@@ -1,0 +1,263 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html><html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ICU Acute Agitation & Hyperactive Delirium – Bedside App (v1.0)</title>
+<style>
+  :root{
+    --bg:#0b1220; --card:#121a2b; --ink:#e7eefb; --muted:#9fb3d9;
+    --ok:#2e7d32; --warn:#f9a825; --med:#ef6c00; --high:#c62828; --brand:#4f8cff;
+    --accent:#7aa2ff; --line:#23314f;
+  }
+  html,body{height:100%}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial;background:var(--bg);color:var(--ink)}
+  .wrap{max-width:1100px;margin:0 auto;padding:20px}
+  header{display:flex;flex-wrap:wrap;align-items:center;gap:16px;justify-content:space-between}
+  h1{font-size:clamp(1.2rem,2.6vw,1.8rem);margin:0;font-weight:700}
+  .sub{color:var(--muted);font-size:0.95rem}
+  .clock{font-variant-numeric:tabular-nums;background:#0e1630;border:1px solid var(--line);padding:8px 12px;border-radius:12px}
+  .grid{display:grid;gap:16px;grid-template-columns:repeat(12,1fr)}
+  .card{grid-column:span 12;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
+  @media(min-width:900px){.span6{grid-column:span 6}.span4{grid-column:span 4}.span8{grid-column:span 8}}
+  h2{margin:0 0 10px 0;font-size:1.05rem}
+  h3{margin:8px 0 8px;font-size:1rem;color:var(--muted)}
+  .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .pill{display:inline-flex;align-items:center;gap:6px;background:#0e1630;border:1px solid var(--line);border-radius:999px;padding:6px 10px;font-size:0.9rem;color:var(--muted)}
+  .btn{cursor:pointer;border:1px solid var(--line);background:#0f1a35;color:var(--ink);padding:8px 12px;border-radius:10px}
+  .btn:active{transform:translateY(1px)}
+  .btn-primary{background:linear-gradient(180deg,var(--brand),#2c5dd8);border-color:#2e52b8}
+  .btn-danger{background:linear-gradient(180deg,#9e2f2f,#7a1e1e);border-color:#6a1c1c}
+  .warn{color:#ffd86b}
+  .ok{color:#9cffb5}
+  .high{color:#ff8a8a}
+  .kvs{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  label{font-size:0.92rem;color:var(--muted)}
+  input[type="number"], input[type="text"], select{width:100%;background:#0e1630;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:8px}
+  input[type="checkbox"]{transform:scale(1.2)}
+  .list{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+  .note{font-size:0.85rem;color:var(--muted)}
+  .hr{height:1px;background:var(--line);margin:12px 0}
+  .badge{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid var(--line);background:#0e1630;color:var(--muted);font-size:0.8rem}
+  details{border:1px solid var(--line);border-radius:12px;padding:10px;background:#0f1631}
+  details>summary{cursor:pointer;font-weight:600}
+  .danger{background:#2a1218;border-color:#5e1b25}
+  .success{background:#11241a;border-color:#1f3a2b}
+  .print-note{font-size:0.8rem;color:var(--muted)}
+  .footer{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;color:var(--muted);font-size:0.85rem;margin-top:12px}
+  .big{font-size:1.3rem}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>ICU Acute Agitation & Hyperactive Delirium – Bedside App</h1>
+        <div class="sub">Simple, safe, stepwise checklist • v1.0 • For trained ICU staff only • Off-label antipsychotic use per unit policy</div>
+      </div>
+      <div class="clock" id="clock">--:--</div>
+    </header><div class="grid" style="margin-top:16px">
+  <!-- STEP 1 -->
+  <section class="card span6">
+    <h2>STEP 1 – FIND THE CAUSE (P‑I‑N‑C‑H)</h2>
+    <div class="list">
+      <label><input type="checkbox"> Pain – assess & treat</label>
+      <label><input type="checkbox"> Infection – fever / new cough</label>
+      <label><input type="checkbox"> New drug started?</label>
+      <label><input type="checkbox"> Withdrawal (alcohol/opioids/sedatives)</label>
+      <label><input type="checkbox"> Cardiac/Cerebral – hypoxia/hypercarbia</label>
+      <label><input type="checkbox"> Metabolic – acidosis/hypoglycemia/hyponatremia</label>
+      <label><input type="checkbox"> Uremia / Hepatic encephalopathy</label>
+      <label><input type="checkbox"> Hazardous – bladder/bowel, lines/tubes pulling</label>
+    </div>
+    <div class="hr"></div>
+    <details>
+      <summary>Vitals/Labs quick entry (optional)</summary>
+      <div class="kvs" style="margin-top:8px">
+        <div><label>SpO₂ (%)<br><input id="spo2" type="number" min="0" max="100" placeholder="95"></label></div>
+        <div><label>EtCO₂ / PaCO₂ (mmHg)<br><input id="paco2" type="number" min="0" max="120" placeholder="40"></label></div>
+        <div><label>Glucose (mg/dL)<br><input id="glu" type="number" min="0" max="1000" placeholder="110"></label></div>
+        <div><label>Na⁺ (mmol/L)<br><input id="na" type="number" min="80" max="180" placeholder="138"></label></div>
+        <div><label>Urea/Cr (mg/dL)<br><input id="urea" type="number" min="0" max="500" placeholder="45"></label></div>
+        <div><label>NH₃ (µmol/L)<br><input id="nh3" type="number" min="0" max="500" placeholder="30"></label></div>
+      </div>
+      <div class="row" style="margin-top:10px"><button class="btn" onclick="autoFlags()">Auto‑flag hazards</button><span id="flags" class="badge"></span></div>
+    </details>
+  </section>
+
+  <!-- STEP 2 -->
+  <section class="card span6">
+    <h2>STEP 2 – SEDATION (if Step 1 fails)</h2>
+    <div class="row"><span class="pill">Use soft restraints only if danger to self/staff. Document reason & time.</span></div>
+    <h3>Dexmedetomidine infusion (NO loading dose)</h3>
+    <div class="kvs">
+      <div><label>Patient weight (kg)<br><input id="wt" type="number" min="10" max="300" placeholder="70" value="70"></label></div>
+      <div><label>Target rate (µg/kg/hr) 0.2–1.5<br><input id="dexRate" type="number" min="0.2" max="1.5" step="0.05" value="0.5"></label></div>
+      <div><label>Infusion strength (µg/mL) <span class="note">(e.g., 200 µg in 50 mL → 4 µg/mL)</span><br><input id="conc" type="number" min="0.1" max="20" step="0.1" value="4"></label></div>
+      <div class="big" id="dexOut">--</div>
+    </div>
+    <div class="row" style="margin-top:8px"><button class="btn btn-primary" onclick="calcDex()">Calculate mL/hr</button><span class="note">Avoid in severe bradycardia/AV block/profound hypotension.</span></div>
+  </section>
+
+  <!-- STEP 3 -->
+  <section class="card span8">
+    <h2>STEP 3 – TREAT THE DELIRIUM</h2>
+    <div class="kvs">
+      <div>
+        <h3>Delirium assessment</h3>
+        <div class="row" style="gap:12px">
+          <label>CAM‑ICU result
+            <select id="cam">
+              <option value="">Select…</option>
+              <option>Positive</option>
+              <option>Negative</option>
+              <option>Unable to assess</option>
+            </select>
+          </label>
+          <label>RASS target
+            <select id="rass">
+              <option>0 (Alert & Calm)</option>
+              <option>−1 (Drowsy)</option>
+              <option>−2 (Light sedation)</option>
+            </select>
+          </label>
+          </div>
+      </div>
+      <div>
+        <h3>Olanzapine (off‑label in ICU)</h3>
+        <div class="list">
+          <label><input type="checkbox" id="ecg"> ECG done in last 24–48 h</label>
+          <label><input type="checkbox" id="qtcok"> QTc < 500 ms</label>
+        </div>
+        <div class="kvs" style="margin-top:8px">
+          <div><label>Dose at 21:00 hrs (OD)
+            <select id="olaDose">
+              <option value="5">5 mg SL/PO (standard)</option>
+              <option value="2.5">2.5 mg SL/PO (frail/elderly)</option>
+              <option value="10">10 mg SL/PO (if needed)</option>
+            </select>
+          </label></div>
+          <div class="big" id="olaOut">--</div>
+        </div>
+        <div class="note">Max per SmPC: <b>20 mg/24 h total</b> (all routes). Avoid giving IM olanzapine and parenteral benzodiazepines within <b>1 hour</b> of each other (cardiorespiratory depression risk).</div>
+        <div class="row" style="margin-top:8px"><button class="btn" onclick="olaPlan()">Create tonight plan</button></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SAFETY BOX -->
+  <section class="card span4 danger">
+    <h2>Safety Warnings</h2>
+    <ul>
+      <li><b>Do not exceed 20 mg/24 h</b> of olanzapine (oral + IM combined).</li>
+      <li><b>Do not co‑administer</b> IM olanzapine and parenteral benzodiazepines within 1 hour.</li>
+      <li>Monitor for oversedation, hypotension, bradycardia.</li>
+      <li>Reassess need for restraints frequently and document.</li>
+    </ul>
+    <div class="note">Label basis: EU SmPC for olanzapine tablets & short‑acting IM injection.</div>
+  </section>
+
+  <!-- NOTES / PRINT -->
+  <section class="card span12">
+    <h2>Notes & Print</h2>
+    <div class="kvs">
+      <div>
+        <label>Free‑text notes (saved locally)
+          <textarea id="notes" style="width:100%;height:120px;background:#0e1630;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:8px" placeholder="Brief summary, family counseling, causes ruled out, meds given…"></textarea>
+        </label>
+        <div class="row" style="margin-top:8px">
+          <button class="btn" onclick="saveNotes()">Save notes</button>
+          <button class="btn" onclick="loadNotes()">Load</button>
+          <button class="btn" onclick="clearNotes()">Clear</button>
+        </div>
+      </div>
+      <div>
+        <div class="row" style="gap:10px;align-items:flex-start">
+          <button class="btn btn-primary" onclick="window.print()">Print / Save as PDF</button>
+          <div class="print-note">Tip: Printing captures the live timestamp and current plan.</div>
+        </div>
+        <div class="hr"></div>
+        <details class="success">
+          <summary>Non‑pharmacological measures (recap)</summary>
+          <ul>
+            <li>Calm, clear verbal re‑orientation; reduce noise at night.</li>
+            <li>Normalize day–night lighting; allow glasses/hearing aids.</li>
+            <li>Involve family briefly for reassurance if unit policy permits.</li>
+            <li>Remove unnecessary lines/tubes if safe.</li>
+          </ul>
+        </details>
+      </div>
+    </div>
+    <div class="footer">
+      <div>For ICU educational use by trained staff. This tool does not replace clinical judgment.</div>
+      <div id="ver">Build v1.0 • <span id="stamp"></span></div>
+    </div>
+  </section>
+</div>
+
+  </div><script>
+  function tick(){
+    const d=new Date();
+    const pad=n=>String(n).padStart(2,'0');
+    const s=`${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    document.getElementById('clock').textContent=s;
+    document.getElementById('stamp').textContent=d.toLocaleString();
+  }
+  tick(); setInterval(tick, 30000);
+
+  function autoFlags(){
+    const spo2=+document.getElementById('spo2').value||NaN;
+    const paco2=+document.getElementById('paco2').value||NaN;
+    const glu=+document.getElementById('glu').value||NaN;
+    const na=+document.getElementById('na').value||NaN;
+    const urea=+document.getElementById('urea').value||NaN;
+    const nh3=+document.getElementById('nh3').value||NaN;
+    const alerts=[];
+    if(!isNaN(spo2) && spo2<92) alerts.push('Hypoxia');
+    if(!isNaN(paco2) && paco2>50) alerts.push('Hypercarbia');
+    if(!isNaN(glu) && glu<70) alerts.push('Hypoglycemia');
+    if(!isNaN(na) && (na<130 || na>150)) alerts.push('Na⁺ abnormal');
+    if(!isNaN(urea) && urea>120) alerts.push('Uremia?');
+    if(!isNaN(nh3) && nh3>60) alerts.push('Hepatic encephalopathy?');
+    const el=document.getElementById('flags');
+    el.textContent=alerts.length?('Flags: '+alerts.join(', ')):'No obvious flags.';
+  }
+
+  function calcDex(){
+    const wt=+document.getElementById('wt').value||0;
+    const rate=+document.getElementById('dexRate').value||0;
+    const conc=+document.getElementById('conc').value||0;
+    if(wt<=0||rate<=0||conc<=0){
+      document.getElementById('dexOut').innerHTML='<span class="high">Enter weight, rate (0.2–1.5), and concentration.</span>';
+      return;
+    }
+    const ugPerHr=wt*rate;
+    const mlPerHr=ugPerHr/conc;
+    document.getElementById('dexOut').innerHTML=`<b>Set pump:</b> <span class="ok">${mlPerHr.toFixed(2)} mL/hr</span> <span class="note">(${ugPerHr.toFixed(1)} µg/hr @ ${conc} µg/mL)</span>`;
+  }
+
+  function olaPlan(){
+    const ecg=document.getElementById('ecg').checked;
+    const qtcok=document.getElementById('qtcok').checked;
+    const dose=parseFloat(document.getElementById('olaDose').value);
+    if(!ecg||!qtcok){
+      document.getElementById('olaOut').innerHTML='<span class="high">Complete ECG/QTc safety checks first.</span>';
+      return;
+    }
+    if(dose>20){
+      document.getElementById('olaOut').innerHTML='<span class="high">Dose exceeds SmPC daily max (20 mg).</span>';
+      return;
+    }
+    document.getElementById('olaOut').innerHTML=`Tonight plan: <b>${dose} mg</b> SL/PO at <b>21:00</b>. <span class="note">Review daily; aim lowest effective dose.</span>`;
+  }
+
+  function saveNotes(){
+    localStorage.setItem('icu_delirium_notes', document.getElementById('notes').value||'');
+  }
+  function loadNotes(){
+    document.getElementById('notes').value = localStorage.getItem('icu_delirium_notes')||'';
+  }
+  function clearNotes(){
+    if(confirm('Clear notes?')){ localStorage.removeItem('icu_delirium_notes'); document.getElementById('notes').value=''; }
+  }
+</script></body>
+</html>
