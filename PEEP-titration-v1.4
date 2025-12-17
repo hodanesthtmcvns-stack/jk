@@ -1,0 +1,997 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>PEEP Titration (VCV) – Cstat/ΔP/Cdyn + S/F + MAP</title>
+  <style>
+    :root{
+      --bg:#0b0f14; --card:#111824; --muted:#95a3b3; --txt:#e8eef6;
+      --line:#213044; --bad:#ff5c5c; --ok:#5cffb0; --warn:#ffd56a; --accent:#74b9ff;
+      --radius:14px;
+      --pad:14px;
+      --fs-base:14px;
+      --fs-small:12px;
+      --fs-h1:18px;
+    }
+
+    /* Density presets */
+    body[data-density="compact"]{
+      --radius:12px; --pad:12px; --fs-base:13px; --fs-small:11px; --fs-h1:17px;
+    }
+    body[data-density="comfortable"]{
+      --radius:16px; --pad:16px; --fs-base:15px; --fs-small:13px; --fs-h1:19px;
+    }
+
+    html,body{background:var(--bg); color:var(--txt); font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; margin:0}
+    body{font-size:var(--fs-base);}
+
+    .wrap{max-width:1180px; margin:0 auto; padding:calc(12px + env(safe-area-inset-top)) 12px calc(18px + env(safe-area-inset-bottom));}
+    body[data-layout="desktop"] .wrap{padding:18px;}
+    h1{font-size:var(--fs-h1); margin:0 0 6px}
+    .sub{color:var(--muted); font-size:var(--fs-small); line-height:1.35; margin:0 0 12px}
+
+    .topbar{
+      display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;
+    }
+
+    .toolbar{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+    }
+    .toolbar .group{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+    .toolbar label{margin:0; font-size:var(--fs-small); color:var(--muted)}
+    .toolbar select{
+      width:auto; min-width:120px;
+    }
+
+    .grid{display:grid; gap:12px; grid-template-columns: 1fr;}
+    @media(min-width:980px){ .grid{grid-template-columns: 420px 1fr;} }
+    body[data-layout="mobile"] .grid{grid-template-columns:1fr;}
+    body[data-layout="desktop"] .grid{grid-template-columns: 420px 1fr;}
+
+    .card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:var(--pad)}
+    .row{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+    body[data-layout="mobile"] .row{grid-template-columns:1fr;} /* stacked inputs on small screens */
+    label{display:block; font-size:var(--fs-small); color:var(--muted); margin-bottom:6px}
+
+    input,select,button,textarea{
+      width:100%; box-sizing:border-box; padding:10px 10px; border-radius:12px;
+      border:1px solid var(--line); background:#0c131d; color:var(--txt); outline:none;
+      font-size:var(--fs-base);
+    }
+    input:focus,textarea:focus,select:focus{border-color:#2d4766}
+    button{cursor:pointer; background:#0e1a28}
+    button.primary{background:linear-gradient(180deg,#1b3a5c,#14253a); border-color:#2c5b8a}
+    button.danger{background:#2a1010; border-color:#5a1d1d}
+
+    /* Action buttons: horizontal scroll on phones */
+    .actions{
+      display:flex; gap:10px; flex-wrap:wrap;
+    }
+    body[data-layout="mobile"] .actions{
+      flex-wrap:nowrap; overflow:auto; -webkit-overflow-scrolling:touch;
+      padding-bottom:6px;
+    }
+    body[data-layout="mobile"] .actions button{flex:0 0 auto; white-space:nowrap}
+
+    .small{font-size:var(--fs-small); color:var(--muted)}
+    .pill{display:inline-block; padding:6px 10px; border-radius:999px; border:1px solid var(--line); font-size:var(--fs-small); color:var(--muted)}
+    .pill.ok{color:var(--ok); border-color:rgba(92,255,176,.35)}
+    .pill.bad{color:var(--bad); border-color:rgba(255,92,92,.35)}
+    .pill.warn{color:var(--warn); border-color:rgba(255,213,106,.35)}
+    .kpi{display:flex; gap:10px; flex-wrap:wrap; margin-top:10px}
+
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    .note{width:100%; min-height:78px}
+    .hr{height:1px; background:var(--line); margin:12px 0}
+
+    .recBox{border:1px solid var(--line); background:#0c131d; border-radius:var(--radius); padding:12px}
+    .recTitle{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap}
+    .recTitle strong{font-size:14px}
+    .list{margin:8px 0 0; padding-left:18px; color:var(--muted); font-size:var(--fs-small); line-height:1.5}
+    .hint{color:var(--muted); font-size:var(--fs-small); margin:6px 0 0}
+    .badge{display:inline-block; padding:2px 8px; border-radius:999px; border:1px solid var(--line); font-size:11px; color:var(--muted)}
+    .badge.ok{color:var(--ok)}
+    .badge.bad{color:var(--bad)}
+    .badge.warn{color:var(--warn)}
+
+    .checkline{display:flex; align-items:flex-start; gap:10px; margin-top:8px}
+    .checkline input{width:auto; margin-top:3px}
+
+    /* Table desktop */
+    table{width:100%; border-collapse:separate; border-spacing:0; overflow:hidden; border-radius:var(--radius); border:1px solid var(--line)}
+    th,td{padding:10px 10px; border-bottom:1px solid var(--line); font-size:13px; vertical-align:top}
+    th{background:#0e1824; color:var(--muted); text-align:left; font-weight:600; position:sticky; top:0; z-index:1}
+    tr:last-child td{border-bottom:none}
+    td input{padding:8px 8px; border-radius:12px}
+
+    /* Mobile table -> cards */
+    body[data-layout="mobile"] table{border:none; border-radius:0}
+    body[data-layout="mobile"] thead{display:none}
+    body[data-layout="mobile"] tbody{display:block}
+    body[data-layout="mobile"] tr{
+      display:block; margin:0 0 10px; border:1px solid var(--line);
+      border-radius:var(--radius); background:#0c131d; overflow:hidden;
+    }
+    body[data-layout="mobile"] td{
+      display:flex; gap:10px; align-items:center; justify-content:space-between;
+      border-bottom:1px solid var(--line);
+    }
+    body[data-layout="mobile"] td:last-child{border-bottom:none}
+    body[data-layout="mobile"] td::before{
+      content: attr(data-label);
+      color: var(--muted);
+      font-size: var(--fs-small);
+      min-width: 110px;
+    }
+    body[data-layout="mobile"] td input, body[data-layout="mobile"] td button{
+      width: 55%;
+    }
+
+    /* “Desktop preference” option can force 2-column even on narrow screens */
+    body[data-layout="desktop"] .row{grid-template-columns:1fr 1fr;}
+    body[data-layout="desktop"] .actions{flex-wrap:wrap;}
+
+    /* Sticky recommendation on desktop */
+    @media(min-width:980px){
+      body[data-layout="desktop"] .rightCard{position:sticky; top:14px;}
+    }
+
+  </style>
+</head>
+<body data-layout="auto" data-density="compact">
+<div class="wrap">
+  <div class="topbar">
+    <div>
+      <h1>PEEP titration (VCV) bedside tool, v1.4</h1>
+      <p class="sub">
+        Author: Prof. J Kirtania. Decision-support heuristic using <span class="mono">Cstat</span>, <span class="mono">ΔP</span>, <span class="mono">Cdyn</span>,
+        <span class="mono">SpO₂/FiO₂</span> and <span class="mono">MAP</span>. Use with clinical context. For reliable <span class="mono">Cstat/ΔP</span>, patient should be passive and plateau pressure reliable.
+      </p>
+      <div class="toolbar">
+        <div class="group">
+          <label for="layoutMode">Layout</label>
+          <select id="layoutMode">
+            <option value="auto" selected>Auto</option>
+            <option value="mobile">Mobile</option>
+            <option value="desktop">Desktop</option>
+          </select>
+        </div>
+        <div class="group">
+          <label for="density">Density</label>
+          <select id="density">
+            <option value="compact" selected>Compact</option>
+            <option value="comfortable">Comfortable</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="primary" id="btnAdd">+ Add PEEP step</button>
+      <button id="btnSave">Save</button>
+      <button id="btnLoad">Load</button>
+      <button id="btnCSV">Export CSV</button>
+      <button class="danger" id="btnClear">Clear</button>
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- LEFT -->
+    <div class="card">
+      <div class="row">
+        <div>
+          <label>Workflow</label>
+          <select id="workflow">
+            <option value="incremental" selected>Incremental PEEP trial (step-up)</option>
+            <option value="decremental">Decremental PEEP after recruitment (step-down)</option>
+          </select>
+        </div>
+        <div>
+          <label>Selection method</label>
+          <select id="selector">
+            <option value="balanced" selected>Balanced score (Cstat + ΔP + SpO₂/FiO₂ + MAP)</option>
+            <option value="mechanics">Mechanics-first (Cstat max + ΔP min; SpO₂/FiO₂ secondary)</option>
+            <option value="oxygenation">Oxygenation-first (SpO₂/FiO₂ max; ΔP + MAP safety)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <div>
+          <label>Minimum acceptable MAP (mmHg)</label>
+          <input type="number" id="minMAP" value="65" step="1" inputmode="decimal" />
+        </div>
+        <div>
+          <label>Driving pressure alert threshold ΔP (cmH₂O)</label>
+          <input type="number" id="maxDP" value="15" step="1" inputmode="decimal" />
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <div>
+          <label>Plateau pressure alert threshold Pplat (cmH₂O)</label>
+          <input type="number" id="maxPplat" value="30" step="1" />
+        </div>
+        <div>
+          <label>Plateau pressure hard limit (cmH₂O)</label>
+          <input type="number" id="hardPplat" value="35" step="1" />
+        </div>
+      </div>
+
+      <div id="decHysBox" style="margin-top:10px">
+        <div class="small">Decremental limb hysteresis (derecruitment trigger)</div>
+        <div class="row" style="margin-top:8px">
+          <div>
+            <label>S/F drop trigger (% from previous higher PEEP)</label>
+            <input type="number" id="sfDropPct" value="10" step="1" />
+          </div>
+          <div>
+            <label>or absolute S/F drop (units)</label>
+            <input type="number" id="sfDropAbs" value="30" step="1" />
+          </div>
+        </div>
+      </div>
+
+
+      <div class="row" style="margin-top:10px">
+        <div>
+          <label>Oxygenation (S/F) weight</label>
+          <select id="wSF">
+            <option value="1">Low</option>
+            <option value="2" selected>Medium</option>
+            <option value="3">High</option>
+          </select>
+        </div>
+        <div>
+          <label>Mechanics weight (Cstat & ΔP)</label>
+          <select id="wMech">
+            <option value="1">Low</option>
+            <option value="2" selected>Medium</option>
+            <option value="3">High</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="checkline">
+        <input type="checkbox" id="preferLower" checked />
+        <label style="margin:0">Tie-breaker: if similar benefit (≥95% of best), prefer <span class="mono">lower PEEP</span> to reduce barotrauma/hemodynamic risk</label>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="small">Quick-entry (adds one row). Enter values at a given PEEP after stabilization.</div>
+
+      <div class="row" style="margin-top:10px">
+        <div>
+          <label>PEEP (cmH₂O)</label>
+          <input type="number" id="qPEEP" step="1" placeholder="e.g., 8" inputmode="decimal"/>
+        </div>
+        <div>
+          <label>Cstat (mL/cmH₂O)</label>
+          <input type="number" id="qCstat" step="0.1" placeholder="e.g., 32" inputmode="decimal"/>
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <div>
+          <label>ΔP (cmH₂O)</label>
+          <input type="number" id="qDP" step="0.1" placeholder="e.g., 12" inputmode="decimal"/>
+        </div>
+        <div>
+          <label>Cdyn (mL/cmH₂O)</label>
+          <input type="number" id="qCdyn" step="0.1" placeholder="optional" inputmode="decimal"/>
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <div>
+          <label>Pplat (cmH₂O)</label>
+          <input type="number" id="qPplat" step="0.1" placeholder="e.g., 28" inputmode="decimal"/>
+        </div>
+        <div>
+          <label>Vt (mL) (optional)</label>
+          <input type="number" id="qVt" step="1" placeholder="optional" inputmode="decimal"/>
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <div>
+          <label>SpO₂ (%)</label>
+          <input type="number" id="qSpO2" step="1" min="0" max="100" placeholder="e.g., 92" inputmode="decimal"/>
+        </div>
+        <div>
+          <label>FiO₂</label>
+          <input type="number" id="qFiO2" step="0.01" placeholder="e.g., 0.60 (or 60)" inputmode="decimal"/>
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <div style="grid-column:1/-1">
+          <label>MAP (mmHg)</label>
+          <input type="number" id="qMAP" step="1" placeholder="e.g., 72" inputmode="decimal"/>
+        </div>
+      </div>
+      <div style="margin-top:10px">
+        <button class="primary" id="btnQuickAdd">Add this step</button>
+        <div class="hint" id="wfHint"></div>
+      </div>
+
+      <div class="hr"></div>
+
+      <label>Clinical note (optional)</label>
+      <textarea class="note" id="note" placeholder="e.g., deep sedation; ARDS moderate; vasopressor stable; recruitment done before decremental..."></textarea>
+
+      <div class="kpi" id="kpiBar"></div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="card rightCard">
+      <div class="recBox">
+        <div class="recTitle">
+          <strong>Recommendation</strong>
+          <span class="badge" id="recBadge">—</span>
+        </div>
+        <div class="small" id="recMain" style="margin-top:6px">
+          Add at least 2 PEEP steps to generate a recommendation.
+        </div>
+        <ul class="list" id="recWhy"></ul>
+      </div>
+
+      <div class="hr"></div>
+
+      <div style="overflow:auto; max-height: min(58vh, 520px);">
+        <table id="tbl">
+          <thead>
+            <tr>
+              <th style="min-width:70px">PEEP</th>
+              <th style="min-width:105px">Cstat</th>
+              <th style="min-width:95px">ΔP</th>
+              <th style="min-width:105px">Cdyn</th>
+              <th style="min-width:95px">SpO₂</th>
+              <th style="min-width:95px">FiO₂</th>
+              <th style="min-width:95px">MAP</th>
+              <th style="min-width:80px">Action</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+
+      <div class="hint" style="margin-top:10px">
+        Cdyn is treated as <b>supportive trend only</b> (airway resistance can confound it). Primary mechanics are via
+        <span class="mono">Cstat</span> and <span class="mono">ΔP</span>.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const $ = (id)=>document.getElementById(id);
+  const state = { rows: [] };
+
+  function num(v){
+    const x = parseFloat(v);
+    return Number.isFinite(x) ? x : null;
+  }
+  function clamp01(x){ return Math.max(0, Math.min(1, x)); }
+
+  function applyLayout(mode){
+    const body = document.body;
+    if(mode === "auto"){
+      body.dataset.layout = (window.matchMedia("(min-width:980px)").matches ? "desktop" : "mobile");
+      body.dataset.layoutAuto = "1";
+    }else{
+      body.dataset.layout = mode;
+      body.dataset.layoutAuto = "0";
+    }
+  }
+
+  function applyDensity(d){
+    document.body.dataset.density = d;
+  }
+
+  function persistUISettings(){
+    const ui = {
+      layoutMode: $("layoutMode").value,
+      density: $("density").value
+    };
+    localStorage.setItem("peep_titration_ui", JSON.stringify(ui));
+  }
+
+  function loadUISettings(){
+    try{
+      const raw = localStorage.getItem("peep_titration_ui");
+      if(!raw) return;
+      const ui = JSON.parse(raw);
+      if(ui.layoutMode) $("layoutMode").value = ui.layoutMode;
+      if(ui.density) $("density").value = ui.density;
+    }catch(_){}
+  }
+
+  function addRow(prefill={}){
+    state.rows.push({
+      peep: prefill.peep ?? null,
+      cstat: prefill.cstat ?? null,
+      dp: prefill.dp ?? null,
+      pplat: prefill.pplat ?? null,
+      vt: prefill.vt ?? null,
+      cdyn: prefill.cdyn ?? null,
+      spo2: prefill.spo2 ?? null,
+      fio2: prefill.fio2 ?? null,
+      map: prefill.map ?? null
+    });
+    render();
+  }
+
+  function delRow(i){
+    state.rows.splice(i,1);
+    render();
+  }
+
+  function renderWorkflowHint(){
+    const wf = $("workflow").value;
+    $("wfHint").textContent = (wf==="incremental")
+      ? "Incremental: step PEEP up (e.g., 5→8→10→12…), wait stable, record values."
+      : "Decremental: after recruitment, step PEEP down (e.g., 18→16→14→12…), record values; choose PEEP before derecruitment/oxygenation drop, while keeping ΔP low and MAP acceptable.";
+  }
+
+  function render(){
+    renderWorkflowHint();
+
+    const allHavePEEP = state.rows.every(r => r.peep !== null);
+    if(allHavePEEP){
+      state.rows.sort((a,b)=>a.peep-b.peep);
+    }
+
+    const tb = $("tbody");
+    tb.innerHTML = "";
+
+    state.rows.forEach((r,i)=>{
+      const tr = document.createElement("tr");
+
+      function cellInput(key, step, placeholder, label){
+        const td = document.createElement("td");
+        td.setAttribute("data-label", label);
+        const inp = document.createElement("input");
+        inp.type = "number";
+        inp.step = step;
+        inp.placeholder = placeholder || "";
+        inp.value = (r[key] ?? "");
+        inp.inputMode = "decimal";
+        inp.addEventListener("input", ()=>{
+          r[key] = num(inp.value);
+          computeAndDisplay();
+          renderKPI();
+        });
+        td.appendChild(inp);
+        return td;
+      }
+
+      tr.appendChild(cellInput("peep","1","cmH2O","PEEP"));
+      tr.appendChild(cellInput("cstat","0.1","mL/cmH2O","Cstat"));
+      tr.appendChild(cellInput("dp","0.1","cmH2O","ΔP"));
+      tr.appendChild(cellInput("pplat","0.1","cmH2O","Pplat"));
+      tr.appendChild(cellInput("vt","1","mL","Vt (mL)"));
+      tr.appendChild(cellInput("cdyn","0.1","optional","Cdyn"));
+      tr.appendChild(cellInput("spo2","1","%","SpO₂"));
+      tr.appendChild(cellInput("fio2","0.01","0.21–1.0 or 21–100","FiO₂"));
+      tr.appendChild(cellInput("map","1","mmHg","MAP"));
+
+      const tdA = document.createElement("td");
+      tdA.setAttribute("data-label","Action");
+      const btn = document.createElement("button");
+      btn.className = "danger";
+      btn.textContent = "Delete";
+      btn.addEventListener("click", ()=>delRow(i));
+      tdA.appendChild(btn);
+      tr.appendChild(tdA);
+
+      tb.appendChild(tr);
+    });
+
+    computeAndDisplay();
+    renderKPI();
+  }
+
+  function validRows(){
+    return state.rows.filter(r => r.peep!==null && r.cstat!==null && r.dp!==null && r.pplat!==null && r.spo2!==null && r.fio2!==null && r.map!==null);
+  }
+
+  function normHi(val, vmin, vmax){
+    if(vmax === vmin) return 0.5;
+    return clamp01((val - vmin) / (vmax - vmin));
+  }
+  function normLo(val, vmin, vmax){
+    if(vmax === vmin) return 0.5;
+    return clamp01((vmax - val) / (vmax - vmin));
+  }
+
+  function normalizeFiO2(v){
+    // Accept FiO2 as 0.21–1.0 OR 21–100 (percent). Returns fraction (0–1) or null.
+    if(v===null || !Number.isFinite(v)) return null;
+    if(v > 1.5) return v/100;
+    return v;
+  }
+
+  function dpFromRow(r){
+    // expected ΔP from Pplat-PEEP if both available
+    if(!r) return null;
+    if(r.pplat===null || r.peep===null) return null;
+    return (r.pplat - r.peep);
+  }
+
+  function sfRatioRow(r){
+    const sp = r?.spo2;
+    const fi = normalizeFiO2(r?.fio2);
+    if(sp===null || fi===null || fi<=0) return null;
+    return sp/fi;
+  }
+
+  function fmt(x){
+    if(x===null || !Number.isFinite(x)) return "—";
+    const sign = x>0 ? "+" : "";
+    return sign + (Math.round(x*10)/10);
+  }
+
+  function scoreRows(rows){
+    const minMAP = num($("minMAP").value) ?? 65;
+    const maxDP = num($("maxDP").value) ?? 15;
+    const maxPplat = num($("maxPplat").value) ?? 30;
+    const hardPplat = num($("hardPplat").value) ?? 35;
+    const wSF = parseInt($("wSF").value,10) || 2;
+    const wMech = parseInt($("wMech").value,10) || 2;
+    const selector = $("selector").value;
+
+    const cstats = rows.map(r=>r.cstat);
+    const dps = rows.map(r=>r.dp);
+    const sfs = rows.map(r=>sfRatioRow(r)).filter(v=>v!==null);
+
+    const cMin = Math.min(...cstats), cMax = Math.max(...cstats);
+    const dpMin = Math.min(...dps), dpMax = Math.max(...dps);
+    const sfMin = (sfs.length ? Math.min(...sfs) : 0), sfMax = (sfs.length ? Math.max(...sfs) : 1);
+
+    const byPEEP = [...rows].sort((a,b)=>a.peep-b.peep);
+
+    function penaltyTrend(r){
+      const wf = $("workflow").value;
+      const idx = byPEEP.findIndex(x=>x===r);
+      if(idx < 0) return 0;
+      let p = 0;
+      const lower = idx>0 ? byPEEP[idx-1] : null;
+      const higher = idx<byPEEP.length-1 ? byPEEP[idx+1] : null;
+
+      if(wf === "incremental"){
+        if(lower){
+          const cDrop = (r.cstat < lower.cstat);
+          const sfUp = ((sfRatioRow(r) ?? -Infinity) >= (sfRatioRow(lower) ?? -Infinity));
+          if(cDrop && !sfUp) p += 0.7;
+        }
+      } else {
+        if(higher){
+          const sfDrop = ((sfRatioRow(r) ?? Infinity) < (sfRatioRow(higher) ?? Infinity));
+          const cGainSmall = (r.cstat - higher.cstat) < 1.0;
+          if(sfDrop && cGainSmall) p += 0.7;
+        }
+      }
+      return p;
+    }
+
+    return rows.map(r=>{
+      const nC  = normHi(r.cstat, cMin, cMax);
+      const nDP = normLo(r.dp, dpMin, dpMax);
+      const sfv = sfRatioRow(r);
+      const nSF = normHi((sfv ?? sfMin), sfMin, sfMax);
+
+      let mech = (nC*0.6 + nDP*0.4);
+      let oxy  = nSF;
+
+      if(selector === "mechanics"){ mech *= 3; oxy *= 1; }
+      else if(selector === "oxygenation"){ mech *= 1; oxy *= 3; }
+      else { mech *= wMech; oxy *= wSF; }
+
+      let penalty = 0;
+      if(r.map < minMAP) penalty += 2.0 + (minMAP - r.map)/20;
+      if(r.dp > maxDP) penalty += 1.2 + (r.dp - maxDP)/10;
+
+      // Plateau pressure safety
+      if(r.pplat !== null && r.pplat > maxPplat) penalty += 1.6 + (r.pplat - maxPplat)/5;
+      if(r.pplat !== null && r.pplat > hardPplat) penalty += 5.0 + (r.pplat - hardPplat)/2;
+      penalty += penaltyTrend(r);
+
+      return {r, score: mech + oxy - penalty, penalty, mech, oxy};
+    }).sort((a,b)=>b.score-a.score);
+  }
+
+  function chooseWithLowerPEEPTiebreak(scored){
+    if(!scored.length) return null;
+    if(!$("preferLower").checked) return scored[0];
+    const bestScore = scored[0].score;
+    const cutoff = bestScore * 0.95;
+    const candidates = scored.filter(x => x.score >= cutoff);
+    candidates.sort((a,b)=> (a.r.peep - b.r.peep) || (b.score - a.score));
+    return candidates[0];
+  }
+
+  function computeRecommendation(rows){
+    if(rows.length < 2){
+      return {status:"—", badgeClass:"", main:"Add at least 2 complete PEEP steps (PEEP, Cstat, ΔP, Pplat, SpO₂, FiO₂, MAP).", why:[]};
+    }
+
+    const minMAP = num($("minMAP").value) ?? 65;
+    const maxDP = num($("maxDP").value) ?? 15;
+    const maxPplat = num($("maxPplat").value) ?? 30;
+    const hardPplat = num($("hardPplat").value) ?? 35;
+    const wf = $("workflow").value;
+    const sfDropPct = num($("sfDropPct").value) ?? 10;
+    const sfDropAbs = num($("sfDropAbs").value) ?? 30;
+
+    const maxPplat = num($("maxPplat").value) ?? 30;
+    const hardPplat = num($("hardPplat").value) ?? 35;
+    const wf = $("workflow").value;
+    // Decremental hysteresis override (only in decremental workflow):
+    // Find first step-down where S/F drops beyond threshold vs the previous higher PEEP.
+    // Recommend the previous higher PEEP (one step above derecruitment), unless it violates hard safety limits.
+    if(wf === "decremental"){
+      const byPEEP = [...rows].sort((a,b)=>a.peep-b.peep);
+      // iterate from high->low comparing lower step to immediately higher step
+      for(let i = byPEEP.length-2; i >= 0; i--){
+        const higher = byPEEP[i+1];
+        const lower  = byPEEP[i];
+        const sfH = sfRatioRow(higher);
+        const sfL = sfRatioRow(lower);
+        if(sfH===null || sfL===null) continue;
+
+        const absDrop = sfH - sfL;
+        const pctDrop = (sfH>0) ? (absDrop/sfH)*100 : 0;
+
+        const derecruit = (absDrop >= sfDropAbs) || (pctDrop >= sfDropPct);
+        if(derecruit){
+          // Prefer higher step (one above) if not exceeding hard plateau limit
+          const chosen = (higher.pplat !== null && higher.pplat > hardPplat) ? null : higher;
+          if(chosen){
+            // Provide direct recommendation without composite scoring
+            let badgeClass = "warn";
+            let status = `Select PEEP ${chosen.peep} cmH₂O`;
+            let main = `Decremental hysteresis trigger: S/F fell at/below PEEP ${lower.peep}. Recommend one step above (PEEP ${chosen.peep}) to avoid derecruitment, while respecting safety limits.`;
+            const why = [];
+            why.push(`Trigger: S/F at PEEP ${higher.peep} → ${Math.round(sfH)}; at PEEP ${lower.peep} → ${Math.round(sfL)} (drop ${Math.round(absDrop)}; ${Math.round(pctDrop)}%).`);
+            why.push(`Chosen step PEEP ${chosen.peep}: Cstat ${chosen.cstat}, ΔP ${chosen.dp}, Pplat ${chosen.pplat}, SpO₂ ${chosen.spo2}%, FiO₂ ${normalizeFiO2(chosen.fio2)}, S/F ${Math.round(sfRatioRow(chosen) ?? 0)}, MAP ${chosen.map}${(chosen.cdyn!=null?`, Cdyn ${chosen.cdyn}`:"")}.`);
+
+            if(chosen.map < minMAP){ badgeClass = "bad"; why.push(`Unsafe: MAP below minimum (${minMAP}).`); }
+            if(chosen.dp > maxDP){ badgeClass = "warn"; why.push(`Caution: ΔP above threshold (${maxDP}).`); }
+            if(chosen.pplat > maxPplat){ badgeClass = "warn"; why.push(`Caution: Pplat above alert threshold (${maxPplat}).`); }
+            if(chosen.pplat > hardPplat){ badgeClass = "bad"; why.push(`Unsafe: Pplat above hard limit (${hardPplat}).`); }
+
+    const dpExpBest = dpFromRow(bestRow);
+    if(dpExpBest !== null && bestRow.dp !== null){
+      const diff = Math.abs(dpExpBest - bestRow.dp);
+      if(diff >= 2){
+        why.push(`Note: ΔP entered (${bestRow.dp}) differs from (Pplat−PEEP) (${Math.round(dpExpBest*10)/10}) by ≥2 cmH₂O. Verify measurements.`);
+      }
+    }
+
+
+            // ΔP consistency check if both Pplat and PEEP are provided
+            const dpExp = dpFromRow(chosen);
+            if(dpExp !== null && chosen.dp !== null){
+              const diff = Math.abs(dpExp - chosen.dp);
+              if(diff >= 2){
+                why.push(`Note: ΔP entered (${chosen.dp}) differs from (Pplat−PEEP) (${Math.round(dpExp*10)/10}) by ≥2 cmH₂O. Verify measurements.`);
+              }
+            }
+
+            // Tie-breaker explanation (if enabled)
+            if($("preferLower").checked){
+              why.push(`Tie-breaker rationale: when two PEEP levels provide near-identical benefit, lower PEEP is generally preferred to reduce barotrauma/hemodynamic risk.`);
+            }
+
+            return {status, badgeClass, main, why};
+          }
+          break; // If chosen is null due to hard safety, fall back to scoring
+        }
+      }
+    }
+
+
+
+    const scored = scoreRows(rows);
+    const pick = chooseWithLowerPEEPTiebreak(scored) || scored[0];
+    const bestRow = pick.r;
+
+    const byPEEP = [...rows].sort((a,b)=>a.peep-b.peep);
+    const idx = byPEEP.findIndex(x=>x.peep===bestRow.peep && x.cstat===bestRow.cstat && x.dp===bestRow.dp && x.sf===bestRow.sf && x.map===bestRow.map);
+    const lower = idx>0 ? byPEEP[idx-1] : null;
+    const higher = idx<byPEEP.length-1 ? byPEEP[idx+1] : null;
+
+    let status = `Select PEEP ${bestRow.peep} cmH₂O`;
+    let badgeClass = "ok";
+    let main = (wf==="incremental")
+      ? "Best-tested PEEP by your inputs: mechanics–oxygenation balance with acceptable MAP."
+      : "Best-tested PEEP on decremental (post-recruitment): avoid derecruitment while keeping ΔP low and MAP acceptable.";
+
+    const why = [];
+    why.push(`At PEEP ${bestRow.peep}: Cstat ${bestRow.cstat}, ΔP ${bestRow.dp}, Pplat ${bestRow.pplat}, Vt ${bestRow.vt ?? ""}, SpO₂ ${bestRow.spo2}%, FiO₂ ${normalizeFiO2(bestRow.fio2)}, S/F ${Math.round(sfRatioRow(bestRow) ?? 0)}, MAP ${bestRow.map}${(bestRow.cdyn!=null?`, Cdyn ${bestRow.cdyn}`:"")}.`);
+
+    if(bestRow.dp > maxDP) { badgeClass = "warn"; why.push(`Caution: ΔP above your threshold (${maxDP}).`); }
+    if(bestRow.map < minMAP) { badgeClass = "bad"; why.push(`Unsafe: MAP below minimum (${minMAP}).`); }
+
+    if(wf==="incremental"){
+      if(lower){
+        why.push(`Vs lower PEEP ${lower.peep}: ΔCstat ${fmt(bestRow.cstat-lower.cstat)}, ΔΔP ${fmt(bestRow.dp-lower.dp)}, Δ(S/F) ${fmt((sfRatioRow(bestRow)??0)-(sfRatioRow(lower)??0))}, ΔMAP ${fmt(bestRow.map-lower.map)}.`);
+      }
+      if(higher){
+        why.push(`If you go higher to PEEP ${higher.peep} (your data): ΔCstat ${fmt(higher.cstat-bestRow.cstat)}, ΔΔP ${fmt(higher.dp-bestRow.dp)}, Δ(S/F) ${fmt((sfRatioRow(higher)??0)-(sfRatioRow(bestRow)??0))}, ΔMAP ${fmt(higher.map-bestRow.map)}.`);
+        if(higher.cstat < bestRow.cstat && (sfRatioRow(higher) ?? 0) <= (sfRatioRow(bestRow) ?? 0)) why.push(`Pattern suggests possible overdistension beyond PEEP ${bestRow.peep} (Cstat down without S/F gain).`);
+      }
+    } else {
+      if(higher){
+        why.push(`Vs higher PEEP ${higher.peep}: ΔCstat ${fmt(bestRow.cstat-higher.cstat)}, ΔΔP ${fmt(bestRow.dp-higher.dp)}, Δ(S/F) ${fmt((sfRatioRow(bestRow)??0)-(sfRatioRow(higher)??0))}, ΔMAP ${fmt(bestRow.map-higher.map)}.`);
+        if((sfRatioRow(bestRow) ?? 0) < (sfRatioRow(higher) ?? 0) && (bestRow.cstat - higher.cstat) < 1.0) why.push(`Pattern suggests derecruitment at/below PEEP ${bestRow.peep} (S/F drop without meaningful mechanics gain).`);
+      }
+      if(lower){
+        why.push(`If you step further down to PEEP ${lower.peep} (your data): ΔCstat ${fmt(lower.cstat-bestRow.cstat)}, ΔΔP ${fmt(lower.dp-bestRow.dp)}, Δ(S/F) ${fmt((sfRatioRow(lower)??0)-(sfRatioRow(bestRow)??0))}, ΔMAP ${fmt(lower.map-bestRow.map)}.`);
+        if((sfRatioRow(lower) ?? 0) < (sfRatioRow(bestRow) ?? 0)) why.push(`Watch for derecruitment if stepping below PEEP ${bestRow.peep} (S/F worsens in your run).`);
+      }
+    }
+
+    if(bestRow.map < minMAP || bestRow.dp > maxDP){
+      main = "Safety constraints dominate. Address hypotension and/or high ΔP; consider stepping PEEP down or changing strategy per context.";
+      badgeClass = (bestRow.map < minMAP) ? "bad" : "warn";
+    } else {
+      if($("preferLower").checked){
+        why.push("Tie-breaker active: lowest PEEP within 95% of best score selected to reduce PEEP exposure when similar.");
+      }
+    }
+
+    return {status, badgeClass, main, why};
+  }
+
+  function computeAndDisplay(){
+    const rows = validRows();
+    const rec = computeRecommendation(rows);
+    $("recBadge").textContent = rec.status;
+    $("recBadge").className = "badge " + (rec.badgeClass || "");
+    $("recMain").textContent = rec.main;
+
+    const ul = $("recWhy");
+    ul.innerHTML = "";
+    rec.why.forEach(s=>{
+      const li = document.createElement("li");
+      li.textContent = s;
+      ul.appendChild(li);
+    });
+  }
+
+  function renderKPI(){
+    const rows = validRows();
+    const minMAP = num($("minMAP").value) ?? 65;
+    const maxDP = num($("maxDP").value) ?? 15;
+    const maxPplat = num($("maxPplat").value) ?? 30;
+    const hardPplat = num($("hardPplat").value) ?? 35;
+
+    let flags = [];
+    if(rows.length){
+      const worstMAP = Math.min(...rows.map(r=>r.map));
+      const worstDP = Math.max(...rows.map(r=>r.dp));
+      const worstPplat = Math.max(...rows.map(r=>r.pplat));
+      const bestCstat = Math.max(...rows.map(r=>r.cstat));
+      const bestSF = Math.max(...rows.map(r=>sfRatioRow(r)).filter(v=>v!==null));
+      flags.push({ text:`Lowest MAP: ${worstMAP} mmHg`, cls: worstMAP < minMAP ? "bad" : "ok" });
+      flags.push({ text:`Highest ΔP: ${worstDP} cmH₂O`, cls: worstDP > maxDP ? "warn" : "ok" });
+      flags.push({ text:`Highest Pplat: ${worstPplat} cmH₂O`, cls: worstPplat > (num($("hardPplat").value) ?? 35) ? "bad" : (worstPplat > (num($("maxPplat").value) ?? 30) ? "warn" : "ok") });
+      flags.push({ text:`Best Cstat: ${bestCstat} mL/cmH₂O`, cls:"ok" });
+      flags.push({ text:`Best S/F: ${Math.round(bestSF)}`, cls:"ok" });
+    } else {
+      flags = [{text:"Enter complete steps to see KPI flags.", cls:"warn"}];
+    }
+
+    const bar = $("kpiBar");
+    bar.innerHTML = "";
+    flags.forEach(f=>{
+      const s = document.createElement("span");
+      s.className = `pill ${f.cls}`;
+      s.textContent = f.text;
+      bar.appendChild(s);
+    });
+  }
+
+  // Save/Load/CSV
+  function save(){
+    const payload = {
+      version: "1.2",
+      savedAt: new Date().toISOString(),
+      ui: {
+        layoutMode: $("layoutMode").value,
+        density: $("density").value
+      },
+      settings: {
+        workflow: $("workflow").value,
+        selector: $("selector").value,
+        minMAP: $("minMAP").value,
+        maxDP: $("maxDP").value,
+        maxPplat: $("maxPplat").value,
+        hardPplat: $("hardPplat").value,
+        sfDropPct: $("sfDropPct").value,
+        sfDropAbs: $("sfDropAbs").value,
+        wSF: $("wSF").value,
+        wMech: $("wMech").value,
+        preferLower: $("preferLower").checked,
+        note: $("note").value
+      },
+      rows: state.rows
+    };
+    localStorage.setItem("peep_titration_vcv_tool", JSON.stringify(payload));
+    persistUISettings();
+    alert("Saved locally on this device/browser.");
+  }
+
+  function load(){
+    const raw = localStorage.getItem("peep_titration_vcv_tool");
+    if(!raw){ alert("No saved data found."); return; }
+    try{
+      const payload = JSON.parse(raw);
+
+      // UI
+      if(payload.ui?.layoutMode) $("layoutMode").value = payload.ui.layoutMode;
+      if(payload.ui?.density) $("density").value = payload.ui.density;
+
+      // Main settings
+      $("workflow").value = payload.settings?.workflow ?? "incremental";
+      $("selector").value = payload.settings?.selector ?? "balanced";
+      $("minMAP").value = payload.settings?.minMAP ?? 65;
+      $("maxDP").value = payload.settings?.maxDP ?? 15;
+      $("maxPplat").value = payload.settings?.maxPplat ?? 30;
+      $("hardPplat").value = payload.settings?.hardPplat ?? 35;
+      $("sfDropPct").value = payload.settings?.sfDropPct ?? 10;
+      $("sfDropAbs").value = payload.settings?.sfDropAbs ?? 30;
+      $("wSF").value = payload.settings?.wSF ?? "2";
+      $("wMech").value = payload.settings?.wMech ?? "2";
+      $("preferLower").checked = payload.settings?.preferLower ?? true;
+      $("note").value = payload.settings?.note ?? "";
+
+      state.rows = Array.isArray(payload.rows) ? payload.rows : [];
+      applyDensity($("density").value);
+      applyLayout($("layoutMode").value);
+      persistUISettings();
+      render();
+      alert("Loaded.");
+    }catch(e){
+      alert("Load failed: corrupted saved data.");
+    }
+  }
+
+  function clearAll(){
+    if(!confirm("Clear all rows (this does not delete saved data unless you Save after clearing)?")) return;
+    state.rows = [];
+    $("note").value = "";
+    render();
+  }
+
+  function exportCSV(){
+    const header = ["PEEP_cmH2O","Cstat_mL_per_cmH2O","DP_cmH2O","Pplat_cmH2O","Vt_mL","Cdyn_mL_per_cmH2O","SpO2_percent","FiO2","SpO2_FiO2_ratio","MAP_mmHg"];
+    const lines = [header.join(",")];
+    state.rows.forEach(r=>{
+      lines.push([r.peep ?? "", r.cstat ?? "", r.dp ?? "", r.pplat ?? "", r.vt ?? "", r.cdyn ?? "", r.spo2 ?? "", r.fio2 ?? "", (sfRatioRow(r)??""), r.map ?? ""].join(","));
+    });
+    const blob = new Blob([lines.join("\n")], {type:"text/csv;charset=utf-8"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "peep_titration_vcv.csv";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  // Events
+  $("btnAdd").addEventListener("click", ()=>addRow({}));
+  $("btnQuickAdd").addEventListener("click", ()=>{
+    const peep = num($("qPEEP").value);
+    const cstat = num($("qCstat").value);
+    const dp = num($("qDP").value);
+    const pplat = num($("qPplat").value);
+    const vt = num($("qVt").value);
+    const cdyn = num($("qCdyn").value);
+    const spo2 = num($("qSpO2").value);
+    const fio2 = num($("qFiO2").value);
+    const map = num($("qMAP").value);
+
+    if(peep===null || cstat===null || dp===null || pplat===null || spo2===null || fio2===null || map===null){
+      alert("Please enter at least: PEEP, Cstat, ΔP, Pplat, SpO₂ (%), FiO₂, MAP. (Vt and Cdyn optional)");
+      return;
+    }
+    addRow({peep,cstat,dp,pplat,vt,cdyn,spo2,fio2,map});
+    ["qPEEP","qCstat","qDP","qPplat","qVt","qCdyn","qSpO2","qFiO2","qMAP"].forEach(id=>$(id).value="");
+  });
+
+  ["workflow","selector","minMAP","maxDP","maxPplat","hardPplat","sfDropPct","sfDropAbs","wSF","wMech","preferLower"].forEach(id=>{
+    $(id).addEventListener("input", ()=>{ renderWorkflowHint(); computeAndDisplay(); renderKPI(); });
+    $(id).addEventListener("change", ()=>{ renderWorkflowHint(); computeAndDisplay(); renderKPI(); });
+  });
+
+  $("btnSave").addEventListener("click", save);
+  $("btnLoad").addEventListener("click", load);
+  $("btnClear").addEventListener("click", clearAll);
+  $("btnCSV").addEventListener("click", exportCSV);
+
+  // UI controls
+  $("layoutMode").addEventListener("change", ()=>{
+    applyLayout($("layoutMode").value);
+    persistUISettings();
+  });
+  $("density").addEventListener("change", ()=>{
+    applyDensity($("density").value);
+    persistUISettings();
+  });
+
+  // Auto layout refresh if user chose Auto
+  window.addEventListener("resize", ()=>{
+    if($("layoutMode").value === "auto") applyLayout("auto");
+  });
+
+  // Init
+  loadUISettings();
+  applyDensity($("density").value);
+  applyLayout($("layoutMode").value);
+
+  // Default 2 rows
+  addRow({});
+  addRow({});
+  render();
+})();
+</script>
+<!-- About & Help (Collapsible) -->
+<div class="card" style="margin-top:12px;">
+  <details>
+    <summary style="cursor:pointer; font-weight:600;">
+      About & Help
+      <span class="small" style="font-weight:normal; margin-left:6px;">
+        (tap to expand)
+      </span>
+    </summary>
+
+    <div class="small" style="margin-top:10px; line-height:1.5;">
+      <p><b>Purpose</b><br>
+      This bedside tool supports <b>PEEP titration during volume-controlled ventilation (VCV)</b>
+      using <b>Cstat</b>, <b>ΔP</b>, <b>Cdyn</b> (trend only),
+      <b>SpO₂ (%)</b>, and <b>MAP</b> to guide a physiologic balance between
+      lung recruitment, oxygenation, lung protection, and hemodynamic safety.</p>
+
+      <p><b>Clinical Goal</b><br>
+      Achieve <b>adequate recruitment of lung units</b> to
+      <b>maximize oxygenation at the lowest effective FiO₂ and PEEP</b>,
+      while avoiding <b>overdistension</b>, excessive driving pressure,
+      and circulatory compromise.</p>
+
+      <p><b>How to Use (Quick Steps)</b></p>
+      <ul>
+        <li>Use only in <b>passive patients on VCV</b> with reliable plateau pressures.</li>
+        <li>Select <b>Incremental</b> or <b>Decremental (post-recruitment)</b> PEEP workflow.</li>
+        <li>Set safety limits (<b>MAP</b>, <b>ΔP</b>).</li>
+        <li>At each PEEP (after stabilization), enter
+          <b>PEEP, Cstat, ΔP, SpO₂/FiO₂, MAP</b>
+          (<b>Cdyn optional</b>).</li>
+        <li>Review the <b>best-tested PEEP</b> and safety flags.</li>
+        <li>Reassess after changes in sedation, recruitment,
+          fluids/vasopressors, or clinical status.</li>
+      </ul>
+
+      <p><b>Important Notes</b></p>
+      <ul>
+        <li><b>Cdyn is supportive only</b>; do not titrate PEEP on Cdyn alone.</li>
+        <li>Interpret outputs with <b>ABGs, imaging, and bedside assessment</b>.</li>
+        <li>Recommendations apply <b>only to the PEEP levels tested</b>.</li>
+      </ul>
+
+      <p><b>License</b><br>
+      <b>CC BY-NC 4.0</b> — Free for non-commercial use, sharing, and modification
+      with attribution to the creator (<b>Prof. J Kirtania</b>).<br>
+      https://creativecommons.org/licenses/by-nc/4.0/
+      </p>
+
+      <p><b>Disclaimer</b><br>
+      Decision-support only. <b>Does not replace clinical judgement</b>.</p>
+    </div>
+  </details>
+</div>
+
+</body>
+</html>
