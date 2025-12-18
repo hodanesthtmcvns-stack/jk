@@ -1,7 +1,7 @@
 # jk
 Bridging the gap between theory and bedside practice through open-access, physiologically-weighted, evidence based, decision support tools for anesthesia and intensive care.
 # hodanesthtmcvns-stack: Critical Care & Anesthesia Bedside Tools
-> **Mission:** Bridging the gap between theory and bedside practice through open-access, physiologically-weighted, evidence-based decision support tools for anesthesia and intensive care.
+**Mission:** Bridging the gap between theory and bedside practice through open-access, physiologically-weighted, evidence-based decision support tools for anesthesia and intensive care.
 
 This repository hosts a suite of portable, offline-ready HTML applications designed for intensivists, anesthesiologists, and frontline caregivers. These tools transform complex physiological data into actionable bedside insights.
 
@@ -17,11 +17,6 @@ This repository hosts a suite of portable, offline-ready HTML applications desig
 | **Lab Trends & Alerts** | Decision Support | [Launch App](./ICU-lab-trends-alerts-v2.0.html) |
 | **Agitation Manager** | ICU Delirium | [Launch App](./acute-agitation-v1.0.html) |
 | **Label Generator** | Workflow Efficiency | [Launch App](./Patient-label-generator-v1.5.html) |
-
-
-
-[Image of a clinical decision support system architecture]
-
 
 ## Core Principles
 * **Offline Capability:** Each tool is a single-file HTML/JS application. Once loaded, they function without an internet connection—ideal for high-stakes clinical environments.
