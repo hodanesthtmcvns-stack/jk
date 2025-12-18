@@ -2,7 +2,7 @@
 **Direct URLs for clinical use. Bookmark these on your mobile browser for instant access.**
 
 ### Emergency & Triage
-* **NEWS2 Triage:** [Launch App](https://https://github.com/hodanesthtmcvns-stack/jk/NEWS2.html)
+* **NEWS2 Triage:** [Launch App](https://github.com/hodanesthtmcvns-stack/jk/NEWS2.html)
     * *Bedside Use:* Rapid severity assessment and clinical escalation triggers based on standardized physiological scoring.
 * **BEAT-C Antibiotics:** [Launch App](https://github.com/hodanesthtmcvns-stack/jk/BEAT-C-v1.0.html)
     * *Bedside Use:* Probabilistic empiric antibiotic selection and comprehensive 6-hour sepsis bundle checklist.
