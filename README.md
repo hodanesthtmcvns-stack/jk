@@ -13,7 +13,7 @@ This repository hosts a suite of portable, offline-ready HTML applications desig
 | Tool | Clinical Focus | Key Parameters / Logic |
 | --- | --- | --- |
 | **[BEAT-C](https://www.google.com/search?q=./BEAT-C%2520v1.0.html)** | Empiric Antibiotics | Antibiogram-weighted scoring (TMC VNS 2024) with a 6-hour sepsis bundle. |
-| **[PEEP Titrator](https://www.google.com/search?q=./PEEP%2520titration%2520v1.2.html)** | Optimal PEEP Selection | Static Compliance (C_{stat}), Driving Pressure (\Delta P), and S/F ratio. |
+| **[PEEP Titrator](https://www.google.com/search?q=./PEEP%2520titration%2520v1.2.html)** | Optimal PEEP Selection | Static Compliance (Cstat), Driving Pressure (Delta P), and S/F ratio. |
 | **[NEWS2 Triage](https://www.google.com/search?q=./NEWS2%2520triage_app_offline,%2520v31Aug2025%2520(1).html)** | Severity Assessment | National Early Warning Score 2 (NEWS2) physiological scoring and response. |
 | **[Ventilator Simulator](https://www.google.com/search?q=./ICU%2520Ventilator%2520simulator%2520v%25201.2%2520(1).html)** | Respiratory Education | Interactive real-time VCV/PCV waveform dynamics and lung mechanics. |
 | **[Lab Trends & Alerts](https://www.google.com/search?q=./ICU%2520Lab%2520Trends%2520and%2520Alerts%2520v%25202.0,%252022Nov2025%2520(1).html)** | Decision Support | Longitudinal LIS analysis with AKI (KDIGO) and DIC (ISTH) alerts. |
