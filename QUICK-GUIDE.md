@@ -6,7 +6,7 @@
 | :--- | :--- | :--- |
 | **BEAT-C Antibiotics** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/BEAT-C-v1.0.html) | [📖 About & Help](./docs/BEAT-C-Help.md) |
 | **NEWS2 Triage** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/NEWS2.html) | [📖 About & Help](./docs/NEWS2-Help.md) |
-| **PEEP Titrator** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/PEEP-titration-v1.4.html) | [📖 About & Help](./docs/PEEP-Titration-Help.md) |
+| **PEEP Titrator** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/PEEP-titration-v1.4.html) | [📖 About & Help](./docs/PEEP-titration-v1.4-Help.md) |
 | **Agitation Manager** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/acute-agitation-v1.0.html) | [📖 About & Help](./docs/Agitation-Manager-Help.md) |
 | **Lab Trends & Alerts** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/ICU-lab-trends-alerts-v2.0.html) | [📖 About & Help](./docs/Lab-Trends-Help.md) |
 | **Patient Label Gen** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/Patient-label-generator-v1.5.html) | [📖 About & Help](./docs/Patient-Label-Help.md) |
