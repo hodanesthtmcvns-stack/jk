@@ -4,7 +4,7 @@
 ### Clinical Applications Stack
 | Tool | Launch App (Live) | Manual & Clinical Logic |
 | :--- | :--- | :--- |
-| **ICU Help & Support** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/ICU-Help-Support-v2.4.html) | [📖 About & Help](./docs/ICU-help-supportv2.4-Help.md) |
+| **ICU Help & Support** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/ICU-Help-Support-v2.4.html) | [📖 About & Help](./docs/ICU-help-support-v2.4-Help.md) |
 | **BEAT-C Antibiotics** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/BEAT-C-v1.0.html) | [📖 About & Help](./docs/BEAT-C-Help.md) |
 | **NEWS2 Triage** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/NEWS2.html) | [📖 About & Help](./docs/NEWS2-Help.md) |
 | **PEEP Titrator** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/PEEP-titration-v1.4.html) | [📖 About & Help](./docs/PEEP-titration-v1.4-Help.md) |
