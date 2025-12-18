@@ -34,7 +34,11 @@ Parses LIS data to create longitudinal trends. It includes automated alerts for 
 ### ICU Ventilator Simulator (v1.2)
 An interactive educational tool for VCV and PCV modes. Users can adjust lung resistance and compliance to see real-time effects on pressure and flow waveforms.
 
+### PEEP Titration (v1.4)
+Assists clinicians in finding the "optimal PEEP" for passive patients on Volume Controlled Ventilation. It identifies the PEEP level that maximizes compliance while maintaining hemodynamic stability and minimizing driving pressure.
 
+### NEWS2
+National Early Warning Score 2 (NEWS2) physiological scoring and response. It helps healthcare providers to screen and triage patients in the emergency room, clinic and wards for critical illness and sepsis.
 
 ## License
 This project is licensed under **Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)**. 
