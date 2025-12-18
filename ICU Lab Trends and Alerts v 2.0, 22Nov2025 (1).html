@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>ICU Lab Trend with Alerts, v2.0, 22Nov2025, Author: Prof. (Dr.) Jyotirmay Kirtania. Terms of Use: CC BY-NC (This license enables reusers to distribute, remix, adapt, and build upon the material in any medium or format for noncommercial purposes only, and only so long as attribution is given to the creator.)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+
+<!-- jQuery + DataTables + Buttons -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<link rel="stylesheet"
+      href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css"/>
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+
+<link rel="stylesheet"
+      href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.dataTables.min.css"/>
+<script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.print.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    padding: 20px;
+  }
+  h2 {
+    margin-top: 0;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+  th, td {
+    border: 1px solid #444;
+    padding: 6px 8px;
+    text-align: center;
+  }
+  th {
+    background-color: #e0e0e0;
+  }
+  #labTable td:first-child,
+  #labTable th:first-child {
+    text-align: left;
+  }
+  .controls-box {
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    padding: 10px;
+  }
+  .small-note {
+    font-size: 11px;
+    color: #555;
+  }
+  .export-buttons {
+    margin: 10px 0;
+  }
+  @media print {
+    table { font-size: 8pt !important; }
+  }
+  table.dataTable td,
+  table.dataTable th {
+    padding: 4px;
+  }
+
+  /* Range-based highlighting */
+  .flag-in-range {
+    background-color: #d9fdd3;  /* light green */
+  }
+  .flag-out-of-range {
+    background-color: #ffd6d6;  /* light red */
+  }
+
+  #alertsBox {
+    margin-top: 10px;
+    border: 1px solid #999;
+    padding: 8px;
+    background: #f9f9f9;
+  }
+  #alertsBox ul {
+    margin: 0;
+    padding-left: 18px;
+  }
+</style>
+</head>
+<body>
+
+<h2>ICU Lab Trend with Alerts, v2.0, 22Nov2025, Author: Prof. (Dr.) Jyotirmay Kirtania.</h2>
+<h4>Terms of Use: CC BY-NC. This license enables reusers to distribute, remix, adapt, and build upon the material in any medium or format for noncommercial purposes only, and only so long as attribution is given to the creator.<h4>
+
+<div class="controls-box">
+  <div style="margin-bottom: 6px;">
+    <strong>Case No:</strong>
+    <span id="caseNoSpan">—</span>
+  </div>
+  <div style="margin-bottom: 6px;">
+    <strong>Patient Name:</strong>
+    <span id="patientName">—</span>
+    &nbsp; | &nbsp;
+    <strong>Age:</strong>
+    <span id="patientAge">—</span>
+    &nbsp; | &nbsp;
+    <strong>Sex:</strong>
+    <span id="patientGender">—</span>
+  </div>
+
+  <!-- Editable case field (optional override) -->
+  <div style="margin-bottom: 8px;">
+    <label for="caseNumber">Edit Case No (optional):</label>
+    <input type="text" id="caseNumber" style="width: 200px;"
+           placeholder="Case number override"
+           oninput="syncCaseOverride()"/>
+  </div>
+
+  <!-- File loader -->
+  <div style="margin-bottom: 8px;">
+    <label for="labFileInput"><strong>Lab Source File (HTML / MHTML):</strong></label>
+    <input type="file" id="labFileInput"
+           accept=".html,.htm,.mhtml,.mht,.xhtml,.php,.asp,.aspx,.jsp"/>
+  </div>
+  <div class="small-note">
+    1. In LIS, open <em>All Requisitions / All Lab Reports</em> → save as
+       <strong>Webpage, HTML only</strong> or <strong>Single file (MHTML)</strong>.<br/>
+    2. Load the saved file here. The app groups all results by <strong>Report Date</strong>
+       and creates a simple parameter × date matrix with alerts.
+  </div>
+  <div id="statusMsg" class="small-note" style="margin-top: 6px; font-weight: bold;"></div>
+</div>
+
+<div class="export-buttons">
+  <button type="button" onclick="exportLandscapePDF()">Export PDF (Landscape detailed)</button>
+  <button type="button" onclick="exportPortraitMinimalPDF()">Export PDF (Portrait minimal)</button>
+  <button type="button" onclick="printMinimalText()">Print Minimal Text Table</button>
+</div>
+
+<table id="labTable">
+  <thead>
+    <tr id="labHeaderRow">
+      <th>Parameter</th>
+      <!-- Date columns added dynamically -->
+    </tr>
+  </thead>
+  <tbody id="labBody">
+    <!-- Rows generated dynamically -->
+  </tbody>
+</table>
+
+<div class="export-buttons">
+  <button type="button" onclick="exportLandscapePDF()">Export PDF (Landscape detailed)</button>
+  <button type="button" onclick="exportPortraitMinimalPDF()">Export PDF (Portrait minimal)</button>
+  <button type="button" onclick="printMinimalText()">Print Minimal Text Table</button>
+</div>
+
+<div id="generatedStamp" class="small-note" style="margin-top: 8px;">
+  Trend not generated yet.
+</div>
+
+<div id="alertsBox" class="small-note">
+  No alerts yet.
+</div>
+
+<script>
+/* ===================== 1. Parameter list & mapping ===================== */
+
+const PARAM_ORDER = [
+  "Hb",
+  "Platelets",
+  "TLC",
+  "ANC",
+  "PT",
+  "INR",
+  "APTT",
+  "S. Fibrinogen",
+  "S. D-Dimer",
+  "S. Urea",
+  "S. Uric Acid",
+  "S. Creatinine",
+  "Na",
+  "K",
+  "Mg",
+  "Cl",
+  "HCO3",
+  "PO4",
+  "Ca (Total)",
+  "S. Bilirubin (T)",
+  "S. Bilirubin (C)",
+  "S. Bilirubin (UC)",
+  "S. AST",
+  "S. ALT",
+  "S. Albumin",
+  "S. CRP",
+  "S. Procalcitonin",
+  "S. NT-proBNP",
+  "S. LDH"
+];
+
+const PARAM_MAP = [
+  { rowLabel: "Hb",               synonyms: [/HAEMOGLOBIN\b/i] },
+  { rowLabel: "Platelets",        synonyms: [/PLATELETS\b/i, /\bPlatelet Count\b/i] },
+  { rowLabel: "TLC",              synonyms: [/WBC COUNT\b/i, /\bTLC\b/i, /Total Leucocyte Count\b/i] },
+  { rowLabel: "ANC",              synonyms: [/NEUTROPHIL ABS \(ANC\)/i, /\bNEUTROPHIL ABS\b/i, /\bANC\b/i] },
+
+  { rowLabel: "PT",               synonyms: [/\bPROTHROMBIN TIME\b/i, /\bPT\b/i] },
+  { rowLabel: "INR",              synonyms: [/\bINR\b/i] },
+  { rowLabel: "APTT",             synonyms: [/\bAPTT\b/i, /Partial Thromboplastin/i] },
+  { rowLabel: "S. Fibrinogen",    synonyms: [/FIBRINOGEN\b/i] },
+  { rowLabel: "S. D-Dimer",       synonyms: [/D-?DIMER\b/i] },
+
+  { rowLabel: "S. Urea",          synonyms: [/Serum Urea\b/i, /\bUrea\b/i] },
+  { rowLabel: "S. Uric Acid",     synonyms: [/Serum Uric Acid\b/i, /\bUric Acid\b/i] },
+  { rowLabel: "S. Creatinine",    synonyms: [/Serum Creatinine\b/i, /\bCreatinine\b/i] },
+
+  { rowLabel: "Na",               synonyms: [/Serum Sodium\b/i, /\bSodium\b/i, /\bNa\b/i] },
+  { rowLabel: "K",                synonyms: [/Serum Potassium\b/i, /\bPotassium\b/i, /\bK\b/i] },
+  { rowLabel: "Mg",               synonyms: [/Serum Magnesium\b/i, /\bMagnesium\b/i] },
+  { rowLabel: "Cl",               synonyms: [/Serum Chlorides\b/i, /\bChloride\b/i, /\bCl\b/i] },
+  { rowLabel: "HCO3",             synonyms: [/Serum Bicarbonates\b/i, /\bBicarbonate\b/i, /\bHCO3\b/i, /\bTCO2\b/i] },
+  { rowLabel: "PO4",              synonyms: [/Serum Phosphorus\b/i, /\bPhosphate\b/i, /\bPO4\b/i] },
+  { rowLabel: "Ca (Total)",       synonyms: [/Serum Calcium\b/i, /\bCalcium\b/i] },
+
+  { rowLabel: "S. Bilirubin (T)", synonyms: [/Total Bilirubin\b/i] },
+  { rowLabel: "S. Bilirubin (C)", synonyms: [/Direct Bilirubin\b/i, /\bConjugated Bilirubin\b/i] },
+  { rowLabel: "S. Bilirubin (UC)",synonyms: [/Indirect Bilirubin\b/i, /\bUnconjugated Bilirubin\b/i] },
+
+  { rowLabel: "S. AST",           synonyms: [/Serum AST\b/i, /\bSGOT\b/i] },
+  { rowLabel: "S. ALT",           synonyms: [/Serum ALT\b/i, /\bSGPT\b/i] },
+  { rowLabel: "S. Albumin",       synonyms: [/Serum Albumin\b/i, /\bAlbumin\b/i] },
+
+  { rowLabel: "S. CRP",           synonyms: [/Serum CRP\b/i, /\bC-?Reactive Protein\b/i] },
+  { rowLabel: "S. Procalcitonin", synonyms: [/Procalcitonin\b/i, /PROCALCITONIN LEVEL/i] },
+  { rowLabel: "S. NT-proBNP",     synonyms: [/NT-?Pro BNP\b/i, /NT-?proBNP\b/i] },
+  { rowLabel: "S. LDH",           synonyms: [/Serum LDH\b/i, /Lactate Dehydrogenase\b/i] }
+];
+
+function normaliseText(s) {
+  return (s || "")
+    .toString()
+    .replace(/\u00a0/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function findRowLabelFromLisName(testName) {
+  const txt = normaliseText(testName);
+  if (!txt) return null;
+  for (const entry of PARAM_MAP) {
+    for (const re of entry.synonyms) {
+      if (re.test(txt)) return entry.rowLabel;
+    }
+  }
+  return null;
+}
+
+/* ===================== 2. Globals for episodes/dates ===================== */
+
+let _episodesFull = null;  // {dateStr: {param: {text,value,refLow,refHigh,refRaw}}}
+let _dates = null;         // sorted array of dateStr
+
+/* Helper: parse dd/mm/yyyy → Date */
+function parseDdMmYyyy(dateStr) {
+  const m = dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!m) return null;
+  const d = parseInt(m[1], 10);
+  const mo = parseInt(m[2], 10) - 1;
+  const y = parseInt(m[3], 10);
+  return new Date(y, mo, d);
+}
+
+/* ===================== 3. Export date subset: latest + previous 6 days ===================== */
+
+function getExportDates() {
+  if (!_dates || !_dates.length) return [];
+  const dObjs = _dates.map(parseDdMmYyyy);
+  const lastIdx = _dates.length - 1;
+  const lastDate = dObjs[lastIdx];
+  if (!lastDate) {
+    // fallback: last up to 7 episodes
+    const start = Math.max(0, _dates.length - 7);
+    return _dates.slice(start);
+  }
+  const MS_PER_DAY = 24 * 60 * 60 * 1000;
+  const threshold = lastDate.getTime() - 6 * MS_PER_DAY;
+  const subset = [];
+  for (let i = 0; i < _dates.length; i++) {
+    const dObj = dObjs[i];
+    if (!dObj) continue;
+    const t = dObj.getTime();
+    if (t >= threshold && t <= lastDate.getTime()) {
+      subset.push(_dates[i]);
+    }
+  }
+  if (!subset.length) subset.push(_dates[lastIdx]);
+  return subset;
+}
+
+/* For DataTables pdfHtml5: column indices (0-based) to keep */
+function getExportColumnIndices() {
+  const exportDates = getExportDates();
+  if (!exportDates.length || !_dates) return null;
+  const indices = [0]; // always keep parameter column
+  exportDates.forEach(dStr => {
+    const idx = _dates.indexOf(dStr);
+    if (idx >= 0) indices.push(1 + idx); // column = 1 + date index
+  });
+  return indices;
+}
+
+/* Build matrix from episodesFull and exportDates */
+function buildExportMatrix() {
+  if (!_episodesFull || !_dates) return { dates: [], rows: [], headerRow: [] };
+  const exportDates = getExportDates();
+  const headerRow = ['Parameter'].concat(exportDates);
+  const rows = [];
+  PARAM_ORDER.forEach(label => {
+    const vals = exportDates.map(d => {
+      const day = _episodesFull[d];
+      if (!day || !day[label]) return '';
+      return day[label].text;
+    });
+    if (vals.some(v => v && v !== '')) {
+      rows.push({ label, vals });
+    }
+  });
+  return { dates: exportDates, rows, headerRow };
+}
+
+/* ===================== 4. DataTables + landscape PDF ===================== */
+
+function initializeLabTable() {
+  if ($.fn.DataTable.isDataTable('#labTable')) {
+    $('#labTable').DataTable().clear().destroy();
+  }
+  $('#labTable').DataTable({
+    paging: false,
+    searching: false,
+    info: false,
+    ordering: false,
+    dom: 'Bfrtip',
+    buttons: [
+      { extend: 'copyHtml5', title: 'ICU Lab Trend' },
+      {
+        extend: 'excelHtml5',   // FULL trend in Excel
+        title: 'ICU Lab Trend'
+      },
+      {
+        extend: 'pdfHtml5',
+        text: 'PDF (Landscape detailed)',
+        className: 'btn-pdf-landscape',
+        title: 'ICU Lab Trend',
+        orientation: 'landscape',
+        pageSize: 'A4',
+        exportOptions: {
+          columns: function (idx, data, node) {
+            const cols = getExportColumnIndices();
+            if (!cols) return true;
+            return cols.indexOf(idx) !== -1;
+          }
+        },
+        customize: function (doc) {
+          doc.defaultStyle.fontSize = 8;
+          doc.styles.tableHeader.fontSize = 9;
+          doc.pageMargins = [20, 40, 20, 20];
+
+          if (doc.content[1] && doc.content[1].table && doc.content[1].table.body) {
+            const body = doc.content[1].table.body;
+            if (body[0]) {
+              doc.content[1].table.widths = new Array(body[0].length).fill('*');
+            }
+          }
+
+          const caseNo =
+            (document.getElementById('caseNoSpan').textContent || '').trim() ||
+            (document.getElementById('caseNumber').value || '').trim() ||
+            '—';
+
+          const pName = (document.getElementById('patientName').textContent || '').trim() || '—';
+          const pAge  = (document.getElementById('patientAge').textContent || '').trim();
+          const pSex  = (document.getElementById('patientGender').textContent || '').trim();
+
+          const now = new Date();
+          const stamp = now.toLocaleString();
+
+          const headerLines = [
+            'ICU Lab Trend – Detailed Table (last 7 days)',
+            'Case: ' + caseNo,
+            'Patient: ' + pName + (pSex || pAge ? ' | ' + [pSex, pAge].filter(Boolean).join(', ') : ''),
+            'Generated on: ' + stamp
+          ];
+
+          doc.content.splice(0, 0, {
+            text: headerLines.join('\n'),
+            margin: [0, 0, 0, 8],
+            alignment: 'left',
+            fontSize: 9
+          });
+        }
+      },
+      { extend: 'print', title: 'ICU Lab Trend' }
+    ]
+  });
+}
+
+function exportLandscapePDF() {
+  if ($.fn.DataTable.isDataTable('#labTable')) {
+    $('#labTable').DataTable().button('.btn-pdf-landscape').trigger();
+  } else {
+    alert("No trend table yet. Load a lab file first.");
+  }
+}
+
+/* ===================== 5. Portrait minimal PDF & minimal print ===================== */
+
+function exportPortraitMinimalPDF() {
+  const { dates, rows, headerRow } = buildExportMatrix();
+  if (!dates.length || !rows.length) {
+    alert("No trend data to export. Load a lab file first.");
+    return;
+  }
+
+  const caseNo =
+    (document.getElementById('caseNoSpan').textContent || '').trim() ||
+    (document.getElementById('caseNumber').value || '').trim() ||
+    '—';
+
+  const pName = (document.getElementById('patientName').textContent || '').trim() || '—';
+  const pAge  = (document.getElementById('patientAge').textContent || '').trim();
+  const pSex  = (document.getElementById('patientGender').textContent || '').trim();
+
+  const now = new Date();
+  const stamp = now.toLocaleString();
+
+  const body = [headerRow];
+  rows.forEach(r => {
+    body.push([r.label].concat(r.vals));
+  });
+
+  const docDefinition = {
+    pageOrientation: 'portrait',
+    pageSize: 'A4',
+    pageMargins: [20, 40, 20, 20],
+    defaultStyle: { fontSize: 7 },
+    styles: {
+      header: { fontSize: 10, bold: true, margin: [0, 0, 0, 4] },
+      subheader: { fontSize: 8, margin: [0, 0, 0, 8] }
+    },
+    content: [
+      {
+        text: 'ICU Lab Trend – Minimal Text Table (last 7 days)',
+        style: 'header'
+      },
+      {
+        text:
+          'Case: ' + caseNo + '\n' +
+          'Patient: ' + pName + (pSex || pAge ? ' | ' + [pSex, pAge].filter(Boolean).join(', ') : '') + '\n' +
+          'Generated on: ' + stamp,
+        style: 'subheader'
+      },
+      {
+        table: {
+          headerRows: 1,
+          widths: new Array(headerRow.length).fill('*'),
+          body: body
+        },
+        layout: {
+          paddingLeft: () => 1,
+          paddingRight: () => 1,
+          paddingTop: () => 1,
+          paddingBottom: () => 1
+        }
+      }
+    ]
+  };
+
+  pdfMake.createPdf(docDefinition).download('ICU_Lab_Trend_Minimal.pdf');
+}
+
+function printMinimalText() {
+  const { dates, rows } = buildExportMatrix();
+  if (!dates.length || !rows.length) {
+    alert("No trend data to print. Load a lab file first.");
+    return;
+  }
+
+  const caseNo =
+    (document.getElementById('caseNoSpan').textContent || '').trim() ||
+    (document.getElementById('caseNumber').value || '').trim() ||
+    '—';
+
+  const pName = (document.getElementById('patientName').textContent || '').trim() || '—';
+  const pAge  = (document.getElementById('patientAge').textContent || '').trim();
+  const pSex  = (document.getElementById('patientGender').textContent || '').trim();
+
+  const now = new Date();
+  const stamp = now.toLocaleString();
+
+  let text = '';
+  text += 'ICU Lab Trend – Minimal Text Table (last 7 days)\n';
+  text += 'Case: ' + caseNo + '\n';
+  text += 'Patient: ' + pName;
+  if (pSex || pAge) text += ' | ' + [pSex, pAge].filter(Boolean).join(', ');
+  text += '\n';
+  text += 'Generated on: ' + stamp + '\n\n';
+
+  text += ['Parameter'].concat(dates).join('\t') + '\n';
+  rows.forEach(r => {
+    text += [r.label].concat(r.vals).join('\t') + '\n';
+  });
+
+  const w = window.open('', '_blank');
+  if (!w) {
+    alert("Popup blocked. Allow popups to print.");
+    return;
+  }
+  w.document.write('<pre style="font-family: Consolas, monospace; font-size: 10pt;">' +
+                   text.replace(/</g, '&lt;').replace(/>/g, '&gt;') +
+                   '</pre>');
+  w.document.close();
+  w.focus();
+  w.print();
+}
+
+/* ===================== 6. Status & patient info utilities ===================== */
+
+function setStatus(msg, isError) {
+  const el = document.getElementById("statusMsg");
+  el.textContent = msg || "";
+  el.style.color = isError ? "#b91c1c" : "#065f46";
+}
+
+function extractHtmlFromPossibleMhtml(rawText) {
+  const trimmed = rawText.trim().toLowerCase();
+  if (trimmed.startsWith("<!doctype") || trimmed.startsWith("<html")) {
+    return rawText;
+  }
+  const lower = rawText.toLowerCase();
+  const startIdx = lower.indexOf("<html");
+  if (startIdx === -1) {
+    throw new Error("No <html> segment found in file.");
+  }
+  const endIdx = lower.lastIndexOf("</html>");
+  if (endIdx === -1) {
+    return rawText.slice(startIdx);
+  }
+  return rawText.slice(startIdx, endIdx + "</html>".length);
+}
+
+function extractPatientInfo(doc) {
+  const info = { caseNo: "", patientName: "", sex: "", age: "" };
+  const tds = Array.from(doc.querySelectorAll('td'));
+
+  for (const td of tds) {
+    const txt = normaliseText(td.textContent || "");
+    if (!txt) continue;
+
+    if (!info.caseNo && /^Case No/i.test(txt)) {
+      const parts = txt.split(':');
+      if (parts[1]) info.caseNo = parts[1].trim();
+    }
+
+    if (!info.patientName && /^Patient Name/i.test(txt)) {
+      const parts = txt.split(':');
+      if (parts[1]) info.patientName = parts[1].trim();
+    }
+
+    if (!info.sex && !info.age && /^Sex\/Age/i.test(txt)) {
+      const parts = txt.split(':');
+      if (parts[1]) {
+        const payload = parts[1].trim();
+        const tokens = payload.split('/').map(x => x.trim()).filter(Boolean);
+        if (tokens.length >= 2) {
+          info.sex = tokens[0];
+          info.age = tokens[1];
+        }
+      }
+    }
+
+    if (info.caseNo && info.patientName && info.sex && info.age) break;
+  }
+  return info;
+}
+
+function applyPatientInfo(info) {
+  const caseNo = info.caseNo || "—";
+  document.getElementById('caseNoSpan').textContent = caseNo;
+  document.getElementById('caseNumber').value = caseNo;
+
+  document.getElementById('patientName').textContent = info.patientName || "—";
+  document.getElementById('patientAge').textContent   = info.age || "—";
+  document.getElementById('patientGender').textContent = info.sex || "—";
+}
+
+function syncCaseOverride() {
+  const v = document.getElementById('caseNumber').value.trim();
+  document.getElementById('caseNoSpan').textContent = v || "—";
+}
+
+function parseAgeYears(ageStr) {
+  const m = (ageStr || "").match(/(\d+)/);
+  if (!m) return null;
+  return parseInt(m[1], 10);
+}
+
+/* ===================== 7. Measurement table + ref range parsing ===================== */
+
+function getNameValRefIndex(tbl) {
+  if (!tbl || !tbl.rows || tbl.rows.length === 0) return null;
+  const headerRow = tbl.rows[0];
+  const cells = Array.from(headerRow.cells);
+  let nameIdx = -1;
+  let valIdx = -1;
+  let refIdx = -1;
+
+  cells.forEach((cell, idx) => {
+    const t = normaliseText(cell.textContent || "").toLowerCase();
+    if (t.includes("procedure name") || t.includes("investigation")) {
+      nameIdx = idx;
+    }
+    if (t.includes("observed value")) {
+      valIdx = idx;
+    }
+    if (t.includes("biological reference") || t.includes("reference interval") || t.includes("reference range")) {
+      refIdx = idx;
+    }
+  });
+
+  if (nameIdx >= 0 && valIdx >= 0) {
+    return { nameIdx, valIdx, refIdx };
+  }
+  return null;
+}
+
+function parseRefRange(refStr) {
+  const s = normaliseText(refStr);
+  if (!s) return { low: null, high: null };
+
+  let m = s.match(/([-+]?\d+(\.\d+)?)\s*(?:-|–|to)\s*([-+]?\d+(\.\d+)?)/i);
+  if (m) {
+    return { low: parseFloat(m[1]), high: parseFloat(m[3]) };
+  }
+
+  m = s.match(/[<≤]\s*=?\s*([-+]?\d+(\.\d+)?)/);
+  if (m) {
+    return { low: null, high: parseFloat(m[1]) };
+  }
+
+  m = s.match(/[>≥]\s*=?\s*([-+]?\d+(\.\d+)?)/);
+  if (m) {
+    return { low: parseFloat(m[1]), high: null };
+  }
+
+  return { low: null, high: null };
+}
+
+/* ===================== 8. Parse All Requisitions → episodesFull ===================== */
+
+function parseAllRequisitions(rawText) {
+  const htmlText = extractHtmlFromPossibleMhtml(rawText);
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(htmlText, "text/html");
+
+  const patient = extractPatientInfo(doc);
+
+  const allTables = Array.from(doc.querySelectorAll("table"));
+  const headerTables = allTables.filter(tbl => {
+    const txt = tbl.textContent || "";
+    return txt.includes("Final Report") && txt.includes("Report Date");
+  });
+
+  const episodesFull = {}; // dateStr -> param -> measurement
+
+  headerTables.forEach(hdr => {
+    const hdrText = hdr.textContent || "";
+    const m = hdrText.match(/Report Date\s*:\s*([0-9]{2}\/[0-9]{2}\/[0-9]{4})/);
+    if (!m) return;
+    const dateStr = m[1];
+    if (!episodesFull[dateStr]) episodesFull[dateStr] = {};
+
+    let node = hdr.nextSibling;
+    while (node) {
+      if (node.nodeType === 1 && node.tagName && node.tagName.toLowerCase() === "table") {
+        const tbl = node;
+        const txt = tbl.textContent || "";
+
+        if (txt.includes("Final Report") && txt.includes("Report Date")) {
+          break;
+        }
+
+        const idx = getNameValRefIndex(tbl);
+        if (idx) {
+          const { nameIdx, valIdx, refIdx } = idx;
+          const rows = tbl.rows;
+          for (let r = 1; r < rows.length; r++) {
+            const cells = rows[r].cells;
+            if (!cells || cells.length <= Math.max(nameIdx, valIdx)) continue;
+
+            const name = cells[nameIdx].textContent || "";
+            const valStrRaw = cells[valIdx].textContent || "";
+            const refStr = (refIdx >= 0 && cells[refIdx]) ? (cells[refIdx].textContent || "") : "";
+
+            const rowLabel = findRowLabelFromLisName(name);
+            if (!rowLabel) continue;
+
+            let textVal = normaliseText(valStrRaw);
+            let numVal = null;
+            const mVal = textVal.replace(/,/g, " ").match(/[-+]?\d+(\.\d+)?/);
+            if (mVal) numVal = parseFloat(mVal[0]);
+
+            const rr = parseRefRange(refStr);
+
+            episodesFull[dateStr][rowLabel] = {
+              text: textVal,
+              value: numVal,
+              refLow: rr.low,
+              refHigh: rr.high,
+              refRaw: refStr
+            };
+          }
+        }
+
+        const pctMatch = txt.match(/PROCALCITONIN LEVEL[^0-9]*([0-9]+(\.[0-9]+)?)/i);
+        if (pctMatch) {
+          const val = parseFloat(pctMatch[1]);
+          episodesFull[dateStr]["S. Procalcitonin"] = {
+            text: pctMatch[1],
+            value: val,
+            refLow: null,
+            refHigh: null,
+            refRaw: ""
+          };
+        }
+      }
+      node = node.nextSibling;
+    }
+  });
+
+  const dateKeys = Object.keys(episodesFull);
+  if (!dateKeys.length) {
+    throw new Error("No supported lab parameters found in this file.");
+  }
+
+  const dates = dateKeys.sort((a, b) => {
+    const da = parseDdMmYyyy(a);
+    const db = parseDdMmYyyy(b);
+    if (da && db) return da - db;
+    return a.localeCompare(b);
+  });
+
+  return { episodesFull, dates, patient };
+}
+
+/* ===================== 9. Color-coding + table rebuild ===================== */
+
+function classifyByRef(meas) {
+  if (!meas) return "none";
+  if (meas.value == null) return "none";
+  const v = meas.value;
+  const low = meas.refLow;
+  const high = meas.refHigh;
+
+  if (low == null && high == null) return "none";
+
+  let lowFlag = false;
+  let highFlag = false;
+
+  if (low != null && v < low) lowFlag = true;
+  if (high != null && v > high) highFlag = true;
+
+  if (lowFlag || highFlag) return "out";
+  return "in";
+}
+
+function rebuildTrendTable(episodesFull, dates) {
+  const headerRow = document.getElementById('labHeaderRow');
+  const tbody = document.getElementById('labBody');
+
+  while (headerRow.cells.length > 1) {
+    headerRow.deleteCell(1);
+  }
+
+  dates.forEach(d => {
+    const th = document.createElement('th');
+    th.textContent = d;
+    headerRow.appendChild(th);
+  });
+
+  tbody.innerHTML = "";
+
+  PARAM_ORDER.forEach(label => {
+    const tr = document.createElement('tr');
+    const td0 = document.createElement('td');
+    td0.textContent = label;
+    tr.appendChild(td0);
+
+    dates.forEach(d => {
+      const td = document.createElement('td');
+      const dayData = episodesFull[d] || {};
+      const meas = dayData[label];
+      td.textContent = meas ? meas.text : "";
+
+      const cls = classifyByRef(meas);
+      if (cls === "in") td.classList.add("flag-in-range");
+      else if (cls === "out") td.classList.add("flag-out-of-range");
+
+      tr.appendChild(td);
+    });
+
+    tbody.appendChild(tr);
+  });
+}
+
+/* ===================== 10. Alerts (unchanged logic) ===================== */
+
+function getMeas(episodesFull, dateStr, label) {
+  const day = episodesFull[dateStr];
+  if (!day) return null;
+  return day[label] || null;
+}
+
+function computeAlerts(episodesFull, dates, ageYears) {
+  const alerts = [];
+  const dateObjs = dates.map(parseDdMmYyyy);
+  const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+  function baselineLowest(episodesFull, dates, idx, label) {
+    let base = null;
+    for (let j = 0; j < idx; j++) {
+      const m = getMeas(episodesFull, dates[j], label);
+      if (m && m.value != null) {
+        if (base == null || m.value < base) base = m.value;
+      }
+    }
+    return base;
+  }
+
+  for (let i = 0; i < dates.length; i++) {
+    const dStr = dates[i];
+    const dObj = dateObjs[i];
+
+    const hb = getMeas(episodesFull, dStr, "Hb");
+    if (hb && hb.value != null && hb.value < 7) {
+      alerts.push(`Critical low Hb alert on ${dStr}: Hb ${hb.value} g/dL (< 7).`);
+    }
+
+    const plt = getMeas(episodesFull, dStr, "Platelets");
+    if (plt && plt.value != null && plt.value < 20) {
+      alerts.push(`Critical low Platelet alert on ${dStr}: Platelets ${plt.value} ×10⁹/L (< 20).`);
+    }
+
+    const inr = getMeas(episodesFull, dStr, "INR");
+    const alt = getMeas(episodesFull, dStr, "S. ALT");
+    if (inr && alt && inr.value != null && alt.value != null && alt.refHigh != null) {
+      if (inr.value > 1.5 && alt.value > 3 * alt.refHigh) {
+        alerts.push(`Liver failure alert on ${dStr}: INR ${inr.value.toFixed(2)} & ALT ${alt.value} (> 3× ULN ${alt.refHigh}).`);
+      }
+    }
+
+    const ca = getMeas(episodesFull, dStr, "Ca (Total)");
+    if (ca && ca.value != null && ca.refHigh != null && ca.value > ca.refHigh) {
+      alerts.push(`Hypercalcemia alert on ${dStr}: Ca ${ca.value} > ULN ${ca.refHigh}.`);
+    }
+
+    const k = getMeas(episodesFull, dStr, "K");
+    if (k && k.value != null && k.refHigh != null && k.value > k.refHigh) {
+      alerts.push(`Hyperkalemia alert on ${dStr}: K ${k.value} > ULN ${k.refHigh}.`);
+    }
+
+    const cr = getMeas(episodesFull, dStr, "S. Creatinine");
+    if (cr && cr.value != null) {
+      let ratioFlag = false;
+      let deltaFlag = false;
+
+      for (let j = 0; j < i; j++) {
+        const prevCr = getMeas(episodesFull, dates[j], "S. Creatinine");
+        if (!prevCr || prevCr.value == null) continue;
+        const prevDate = dateObjs[j];
+        if (!prevDate) continue;
+        const diffDays = (dObj - prevDate) / MS_PER_DAY;
+
+        if (diffDays <= 7) {
+          if (cr.value >= 1.5 * prevCr.value) ratioFlag = true;
+        }
+        if (diffDays <= 3) {
+          if (cr.value - prevCr.value >= 0.3) deltaFlag = true;
+        }
+      }
+
+      if (ratioFlag || deltaFlag) {
+        const reasons = [];
+        if (ratioFlag) reasons.push("≥1.5× any creatinine in prior 7 days");
+        if (deltaFlag) reasons.push("rise ≥0.3 mg/dL in 72 h");
+        alerts.push(`AKI alert on ${dStr}: Creatinine ${cr.value} mg/dL (${reasons.join(" & ")}).`);
+      }
+    }
+
+    const ua = getMeas(episodesFull, dStr, "S. Uric Acid");
+    if (ua && ua.value != null) {
+      const baseUa = baselineLowest(episodesFull, dates, i, "S. Uric Acid");
+      const absFlag = ua.value >= 8.0;
+      let relFlag = false;
+      if (baseUa != null && baseUa > 0) {
+        relFlag = ua.value >= 1.25 * baseUa;
+      }
+      if (absFlag || relFlag) {
+        const parts = [];
+        if (absFlag) parts.push("≥ 8.0 mg/dL");
+        if (relFlag) parts.push("≥25% increase from baseline " + baseUa);
+        alerts.push(`TLS alert (uric acid) on ${dStr}: ${ua.value} mg/dL (${parts.join(", ")}).`);
+      }
+    }
+
+    if (k && k.value != null) {
+      const baseK = baselineLowest(episodesFull, dates, i, "K");
+      const absFlag = k.value >= 6.0;
+      let relFlag = false;
+      if (baseK != null && baseK > 0) {
+        relFlag = k.value >= 1.25 * baseK;
+      }
+      if (absFlag || relFlag) {
+        const parts = [];
+        if (absFlag) parts.push("≥ 6.0 mEq/L");
+        if (relFlag) parts.push("≥25% increase from baseline " + baseK);
+        alerts.push(`TLS alert (potassium) on ${dStr}: ${k.value} mEq/L (${parts.join(", ")}).`);
+      }
+    }
+
+    const phos = getMeas(episodesFull, dStr, "PO4");
+    if (phos && phos.value != null) {
+      const baseP = baselineLowest(episodesFull, dates, i, "PO4");
+      const isChild = ageYears != null && ageYears < 18;
+      const absThresh = isChild ? 6.5 : 4.5;
+      const absFlag = phos.value >= absThresh;
+      let relFlag = false;
+      if (baseP != null && baseP > 0) {
+        relFlag = phos.value >= 1.25 * baseP;
+      }
+      if (absFlag || relFlag) {
+        const parts = [];
+        if (absFlag) parts.push(`≥ ${absThresh} mg/dL`);
+        if (relFlag) parts.push("≥25% increase from baseline " + baseP);
+        alerts.push(`TLS alert (phosphorus) on ${dStr}: ${phos.value} mg/dL (${parts.join(", ")}).`);
+      }
+    }
+
+    if (ca && ca.value != null) {
+      const baseCa = baselineLowest(episodesFull, dates, i, "Ca (Total)");
+      const absFlag = ca.value <= 7.0;
+      let relFlag = false;
+      if (baseCa != null && baseCa > 0) {
+        relFlag = ca.value <= 0.75 * baseCa;
+      }
+      if (absFlag || relFlag) {
+        const parts = [];
+        if (absFlag) parts.push("≤ 7.0 mg/dL");
+        if (relFlag) parts.push("≥25% decrease from baseline " + baseCa);
+        alerts.push(`TLS alert (calcium) on ${dStr}: ${ca.value} mg/dL (${parts.join(", ")}).`);
+      }
+    }
+
+    const nt = getMeas(episodesFull, dStr, "S. NT-proBNP");
+    if (nt && nt.value != null && ageYears != null) {
+      let cutoffIn = null;
+      if (ageYears < 50) cutoffIn = 450;
+      else if (ageYears <= 75) cutoffIn = 900;
+      else cutoffIn = 1800;
+
+      if (nt.value >= cutoffIn) {
+        alerts.push(`Heart failure RULE-IN alert on ${dStr}: NT-proBNP ${nt.value} ≥ ${cutoffIn} pg/mL (age ${ageYears}).`);
+      }
+      if (nt.value < 300) {
+        alerts.push(`Heart failure RULE-OUT support on ${dStr}: NT-proBNP ${nt.value} < 300 pg/mL (high NPV).`);
+      }
+    }
+
+    let dicScore = 0;
+    let dicComponents = 0;
+
+    if (plt && plt.value != null) {
+      dicComponents++;
+      const p = plt.value;
+      if (p < 50) dicScore += 2;
+      else if (p < 100) dicScore += 1;
+    }
+
+    const dd = getMeas(episodesFull, dStr, "S. D-Dimer");
+    if (dd && dd.value != null && dd.refHigh != null) {
+      dicComponents++;
+      const ratio = dd.value / dd.refHigh;
+      if (ratio <= 1) {
+      } else if (ratio <= 3) {
+        dicScore += 2;
+      } else {
+        dicScore += 3;
+      }
+    }
+
+    const pt = getMeas(episodesFull, dStr, "PT");
+    if (pt && pt.value != null && pt.refHigh != null) {
+      dicComponents++;
+      const prolong = pt.value - pt.refHigh;
+      if (prolong < 3) {
+      } else if (prolong < 6) {
+        dicScore += 1;
+      } else {
+        dicScore += 2;
+      }
+    }
+
+    const fib = getMeas(episodesFull, dStr, "S. Fibrinogen");
+    if (fib && fib.value != null) {
+      dicComponents++;
+      if (fib.value < 1) dicScore += 1;
+    }
+
+    if (dicComponents > 0) {
+      if (dicScore >= 5) {
+        alerts.push(`DIC alert (overt) on ${dStr}: ISTH score = ${dicScore} (≥ 5).`);
+      } else {
+        alerts.push(`DIC possible (non-overt) on ${dStr}: ISTH score = ${dicScore} (< 5, repeat in 1–2 days).`);
+      }
+    }
+  }
+
+  return alerts;
+}
+
+function displayAlerts(alerts) {
+  const el = document.getElementById("alertsBox");
+  if (!alerts || alerts.length === 0) {
+    el.innerHTML = "No automated alerts triggered based on available labs.";
+    return;
+  }
+  const html = "<strong>Alerts:</strong><ul>" +
+    alerts.map(a => "<li>" + a + "</li>").join("") +
+    "</ul>";
+  el.innerHTML = html;
+}
+
+/* ===================== 11. File input handler ===================== */
+
+document.getElementById("labFileInput").addEventListener("change", function (ev) {
+  const file = ev.target.files && ev.target.files[0];
+  if (!file) {
+    setStatus("No file selected.", true);
+    return;
+  }
+  setStatus("Reading file: " + file.name + " ...", false);
+
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    try {
+      const text = e.target.result;
+      const parsed = parseAllRequisitions(text);
+      const episodesFull = parsed.episodesFull;
+      const dates = parsed.dates;
+      const patient = parsed.patient;
+
+      _episodesFull = episodesFull;
+      _dates = dates;
+
+      applyPatientInfo(patient);
+
+      if ($.fn.DataTable.isDataTable('#labTable')) {
+        $('#labTable').DataTable().clear().destroy();
+      }
+      rebuildTrendTable(episodesFull, dates);      // full trend in browser
+      initializeLabTable();                        // DataTables with exports
+
+      const now = new Date();
+      document.getElementById('generatedStamp').textContent =
+        "Trend generated on: " + now.toLocaleString();
+
+      const ageYears = parseAgeYears(patient.age || "");
+      const alerts = computeAlerts(episodesFull, dates, ageYears);
+      displayAlerts(alerts);
+
+      setStatus("Trend data loaded successfully from " + file.name + ".", false);
+    } catch (err) {
+      console.error(err);
+      setStatus("Error parsing lab file: " + err.message, true);
+    }
+  };
+  reader.onerror = function () {
+    setStatus("Error reading file.", true);
+  };
+  reader.readAsText(file);
+});
+
+/* ===================== 12. Init ===================== */
+
+$(document).ready(function () {
+  initializeLabTable();
+  setStatus(
+    "Load a saved LIS 'All Requisitions/All Lab Reports' file to populate the trend table.",
+    false
+  );
+});
+</script>
+
+</body>
+</html>
