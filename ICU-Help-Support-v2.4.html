@@ -1,0 +1,1871 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ICU Help & Support | Documentation + Orders + Notes + ICU Calculators + Advanced Support (v2.4)</title>
+  <style>
+    :root{
+      --bg:#0b1220; --panel:#0f1a2e; --panel2:#101f3a; --text:#e7eefc; --muted:#a9b7d6;
+      --border:rgba(255,255,255,.10); --accent:#7dd3fc; --ok:#34d399; --warn:#fbbf24; --bad:#fb7185;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius:16px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:linear-gradient(180deg,#070b14,#0b1220);color:var(--text);font-family:var(--sans)}
+    header{position:sticky;top:0;z-index:10;background:rgba(11,18,32,.85);backdrop-filter: blur(10px);
+      border-bottom:1px solid var(--border)}
+    .wrap{max-width:1280px;margin:0 auto;padding:16px}
+    .topbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    .brand{display:flex;gap:10px;align-items:center}
+    .badge{font-size:12px;color:#00121f;background:var(--accent);padding:4px 10px;border-radius:999px;font-weight:700}
+    h1{font-size:18px;margin:0}
+    .sub{font-size:12px;color:var(--muted)}
+    .grid{display:grid;grid-template-columns: 1.1fr .9fr; gap:14px; align-items:start}
+    @media (max-width: 980px){.grid{grid-template-columns: 1fr}}
+    .card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--border);
+      border-radius:var(--radius); box-shadow:var(--shadow)}
+    .card h2{font-size:14px;margin:0 0 10px 0;color:#dbeafe}
+    .card .p{color:var(--muted);font-size:12px;line-height:1.35}
+    .card .inner{padding:14px}
+    .tabs{display:flex;gap:8px;flex-wrap:wrap}
+    .tab{padding:8px 10px;border-radius:999px;border:1px solid var(--border);background:rgba(255,255,255,.03);
+      color:var(--text);cursor:pointer;font-size:12px}
+    .tab[aria-selected="true"]{border-color:rgba(125,211,252,.6);box-shadow:0 0 0 4px rgba(125,211,252,.12)}
+    .row{display:grid;grid-template-columns: 1fr 1fr; gap:10px}
+    @media (max-width: 700px){.row{grid-template-columns: 1fr}}
+    label{display:block;font-size:12px;color:var(--muted);margin:10px 0 6px}
+    input, select, textarea{
+      width:100%; padding:10px 12px; border-radius:12px; border:1px solid var(--border);
+      background:rgba(255,255,255,.03); color:var(--text); outline:none;
+    }
+    textarea{min-height:92px;resize:vertical;font-family:var(--mono);font-size:12px;line-height:1.35}
+    .pillrow{display:flex;gap:8px;flex-wrap:wrap}
+    .pill{
+      border:1px solid var(--border); background:rgba(255,255,255,.03); padding:6px 10px; border-radius:999px;
+      font-size:12px; cursor:pointer; user-select:none;
+    }
+    .pill[data-on="true"]{border-color:rgba(52,211,153,.6); box-shadow:0 0 0 4px rgba(52,211,153,.12)}
+    .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+    button{
+      border:1px solid var(--border); background:rgba(255,255,255,.05); color:var(--text);
+      padding:10px 12px; border-radius:12px; cursor:pointer; font-size:12px;
+    }
+    button.primary{border-color:rgba(125,211,252,.6); background:rgba(125,211,252,.12)}
+    button.danger{border-color:rgba(251,113,133,.55); background:rgba(251,113,133,.12)}
+    button.ok{border-color:rgba(52,211,153,.55); background:rgba(52,211,153,.12)}
+    .kpi{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px}
+    .dot{width:10px;height:10px;border-radius:999px;background:var(--muted)}
+    .dot.ok{background:var(--ok)} .dot.warn{background:var(--warn)} .dot.bad{background:var(--bad)}
+    .small{font-size:12px;color:var(--muted)}
+    .outbox{border-top:1px solid var(--border);margin-top:12px;padding-top:12px}
+    .output{white-space:pre-wrap;font-family:var(--mono);font-size:12px;line-height:1.35;background:rgba(0,0,0,.18);
+      border:1px solid var(--border); padding:12px; border-radius:14px; min-height:180px}
+    .footer{padding:18px 0 40px;color:var(--muted);font-size:12px}
+    .split{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .hint{border-left:3px solid rgba(125,211,252,.6); padding:10px 12px; background:rgba(125,211,252,.07);
+      border-radius:12px; color:var(--muted); font-size:12px; line-height:1.35}
+    .warnbox{border-left:3px solid rgba(251,191,36,.75); padding:10px 12px; background:rgba(251,191,36,.08);
+      border-radius:12px; color:var(--muted); font-size:12px; line-height:1.35}
+    .dangerbox{border-left:3px solid rgba(251,113,133,.75); padding:10px 12px; background:rgba(251,113,133,.08);
+      border-radius:12px; color:var(--muted); font-size:12px; line-height:1.35}
+    .divider{height:1px;background:var(--border);margin:10px 0}
+    .list{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+    .lineitem{
+      border:1px solid var(--border); background:rgba(255,255,255,.02);
+      border-radius:14px; padding:10px 10px;
+      display:grid; grid-template-columns: 24px 1fr; gap:10px; align-items:start;
+    }
+    .lineitem input[type="checkbox"]{width:18px;height:18px;margin-top:2px}
+    .linehead{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .tag{font-size:11px;color:#00121f;background:rgba(125,211,252,.85);padding:2px 8px;border-radius:999px;font-weight:700}
+    .tag.gray{background:rgba(255,255,255,.14);color:var(--text);font-weight:600}
+    .linetxt{font-family:var(--mono);font-size:12px;line-height:1.35;color:var(--text)}
+    .inlineEdit{margin-top:8px}
+    .inlineEdit textarea{min-height:64px}
+    .req{border-color:rgba(251,113,133,.55)!important; box-shadow:0 0 0 4px rgba(251,113,133,.12)}
+    .okField{border-color:rgba(52,211,153,.55)!important; box-shadow:0 0 0 4px rgba(52,211,153,.12)}
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <span class="badge">ICU</span>
+        <div>
+          <h1>ICU Help & Support | Orders + Documentation + Notes + ICU Calculators (Non AI mode), + Advanced Support (CRIL AI Agent) </h1>
+          <div class="sub">v2.4 (For Desktop PC) • Order Composer + Short Rounds Note + Every-shift macro • Local-first • Keeper-upgradable • Advanced Support (CRIL - Critical-care Rounds & Interactive Learning assistant). Author: Prof. Jyotirmay Kirtania, License: CC BY-NC 4.0</div>
+        </div>
+      </div>
+      <div style="flex:1"></div>
+      <div class="split">
+        <button id="btnSave" class="ok">Save (local)</button>
+        <button id="btnLoad">Load</button>
+        <button id="btnExport" class="primary">Export JSON</button>
+        <button id="btnImport">Import JSON</button>
+        <button id="btnReset" class="danger">Reset</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="grid">
+    <!-- LEFT: INPUT -->
+    <section class="card">
+      <div class="inner">
+        <div class="tabs" role="tablist" aria-label="ICU modules">
+          <button class="tab" role="tab" aria-selected="true" data-tab="admission">Admission Orders</button>
+          <button class="tab" role="tab" aria-selected="false" data-tab="composer">Order Composer</button>
+          <button class="tab" role="tab" aria-selected="false" data-tab="daily">Daily Progress Note</button>
+          <button class="tab" role="tab" aria-selected="false" data-tab="short">Short Rounds Note</button>
+          <button class="tab" role="tab" aria-selected="false" data-tab="shift">Every-shift Progress Macro</button>
+          <button class="tab" role="tab" aria-selected="false" data-tab="procedure">Procedure Note</button>
+          <button class="tab" role="tab" aria-selected="false" data-tab="acls">ACLS Note</button>
+          <button class="tab" role="tab" aria-selected="false" data-tab="keeper">Keeper Mode</button>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Patient header (always visible) -->
+        <h2>Patient Header</h2>
+        <div class="row">
+          <div>
+            <label>First Name</label>
+            <input id="p_fname" placeholder="e.g., R.K." />
+          </div>
+          <div>
+            <label>Age (years)</label>
+            <input id="p_age" inputmode="numeric" placeholder="e.g., 45" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Gender</label>
+            <select id="p_gender">
+              <option value="">— Select —</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label>Case No.</label>
+            <input id="p_case" placeholder="e.g., 16F2025001234" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Height (cm)</label>
+            <input id="p_ht" inputmode="numeric" placeholder="e.g., 170" />
+          </div>
+          <div>
+            <label>Weight (kg)</label>
+            <input id="p_wt" inputmode="numeric" placeholder="e.g., 65" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Primary cancer / status</label>
+            <input id="p_cancer" placeholder="e.g., DLBCL on treatment / post-chemo" />
+          </div>
+          <div>
+            <label>Date &amp; time</label>
+            <input id="p_dt" />
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Admission Orders -->
+        <div class="tabpanel" data-panel="admission">
+          <h2>Admission Orders Builder</h2>
+          <div class="p">Pick bundles + antimicrobial/infusion templates. Output is clean text for CIS/EMR paste.</div>
+
+          <label>Admitting diagnosis (free text)</label>
+          <input id="a_dx" placeholder="e.g., Neutropenic sepsis with shock; pneumonia with RF; AKI/TLS..." />
+
+          <label>Choose ICU bundles / order-sets</label>
+          <div id="a_sets" class="pillrow"></div>
+
+          <div class="row">
+            <div>
+              <label>Antimicrobial scenario</label>
+              <select id="a_abx">
+                <option value="">— Select —</option>
+                <option value="undiff_sepsis">Undifferentiated sepsis</option>
+                <option value="sepsis_diarrhoea">Sepsis with diarrhoea</option>
+                <option value="pneumonia">Pneumonia</option>
+                <option value="urosepsis">Urosepsis</option>
+                <option value="fungal">Systemic fungal sepsis</option>
+                <option value="custom">Custom / culture-directed (free text)</option>
+              </select>
+            </div>
+            <div>
+              <label>Custom / culture-directed antimicrobial</label>
+              <input id="a_abx_custom" placeholder="e.g., drug + dose + frequency + duration" />
+            </div>
+          </div>
+
+          <label>Shock / infusion scenario</label>
+          <div class="row">
+            <div>
+              <select id="a_shock">
+                <option value="">— Select —</option>
+                <option value="septic">Septic shock infusion bundle</option>
+                <option value="cardio">Cardiogenic shock infusion bundle</option>
+                <option value="rv">RV failure supportive bundle</option>
+              </select>
+            </div>
+            <div>
+              <input id="a_shock_custom" placeholder="Optional: targets (MAP, lactate, UO etc.)" />
+            </div>
+          </div>
+
+          <label>Ventilation / oxygen support (optional)</label>
+          <div class="row">
+            <div>
+              <select id="a_resp">
+                <option value="">— Select —</option>
+                <option value="hfnc">HFNC initial settings</option>
+                <option value="mv_init">MV initial settings after intubation</option>
+              </select>
+            </div>
+            <div>
+              <input id="a_resp_custom" placeholder="Optional: mode, FiO2, PEEP, Vt, RR etc." />
+            </div>
+          </div>
+
+          <label>Extra orders / notes (free text)</label>
+          <textarea id="a_extra" placeholder="Consults, imaging, blood products plan, special precautions..."></textarea>
+
+          <div class="btnrow">
+            <button class="primary" id="btnGenAdmission">Generate Admission Orders</button>
+            <button id="btnCopyOutA">Copy Output</button>
+            <button id="btnDownloadA">Download .txt</button>
+          </div>
+        </div>
+
+        <!-- Order Composer -->
+        <div class="tabpanel" data-panel="composer" style="display:none">
+          <h2>Order Composer — tick-box dose lines</h2>
+          <div class="p">Tick the dose lines you want → auto-collates into one “Treatment advice” block. You can edit any selected line before generating.</div>
+
+          <div class="row">
+            <div>
+              <label>Filter lines</label>
+              <input id="oc_filter" placeholder="Type to filter (e.g., pantoprazole, meropenem, insulin, SLED...)" />
+            </div>
+            <div>
+              <label>Category</label>
+              <select id="oc_cat">
+                <option value="">All</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label>Output header</label>
+              <select id="oc_hdr">
+                <option value="treatment_advice">Treatment advice</option>
+                <option value="treatment_orders">Treatment orders</option>
+                <option value="icu_orders">ICU orders</option>
+              </select>
+            </div>
+            <div>
+              <label>Free text add-on</label>
+              <input id="oc_addon" placeholder="One-line add-on (optional)" />
+            </div>
+          </div>
+
+          <div class="list" id="oc_list"></div>
+
+          <label>Additional instructions / narrative (optional)</label>
+          <textarea id="oc_extra" placeholder="Any plan notes, targets, communication, consults..."></textarea>
+
+          <div class="btnrow">
+            <button class="primary" id="btnGenComposer">Generate Collated Block</button>
+            <button id="btnSelectNone">Uncheck all</button>
+            <button id="btnCopyOutOC">Copy Output</button>
+            <button id="btnDownloadOC">Download .txt</button>
+          </div>
+        </div>
+
+        <!-- Daily Progress -->
+        <div class="tabpanel" data-panel="daily" style="display:none">
+          <h2>Daily Progress Note (Structured)</h2>
+
+          <label>Diagnosis line</label>
+          <input id="d_dx" placeholder="Known case of … admitted with …" />
+
+          <div class="row">
+            <div>
+              <label>Neuro</label>
+              <textarea id="d_neuro" placeholder="AVPU/GCS, pupils, sedation, seizures, delirium..."></textarea>
+            </div>
+            <div>
+              <label>Resp</label>
+              <textarea id="d_resp" placeholder="Support, FiO2/PEEP, ABG, CXR/POCUS, PF trend..."></textarea>
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label>CVS</label>
+              <textarea id="d_cvs" placeholder="HR/BP, pressors, rhythm, echo/IVC, CRT, lactate trend..."></textarea>
+            </div>
+            <div>
+              <label>Renal</label>
+              <textarea id="d_renal" placeholder="UO, Cr, dialysis mode, electrolytes (K/Na/Ca/PO4 etc.)..."></textarea>
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label>Heme</label>
+              <textarea id="d_heme" placeholder="Hb/TLC/ANC/Plt, bleeding, coags, transfusions..."></textarea>
+            </div>
+            <div>
+              <label>Hepatic / Metabolic</label>
+              <textarea id="d_liver" placeholder="Bili, AST/ALT, INR/PT, glucose, albumin..."></textarea>
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label>Infection / Sepsis</label>
+              <textarea id="d_sepsis" placeholder="Temp, source, cultures, antibiotics, escalation/de-escalation..."></textarea>
+            </div>
+            <div>
+              <label>Immune suppression</label>
+              <textarea id="d_immune" placeholder="Neutropenia, chemo, G-CSF, antifungals..."></textarea>
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label>Lines / Tubes / Support</label>
+              <textarea id="d_lines" placeholder="CVC/HD cath/A-line/NGT/Foley, sites..."></textarea>
+            </div>
+            <div>
+              <label>Nutrition / GI + Skin / Others</label>
+              <textarea id="d_nutri" placeholder="Feeds, GI symptoms, pressure areas, DVT prophylaxis..."></textarea>
+            </div>
+          </div>
+
+          <label>Plan</label>
+          <textarea id="d_plan" placeholder="Continue/wean/escalate/de-escalate/imaging/consults/family update..."></textarea>
+
+          <div class="warnbox" style="margin-top:10px">
+            <b>Rule:</b> Don’t trigger ICU interventions on a single parameter; require ≥3 independent triggers for action.
+          </div>
+
+          <label>Trigger checklist (for decision justification)</label>
+          <div class="pillrow" id="d_triggers"></div>
+          <div class="kpi">
+            <span id="triDot" class="dot"></span>
+            <span class="small" id="triText">Select triggers (0/3)</span>
+          </div>
+
+          <div class="btnrow">
+            <button class="primary" id="btnGenDaily">Generate Daily Progress Note</button>
+            <button id="btnCopyOutD">Copy Output</button>
+            <button id="btnDownloadD">Download .txt</button>
+          </div>
+        </div>
+
+        <!-- Short rounds note -->
+        <div class="tabpanel" data-panel="short" style="display:none">
+          <h2>Short form daily rounds documentation (CIS)</h2>
+          <div class="p">Your short-form CIS note structure. Keep it tight. Paste directly.</div>
+
+          <label>Diagnosis (short form)</label>
+          <input id="s_dx" placeholder="[MM/DLBCL/ALL/AML/...] admitted with [ARDS/shock/AKI/TLS/...]" />
+
+          <div class="row">
+            <div>
+              <label>Neuro</label>
+              <input id="s_neuro" placeholder="[V/AVPU], GCS [ ], [sedated/alert], pupils equal/reactive." />
+            </div>
+            <div>
+              <label>Resp</label>
+              <input id="s_resp" placeholder="[RA/HFNC/NIV/MV], FiO2 [ ], PEEP [ ], ABG [ ], CXR/POCUS [ ]." />
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label>CVS</label>
+              <input id="s_cvs" placeholder="HR [ ], BP [ ], [on/off pressors], CRT [ ], lactate [ ]." />
+            </div>
+            <div>
+              <label>Renal</label>
+              <input id="s_renal" placeholder="UO [ ], Cr [ ], [on/off dialysis], electrolytes stable/labile." />
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label>Heme</label>
+              <input id="s_heme" placeholder="Hb [ ], TLC [ ], ANC [ ], Plt [ ], bleeding [ ], transfusion [ ]." />
+            </div>
+            <div>
+              <label>Liver/Metabolic</label>
+              <input id="s_liver" placeholder="Bili [ ], AST/ALT [ ], INR [ ], Glu [ ], Alb [ ], dysfunction [Y/N]." />
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label>Sepsis/Infection</label>
+              <input id="s_sepsis" placeholder="Temp [ ], source [known/unknown], empiric ABx [ ], cultures sent." />
+            </div>
+            <div>
+              <label>Immune/Chemo</label>
+              <input id="s_immune" placeholder="Neutropenic [Y/N], chemo [Y/N], G-CSF [Y/N], antifungals [Y/N]." />
+            </div>
+          </div>
+
+          <label>Lines/Access</label>
+          <input id="s_lines" placeholder="[CVC/HD cath/A-line/Foley/NGT] in situ; site [ ]." />
+
+          <label>Plan (single paragraph)</label>
+          <textarea id="s_plan" placeholder="Continue/wean/escalate/de-escalate; imaging; consults; family update; procedures planned..."></textarea>
+
+          <div class="btnrow">
+            <button class="primary" id="btnGenShort">Generate Short Rounds Note</button>
+            <button id="btnCopyOutS">Copy Output</button>
+            <button id="btnDownloadS">Download .txt</button>
+          </div>
+        </div>
+
+        <!-- Every-shift macro -->
+        <div class="tabpanel" data-panel="shift" style="display:none">
+          <h2>Record progress note every shift (macro)</h2>
+          <div class="p">One-click macro that forces documenting Lung/CVS/Renal trends exactly as you specified. It also flags missing fields before generation.</div>
+
+          <div class="row">
+            <div>
+              <label>Shift</label>
+              <select id="sh_shift">
+                <option value="Morning">Morning</option>
+                <option value="Evening">Evening</option>
+                <option value="Night">Night</option>
+              </select>
+            </div>
+            <div>
+              <label>AVPU / GCS / Sedation</label>
+              <input id="sh_neuro" placeholder="AVPU/GCS [ ], RASS/sedation [ ], delirium [ ]" />
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <h2>Lung condition (trend)</h2>
+          <div class="row">
+            <div>
+              <label>Oxygenation trend (PaO2/FiO2)</label>
+              <input id="sh_pf" placeholder="PaO2/FiO2: [ ], trend: [improving/static/worsening]" />
+            </div>
+            <div>
+              <label>Ventilation trend (PaCO2)</label>
+              <input id="sh_paco2" placeholder="PaCO2: [ ], trend: [ ]" />
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <label>Driving pressure trend (ΔP)</label>
+              <input id="sh_dp" placeholder="Driving pressure: [ ], trend: [ ]" />
+            </div>
+            <div>
+              <label>Support summary</label>
+              <input id="sh_support" placeholder="[RA/HFNC/NIV/MV], mode [ ], FiO2 [ ], PEEP [ ], RR [ ]" />
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <h2>Heart condition (trend)</h2>
+          <div class="row">
+            <div>
+              <label>MAP trend</label>
+              <input id="sh_map" placeholder="MAP: [ ], trend: [ ]" />
+            </div>
+            <div>
+              <label>PI trend</label>
+              <input id="sh_pi" placeholder="PI: [ ], trend: [ ]" />
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <label>Vasopressor / inotrope trend</label>
+              <input id="sh_pressor" placeholder="Pressors: [drug + dose], trend: [increasing/decreasing/stable/off]" />
+            </div>
+            <div>
+              <label>NT-proBNP trend (if relevant)</label>
+              <input id="sh_ntprobnp" placeholder="NT-proBNP: [ ], trend: [ ] / NA" />
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <h2>Kidney condition (trend)</h2>
+          <div class="row">
+            <div>
+              <label>Urine output trend</label>
+              <input id="sh_uo" placeholder="UO: [ ], trend: [ ]" />
+            </div>
+            <div>
+              <label>Creatinine trend</label>
+              <input id="sh_cr" placeholder="Creatinine: [ ], trend: [ ]" />
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <label>Urea trend</label>
+              <input id="sh_urea" placeholder="Urea: [ ], trend: [ ]" />
+            </div>
+            <div>
+              <label>Uric acid trend</label>
+              <input id="sh_ua" placeholder="Uric acid: [ ], trend: [ ]" />
+            </div>
+          </div>
+          <label>Electrolyte trend</label>
+          <input id="sh_elect" placeholder="Electrolytes: Na [ ], K [ ], Ca [ ], PO4 [ ], Mg [ ] — trend [stable/labile]" />
+
+          <div class="divider"></div>
+
+          <h2>Other mandatory line-items (shift)</h2>
+          <label>Liver / coagulation trend</label>
+          <input id="sh_liver" placeholder="LFT/INR trend: [ ]" />
+          <label>Bleeding + Platelets trend</label>
+          <input id="sh_bleed" placeholder="Bleeding: [Y/N, site], Platelets: [ ], trend: [ ]" />
+          <label>Procedures planned / done</label>
+          <input id="sh_proc" placeholder="Procedures: [planned/done/none]" />
+          <label>Family communication</label>
+          <input id="sh_family" placeholder="Family updated: [Y/N], by [ ], key points: [ ]" />
+
+          <div class="warnbox" style="margin-top:10px">
+            <b>Validation:</b> Generate is enabled even if fields are missing, but missing required fields are highlighted red for medico-legal completeness.
+          </div>
+
+          <div class="btnrow">
+            <button class="primary" id="btnMacroFill">One-click: insert macro text into note</button>
+            <button class="primary" id="btnGenShift">Generate Shift Progress Note</button>
+            <button id="btnCopyOutSH">Copy Output</button>
+            <button id="btnDownloadSH">Download .txt</button>
+          </div>
+        </div>
+
+        <!-- Procedure Note -->
+        <div class="tabpanel" data-panel="procedure" style="display:none">
+          <h2>Procedure Note (Template-driven)</h2>
+
+          <label>Procedure type</label>
+          <select id="pr_type"></select>
+
+          <label>Minimal variables (auto-insert into template)</label>
+          <div class="row">
+            <div>
+              <label>Side / Site</label>
+              <input id="pr_site" placeholder="e.g., Left radial / Right IJV / Right femoral..." />
+            </div>
+            <div>
+              <label>Indication</label>
+              <input id="pr_ind" placeholder="e.g., IBP + sampling / vasopressors / SLED..." />
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <label>Device / size</label>
+              <input id="pr_dev" placeholder="e.g., 20G 4 cm / 7 Fr 3 lumen / 11.5 Fr HD cath..." />
+            </div>
+            <div>
+              <label>Attempts / complications</label>
+              <input id="pr_att" placeholder="e.g., Single attempt, uncomplicated" />
+            </div>
+          </div>
+
+          <label>Overrides / add-ons (optional)</label>
+          <textarea id="pr_extra" placeholder="Any deviations, US findings, heparinization decision, confirmation steps..."></textarea>
+
+          <div class="btnrow">
+            <button class="primary" id="btnGenProc">Generate Procedure Note</button>
+            <button id="btnCopyOutP">Copy Output</button>
+            <button id="btnDownloadP">Download .txt</button>
+          </div>
+        </div>
+
+        <!-- ACLS Note -->
+        <div class="tabpanel" data-panel="acls" style="display:none">
+          <h2>ACLS Note (Template-driven)</h2>
+
+          <div class="row">
+            <div>
+              <label>Scenario</label>
+              <select id="c_scn">
+                <option value="ns_rosc">Non-shockable rhythm — ROSC achieved</option>
+                <option value="ns_norosc">Non-shockable rhythm — ROSC not achieved</option>
+                <option value="s_rosc">Shockable rhythm — ROSC achieved</option>
+                <option value="s_norosc">Shockable rhythm — ROSC not achieved</option>
+              </select>
+            </div>
+            <div>
+              <label>Airway during CPR</label>
+              <input id="c_airway" placeholder="e.g., i-gel #3/#4 / already intubated" />
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label>Arrest time</label>
+              <input id="c_t0" placeholder="e.g., 14:32" />
+            </div>
+            <div>
+              <label>ROSC / TOD time</label>
+              <input id="c_t1" placeholder="e.g., ROSC 14:45 / TOD 14:58" />
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label>Suspected reversible causes</label>
+              <input id="c_causes" placeholder="e.g., severe acidosis, hypoxia, hyperkalemia, septic shock..." />
+            </div>
+            <div>
+              <label>Key drugs / doses (override)</label>
+              <input id="c_drugs" placeholder="Optional: any deviations from default text" />
+            </div>
+          </div>
+
+          <label>Extra narrative (optional)</label>
+          <textarea id="c_extra" placeholder="Team members, shocks, ETCO2 notes, post-ROSC plan..."></textarea>
+
+          <div class="btnrow">
+            <button class="primary" id="btnGenACLS">Generate ACLS Note</button>
+            <button id="btnCopyOutC">Copy Output</button>
+            <button id="btnDownloadC">Download .txt</button>
+          </div>
+        </div>
+
+        <!-- Keeper Mode -->
+        <div class="tabpanel" data-panel="keeper" style="display:none">
+          <h2>Keeper Mode (Upgradability)</h2>
+          <div class="hint">
+            All dose-lines / bundles / templates live in <span style="font-family:var(--mono)">STORE.catalog</span>.
+            Export/import JSON for versioning and safe updates.
+          </div>
+
+          <label>Catalog JSON (editable)</label>
+          <textarea id="k_json" spellcheck="false"></textarea>
+
+          <div class="btnrow">
+            <button class="primary" id="btnApplyCatalog">Apply Catalog JSON</button>
+            <button id="btnRebuildCatalog">Refresh JSON from Current Catalog</button>
+          </div>
+
+          <div class="dangerbox" style="margin-top:10px">
+            Drafting tool only. Final clinical decisions and prescriptions remain with the treating team.
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- RIGHT: OUTPUT -->
+    <aside class="card">
+      <div class="inner">
+        <h2>Generated Output</h2>
+        <div class="p">Read, Check, Modify (as per actual patient data). Then copy into CIS/EMR; read again before save/commit. The responsibility of the saved information rests on the doctor on-duty.</div>
+
+        <div class="outbox">
+          <div class="output" id="out"></div>
+        </div>
+
+        <div class="footer">
+          Keeper tip: Export JSON as “Catalog_vXX.json” whenever you change dose-lines/templates.
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <section class="card" style="margin-top:14px">
+    <div class="inner">
+      <details id="scoresPanel" style="border:1px solid var(--border); border-radius:var(--radius); padding:10px 12px; background:rgba(255,255,255,.02)">
+        <summary style="cursor:pointer; font-weight:700; color:#dbeafe; list-style:none; outline:none;">
+          ICU Scores & Calculators (MPM₀-III, SOFA, GCS, CrCl)
+          <span class="small" style="font-weight:600; margin-left:8px; color:var(--muted)">(Click to expand)</span>
+        </summary>
+        <div class="divider" style="margin:10px 0"></div>
+        <div class="p" style="margin-top:0"></div>
+        <iframe
+          title="ICU Scores"
+          style="width:100%; height:980px; border:1px solid var(--border); border-radius:12px; background:#fff"
+          sandbox="allow-scripts allow-forms"
+          srcdoc="&lt;!DOCTYPE html&gt;
+&lt;html lang=&quot;en&quot;&gt;
+&lt;head&gt;
+    &lt;meta charset=&quot;UTF-8&quot;&gt;
+    &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;
+    &lt;title&gt;ICU All-in-One Calculator (MPM-III, SOFA, GCS, CrCl)&lt;/title&gt;
+    &lt;style&gt;
+        :root { --primary: #2980b9; --secondary: #16a085; --bg: #f4f7f6; --text: #333; }
+        body { font-family: -apple-system, system-ui, sans-serif; background-color: var(--bg); color: var(--text); padding: 20px; line-height: 1.5; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 30px; }
+        h2 { background: var(--primary); color: white; padding: 10px 15px; border-radius: 6px; font-size: 1.2rem; margin-top: 35px; }
+        h2.sofa { background: var(--secondary); }
+        h2.gcs { background: #8e44ad; }
+        h2.crcl { background: #d35400; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 15px; }
+        .card { border: 1px solid #e0e0e0; padding: 15px; border-radius: 8px; background: #fafafa; }
+        .input-group { margin-bottom: 12px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9rem; }
+        input[type=&quot;number&quot;], select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .checkbox-group { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; font-size: 0.85rem; cursor: pointer; }
+        .checkbox-group input { margin-top: 3px; }
+        button { width: 100%; padding: 12px; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; font-weight: bold; margin-top: 10px; transition: 0.2s; }
+        .btn-mpm { background: var(--primary); }
+        .btn-sofa { background: var(--secondary); }
+        .btn-gcs { background: #8e44ad; }
+        .btn-crcl { background: #d35400; }
+        button:hover { opacity: 0.9; transform: translateY(-1px); }
+        .result-box { margin-top: 15px; padding: 15px; background: #fff; border: 2px solid #eee; border-radius: 6px; text-align: center; font-weight: bold; font-size: 1.15rem; }
+        .note { font-size: 0.75rem; color: #666; font-style: italic; margin-top: 5px; line-height: 1.2; }
+    &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+
+&lt;div class=&quot;container&quot;&gt;
+    &lt;h1&gt;ICU Clinical Calculators&lt;/h1&gt;
+
+    &lt;section&gt;
+        &lt;h2&gt;Mortality Probability Model (MPM₀-III)&lt;/h2&gt;
+        &lt;div class=&quot;card&quot;&gt;
+            &lt;div class=&quot;grid&quot; style=&quot;grid-template-columns: 1fr 1fr; margin-bottom: 15px;&quot;&gt;
+                &lt;div class=&quot;input-group&quot;&gt;
+                    &lt;label&gt;Age (Years)&lt;/label&gt;
+                    &lt;input type=&quot;number&quot; id=&quot;mpm_age&quot; placeholder=&quot;Age 18+&quot;&gt;
+                &lt;/div&gt;
+                &lt;div class=&quot;input-group&quot;&gt;
+                    &lt;label&gt;Admission Type&lt;/label&gt;
+                    &lt;select id=&quot;mpm_adm_type&quot;&gt;
+                        &lt;option value=&quot;elective&quot;&gt;Elective Surgical&lt;/option&gt;
+                        &lt;option value=&quot;medical&quot;&gt;Medical / Unscheduled Surgical&lt;/option&gt;
+                    &lt;/select&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+            &lt;div class=&quot;checkbox-group&quot; style=&quot;background: #e1f5fe; padding: 10px; border-radius: 5px; border-left: 5px solid #03a9f4;&quot;&gt;
+                &lt;input type=&quot;checkbox&quot; id=&quot;mpm_full_code&quot; checked&gt;
+                &lt;label for=&quot;mpm_full_code&quot;&gt;&lt;strong&gt;Full Code Status&lt;/strong&gt; (Uncheck if DNR/DNI or limitation of care present at admission)&lt;/label&gt;
+            &lt;/div&gt;
+            &lt;div class=&quot;grid&quot;&gt;
+                &lt;div&gt;
+                    &lt;label style=&quot;color:var(--primary)&quot;&gt;Physiological / Chronic Factors:&lt;/label&gt;
+                    &lt;div class=&quot;checkbox-group&quot;&gt;&lt;input type=&quot;checkbox&quot; class=&quot;mpm-bit&quot; id=&quot;coma&quot; data-b=&quot;2.0505&quot; data-ia=&quot;-0.0075&quot;&gt;&lt;label&gt;Coma / Deep Stupor (GCS 3-4)&lt;/label&gt;&lt;/div&gt;
+                    &lt;div class=&quot;checkbox-group&quot;&gt;&lt;input type=&quot;checkbox&quot; class=&quot;mpm-bit&quot; id=&quot;sap90&quot; data-b=&quot;1.4510&quot; data-ia=&quot;-0.0085&quot;&gt;&lt;label&gt;Systolic BP ≤ 90 mmHg&lt;/label&gt;&lt;/div&gt;
+                    &lt;div class=&quot;checkbox-group&quot;&gt;&lt;input type=&quot;checkbox&quot; class=&quot;mpm-bit&quot; id=&quot;hr150&quot; data-b=&quot;0.4332&quot;&gt;&lt;label&gt;Heart Rate ≥ 150/min&lt;/label&gt;&lt;/div&gt;
+                    &lt;div class=&quot;checkbox-group&quot;&gt;&lt;input type=&quot;checkbox&quot; class=&quot;mpm-bit&quot; id=&quot;dysrhythmia&quot; data-b=&quot;0.8220&quot; data-ia=&quot;-0.0101&quot;&gt;&lt;label&gt;Cardiac Dysrhythmia&lt;/label&gt;&lt;/div&gt;
+                    &lt;div class=&quot;checkbox-group&quot;&gt;&lt;input type=&quot;checkbox&quot; class=&quot;mpm-bit&quot; id=&quot;cpr&quot; data-b=&quot;1.4973&quot; data-ia=&quot;-0.0112&quot;&gt;&lt;label&gt;CPR prior to admission&lt;/label&gt;&lt;/div&gt;
+                    &lt;div class=&quot;checkbox-group&quot;&gt;&lt;input type=&quot;checkbox&quot; class=&quot;mpm-bit&quot; id=&quot;mech_vent&quot; data-b=&quot;0.8216&quot;&gt;&lt;label&gt;Mech. Ventilation (within 1h)&lt;/label&gt;&lt;/div&gt;
+                &lt;/div&gt;
+                &lt;div&gt;
+                    &lt;label style=&quot;color:var(--primary)&quot;&gt;Co-morbidities:&lt;/label&gt;
+                    &lt;div class=&quot;checkbox-group&quot;&gt;&lt;input type=&quot;checkbox&quot; class=&quot;mpm-bit&quot; id=&quot;met_cancer&quot; data-b=&quot;3.2049&quot; data-ia=&quot;-0.0330&quot;&gt;&lt;label&gt;Metastatic Neoplasm&lt;/label&gt;&lt;/div&gt;
+                    &lt;div class=&quot;checkbox-group&quot;&gt;&lt;input type=&quot;checkbox&quot; class=&quot;mpm-bit&quot; id=&quot;cirrhosis&quot; data-b=&quot;2.0707&quot; data-ia=&quot;-0.0224&quot;&gt;&lt;label&gt;Cirrhosis&lt;/label&gt;&lt;/div&gt;
+                    &lt;div class=&quot;checkbox-group&quot;&gt;&lt;input type=&quot;checkbox&quot; class=&quot;mpm-bit&quot; id=&quot;mass_effect&quot; data-b=&quot;1.8553&quot; data-ia=&quot;-0.0169&quot;&gt;&lt;label&gt;Intracranial Mass Effect&lt;/label&gt;&lt;/div&gt;
+                    &lt;div class=&quot;checkbox-group&quot;&gt;&lt;input type=&quot;checkbox&quot; class=&quot;mpm-bit&quot; id=&quot;cva&quot; data-b=&quot;0.4108&quot;&gt;&lt;label&gt;Cerebrovascular Incident&lt;/label&gt;&lt;/div&gt;
+                    &lt;div class=&quot;checkbox-group&quot;&gt;&lt;input type=&quot;checkbox&quot; class=&quot;mpm-bit&quot; id=&quot;gibleed&quot; data-b=&quot;-0.1653&quot;&gt;&lt;label&gt;GI Bleeding&lt;/label&gt;&lt;/div&gt;
+                    &lt;div class=&quot;checkbox-group&quot;&gt;&lt;input type=&quot;checkbox&quot; class=&quot;mpm-bit&quot; id=&quot;crf&quot; data-b=&quot;0.5395&quot;&gt;&lt;label&gt;Chronic Renal Insufficiency&lt;/label&gt;&lt;/div&gt;
+                    &lt;div class=&quot;checkbox-group&quot;&gt;&lt;input type=&quot;checkbox&quot; class=&quot;mpm-bit&quot; id=&quot;arf&quot; data-b=&quot;0.8412&quot;&gt;&lt;label&gt;Acute Renal Failure&lt;/label&gt;&lt;/div&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+        &lt;button class=&quot;btn-mpm&quot; onclick=&quot;calcMPM3()&quot;&gt;Calculate MPM-III Mortality&lt;/button&gt;
+        &lt;div id=&quot;mpm_res&quot; class=&quot;result-box&quot; style=&quot;border-color: var(--primary);&quot;&gt;Prob: --&lt;/div&gt;
+    &lt;/section&gt;
+
+    &lt;section&gt;
+        &lt;h2 class=&quot;sofa&quot;&gt;SOFA Score (Sequential Organ Failure Assessment)&lt;/h2&gt;
+        &lt;div class=&quot;grid&quot;&gt;
+            &lt;div class=&quot;card&quot;&gt;
+                &lt;div class=&quot;input-group&quot;&gt;&lt;label&gt;PaO₂ (mmHg)&lt;/label&gt;&lt;input type=&quot;number&quot; id=&quot;sofa_pao2&quot; placeholder=&quot;Arterial O2&quot;&gt;&lt;/div&gt;
+                &lt;div class=&quot;input-group&quot;&gt;&lt;label&gt;FiO₂ (%)&lt;/label&gt;&lt;input type=&quot;number&quot; id=&quot;sofa_fio2&quot; placeholder=&quot;21 - 100&quot;&gt;&lt;/div&gt;
+                &lt;div class=&quot;checkbox-group&quot;&gt;&lt;input type=&quot;checkbox&quot; id=&quot;sofa_vent&quot;&gt;&lt;label for=&quot;sofa_vent&quot;&gt;Respiratory Support (Ventilator/CPAP)&lt;/label&gt;&lt;/div&gt;
+                &lt;div class=&quot;input-group&quot;&gt;
+                    &lt;label&gt;Coagulation (Platelets x10³/µL)&lt;/label&gt;
+                    &lt;select id=&quot;sofa_plt&quot;&gt;&lt;option value=&quot;0&quot;&gt;≥ 150&lt;/option&gt;&lt;option value=&quot;1&quot;&gt;&amp;lt; 150&lt;/option&gt;&lt;option value=&quot;2&quot;&gt;&amp;lt; 100&lt;/option&gt;&lt;option value=&quot;3&quot;&gt;&amp;lt; 50&lt;/option&gt;&lt;option value=&quot;4&quot;&gt;&amp;lt; 20&lt;/option&gt;&lt;/select&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+            &lt;div class=&quot;card&quot;&gt;
+                &lt;div class=&quot;input-group&quot;&gt;
+                    &lt;label&gt;Liver (Bilirubin mg/dL)&lt;/label&gt;
+                    &lt;select id=&quot;sofa_bili&quot;&gt;&lt;option value=&quot;0&quot;&gt;&amp;lt; 1.2&lt;/option&gt;&lt;option value=&quot;1&quot;&gt;1.2–1.9&lt;/option&gt;&lt;option value=&quot;2&quot;&gt;2.0–5.9&lt;/option&gt;&lt;option value=&quot;3&quot;&gt;6.0–11.9&lt;/option&gt;&lt;option value=&quot;4&quot;&gt;≥ 12.0&lt;/option&gt;&lt;/select&gt;
+                &lt;/div&gt;
+                &lt;div class=&quot;input-group&quot;&gt;
+                    &lt;label&gt;Cardiovascular&lt;/label&gt;
+                    &lt;select id=&quot;sofa_cv&quot;&gt;&lt;option value=&quot;0&quot;&gt;MAP ≥ 70 mmHg&lt;/option&gt;&lt;option value=&quot;1&quot;&gt;MAP &amp;lt; 70 mmHg&lt;/option&gt;&lt;option value=&quot;2&quot;&gt;Dopamine ≤ 5 or Dobutamine (any)&lt;/option&gt;&lt;option value=&quot;3&quot;&gt;Dopamine &amp;gt; 5 or Epi/Norepi ≤ 0.1&lt;/option&gt;&lt;option value=&quot;4&quot;&gt;Dopamine &amp;gt; 15 or Epi/Norepi &amp;gt; 0.1&lt;/option&gt;&lt;/select&gt;
+                &lt;/div&gt;
+                &lt;div class=&quot;input-group&quot;&gt;
+                    &lt;label&gt;Neurological (GCS)&lt;/label&gt;
+                    &lt;select id=&quot;sofa_gcs_score&quot;&gt;&lt;option value=&quot;0&quot;&gt;15&lt;/option&gt;&lt;option value=&quot;1&quot;&gt;13–14&lt;/option&gt;&lt;option value=&quot;2&quot;&gt;10–12&lt;/option&gt;&lt;option value=&quot;3&quot;&gt;6–9&lt;/option&gt;&lt;option value=&quot;4&quot;&gt;&amp;lt; 6&lt;/option&gt;&lt;/select&gt;
+                &lt;/div&gt;
+                &lt;div class=&quot;input-group&quot;&gt;
+                    &lt;label&gt;Renal (Creatinine mg/dL)&lt;/label&gt;
+                    &lt;select id=&quot;sofa_cr&quot;&gt;&lt;option value=&quot;0&quot;&gt;&amp;lt; 1.2&lt;/option&gt;&lt;option value=&quot;1&quot;&gt;1.2–1.9&lt;/option&gt;&lt;option value=&quot;2&quot;&gt;2.0–3.4&lt;/option&gt;&lt;option value=&quot;3&quot;&gt;3.5–4.9 or UOP &amp;lt; 500&lt;/option&gt;&lt;option value=&quot;4&quot;&gt;≥ 5.0 or UOP &amp;lt; 200&lt;/option&gt;&lt;/select&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+        &lt;button class=&quot;btn-sofa&quot; onclick=&quot;calcSOFA()&quot;&gt;Calculate SOFA Score&lt;/button&gt;
+        &lt;div id=&quot;sofa_res&quot; class=&quot;result-box&quot; style=&quot;border-color: var(--secondary);&quot;&gt;Total: --&lt;/div&gt;
+    &lt;/section&gt;
+
+    &lt;section&gt;
+        &lt;h2 class=&quot;gcs&quot;&gt;Glasgow Coma Scale (GCS)&lt;/h2&gt;
+        &lt;div class=&quot;card&quot;&gt;
+            &lt;div class=&quot;grid&quot;&gt;
+                &lt;div class=&quot;input-group&quot;&gt;
+                    &lt;label&gt;Eyes (E)&lt;/label&gt;
+                    &lt;select id=&quot;gcs_e&quot;&gt;&lt;option value=&quot;4&quot;&gt;4 - Spontaneous&lt;/option&gt;&lt;option value=&quot;3&quot;&gt;3 - To Sound&lt;/option&gt;&lt;option value=&quot;2&quot;&gt;2 - To Pressure&lt;/option&gt;&lt;option value=&quot;1&quot;&gt;1 - None&lt;/option&gt;&lt;/select&gt;
+                &lt;/div&gt;
+                &lt;div class=&quot;input-group&quot;&gt;
+                    &lt;label&gt;Verbal (V)&lt;/label&gt;
+                    &lt;select id=&quot;gcs_v&quot;&gt;&lt;option value=&quot;5&quot;&gt;5 - Oriented&lt;/option&gt;&lt;option value=&quot;4&quot;&gt;4 - Confused&lt;/option&gt;&lt;option value=&quot;3&quot;&gt;3 - Inappropriate&lt;/option&gt;&lt;option value=&quot;2&quot;&gt;2 - Sounds&lt;/option&gt;&lt;option value=&quot;1&quot;&gt;1 - None&lt;/option&gt;&lt;option value=&quot;T&quot;&gt;T - Intubated&lt;/option&gt;&lt;/select&gt;
+                &lt;/div&gt;
+                &lt;div class=&quot;input-group&quot;&gt;
+                    &lt;label&gt;Motor (M)&lt;/label&gt;
+                    &lt;select id=&quot;gcs_m&quot;&gt;&lt;option value=&quot;6&quot;&gt;6 - Obeys&lt;/option&gt;&lt;option value=&quot;5&quot;&gt;5 - Localizing&lt;/option&gt;&lt;option value=&quot;4&quot;&gt;4 - Flexion/Withdrawal&lt;/option&gt;&lt;option value=&quot;3&quot;&gt;3 - Abnormal Flexion&lt;/option&gt;&lt;option value=&quot;2&quot;&gt;2 - Extension&lt;/option&gt;&lt;option value=&quot;1&quot;&gt;1 - None&lt;/option&gt;&lt;/select&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+        &lt;button class=&quot;btn-gcs&quot; onclick=&quot;calcGCS()&quot;&gt;Calculate GCS&lt;/button&gt;
+        &lt;div id=&quot;gcs_res&quot; class=&quot;result-box&quot; style=&quot;border-color: #8e44ad;&quot;&gt;Score: --&lt;/div&gt;
+    &lt;/section&gt;
+
+    &lt;section&gt;
+        &lt;h2 class=&quot;crcl&quot;&gt;Creatinine Clearance (Cockcroft-Gault)&lt;/h2&gt;
+        &lt;div class=&quot;card&quot;&gt;
+            &lt;div class=&quot;grid&quot;&gt;
+                &lt;div class=&quot;input-group&quot;&gt;&lt;label&gt;Age (Years)&lt;/label&gt;&lt;input type=&quot;number&quot; id=&quot;cg_age&quot;&gt;&lt;/div&gt;
+                &lt;div class=&quot;input-group&quot;&gt;&lt;label&gt;Weight (kg)&lt;/label&gt;&lt;input type=&quot;number&quot; id=&quot;cg_wt&quot;&gt;&lt;/div&gt;
+                &lt;div class=&quot;input-group&quot;&gt;&lt;label&gt;Serum Creatinine (mg/dL)&lt;/label&gt;&lt;input type=&quot;number&quot; id=&quot;cg_cr&quot; step=&quot;0.1&quot;&gt;&lt;/div&gt;
+                &lt;div class=&quot;input-group&quot;&gt;&lt;label&gt;Sex&lt;/label&gt;&lt;select id=&quot;cg_sex&quot;&gt;&lt;option value=&quot;1&quot;&gt;Male&lt;/option&gt;&lt;option value=&quot;0.85&quot;&gt;Female&lt;/option&gt;&lt;/select&gt;&lt;/div&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+        &lt;button class=&quot;btn-crcl&quot; onclick=&quot;calcCG()&quot;&gt;Calculate CrCl&lt;/button&gt;
+        &lt;div id=&quot;cg_res&quot; class=&quot;result-box&quot; style=&quot;border-color: #d35400;&quot;&gt;CrCl: -- mL/min&lt;/div&gt;
+    &lt;/section&gt;
+
+&lt;/div&gt;
+
+&lt;script&gt;
+    // ARF/CRF Mutual Exclusivity Logic for MPM
+    document.getElementById(&#x27;crf&#x27;).addEventListener(&#x27;change&#x27;, function() { if(this.checked) document.getElementById(&#x27;arf&#x27;).checked = false; });
+    document.getElementById(&#x27;arf&#x27;).addEventListener(&#x27;change&#x27;, function() { if(this.checked) document.getElementById(&#x27;crf&#x27;).checked = false; });
+
+    function calcMPM3() {
+        const age = parseFloat(document.getElementById(&#x27;mpm_age&#x27;).value);
+        if (isNaN(age)) return alert(&quot;Please enter patient age.&quot;);
+
+        let logit = -5.36283 + (0.0385582 * age);
+        let factorCount = 0;
+
+        document.querySelectorAll(&#x27;.mpm-bit&#x27;).forEach(cb =&gt; {
+            if (cb.checked) {
+                factorCount++;
+                const b = parseFloat(cb.getAttribute(&#x27;data-b&#x27;));
+                const ia = parseFloat(cb.getAttribute(&#x27;data-ia&#x27;) || 0);
+                logit += b + (ia * age);
+            }
+        });
+
+        if (document.getElementById(&#x27;mpm_adm_type&#x27;).value === &#x27;medical&#x27;) {
+            logit += 0.9097936;
+            factorCount++;
+        }
+        if (document.getElementById(&#x27;mpm_full_code&#x27;).checked) logit -= 0.7969783;
+        if (factorCount === 0) logit -= 0.4243604; // Zero Factor Logic
+
+        const prob = (Math.exp(logit) / (1 + Math.exp(logit))) * 100;
+        document.getElementById(&#x27;mpm_res&#x27;).innerText = &quot;Predicted Mortality: &quot; + prob.toFixed(2) + &quot;%&quot;;
+    }
+
+    function calcSOFA() {
+        const pao2 = parseFloat(document.getElementById(&#x27;sofa_pao2&#x27;).value);
+        const fio2 = parseFloat(document.getElementById(&#x27;sofa_fio2&#x27;).value);
+        const vent = document.getElementById(&#x27;sofa_vent&#x27;).checked;
+        
+        let r = 0;
+        if (!isNaN(pao2) &amp;&amp; !isNaN(fio2)) {
+            const pf = pao2 / (fio2 / 100);
+            if (pf &lt; 100 &amp;&amp; vent) r = 4;
+            else if (pf &lt; 200 &amp;&amp; vent) r = 3;
+            else if (pf &lt; 300) r = 2;
+            else if (pf &lt; 400) r = 1;
+        }
+
+        const score = r + parseInt(document.getElementById(&#x27;sofa_plt&#x27;).value) +
+                      parseInt(document.getElementById(&#x27;sofa_bili&#x27;).value) +
+                      parseInt(document.getElementById(&#x27;sofa_cv&#x27;).value) +
+                      parseInt(document.getElementById(&#x27;sofa_gcs_score&#x27;).value) +
+                      parseInt(document.getElementById(&#x27;sofa_cr&#x27;).value);
+        document.getElementById(&#x27;sofa_res&#x27;).innerText = &quot;Total SOFA: &quot; + score;
+    }
+
+    function calcGCS() {
+        const e = parseInt(document.getElementById(&#x27;gcs_e&#x27;).value);
+        const v = document.getElementById(&#x27;gcs_v&#x27;).value;
+        const m = parseInt(document.getElementById(&#x27;gcs_m&#x27;).value);
+        if (v === &#x27;T&#x27;) document.getElementById(&#x27;gcs_res&#x27;).innerText = &quot;GCS: &quot; + (e + m) + &quot;T&quot;;
+        else document.getElementById(&#x27;gcs_res&#x27;).innerText = &quot;GCS: &quot; + (e + parseInt(v) + m);
+    }
+
+    function calcCG() {
+        const age = parseFloat(document.getElementById(&#x27;cg_age&#x27;).value);
+        const wt = parseFloat(document.getElementById(&#x27;cg_wt&#x27;).value);
+        const cr = parseFloat(document.getElementById(&#x27;cg_cr&#x27;).value);
+        const sex = parseFloat(document.getElementById(&#x27;cg_sex&#x27;).value);
+        if (age &amp;&amp; wt &amp;&amp; cr) {
+            const cl = ((140 - age) * wt / (72 * cr)) * sex;
+            document.getElementById(&#x27;cg_res&#x27;).innerText = &quot;CrCl: &quot; + cl.toFixed(1) + &quot; mL/min&quot;;
+        } else alert(&quot;Fill all CrCl fields.&quot;);
+    }
+&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;"></iframe>
+      </details>
+    </div>
+  </section>
+
+</main>
+
+<script>
+/** ===========================
+ * ICU Help & Support (v1.1)
+ * Added:
+ * 1) Order Composer (tick-box dose lines → collated block)
+ * 2) Short rounds CIS note
+ * 3) Every-shift progress macro with required lung/CVS/renal trend fields
+ * =========================== */
+
+const APP_KEY = "ICU_HELP_SUPPORT_V1_1";
+const nowLocal = () => {
+  const d = new Date();
+  const pad = n => String(n).padStart(2,"0");
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
+const STORE = {
+  meta: { app: "ICU Help & Support", version: "1.1", catalogVersion: "15Dec2025_base_plus" },
+  catalog: {
+    admissionSets: [
+      { id:"labs_schema", label:"Labs schema (admission + daily + indication-based)", text:
+`General schema of lab investigations in ICU:
+• On admission: ABG, CBC, coagulation profile, kidney function tests & electrolytes, LFT, CRP; send blood + urine culture; 12-lead ECG.
+• Daily labs: ABG, CBC, coag profile, KFT+electrolytes, LFT, CRP.
+• Indication-based: NT-proBNP (undifferentiated shock), D-dimer/fibrinogen (bleeding/thrombosis), procalcitonin (sepsis progression), FT4/TSH, ND-BAL culture (VAP), repeat cultures (persistent fever), ECG (arrhythmia), CXR AP (pneumonia/ARDS/after tubes/lines).`
+      },
+      { id:"stress_ulcer", label:"Stress ulcer prophylaxis", text:"Inj. Pantoprazole 40 mg IV OD." },
+      { id:"fluids", label:"Total fluid (IV + dilutions + enteral)", text:"Total fluid 60–150 mL/h. Fluids: RL / D5 / DNS / RL + 25 mL D50 = 2.5% DRL." },
+      { id:"pneumonia_proph", label:"Pneumonia prophylaxis", text:
+`Raise head of bed 15–20° (except hypotension/ongoing CPR).
+Chlorhexidine mouth wash 15 mL 8 hourly orally.
+Tab. Clotrimazole lozenges 6 hourly SL.`
+      },
+      { id:"nutrition_bundle", label:"Nutrition bundle (baseline)", text:"Start enteral feeding within 24 h (except active UGIB, severe shock)." },
+      { id:"transfusion_bundle", label:"Transfusion bundle", text:
+`Hb < 7 g/dL: transfuse 1 unit irradiated PRBC over 4 h.
+Platelets <10,000/mm3 without bleeding OR <30,000/mm3 with bleeding/CVC/dialysis catheter planned: 1 unit irradiated SDP over 40 min.
+DIC with bleeding OR fibrinogen <200 mg/dL: cryoprecipitate 10–15 mL/kg (≈10 units) OR FFP (≈5 units).
+Premedication 30 min prior: Avil 2 mL slow IV + Dexamethasone 6 mg slow IV (for SDP/RDP/FFP).`
+      },
+    ],
+
+    antimicrobials: {
+      undiff_sepsis:
+`Antimicrobial therapy:
+• Inj. Meropenem 2 g IVI 8 hourly
+• Inj. Vancomycin 1 g IVI (over 2 h) 12 hourly`,
+      sepsis_diarrhoea:
+`Sepsis with diarrhoea:
+• Tab. Rifaximine 400 mg PO/NGT 8 hourly OR
+• Inj. Metronidazole 500 mg IVI 8 hourly`,
+      pneumonia:
+`Pneumonia:
+• Inj. Elores (Ceftriaxone+Sulbactam+EDTA) 1.5–3 g IVI 12 hourly × 10 days
+• Inj. Minocycline 200 mg IVI over 1 h loading → 100 mg IVI 12 hourly over 1 h × 10 days
+  OR Cap. Doxycycline 200 mg PO/NGT stat → 100 mg OD × 10 days`,
+      urosepsis:
+`Urosepsis:
+• Inj. Meropenem 2 g IVI 8 hourly OR
+• Piperacillin+Tazobactam 4.5 g IVI 8 hourly`,
+      fungal:
+`Systemic fungal sepsis:
+• Inj. Liposomal Amphotericin 50–100 mg IVI over 3 h OD × 14 days OR
+• Inj. Caspofungin 70 mg IV → 50 mg IV OD × 14 days`
+    },
+
+    infusions: {
+      septic:
+`Infusions (septic shock):
+• Noradrenaline 120 mcg/mL (6/50 in D5) @ 3–10 mL/h to keep MAP > 65 mmHg
+• Hydrocortisone 200 mg IV bolus → 200 mg IVI over 24 h × 48 h
+• Vasopressin (20 U/20 mL D5) @ 1.5–3 mL/h (if noradrenaline requirement > 10 mL/h)`,
+      cardio:
+`Infusions (cardiogenic shock):
+• Noradrenaline 120 mcg/mL (6/50 in D5) @ 3–10 mL/h to keep MAP > 65 mmHg
+• Dobutamine 10 mg/mL (500 mg in 50 mL D5) @ 3–10 mL/h (after MAP > 65 mmHg)`,
+      rv:
+`RV failure supportive bundle:
+Increase PaO2 (FiO2 increase, adjust PEEP), reduce PaCO2 (titrate MV, reduce RQ by diet modification)
+± nebulized NTG 5 mg (1 mL) + 3 mL DW over 20 min (beware delayed hypotension and AKI).`
+    },
+
+    respiratory: {
+      hfnc:
+`HFNC initial settings:
+• FiO2 50–60%
+• Flow 30–50 LPM`,
+      mv_init:
+`Initial ventilator settings:
+VC-AC mode, Vt ~ 6–7 mL/kg IBW, RR 20–24/min, PEEP 3–8 cmH2O, FiO2 50–60%, I:E 1:2, inspiratory pause ~10% of inspiratory time.`
+    },
+
+    // NEW: Order Composer tick-box lines (keeper-editable)
+    orderLines: [
+      // Prophylaxis / routine
+      {id:"pantoprazole", cat:"Prophylaxis", label:"Pantoprazole", text:"Inj. Pantoprazole 40 mg IV OD."},
+      {id:"hob", cat:"Ventilator bundle", label:"Head of bed elevation", text:"Raise head of bed 15–20° (except hypotension/ongoing CPR)."},
+      {id:"chx", cat:"Ventilator bundle", label:"Chlorhexidine mouthwash", text:"Chlorhexidine mouth wash 15 mL 8 hourly orally."},
+      {id:"clotrimazole", cat:"Ventilator bundle", label:"Clotrimazole lozenges", text:"Tab. Clotrimazole lozenges 6 hourly SL."},
+      {id:"feeds", cat:"Nutrition", label:"Early enteral feeding", text:"Start enteral feeding within 24 h (except active UGIB, severe shock)."},
+      {id:"physio_passive", cat:"Nursing/Physio", label:"Passive limb physiotherapy", text:"Passive physiotherapy of limbs (in unconscious patients; family may assist after hand hygiene)."},
+      {id:"physio_chest", cat:"Nursing/Physio", label:"Chest physiotherapy", text:"Chest physiotherapy — for patients after weaning and extubation."},
+
+      // Fluids
+      {id:"fluids", cat:"Fluids", label:"Total fluid rate", text:"Total fluid 60–150 mL/h (IV + dilutions + enteral). Fluids: RL / D5 / DNS / RL + 25 mL D50 = 2.5% DRL."},
+      {id:"albumin", cat:"Fluids", label:"Human albumin (if symptomatic hypoalbuminemia)", text:"Inj. Human Albumin 5% 100 mL x 2 @ 50 mL/h OR 20% 100 mL @ 20 mL/h IVI (if albumin <2 g/dL with low UO/anasarca, or ascitic tap planned to palliate distress)."},
+      {id:"lipid_emulsion", cat:"Nutrition", label:"Lipid emulsion (if EN delayed)", text:"Lipid Emulsion 20% 250 mL IVI over 5 h (if enteral nutrition cannot be started immediately)."},
+      {id:"mct", cat:"Nutrition", label:"MCT", text:"MCT 20 mL 12 hourly PO/NGT."},
+      {id:"atoz", cat:"Nutrition", label:"A to Z syrup", text:"Syrup A to Z 20 mL once daily PO/NGT."},
+      {id:"aristozyme", cat:"Nutrition", label:"Aristozyme syrup", text:"Syrup Aristozyme 20 mL once daily PO/NGT."},
+
+      // Transfusion / hematinic
+      {id:"fcm", cat:"Hematology", label:"Ferric carboxymaltose", text:"Inj. Ferric carboxymaltose 0.5 g in 100 mL NS IVI over 1 h stat and weekly × 3 doses (check serum iron/TIBC on admission)."},
+      {id:"folic", cat:"Hematology", label:"Folic acid", text:"Tab. Folic Acid 5 mg PO/NGT once daily."},
+      {id:"prbc", cat:"Transfusion", label:"PRBC transfusion threshold", text:"If Hb < 7 g/dL: transfuse 1 unit irradiated PRBC over 4 h."},
+      {id:"sdp", cat:"Transfusion", label:"Platelet transfusion threshold", text:"Platelets <10,000/mm3 without bleeding OR <30,000/mm3 with bleeding/CVC/dialysis catheter planned: 1 unit irradiated SDP over 40 min."},
+      {id:"dic", cat:"Transfusion", label:"DIC / fibrinogen low", text:"DIC with bleeding OR fibrinogen <200 mg/dL: cryoprecipitate 10–15 mL/kg (≈10 units) OR FFP (≈5 units)."},
+      {id:"premed", cat:"Transfusion", label:"Premedication before SDP/RDP/FFP", text:"Premedication 30 min prior: Avil 2 mL slow IV + Dexamethasone 6 mg slow IV (for SDP/RDP/FFP)."},
+
+      // Infusions / shock (dose-lines)
+      {id:"na", cat:"Shock/Infusions", label:"Noradrenaline infusion", text:"Noradrenaline 120 mcg/mL (6/50 in D5) @ 3–10 mL/h to keep MAP > 65 mmHg."},
+      {id:"hc", cat:"Shock/Infusions", label:"Hydrocortisone infusion", text:"Hydrocortisone 200 mg IV bolus → 200 mg IVI over 24 h × 48 h."},
+      {id:"vaso", cat:"Shock/Infusions", label:"Vasopressin infusion", text:"Vasopressin (20 U/20 mL D5) @ 1.5–3 mL/h (if noradrenaline requirement > 10 mL/h)."},
+      {id:"dobut", cat:"Shock/Infusions", label:"Dobutamine infusion", text:"Dobutamine 10 mg/mL (500 mg in 50 mL D5) @ 3–10 mL/h (after MAP > 65 mmHg with noradrenaline)."},
+
+      // Antimicrobials (dose-lines)
+      {id:"mero", cat:"Antimicrobials", label:"Meropenem", text:"Inj. Meropenem 2 g IVI 8 hourly."},
+      {id:"vanco", cat:"Antimicrobials", label:"Vancomycin", text:"Inj. Vancomycin 1 g IVI over 2 h 12 hourly."},
+      {id:"metronid", cat:"Antimicrobials", label:"Metronidazole", text:"Inj. Metronidazole 500 mg IVI 8 hourly."},
+      {id:"rifax", cat:"Antimicrobials", label:"Rifaximine", text:"Tab. Rifaximine 400 mg PO/NGT 8 hourly."},
+      {id:"elores", cat:"Antimicrobials", label:"Elores", text:"Inj. Elores 1.5–3 g IVI 12 hourly × 10 days."},
+      {id:"mino", cat:"Antimicrobials", label:"Minocycline", text:"Inj. Minocycline 200 mg IVI over 1 h loading → 100 mg IVI 12 hourly over 1 h × 10 days."},
+      {id:"doxy", cat:"Antimicrobials", label:"Doxycycline", text:"Cap. Doxycycline 200 mg PO/NGT stat → 100 mg OD × 10 days."},
+      {id:"pip_tazo", cat:"Antimicrobials", label:"Piperacillin-Tazobactam", text:"Piperacillin+Tazobactam 4.5 g IVI 8 hourly."},
+      {id:"l_amb", cat:"Antimicrobials", label:"Liposomal Amphotericin", text:"Inj. Liposomal Amphotericin 50–100 mg IVI over 3 h OD × 14 days."},
+      {id:"casp", cat:"Antimicrobials", label:"Caspofungin", text:"Inj. Caspofungin 70 mg IV → 50 mg IV OD × 14 days."},
+
+      // Glycemic / neuro snippets (dose-lines)
+      {id:"vrii", cat:"Metabolic", label:"Variable rate insulin infusion", text:"Variable Rate Regular Insulin (CBG >200): 40 U/40 mL; 6 U IV bolus → infusion as per protocol; target 150–200; stop when CBG <150."},
+      {id:"glargine", cat:"Metabolic", label:"Glargine (if not in shock/hypothermia)", text:"Inj. Glargine PFS pen: 8–12 U SC OD at 10 AM; adjust based on 6 AM CBG daily (avoid in shock/hypothermia)."},
+      {id:"hypo_d50", cat:"Metabolic", label:"Hypoglycemia bolus", text:"Hypoglycemia: Inj. D50 50 mL IV bolus (or D25 100 mL IV bolus)."},
+      {id:"hypo_shock", cat:"Metabolic", label:"Hypoglycemia in septic shock infusion", text:"Hypoglycemia in septic shock: run infusion of D50 @ 20–30 mL/h."},
+      {id:"midaz_seiz", cat:"Neuro", label:"Generalized seizures (first line)", text:"Generalized seizures: Inj. Midazolam 5–10 mg IV stat (first line)."},
+      {id:"levetir", cat:"Neuro", label:"Generalized seizures (second line)", text:"Inj. Levetiracetam 60 mg/kg (max 3 g/24 h) over 15–30 min → 500–1000 mg IVI 8 hourly."},
+      {id:"dp_seiz", cat:"Neuro", label:"ICP—ventilation target note", text:"Maintain PaCO2 30–35 mmHg by controlled hyperventilation if raised ICP."},
+    ],
+
+    procedureTemplates: [
+      { id:"a_line", label:"Radial Artery Catheterization", text:
+`Radial Artery Catheterization:
+After plethysmographic Allen's test, under Surgical Aseptic Non Touch Technique (SANTT), POCUS guidance {{DEVICE}} arterial catheter inserted in {{SITE}}, Seldinger technique, {{ATTEMPTS}}. Backflow of arterial blood confirmed, flushed with NS. Sutured to skin, closed flushing system attached, and transparent dressing applied. Transduced for IBP monitoring and blood sampling. Indication: {{INDICATION}}.` },
+      { id:"cvc", label:"Central Venous Catheterization", text:
+`Central Venous Catheterization:
+Under SANTT, POCUS guidance and local anesthesia (2 mL 2% lignocaine), {{DEVICE}} inserted in {{SITE}}, insertion depth {{DEPTH}}, Seldinger technique, {{ATTEMPTS}}. Indication: {{INDICATION}}. Backflow of venous blood confirmed in all lumens, flushed with NS. Sutured and transparent chlorhexidine gel dressing applied.` },
+      { id:"intubation", label:"Intubation + Mechanical Ventilation (initial)", text:
+`Intubation and Mechanical Ventilation:
+In view of worsening respiratory failure / deteriorated consciousness / impaired airway reflexes, patient intubated and put on mechanical ventilation after preoxygenation. ETT position confirmed with waveform ETCO2 and bilateral auscultation. Initial ventilator settings: {{MVSET}}. Indication: {{INDICATION}}.` },
+      { id:"hd_cath", label:"Hemodialysis Catheter Insertion", text:
+`Hemodialysis catheter insertion:
+Under SANTT, POCUS guidance and local anesthesia (2 mL 2% lignocaine), {{DEVICE}} inserted in {{SITE}}, Seldinger technique, {{ATTEMPTS}}. Backflow confirmed, flushed with NS. Sutured and transparent chlorhexidine dressing applied. Indication: {{INDICATION}}.` },
+      { id:"sled", label:"Hemodialysis (SLED note)", text:
+`Hemodialysis:
+Patient undergoing SLED today: duration 8–12 h, low potassium high bicarbonate dialysate; Blood Flow 150–200 mL/min; Dialysate Flow 200–300 mL/min; UF target {{UF}} over 8–12 h. Circuit heparin rinsed. Heparinization: {{HEPARIN}}. Indication: {{INDICATION}}.` },
+    ],
+
+    aclsTemplates: {
+      ns_rosc:
+`ACLS – Non-shockable rhythm, ROSC achieved
+Cardiac arrest noted at {{T0}}, initial rhythm: PEA / asystole. High-quality CPR started within 10 sec – compressions 100–120/min, depth 5–6 cm with full recoil, minimal interruptions, effective breaths with 100% O2, no hyperventilation. Airway: {{AIRWAY}}. Waveform capnography used throughout to monitor & guide CPR quality and detect ROSC. IV adrenaline 1 mg every 3 min. Suspected reversible causes: {{CAUSES}}. Sodium bicarbonate 8.4% [100–150 mL] IV / calcium gluconate 10% [30 mL] IV / 10 U regular insulin + 50 mL 50% dextrose IVI given. ROSC achieved at {{T1}}. Total CPR duration [min]. Post-ROSC care initiated.`,
+      ns_norosc:
+`ACLS – Non-shockable rhythm, ROSC not achieved, patient died
+Cardiac arrest at {{T0}}, initial rhythm: asystole / PEA. High-quality CPR started within 10 sec – compressions 100–120/min, 5–6 cm depth with full recoil, minimal pauses, effective breaths with 100% O2, no hyperventilation. Airway: {{AIRWAY}}. Waveform capnography used throughout. IV adrenaline 1 mg every 3 min. Reversible causes considered: {{CAUSES}}. Sodium bicarbonate 8.4% [100–150 mL] IV / calcium gluconate 10% [30 mL] IV / 10 U regular insulin + 50 mL 50% dextrose IVI given. No ROSC. CPR discontinued after [min]. Time of death declared at {{T1}}.`,
+      s_rosc:
+`ACLS – Shockable rhythm, ROSC achieved
+Cardiac arrest at {{T0}}, initial rhythm: VF / pulseless VT. High-quality CPR within 10 sec – compressions 100–120/min, 5–6 cm depth with full recoil, minimal pauses. Airway: {{AIRWAY}}. Defibrillation 200J biphasic × [no. of] shocks. Waveform capnography used throughout to monitor & guide CPR quality and detect ROSC. IV adrenaline 1 mg every 3 min, amiodarone 300 mg IV after 3rd shock. Cause likely: {{CAUSES}}. Sodium bicarbonate 8.4% [100 + 100 mL] IV + calcium gluconate 10% [30 mL] IV + 10 U regular insulin + 50 mL 50% dextrose IVI given. ROSC at {{T1}}. CPR duration [min]. Post-ROSC care started.`,
+      s_norosc:
+`ACLS – Shockable rhythm, ROSC not achieved, patient died
+Cardiac arrest at {{T0}}, initial rhythm: VF / pulseless VT. High-quality CPR initiated within 10 sec – compressions 100–120/min, 5–6 cm depth with full recoil, minimal pauses. Airway: {{AIRWAY}}. Defibrillation 200J biphasic × [no. of] shocks. Adrenaline 1 mg IV every 3 min. Waveform capnography used throughout. Amiodarone 300 mg IV bolus (for refractory VF/VT). Reversible cause suspected: {{CAUSES}}. Sodium bicarbonate 8.4% [100 + 100 mL] IV + calcium gluconate 10% [30 mL] IV + 10 U regular insulin + 50 mL 50% dextrose IVI given. No ROSC. CPR stopped after [min]. Time of death: {{T1}}.`
+    },
+
+    triRule: {
+      min: 3,
+      triggers: [
+        "Hemodynamic: MAP < 65 / pressor escalation",
+        "Perfusion: cold extremities / CRT prolonged / low PI",
+        "Lactate rising / persistent > 2 after resuscitation",
+        "Resp: worsening PF / increased WOB / rising PaCO2",
+        "Renal: oliguria + creatinine rise",
+        "Bleeding/coagulopathy trend worsening",
+        "New neuro deterioration (GCS drop / seizures)",
+        "Sepsis: persistent fever + culture/biomarker support",
+      ]
+    }
+  }
+};
+
+const $ = (id)=>document.getElementById(id);
+const out = (txt)=>{$("out").textContent = txt || "";};
+
+function setDateTime(){ $("p_dt").value = nowLocal(); }
+setDateTime();
+
+function switchTab(tabId){
+  document.querySelectorAll(".tab").forEach(b=>{
+    b.setAttribute("aria-selected", b.dataset.tab===tabId ? "true":"false");
+  });
+  document.querySelectorAll(".tabpanel").forEach(p=>{
+    p.style.display = (p.dataset.panel===tabId) ? "block":"none";
+  });
+}
+document.querySelectorAll(".tab").forEach(b=>{
+  b.addEventListener("click", ()=>switchTab(b.dataset.tab));
+});
+
+function mkPills(containerId, items, onToggle){
+  const el = $(containerId);
+  el.innerHTML = "";
+  items.forEach(it=>{
+    const p = document.createElement("div");
+    p.className="pill";
+    p.textContent = it.label || it;
+    p.dataset.on = "false";
+    p.addEventListener("click", ()=>{
+      p.dataset.on = (p.dataset.on==="true") ? "false":"true";
+      onToggle && onToggle();
+    });
+    el.appendChild(p);
+  });
+}
+
+function selectedPills(containerId, items){
+  const pills = [...$(containerId).querySelectorAll(".pill")];
+  const on = pills.map((p,i)=> p.dataset.on==="true" ? items[i] : null).filter(Boolean);
+  return on;
+}
+
+function rebuildAdmissionSets(){
+  mkPills("a_sets", STORE.catalog.admissionSets, ()=>{});
+}
+rebuildAdmissionSets();
+
+function rebuildTriggers(){
+  const triggers = STORE.catalog.triRule.triggers.map(t=>({label:t}));
+  mkPills("d_triggers", triggers, updateTriggerMeter);
+  updateTriggerMeter();
+}
+function updateTriggerMeter(){
+  const pills = [...$("d_triggers").querySelectorAll(".pill")];
+  const n = pills.filter(p=>p.dataset.on==="true").length;
+  const min = STORE.catalog.triRule.min || 3;
+  const dot = $("triDot");
+  dot.className = "dot " + (n>=min ? "ok" : n===0 ? "" : "warn");
+  $("triText").textContent = `Select triggers (${n}/${min})`;
+}
+rebuildTriggers();
+
+function rebuildProcedureSelect(){
+  const sel = $("pr_type");
+  sel.innerHTML = "";
+  STORE.catalog.procedureTemplates.forEach(t=>{
+    const o = document.createElement("option");
+    o.value = t.id; o.textContent = t.label;
+    sel.appendChild(o);
+  });
+}
+rebuildProcedureSelect();
+
+function hdr(){
+  const fn = $("p_fname")?.value.trim() || "";
+  const age = $("p_age")?.value.trim() || "";
+  const gen = $("p_gender")?.value.trim() || "";
+  const cs = $("p_case")?.value.trim() || "";
+  const ht = $("p_ht")?.value.trim() || "";
+  const wt = $("p_wt")?.value.trim() || "";
+  const ca = $("p_cancer").value.trim();
+  const dt = $("p_dt").value.trim();
+
+  const who = [fn || "[First name]", age || "[Age]", gen || "[Gender]"].join(", ");
+  const hw  = [ht || "[Height cm]", wt || "[Weight kg]"].join(", ");
+
+  return [
+    `Patient: ${who}`,
+    `Case No: ${cs || "[Case No]"}`,
+    `Height/Weight: ${hw}`,
+    `Cancer/Status: ${ca || "[Primary cancer/status]"}`,
+    `DateTime: ${dt || nowLocal()}`,
+  ].join("\n");
+}
+function safe(v){ return (v||"").toString().trim(); }
+
+/** ---------- Admission generator ---------- */
+function genAdmission(){
+  const dx = safe($("a_dx").value);
+  const sets = selectedPills("a_sets", STORE.catalog.admissionSets).map(s=>`• ${s.text}`).join("\n\n");
+  const abxKey = $("a_abx").value;
+  let abx = "";
+  if(abxKey==="custom") abx = safe($("a_abx_custom").value);
+  else if(abxKey) abx = STORE.catalog.antimicrobials[abxKey] || "";
+  const shockKey = $("a_shock").value;
+  const shock = shockKey ? (STORE.catalog.infusions[shockKey] || "") : "";
+  const shockCustom = safe($("a_shock_custom").value);
+  const respKey = $("a_resp").value;
+  const resp = respKey ? (STORE.catalog.respiratory[respKey] || "") : "";
+  const respCustom = safe($("a_resp_custom").value);
+  const extra = safe($("a_extra").value);
+
+  const lines = [];
+  lines.push(hdr());
+  lines.push("\nADMISSION ORDERS");
+  if(dx) lines.push(`Diagnosis/Problem: ${dx}`);
+  lines.push("\nOrders / Bundles:");
+  if(sets) lines.push(sets);
+  if(abx) lines.push(`\nAntimicrobials:\n${abx}${abxKey==="custom"?"":"\n(Review C/S; de-escalate within 48–72 h as applicable.)"}`);
+  if(shock) lines.push(`\nInfusion bundle:\n${shock}`);
+  if(shockCustom) lines.push(`\nTargets / clinician notes:\n${shockCustom}`);
+  if(resp) lines.push(`\nRespiratory support:\n${resp}`);
+  if(respCustom) lines.push(`\nRespiratory notes:\n${respCustom}`);
+  if(extra) lines.push(`\nAdditional orders / notes:\n${extra}`);
+
+  lines.push(`\nSafety rule: Do not trigger interventions based on a single parameter; require ≥3 independent triggers for action (document justification).`);
+  out(lines.join("\n"));
+}
+
+/** ---------- Daily generator ---------- */
+function genDaily(){
+  const triMin = STORE.catalog.triRule.min || 3;
+  const triList = [...$("d_triggers").querySelectorAll(".pill")]
+    .filter(p=>p.dataset.on==="true").map(p=>`• ${p.textContent}`);
+
+  const lines = [];
+  lines.push(hdr());
+  lines.push("\nICU DAILY PROGRESS NOTE — Adult Hemato-Oncology / Medical Oncology");
+  lines.push(`\nDiagnosis:\n${safe($("d_dx").value) || "[Fill]"}`);
+  lines.push(`\nNeurological:\n${safe($("d_neuro").value) || "[Fill]"}`);
+  lines.push(`\nRespiratory:\n${safe($("d_resp").value) || "[Fill]"}`);
+  lines.push(`\nCardiovascular:\n${safe($("d_cvs").value) || "[Fill]"}`);
+  lines.push(`\nRenal:\n${safe($("d_renal").value) || "[Fill]"}`);
+  lines.push(`\nHematologic:\n${safe($("d_heme").value) || "[Fill]"}`);
+  lines.push(`\nHepatic / Metabolic:\n${safe($("d_liver").value) || "[Fill]"}`);
+  lines.push(`\nInfection / Sepsis:\n${safe($("d_sepsis").value) || "[Fill]"}`);
+  lines.push(`\nImmune suppression:\n${safe($("d_immune").value) || "[Fill]"}`);
+  lines.push(`\nLines / Tubes / Support:\n${safe($("d_lines").value) || "[Fill]"}`);
+  lines.push(`\nNutrition / GI + Skin / Others:\n${safe($("d_nutri").value) || "[Fill]"}`);
+  lines.push(`\nPlan:\n${safe($("d_plan").value) || "[Fill]"}`);
+
+  lines.push("\nDecision justification (≥3 independent triggers rule):");
+  if(triList.length===0) lines.push("• [Not documented]");
+  else lines.push(triList.join("\n"));
+
+  if(triList.length>0 && triList.length<triMin){
+    lines.push(`\nNOTE: Only ${triList.length}/${triMin} triggers documented — add triggers or explicitly justify deviation.`);
+  }
+  out(lines.join("\n"));
+}
+
+/** ---------- Short rounds generator ---------- */
+function genShort(){
+  const lines = [];
+  lines.push(hdr());
+  lines.push("\nSHORT FORM DAILY ROUNDS NOTE (CIS)");
+  lines.push(`\nDiagnosis:\n${safe($("s_dx").value) || "[Fill]"}`);
+  lines.push(`\nNeuro:\n${safe($("s_neuro").value) || "[Fill]"}`);
+  lines.push(`\nResp:\n${safe($("s_resp").value) || "[Fill]"}`);
+  lines.push(`\nCVS:\n${safe($("s_cvs").value) || "[Fill]"}`);
+  lines.push(`\nRenal:\n${safe($("s_renal").value) || "[Fill]"}`);
+  lines.push(`\nHeme:\n${safe($("s_heme").value) || "[Fill]"}`);
+  lines.push(`\nLiver/Metabolic:\n${safe($("s_liver").value) || "[Fill]"}`);
+  lines.push(`\nSepsis/Infection:\n${safe($("s_sepsis").value) || "[Fill]"}`);
+  lines.push(`\nImmune/Chemo:\n${safe($("s_immune").value) || "[Fill]"}`);
+  lines.push(`\nLines/Access:\n${safe($("s_lines").value) || "[Fill]"}`);
+  lines.push(`\nPlan:\n${safe($("s_plan").value) || "[Fill]"}`);
+  out(lines.join("\n"));
+}
+
+/** ---------- Procedure / ACLS ---------- */
+function fillTemplate(tpl, vars){
+  return tpl.replace(/\{\{(\w+)\}\}/g, (_,k)=> vars[k] ?? `[${k}]`);
+}
+function genProcedure(){
+  const id = $("pr_type").value;
+  const t = STORE.catalog.procedureTemplates.find(x=>x.id===id);
+  const site = safe($("pr_site").value) || "[site]";
+  const ind  = safe($("pr_ind").value) || "[indication]";
+  const dev  = safe($("pr_dev").value) || "[device/size]";
+  const att  = safe($("pr_att").value) || "single attempt, uncomplicated";
+  const extra = safe($("pr_extra").value);
+
+  const vars = {
+    SITE: site,
+    INDICATION: ind,
+    DEVICE: dev,
+    ATTEMPTS: att,
+    DEPTH: "[cm]",
+    MVSET: safe($("a_resp_custom").value) || "VC-AC, Vt 6–7 mL/kg IBW, RR 20–24, PEEP 3–8, FiO2 50–60%, I:E 1:2",
+    UF: "[mL]",
+    HEPARIN: "[heparinized/not heparinized + rationale]"
+  };
+
+  const lines = [];
+  lines.push(hdr());
+  lines.push("\nPROCEDURE NOTE");
+  lines.push(fillTemplate(t.text, vars));
+  if(extra) lines.push(`\nAddendum:\n${extra}`);
+  out(lines.join("\n"));
+}
+function genACLS(){
+  const key = $("c_scn").value;
+  const tpl = STORE.catalog.aclsTemplates[key];
+  const vars = {
+    T0: safe($("c_t0").value) || "[time]",
+    T1: safe($("c_t1").value) || "[time]",
+    AIRWAY: safe($("c_airway").value) || "[i-gel #3/#4 / already intubated]",
+    CAUSES: safe($("c_causes").value) || "severe acidosis / hypoxia / hyperkalemia (as applicable)"
+  };
+  let txt = fillTemplate(tpl, vars);
+  const drugs = safe($("c_drugs").value);
+  const extra = safe($("c_extra").value);
+
+  const lines = [];
+  lines.push(hdr());
+  lines.push("");
+  lines.push(txt);
+  if(drugs) lines.push(`\nDrug deviations / additions:\n${drugs}`);
+  if(extra) lines.push(`\nAdditional narrative:\n${extra}`);
+  out(lines.join("\n"));
+}
+
+/** ---------- NEW: Order Composer ---------- */
+function uniqueCats(){
+  const s = new Set(STORE.catalog.orderLines.map(x=>x.cat||"Other"));
+  return [...s].sort((a,b)=>a.localeCompare(b));
+}
+
+function rebuildComposerCats(){
+  const sel = $("oc_cat");
+  const keep = sel.value;
+  sel.innerHTML = `<option value="">All</option>`;
+  uniqueCats().forEach(c=>{
+    const o = document.createElement("option");
+    o.value = c; o.textContent = c;
+    sel.appendChild(o);
+  });
+  sel.value = keep || "";
+}
+
+function renderComposerList(){
+  const filter = safe($("oc_filter").value).toLowerCase();
+  const cat = $("oc_cat").value;
+  const list = $("oc_list");
+  list.innerHTML = "";
+
+  const items = STORE.catalog.orderLines
+    .filter(x => !cat || (x.cat||"Other")===cat)
+    .filter(x => !filter || (x.label+" "+x.text+" "+(x.cat||"")).toLowerCase().includes(filter));
+
+  items.forEach(item=>{
+    const row = document.createElement("div");
+    row.className = "lineitem";
+    row.dataset.id = item.id;
+
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.addEventListener("change", ()=>{
+      const box = row.querySelector(".inlineEdit");
+      box.style.display = cb.checked ? "block" : "none";
+    });
+
+    const rhs = document.createElement("div");
+
+    const head = document.createElement("div");
+    head.className = "linehead";
+    const tag = document.createElement("span"); tag.className="tag"; tag.textContent = (item.cat||"Other");
+    const tag2 = document.createElement("span"); tag2.className="tag gray"; tag2.textContent = item.label;
+    head.appendChild(tag); head.appendChild(tag2);
+
+    const txt = document.createElement("div");
+    txt.className="linetxt";
+    txt.textContent = item.text;
+
+    const edit = document.createElement("div");
+    edit.className="inlineEdit";
+    edit.style.display = "none";
+    const t = document.createElement("textarea");
+    t.value = item.text;
+    t.addEventListener("input", ()=>{
+      // live preview
+      txt.textContent = t.value;
+    });
+    edit.appendChild(t);
+
+    rhs.appendChild(head);
+    rhs.appendChild(txt);
+    rhs.appendChild(edit);
+
+    row.appendChild(cb);
+    row.appendChild(rhs);
+    list.appendChild(row);
+  });
+
+  if(items.length===0){
+    const empty = document.createElement("div");
+    empty.className="hint";
+    empty.textContent = "No matching dose lines. Clear filter or change category. (Keeper: add more in catalog.orderLines.)";
+    list.appendChild(empty);
+  }
+}
+
+function composerSelectedLines(){
+  const rows = [...$("oc_list").querySelectorAll(".lineitem")];
+  const picked = rows
+    .filter(r => r.querySelector('input[type="checkbox"]').checked)
+    .map(r => ({
+      id: r.dataset.id,
+      text: safe(r.querySelector("textarea")?.value || ""),
+    }))
+    .filter(x => x.text.length>0);
+  return picked;
+}
+
+function genComposer(){
+  const headerChoice = $("oc_hdr").value;
+  const header =
+    headerChoice==="treatment_orders" ? "TREATMENT ORDERS" :
+    headerChoice==="icu_orders" ? "ICU ORDERS" :
+    "TREATMENT ADVICE";
+
+  const addon = safe($("oc_addon").value);
+  const extra = safe($("oc_extra").value);
+  const picked = composerSelectedLines();
+
+  const lines = [];
+  lines.push(hdr());
+  lines.push(`\n${header}`);
+  if(addon) lines.push(addon);
+
+  if(picked.length===0){
+    lines.push("\n• [No dose lines selected]");
+  }else{
+    // group by category (stable)
+    const byCat = {};
+    picked.forEach(p=>{
+      const orig = STORE.catalog.orderLines.find(x=>x.id===p.id);
+      const c = (orig?.cat)||"Other";
+      if(!byCat[c]) byCat[c]=[];
+      byCat[c].push(p.text);
+    });
+
+    Object.keys(byCat).sort((a,b)=>a.localeCompare(b)).forEach(c=>{
+      lines.push(`\n${c}:`);
+      byCat[c].forEach(t=> lines.push(`• ${t}`));
+    });
+  }
+
+  if(extra) lines.push(`\nAdditional instructions:\n${extra}`);
+  out(lines.join("\n"));
+}
+
+function composerUncheckAll(){
+  [...$("oc_list").querySelectorAll('.lineitem input[type="checkbox"]')].forEach(cb=>{
+    cb.checked = false;
+    const box = cb.closest(".lineitem").querySelector(".inlineEdit");
+    box.style.display = "none";
+  });
+}
+
+/** ---------- NEW: Every-shift macro ---------- */
+const SHIFT_REQUIRED = [
+  "sh_neuro","sh_pf","sh_paco2","sh_dp","sh_map","sh_pi","sh_pressor",
+  "sh_uo","sh_cr","sh_urea","sh_ua","sh_elect",
+  "sh_liver","sh_bleed","sh_proc","sh_family"
+];
+
+function validateShift(){
+  let missing = 0;
+  SHIFT_REQUIRED.forEach(id=>{
+    const el = $(id);
+    el.classList.remove("req","okField");
+    if(!safe(el.value)){
+      el.classList.add("req");
+      missing++;
+    }else{
+      el.classList.add("okField");
+    }
+  });
+  return missing;
+}
+
+function macroFillShift(){
+  // One-click: inserts a structured paragraph into sh_family if blank? No:
+  // We create a single macro block and place it into output directly (no destructive edits).
+  const lines = [];
+  lines.push(`Shift: ${safe($("sh_shift").value)}`);
+  lines.push(`AVPU/GCS/Sedation: ${safe($("sh_neuro").value) || "[Fill]"}`);
+  lines.push(`Lung: Oxygenation (PaO2/FiO2 trend): ${safe($("sh_pf").value) || "[Fill]"}; Ventilation (PaCO2 trend): ${safe($("sh_paco2").value) || "[Fill]"}; Driving pressure trend: ${safe($("sh_dp").value) || "[Fill]"}`);
+  lines.push(`Resp support: ${safe($("sh_support").value) || "[Fill]"}`);
+  lines.push(`Heart: MAP trend: ${safe($("sh_map").value) || "[Fill]"}; PI trend: ${safe($("sh_pi").value) || "[Fill]"}; Vasopressor trend: ${safe($("sh_pressor").value) || "[Fill]"}; NT-proBNP trend: ${safe($("sh_ntprobnp").value) || "NA"}`);
+  lines.push(`Kidney: UO trend: ${safe($("sh_uo").value) || "[Fill]"}; Creatinine trend: ${safe($("sh_cr").value) || "[Fill]"}; Urea trend: ${safe($("sh_urea").value) || "[Fill]"}; Uric acid trend: ${safe($("sh_ua").value) || "[Fill]"}; Electrolytes: ${safe($("sh_elect").value) || "[Fill]"}`);
+  lines.push(`Liver/coag trend: ${safe($("sh_liver").value) || "[Fill]"}`);
+  lines.push(`Bleeding/Platelets trend: ${safe($("sh_bleed").value) || "[Fill]"}`);
+  lines.push(`Procedures planned/done: ${safe($("sh_proc").value) || "[Fill]"}`);
+  lines.push(`Family communication: ${safe($("sh_family").value) || "[Fill]"}`);
+  return lines.join("\n");
+}
+
+function genShift(){
+  const missing = validateShift();
+  const lines = [];
+  lines.push(hdr());
+  lines.push("\nICU PROGRESS NOTE — EVERY SHIFT (CIS)");
+  lines.push(macroFillShift());
+  if(missing>0){
+    lines.push(`\nNOTE: ${missing} required field(s) were missing at generation time (highlighted). Please complete for documentation quality.`);
+  }
+  out(lines.join("\n"));
+}
+
+/** ---------- Clipboard / download ---------- */
+function copyOut(){
+  const text = $("out").textContent || "";
+  navigator.clipboard.writeText(text).catch(()=>{ alert("Copy failed (browser permission)."); });
+}
+function downloadTxt(filename){
+  const blob = new Blob([$("out").textContent || ""], {type:"text/plain;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();}, 50);
+}
+
+/** ---------- Save/Load snapshot ---------- */
+function snapshot(){
+  const oc_states = [...$("oc_list").querySelectorAll(".lineitem")].map(r=>{
+    return {
+      id: r.dataset.id,
+      checked: r.querySelector('input[type="checkbox"]').checked,
+      text: r.querySelector("textarea")?.value || ""
+    };
+  });
+
+  return {
+    meta: STORE.meta,
+    catalog: STORE.catalog,
+    data: {
+      p_fname: $("p_fname").value, p_age: $("p_age").value, p_gender: $("p_gender").value, p_case: $("p_case").value, p_ht: $("p_ht").value, p_wt: $("p_wt").value,
+
+      p_cancer: $("p_cancer").value, p_dt: $("p_dt").value,
+
+      a_dx: $("a_dx").value, a_abx: $("a_abx").value, a_abx_custom: $("a_abx_custom").value,
+      a_shock: $("a_shock").value, a_shock_custom: $("a_shock_custom").value,
+      a_resp: $("a_resp").value, a_resp_custom: $("a_resp_custom").value, a_extra: $("a_extra").value,
+      a_sets_on: [...$("a_sets").querySelectorAll(".pill")].map(p=>p.dataset.on==="true"),
+
+      // composer
+      oc_filter: $("oc_filter").value, oc_cat: $("oc_cat").value, oc_hdr: $("oc_hdr").value,
+      oc_addon: $("oc_addon").value, oc_extra: $("oc_extra").value,
+      oc_states,
+
+      // daily
+      d_dx: $("d_dx").value, d_neuro: $("d_neuro").value, d_resp: $("d_resp").value, d_cvs: $("d_cvs").value,
+      d_renal: $("d_renal").value, d_heme: $("d_heme").value, d_liver: $("d_liver").value, d_sepsis: $("d_sepsis").value,
+      d_immune: $("d_immune").value, d_lines: $("d_lines").value, d_nutri: $("d_nutri").value, d_plan: $("d_plan").value,
+      d_triggers_on: [...$("d_triggers").querySelectorAll(".pill")].map(p=>p.dataset.on==="true"),
+
+      // short
+      s_dx: $("s_dx").value, s_neuro: $("s_neuro").value, s_resp: $("s_resp").value, s_cvs: $("s_cvs").value,
+      s_renal: $("s_renal").value, s_heme: $("s_heme").value, s_liver: $("s_liver").value, s_sepsis: $("s_sepsis").value,
+      s_immune: $("s_immune").value, s_lines: $("s_lines").value, s_plan: $("s_plan").value,
+
+      // shift
+      sh_shift: $("sh_shift").value, sh_neuro: $("sh_neuro").value,
+      sh_pf: $("sh_pf").value, sh_paco2: $("sh_paco2").value, sh_dp: $("sh_dp").value, sh_support: $("sh_support").value,
+      sh_map: $("sh_map").value, sh_pi: $("sh_pi").value, sh_pressor: $("sh_pressor").value, sh_ntprobnp: $("sh_ntprobnp").value,
+      sh_uo: $("sh_uo").value, sh_cr: $("sh_cr").value, sh_urea: $("sh_urea").value, sh_ua: $("sh_ua").value, sh_elect: $("sh_elect").value,
+      sh_liver: $("sh_liver").value, sh_bleed: $("sh_bleed").value, sh_proc: $("sh_proc").value, sh_family: $("sh_family").value,
+
+      // procedure
+      pr_type: $("pr_type").value, pr_site: $("pr_site").value, pr_ind: $("pr_ind").value,
+      pr_dev: $("pr_dev").value, pr_att: $("pr_att").value, pr_extra: $("pr_extra").value,
+
+      // acls
+      c_scn: $("c_scn").value, c_airway: $("c_airway").value, c_t0: $("c_t0").value, c_t1: $("c_t1").value,
+      c_causes: $("c_causes").value, c_drugs: $("c_drugs").value, c_extra: $("c_extra").value,
+
+      out: $("out").textContent
+    }
+  };
+}
+
+function restore(s){
+  if(!s) return;
+
+  if(s.catalog){
+    STORE.catalog = s.catalog;
+    rebuildAdmissionSets();
+    rebuildTriggers();
+    rebuildProcedureSelect();
+    rebuildComposerCats();
+    renderComposerList();
+  }
+
+  const d = s.data || {};
+
+  // Backward compatibility (older saves)
+  if(d.p_name && !d.p_fname) d.p_fname = d.p_name;
+  if(d.p_bed && !d.p_case) d.p_case = d.p_bed;
+  Object.keys(d).forEach(k=>{
+    if($(k)) $(k).value = d[k];
+  });
+
+  if(Array.isArray(d.a_sets_on)){
+    [...$("a_sets").querySelectorAll(".pill")].forEach((p,i)=>p.dataset.on = d.a_sets_on[i] ? "true":"false");
+  }
+  if(Array.isArray(d.d_triggers_on)){
+    [...$("d_triggers").querySelectorAll(".pill")].forEach((p,i)=>p.dataset.on = d.d_triggers_on[i] ? "true":"false");
+    updateTriggerMeter();
+  }
+
+  // restore composer line edits and checked states (after list exists)
+  if(Array.isArray(d.oc_states)){
+    const map = new Map(d.oc_states.map(x=>[x.id,x]));
+    [...$("oc_list").querySelectorAll(".lineitem")].forEach(r=>{
+      const state = map.get(r.dataset.id);
+      if(!state) return;
+      const cb = r.querySelector('input[type="checkbox"]');
+      const ta = r.querySelector("textarea");
+      cb.checked = !!state.checked;
+      if(ta) ta.value = state.text || ta.value;
+      r.querySelector(".linetxt").textContent = ta.value;
+      r.querySelector(".inlineEdit").style.display = cb.checked ? "block" : "none";
+    });
+  }
+
+  if(d.out) out(d.out);
+  validateShift();
+}
+
+function saveLocal(){
+  localStorage.setItem(APP_KEY, JSON.stringify(snapshot()));
+}
+function loadLocal(){
+  const raw = localStorage.getItem(APP_KEY);
+  if(!raw) return alert("No saved state found.");
+  restore(JSON.parse(raw));
+}
+function exportJSON(){
+  const blob = new Blob([JSON.stringify(snapshot(), null, 2)], {type:"application/json;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `ICU_HelpSupport_export_${Date.now()}.json`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();}, 50);
+}
+function importJSON(){
+  const inp = document.createElement("input");
+  inp.type="file"; inp.accept="application/json";
+  inp.onchange = ()=>{
+    const f = inp.files?.[0]; if(!f) return;
+    const r = new FileReader();
+    r.onload = ()=>{
+      try{ restore(JSON.parse(String(r.result||""))); alert("Import done."); }
+      catch(e){ alert("Invalid JSON file."); }
+    };
+    r.readAsText(f);
+  };
+  inp.click();
+}
+function resetAll(){
+  if(!confirm("Reset all fields and output?")) return;
+  localStorage.removeItem(APP_KEY);
+  location.reload();
+}
+
+/** ---------- Keeper mode ---------- */
+function refreshKeeperJSON(){ $("k_json").value = JSON.stringify(STORE.catalog, null, 2); }
+function applyKeeperJSON(){
+  try{
+    STORE.catalog = JSON.parse($("k_json").value);
+    rebuildAdmissionSets();
+    rebuildTriggers();
+    rebuildProcedureSelect();
+    rebuildComposerCats();
+    renderComposerList();
+    validateShift();
+    alert("Catalog applied.");
+  }catch(e){ alert("Catalog JSON invalid."); }
+}
+
+/** ---------- Wire UI ---------- */
+$("btnGenAdmission").addEventListener("click", genAdmission);
+$("btnCopyOutA").addEventListener("click", copyOut);
+$("btnDownloadA").addEventListener("click", ()=>downloadTxt("Admission_Orders.txt"));
+
+$("btnGenDaily").addEventListener("click", genDaily);
+$("btnCopyOutD").addEventListener("click", copyOut);
+$("btnDownloadD").addEventListener("click", ()=>downloadTxt("Daily_Progress_Note.txt"));
+
+$("btnGenShort").addEventListener("click", genShort);
+$("btnCopyOutS").addEventListener("click", copyOut);
+$("btnDownloadS").addEventListener("click", ()=>downloadTxt("Short_Rounds_Note.txt"));
+
+$("btnGenShift").addEventListener("click", genShift);
+$("btnMacroFill").addEventListener("click", ()=>{
+  validateShift();
+  const lines = [];
+  lines.push(hdr());
+  lines.push("\nICU PROGRESS NOTE — EVERY SHIFT (CIS)");
+  lines.push(macroFillShift());
+  out(lines.join("\n"));
+});
+$("btnCopyOutSH").addEventListener("click", copyOut);
+$("btnDownloadSH").addEventListener("click", ()=>downloadTxt("Every_Shift_Progress_Note.txt"));
+
+$("btnGenProc").addEventListener("click", genProcedure);
+$("btnCopyOutP").addEventListener("click", copyOut);
+$("btnDownloadP").addEventListener("click", ()=>downloadTxt("Procedure_Note.txt"));
+
+$("btnGenACLS").addEventListener("click", genACLS);
+$("btnCopyOutC").addEventListener("click", copyOut);
+$("btnDownloadC").addEventListener("click", ()=>downloadTxt("ACLS_Note.txt"));
+
+$("btnSave").addEventListener("click", ()=>{ saveLocal(); alert("Saved locally."); });
+$("btnLoad").addEventListener("click", loadLocal);
+$("btnExport").addEventListener("click", exportJSON);
+$("btnImport").addEventListener("click", importJSON);
+$("btnReset").addEventListener("click", resetAll);
+
+$("btnRebuildCatalog").addEventListener("click", refreshKeeperJSON);
+$("btnApplyCatalog").addEventListener("click", applyKeeperJSON);
+
+/** ---------- Composer wiring ---------- */
+rebuildComposerCats();
+renderComposerList();
+$("oc_filter").addEventListener("input", renderComposerList);
+$("oc_cat").addEventListener("change", renderComposerList);
+$("btnGenComposer").addEventListener("click", genComposer);
+$("btnSelectNone").addEventListener("click", composerUncheckAll);
+$("btnCopyOutOC").addEventListener("click", copyOut);
+$("btnDownloadOC").addEventListener("click", ()=>downloadTxt("Treatment_Advice_Block.txt"));
+
+/** ---------- Shift validation live ---------- */
+SHIFT_REQUIRED.forEach(id=>{
+  $(id).addEventListener("input", validateShift);
+});
+$("sh_ntprobnp").addEventListener("input", ()=>{}); // optional
+validateShift();
+
+/** ---------- On load restore ---------- */
+window.addEventListener("load", ()=>{
+  const raw = localStorage.getItem(APP_KEY);
+  if(raw){
+    try{ restore(JSON.parse(raw)); }catch(_){}
+  } else {
+    out("Select a module → Generate → Copy into CIS/EMR.");
+  }
+  refreshKeeperJSON();
+});
+
+/** ---------- Guard accidental refresh ---------- */
+let dirty=false;
+document.addEventListener("input", ()=>{ dirty=true; });
+window.addEventListener("beforeunload", (e)=>{
+  if(!dirty) return;
+  e.preventDefault();
+  e.returnValue="";
+});
+</script>
+<!-- ===================== CRIL QUICK LAUNCH (Simple) ===================== -->
+<button id="crilWidgetBtn" type="button" title="Open CRIL in new tab"
+  style="position:fixed; left:18px; bottom:18px; z-index:99999; border:0; border-radius:999px; padding:12px 14px;
+  box-shadow:0 8px 24px rgba(0,0,0,.18); cursor:pointer; background:#111; color:#fff; font-weight:900;">
+  CRIL
+</button>
+
+<script>
+/* CRIL quick launch (v2):
+   - Default: opens CRIL GROUP CHAT in a NEW TAB.
+   - Optional CRIL-PC mode (local machine): user chooses Group vs Direct (ChatGPT home).
+   - Toggle CRIL-PC mode on/off by right-clicking the CRIL button (stored in localStorage).
+*/
+(function(){
+  const GROUP_URL = "https://chatgpt.com/gg/v/69442e4592a881a3a61c1f5456401108?token=YXwLI1ZDZLrrJ4NCap6NXw";
+  const DIRECT_URL = "https://chatgpt.com";
+  const KEY = "ICU_APP_CRIL_PC_MODE"; // set to "1" on the CRIL PC
+
+  const btn = document.getElementById("crilWidgetBtn");
+  if(!btn) return;
+
+  function openNewTab(url){
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
+
+  function isPcMode(){
+    return localStorage.getItem(KEY) === "1";
+  }
+
+  // Right-click toggles CRIL-PC mode on this machine
+  btn.addEventListener("contextmenu", function(e){
+    e.preventDefault();
+    const next = isPcMode() ? "0" : "1";
+    localStorage.setItem(KEY, next);
+    alert(next==="1"
+      ? "CRIL-PC mode ENABLED on this machine. Click CRIL to choose Group vs Direct."
+      : "CRIL-PC mode DISABLED. Click CRIL will open Group chat by default.");
+  });
+
+  btn.addEventListener("click", function(){
+    if(isPcMode()) {
+      const useGroup = confirm("CRIL-PC mode:\nOK = open CRIL GROUP chat\nCancel = open DIRECT chat (ChatGPT home)");
+      openNewTab(useGroup ? GROUP_URL : DIRECT_URL);
+      return;
+    }
+    // Default (non-CRIL-PC): open group chat
+    openNewTab(GROUP_URL);
+  });
+})();
+</script>
+
+<!-- =================== END CRIL QUICK LAUNCH =================== -->
+
+<!-- =================== END CRIL QUICK LAUNCH =================== -->
+</body>
+</html>
