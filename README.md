@@ -1,5 +1,6 @@
 # Prof. Jyotirmay Kirtania
-Bridging the gap between theory and bedside practice through open-access, physiologically-weighted, evidence based, decision support tools for anesthesia and intensive care.
+Bridging the gap between theory and bedside practice through open-access, physiologically-weighted, evidence-based, decision support tools for anesthesia and intensive care.
+
 # hodanesthtmcvns-stack: Critical Care & Anesthesia Bedside Tools
 **Mission:** Bridging the gap between theory and bedside practice through open-access, physiologically-weighted, evidence-based decision support tools for anesthesia and intensive care.
 
@@ -10,6 +11,7 @@ This repository hosts a suite of portable, offline-ready HTML applications desig
 
 | Tool | Clinical Focus | Launch Link |
 | :--- | :--- | :--- |
+| **ICU Help & Support** | Documentation & Orders | [Launch App](./ICU-Help-Support-v2.4.html) |
 | **BEAT-C** | Empiric Antibiotics | [Launch App](./BEAT-C-v1.0.html) |
 | **PEEP Titrator** | Optimal PEEP Selection | [Launch App](./PEEP-titration-v1.4.html) |
 | **NEWS2 Triage** | Severity Assessment | [Launch App](./NEWS2.html) |
@@ -24,6 +26,9 @@ This repository hosts a suite of portable, offline-ready HTML applications desig
 * **Physiology-Based:** Algorithms prioritize lung mechanics (Compliance, Driving Pressure) and hemodynamic stability (MAP).
 
 ## Key Tool Summaries
+
+### ICU Help & Support (v2.4)
+The central hub for ICU workflow. It features an **Order Composer** with tick-box bundles, a **Progress Note generator** (Daily/Short Rounds/Macros), and integrated **ICU Calculators** (SOFA, MPM-III, GCS). It includes "Keeper Mode" for custom JSON template management and integration with the CRIL AI assistant.
 
 ### BEAT-C (v1.0)
 A probabilistic engine for initial empiric antibiotic selection. It balances suspected infection sources against local antibiogram data while applying safety guardrails for renal function, allergies, and pregnancy.
@@ -50,4 +55,3 @@ These tools are intended for **clinical decision support and educational purpose
 
 ***
 *Developed by Prof. (Dr.) Jyotirmay Kirtania, Department of Anesthesiology, Critical Care & Pain, MPMMCC & HBCH (Tata Memorial Centre), Varanasi.*
-
