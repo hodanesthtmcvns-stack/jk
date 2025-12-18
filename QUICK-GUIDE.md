@@ -1,51 +1,36 @@
 # ICU Bedside Stack: Quick Launch Guide
-**Direct URLs for clinical use. Bookmark these on your mobile browser for instant access.**
+**Direct URLs for clinical use. Bookmark this page on your mobile browser for instant access.**
 
-### Emergency & Triage
-* **NEWS2 Triage:** [Launch App](https://hodanesthtmcvns-stack.github.io/jk/NEWS2.html)
-    * *Bedside Use:* Rapid severity assessment and clinical escalation triggers based on standardized physiological scoring.
-* **BEAT-C Antibiotics:** [Launch App](https://hodanesthtmcvns-stack.github.io/jk/BEAT-C-v1.0.html)
-    * *Bedside Use:* Probabilistic empiric antibiotic selection and comprehensive 6-hour sepsis bundle checklist.
-
-
-### Ventilation & Respiratory
-* **PEEP Titrator:** [Launch App](https://hodanesthtmcvns-stack.github.io/jk/PEEP-titration-v1.4.html)
-    * *Bedside Use:* Finding optimal PEEP for passive patients via Static Compliance ($C_{stat}$) and Driving Pressure ($\Delta P$).
-* **Ventilator Simulator:** [Launch App](https://hodanesthtmcvns-stack.github.io/jk/ICU-vent-sim-v%201.2.html)
-    * *Bedside Use:* Visualizing respiratory mechanics, flow-volume loops, and real-time waveform dynamics.
-
-
-### Diagnostics & Management
-* **Lab Trends & Alerts:** [Launch App](https://hodanesthtmcvns-stack.github.io/jk/ICU-lab-trends-alerts-v2.0.html)
-    * *Bedside Use:* Longitudinal LIS data parsing for automated AKI (KDIGO), TLS, and DIC (ISTH) alerts.
-* **Agitation Manager:** [Launch App](https://hodanesthtmcvns-stack.github.io/jk/acute-agitation-v1.0.html)
-    * *Bedside Use:* Stepwise delirium management (P-I-N-C-H) with built-in QTc safety checks for antipsychotics.
-* **Patient Label Gen:** [Launch App](https://hodanesthtmcvns-stack.github.io/jk/Patient-label-generator-v1.5.html)
-    * *Bedside Use:* Generating standardized 4x10 grid patient identification labels for A4 printing.
+### Clinical Applications Stack
+| Tool | Launch App (Live) | Manual & Clinical Logic |
+| :--- | :--- | :--- |
+| **BEAT-C Antibiotics** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/BEAT-C-v1.0.html) | [📖 About & Help](./docs/BEAT-C-Help.md) |
+| **NEWS2 Triage** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/NEWS2.html) | [📖 About & Help](./docs/NEWS2-Help.md) |
+| **PEEP Titrator** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/PEEP-titration-v1.4.html) | [📖 About & Help](./docs/PEEP-Titration-Help.md) |
+| **Agitation Manager** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/acute-agitation-v1.0.html) | [📖 About & Help](./docs/Agitation-Manager-Help.md) |
+| **Lab Trends & Alerts** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/ICU-lab-trends-alerts-v2.0.html) | [📖 About & Help](./docs/Lab-Trends-Help.md) |
+| **Patient Label Gen** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/Patient-label-generator-v1.5.html) | [📖 About & Help](./docs/Patient-Label-Help.md) |
+| **Vent Simulator** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/ICU-vent-sim-v%201.2.html) | [📖 About & Help](./docs/Vent-Sim-Help.md) |
 
 ---
 
-## Bedside Installation (PWA Style)
-You can use these tools like a native app on your phone:
+### Scan to Open on Mobile
+Scan this QR code with your smartphone camera to access this dashboard instantly at the bedside:
 
-1.  **Open the link** in Chrome (Android) or Safari (iOS).
-2.  **Tap the Share/Menu icon** (the three vertical dots on Android, or the box with an arrow on iOS).
-3.  **Select "Add to Home Screen."**
-4.  The tool icon will now appear on your home screen for one-tap access without typing URLs.
+![Bedside Stack QR Code](https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://hodanesthtmcvns-stack.github.io/jk/QUICK-START.md)
 
-## Offline Resilience
-These applications are built with a single-file HTML/JS architecture. Once the page is loaded, the logic remains cached in your browser. You can continue to perform calculations and generate triage reports even in areas with **zero internet or cellular signal** (e.g., lead-shielded O.T. or basement wards).
+---
 
-## Privacy & Security
-* **Client-Side Only:** All data processing occurs on your local device. 
-* **Zero Uploads:** No patient names, vitals, or lab values are ever transmitted to a server or stored in the cloud.
-* **Compliance:** Inherently HIPAA/GDPR compliant as no Protected Health Information (PHI) leaves the user's control.
+## Installation & Offline Use
+1. **Home Screen:** Open the Launch link in Safari (iOS) or Chrome (Android) and select **"Add to Home Screen"** to use these as apps.
+2. **Offline Resilience:** Once loaded, these tools work without internet (ideal for shielded ICU environments or basement wards).
+3. **Data Privacy:** All calculations and data parsing happen locally on your device. **No PHI/patient data is ever uploaded.**
 
 ---
 
 ### Attribution & Terms
 **Author:** Prof. (Dr.) Jyotirmay Kirtania  
 **Department:** Anesthesiology, Critical Care & Pain, MPMMCC & HBCH (Tata Memorial Centre), Varanasi.  
-**License:** [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/) (Attribution-NonCommercial)
+**License:** [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/)
 
 **Disclaimer:** These tools are for clinical decision support and education only. They do not replace professional medical judgment or institutional protocols.
