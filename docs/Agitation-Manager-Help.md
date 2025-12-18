@@ -19,8 +19,6 @@ This bedside application is designed for the stepwise management of acute agitat
 * **Drug Interaction:** Do not co-administer IM Olanzapine and parenteral benzodiazepines within 1 hour of each other.
 * **Contraindications:** Avoid Dexmedetomidine in patients with severe bradycardia or AV block.
 
-
-
 ---
 **Author:** Prof. Jyotirmay Kirtania  
 **Framework:** Based on European SmPC dosing limits and standard ICU safety protocols.
