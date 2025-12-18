@@ -28,8 +28,8 @@
 ## Bedside Installation (PWA Style)
 You can use these tools like a native app on your phone:
 
-1.  **Open the link** in Safari (iOS) or Chrome (Android).
-2.  **Tap the Share/Menu icon** (the box with an arrow on iOS, or the three vertical dots on Android).
+1.  **Open the link** in Chrome (Android) or Safari (iOS).
+2.  **Tap the Share/Menu icon** (the three vertical dots on Android, or the box with an arrow on iOS).
 3.  **Select "Add to Home Screen."**
 4.  The tool icon will now appear on your home screen for one-tap access without typing URLs.
 
