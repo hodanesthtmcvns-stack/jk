@@ -46,7 +46,7 @@ Assists clinicians in finding the "optimal PEEP" for passive patients on Volume 
 National Early Warning Score 2 (NEWS2) physiological scoring and response. It helps healthcare providers to screen and triage patients in the emergency room, clinic and wards for critical illness and sepsis.
 
 ## License
-This project is licensed under **Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)**. 
+This project is licensed under **GNU GPL v3.0**. 
 * **Attribution:** Credit must be given to the creator, **Prof. (Dr.) Jyotirmay Kirtania**.
 * **Non-Commercial:** The material may not be used for commercial purposes.
 
