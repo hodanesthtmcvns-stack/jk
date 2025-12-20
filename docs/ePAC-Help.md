@@ -52,7 +52,7 @@ The **ePAC** (Electronic Pre Anesthesia Checkup) tool is a specialized digital p
 ### **Legal & Safety**
 * **Data Privacy:** This tool does not store patient data on a server. All data processing happens locally in the browser. 
 * **Disclaimer:** This is a documentation support tool. Clinical judgment and final anesthesia plans remain the sole responsibility of the attending anesthesiologist.
-* **Open Source:** This project is open for modification and distribution under the **GNU GPL v4** license.
+* **Open Source:** This project is open for modification and distribution under the **GNU GPL v4 & Creative Commons Attribution 4.0 (CC BY 4.0)** license.
 
 ---
 
