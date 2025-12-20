@@ -27,5 +27,5 @@ This tool helps clinicians identify the "Optimal PEEP" for passive patients on V
 
 ---
 **Author:** Prof. Jyotirmay Kirtania  
-**License:** CC BY-NC 4.0  
+**License:** GNU GPL v3.0  
 **Disclaimer:** This is a decision-support tool. Clinical responsibility remains with the treating physician.
