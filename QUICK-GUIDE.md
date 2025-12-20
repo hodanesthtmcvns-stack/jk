@@ -33,6 +33,6 @@ Scan this QR code with your smartphone camera to access this dashboard instantly
 ### Attribution & Terms
 **Author:** Prof. (Dr.) Jyotirmay Kirtania  
 **Department:** Anesthesiology, Critical Care & Pain, MPMMCC & HBCH (Tata Memorial Centre), Varanasi.  
-**License:** [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/)
+**License:** GNU GPL v3.0
 
 **Disclaimer:** These tools are for clinical decision support and education only. They do not replace professional medical judgment or institutional protocols.
