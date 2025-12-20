@@ -48,7 +48,6 @@ National Early Warning Score 2 (NEWS2) physiological scoring and response. It he
 ## License
 This project is licensed under **GNU GPL v3.0**. 
 * **Attribution:** Credit must be given to the creator, **Prof. (Dr.) Jyotirmay Kirtania**.
-* **Non-Commercial:** The material may not be used for commercial purposes.
 
 ## Medical Disclaimer
 These tools are intended for **clinical decision support and educational purposes only**. They do not replace professional medical judgment, bedside physical examination, or institutional clinical protocols.
