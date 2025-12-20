@@ -6,7 +6,7 @@ The **ePAC** (Electronic Pre Anesthesia Checkup) tool is a specialized digital p
 * **Version:** 2.4
 * **Release Date:** 06-Nov-2024
 * **Author:** Prof. Jyotirmay Kirtania
-* **License:** GNU GPL v4 & Creative Commons Attribution 4.0 (CC BY 4.0)
+* **License:** GNU GPL v4
 
 ---
 
