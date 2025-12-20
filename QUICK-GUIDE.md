@@ -1,4 +1,4 @@
-# ICU Bedside Stack: Quick Launch Guide
+# ICU Bedside Stack, and Anesthesia Stack: Quick Launch Guide
 **Direct URLs for clinical use. Bookmark this page on your mobile browser for instant access.**
 
 ### Clinical Applications Stack
@@ -12,6 +12,7 @@
 | **Lab Trends & Alerts** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/ICU-lab-trends-alerts-v2.0.html) | [📖 About & Help](./docs/Lab-Trends-Help.md) |
 | **Patient Label Gen** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/Patient-label-generator-v1.5.html) | [📖 About & Help](./docs/Patient-Label-Help.md) |
 | **Vent Simulator** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/ICU-vent-sim-v%201.2.html) | [📖 About & Help](./docs/Vent-Sim-Help.md) |
+| **ePAC** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/ePACv2.4.html) | [📖 About & Help](./docs/ePAC-Help.md) |
 
 ---
 
