@@ -24,8 +24,3 @@ This tool helps clinicians identify the "Optimal PEEP" for passive patients on V
 * **Reassess:** Always reassess after changes in sedation, recruitment maneuvers, fluid status, or vasopressor support.
 * **Scope:** Recommendations apply **only** to the specific PEEP levels you have tested and entered into the tool.
 * **Clinical Judgment:** Interpret outputs alongside ABGs, lung imaging, and physical bedside assessment.
-
----
-**Author:** Prof. Jyotirmay Kirtania  
-**License:** GNU GPL v3.0  
-**Disclaimer:** This is a decision-support tool. Clinical responsibility remains with the treating physician.
