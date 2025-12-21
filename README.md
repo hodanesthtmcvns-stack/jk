@@ -50,7 +50,7 @@ National Early Warning Score 2 (NEWS2) physiological scoring and response. It he
 Healthcare providers may perform and record Pre Anesthesia Checkup (PAC) using this tool, with validated preoperative risk assessment parameters, and checklist of preoperative advice as per ERAS pathways. It helps healthcare providers a cognitive aid to do a structured PAC, and provide time stamped pdf output with unique filename with patient ID, date, and time for indexing and retrieval. 
 
 ## License
-This project is licensed under **GNU GPL v3.0**. 
+This project is licensed under **GNU GPL v3**. 
 * **Attribution:** Credit must be given to the creator, **Prof. (Dr.) Jyotirmay Kirtania**.
 
 ## Medical Disclaimer
