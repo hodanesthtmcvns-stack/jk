@@ -19,7 +19,7 @@ This repository hosts a suite of portable, offline-ready HTML applications desig
 | **Lab Trends & Alerts** | Decision Support | [Launch App](./ICU-lab-trends-alerts-v2.0.html) |
 | **Agitation Manager** | ICU Delirium | [Launch App](./acute-agitation-v1.0.html) |
 | **Label Generator** | Workflow Efficiency | [Launch App](./Patient-label-generator-v1.5.html) |
-|**ePACr** | Pre Anesthesia Checkup | [Launch App](./ePAC-v2.4.html) |
+|**ePAC** | Pre Anesthesia Checkup | [Launch App](./ePAC-v2.4.html) |
 
 ## Core Principles
 * **Offline Capability:** Each tool is a single-file HTML/JS application. Once loaded, they function without an internet connection—ideal for high-stakes clinical environments.
