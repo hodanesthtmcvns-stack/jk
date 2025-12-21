@@ -11,15 +11,15 @@ This repository hosts a suite of portable, offline-ready HTML applications desig
 
 | Tool | Clinical Focus | Launch Link |
 | :--- | :--- | :--- |
-| **ICU Help & Support** | Documentation & Orders | [Launch App](./ICU-Help-Support-v2.4.html) |
-| **BEAT-C** | Empiric Antibiotics | [Launch App](./BEAT-C-v1.0.html) |
-| **PEEP Titrator** | Optimal PEEP Selection | [Launch App](./PEEP-titration-v1.4.html) |
-| **NEWS2 Triage** | Severity Assessment | [Launch App](./NEWS2.html) |
-| **Ventilator Simulator** | Respiratory Education | [Launch App](./ICU-vent-sim-v%201.2.html) |
-| **Lab Trends & Alerts** | Decision Support | [Launch App](./ICU-lab-trends-alerts-v2.0.html) |
-| **Agitation Manager** | ICU Delirium | [Launch App](./acute-agitation-v1.0.html) |
-| **Label Generator** | Workflow Efficiency | [Launch App](./Patient-label-generator-v1.5.html) |
-|**ePAC** | Pre Anesthesia Checkup | [Launch App](./ePAC-v2.4.html) |
+| **ICU Help & Support** | Documentation & Orders | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/ICU-Help-Support-v2.4.html) |
+| **BEAT-C** | Empiric Antibiotics | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/BEAT-C-v1.0.html) |
+| **PEEP Titrator** | Optimal PEEP Selection | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/PEEP-titration-v1.4.html) |
+| **NEWS2 Triage** | Severity Assessment | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/NEWS2.html) |
+| **Ventilator Simulator** | Respiratory Education | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/ICU-vent-sim-v%201.2.html) |
+| **Lab Trends & Alerts** | Decision Support | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/ICU-lab-trends-alerts-v2.0.html) |
+| **Agitation Manager** | ICU Delirium | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/acute-agitation-v1.0.html) |
+| **Label Generator** | Workflow Efficiency | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/Patient-label-generator-v1.5.html) |
+|**ePAC** | Pre Anesthesia Checkup | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/ePAC-v2.4.html) |
 
 ## Core Principles
 * **Offline Capability:** Each tool is a single-file HTML/JS application. Once loaded, they function without an internet connection—ideal for high-stakes clinical environments.
