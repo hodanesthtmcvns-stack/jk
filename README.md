@@ -19,6 +19,7 @@ This repository hosts a suite of portable, offline-ready HTML applications desig
 | **Lab Trends & Alerts** | Decision Support | [Launch App](./ICU-lab-trends-alerts-v2.0.html) |
 | **Agitation Manager** | ICU Delirium | [Launch App](./acute-agitation-v1.0.html) |
 | **Label Generator** | Workflow Efficiency | [Launch App](./Patient-label-generator-v1.5.html) |
+|**ePACr** | Pre Anesthesia Checkup | [Launch App](./ePAC-v2.4.html) |
 
 ## Core Principles
 * **Offline Capability:** Each tool is a single-file HTML/JS application. Once loaded, they function without an internet connection—ideal for high-stakes clinical environments.
@@ -44,6 +45,9 @@ Assists clinicians in finding the "optimal PEEP" for passive patients on Volume 
 
 ### NEWS2
 National Early Warning Score 2 (NEWS2) physiological scoring and response. It helps healthcare providers to screen and triage patients in the emergency room, clinic and wards for critical illness and sepsis.
+
+### ePAC (v2.4)
+Healthcare providers may perform and record Pre Anesthesia Checkup (PAC) using this tool, with validated preoperative risk assessment parameters, and checklist of preoperative advice as per ERAS pathways. It helps healthcare providers a cognitive aid to do a structured PAC, and provide time stamped pdf output with unique filename with patient ID, date, and time for indexing and retrieval. 
 
 ## License
 This project is licensed under **GNU GPL v3.0**. 
