@@ -6,8 +6,6 @@ The **ePAC** (Electronic Pre Anesthesia Checkup) tool is a specialized digital p
 * **Version:** 2.4
 * **Release Date:** 06-Nov-2024
 * **Author:** Prof. Jyotirmay Kirtania
-* **License:** GNU GPL v4
-
 ---
 
 ### **Key Features**
@@ -46,14 +44,3 @@ The **ePAC** (Electronic Pre Anesthesia Checkup) tool is a specialized digital p
 * **Logic:** Vanilla JavaScript for data handling and UI interactions.
 * **PDF Engine:** `jsPDF v2.4.0` (included via CDN).
 * **Offline Capability:** The tool is designed to run locally in any modern web browser without requiring a backend server.
-
----
-
-### **Legal & Safety**
-* **Data Privacy:** This tool does not store patient data on a server. All data processing happens locally in the browser. 
-* **Disclaimer:** This is a documentation support tool. Clinical judgment and final anesthesia plans remain the sole responsibility of the attending anesthesiologist.
-* **Open Source:** This project is open for modification and distribution under the **GNU GPL v4** license.
-
----
-
-© 2024 Prof. Jyotirmay Kirtania. MPMMCC & HBCH, Varanasi.
