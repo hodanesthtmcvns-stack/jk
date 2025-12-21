@@ -235,3 +235,197 @@
 </script>
 </body>
 </html>
+
+<!-- =========================================================
+     License & Medical Disclaimer – Auto Inject (GPLv3 + CDSS)
+     Paste this block once at the bottom of any HTML file
+     ========================================================= -->
+<script>
+/* ===== OPTIONAL CONFIG (edit if needed) ===== */
+const LEGAL_APP_NAME = document.title || "Clinical Decision Support Tool";
+const LEGAL_VERSION  = "v1.0";              // e.g. "v1.0" or ""
+
+/* ===== DO NOT MODIFY BELOW THIS LINE ===== */
+(function injectLegalDisclaimer(){
+  if (document.getElementById('legalToggleBtn')) return;
+
+  const year = new Date().getFullYear();
+  const metaLine = [LEGAL_APP_NAME, LEGAL_VERSION, LEGAL_BUILD && `build ${LEGAL_BUILD}`]
+    .filter(Boolean).join(" – ");
+
+  const html = `
+<button id="legalToggleBtn"
+        type="button"
+        aria-expanded="false"
+        aria-controls="legalPanel"
+        title="License & Medical Disclaimer"
+        data-print-exclude="1">
+  © ${year} • GPLv3 • CDSS
+</button>
+
+<div id="legalBackdrop" hidden data-print-exclude="1"></div>
+
+<section id="legalPanel"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="legalTitle"
+         hidden
+         data-print-exclude="1">
+  <div class="legalHeader">
+    <div>
+      <div id="legalTitle" class="legalTitle">License and Medical Disclaimer</div>
+      <div class="legalMeta">${escapeHtml(metaLine)}</div>
+    </div>
+    <button id="legalCloseBtn" type="button" aria-label="Close">×</button>
+  </div>
+
+  <pre class="legalText">
+${escapeHtml(LEGAL_APP_NAME)}
+Copyright (C) ${year} Prof. Jyotirmay Kirtania
+
+Software License: GNU GPL v3
+
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Medical Disclaimer (Cognitive Assist & Record Keeping)
+
+IMPORTANT: PLEASE READ CAREFULLY BEFORE USE
+
+NOT A MEDICAL DEVICE: This tool is a Clinical Decision Support System (CDSS) intended for educational and cognitive assistance purposes only. It has not been cleared or approved by the FDA, EMA, CDSCO, or any other regulatory authority for use as a medical device.
+
+NO SUBSTITUTE FOR CLINICAL JUDGMENT: This tool is designed to assist, not replace, the clinical judgment of qualified healthcare professionals. All outputs must be independently verified against institutional standards before clinical application.
+
+DATA PRIVACY: This tool runs locally on the user's device. No data is transmitted to external servers by the software. The user is responsible for compliance with applicable patient data protection laws (e.g., HIPAA, GDPR) and institutional IT policies.
+
+LIMITATION OF LIABILITY: In no event shall the authors or copyright holders be liable for any claim, damages, or other liability, whether in an action of contract, tort, or otherwise, arising from, out of, or in connection with the software or the use or other dealings in the software.
+  </pre>
+</section>
+`;
+
+  const css = `
+:root{
+  --legal-bg:#fff;
+  --legal-fg:#111;
+  --legal-muted:rgba(0,0,0,.6);
+  --legal-border:rgba(0,0,0,.22);
+  --legal-shadow:rgba(0,0,0,.25);
+  --legal-backdrop:rgba(0,0,0,.35);
+  --legal-pill-bg:rgba(255,255,255,.85);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --legal-bg:#121212;
+    --legal-fg:#f1f1f1;
+    --legal-muted:rgba(255,255,255,.65);
+    --legal-border:rgba(255,255,255,.18);
+    --legal-shadow:rgba(0,0,0,.55);
+    --legal-backdrop:rgba(0,0,0,.55);
+    --legal-pill-bg:rgba(20,20,20,.75);
+  }
+}
+
+#legalToggleBtn{
+  position:fixed;
+  right:10px;
+  bottom:10px;
+  z-index:9998;
+  font-size:11px;
+  padding:5px 9px;
+  border:1px solid var(--legal-border);
+  border-radius:999px;
+  background:var(--legal-pill-bg);
+  color:var(--legal-fg);
+  backdrop-filter:blur(6px);
+  cursor:pointer;
+}
+
+#legalBackdrop{
+  position:fixed;
+  inset:0;
+  z-index:9999;
+  background:var(--legal-backdrop);
+}
+
+#legalPanel{
+  position:fixed;
+  right:10px;
+  bottom:48px;
+  z-index:10000;
+  width:min(740px,calc(100vw - 20px));
+  max-height:72vh;
+  background:var(--legal-bg);
+  color:var(--legal-fg);
+  border:1px solid var(--legal-border);
+  border-radius:14px;
+  box-shadow:0 12px 28px var(--legal-shadow);
+  overflow:hidden;
+}
+
+.legalHeader{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  padding:10px 12px;
+  border-bottom:1px solid var(--legal-border);
+}
+.legalTitle{ font-weight:800; font-size:14px; }
+.legalMeta{ font-size:12px; color:var(--legal-muted); }
+
+#legalCloseBtn{
+  width:28px;
+  height:28px;
+  font-size:18px;
+  border-radius:8px;
+  border:1px solid var(--legal-border);
+  background:transparent;
+  color:var(--legal-fg);
+  cursor:pointer;
+}
+
+.legalText{
+  margin:0;
+  padding:12px;
+  font-size:12px;
+  line-height:1.35;
+  white-space:pre-wrap;
+  overflow:auto;
+  max-height:calc(72vh - 52px);
+}
+
+@media print{
+  [data-print-exclude="1"]{ display:none !important; }
+}
+`;
+
+  const style = document.createElement('style');
+  style.textContent = css;
+  document.head.appendChild(style);
+  document.body.insertAdjacentHTML('beforeend', html);
+
+  const btn = document.getElementById('legalToggleBtn');
+  const panel = document.getElementById('legalPanel');
+  const backdrop = document.getElementById('legalBackdrop');
+  const closeBtn = document.getElementById('legalCloseBtn');
+
+  const open = () => { panel.hidden = false; backdrop.hidden = false; };
+  const close = () => { panel.hidden = true; backdrop.hidden = true; };
+
+  btn.onclick = () => panel.hidden ? open() : close();
+  closeBtn.onclick = close;
+  backdrop.onclick = close;
+  window.addEventListener('beforeprint', close);
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !panel.hidden) close();
+  });
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, m =>
+      ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])
+    );
+  }
+})();
+</script>
+<!-- ======================= END LEGAL BLOCK ======================= -->
+
