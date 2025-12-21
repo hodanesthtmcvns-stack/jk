@@ -42,5 +42,5 @@ The **ePAC** (Electronic Pre Anesthesia Checkup) tool is a specialized digital p
 ### **Technical Implementation**
 * **Frontend:** Pure HTML5 and CSS3 (no external CSS frameworks required).
 * **Logic:** Vanilla JavaScript for data handling and UI interactions.
-* **PDF Engine:** `jsPDF v2.4.0` (included via CDN).
+* **PDF Engine:** `jsPDF v2.4.0`.
 * **Offline Capability:** The tool is designed to run locally in any modern web browser without requiring a backend server.
