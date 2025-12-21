@@ -16,6 +16,3 @@ A specialized tool for rapid printing of standardized patient identification lab
 * **Label Size:** Precisely 52.5mm x 29.7mm.
 * **Privacy:** Operates entirely client-side; no patient data is ever uploaded or stored.
 
----
-**Author:** Prof. Jyotirmay Kirtania. GNU GPL v3.0  
-**Department:** Anesthesiology, Critical Care & Pain, TMC Varanasi.
