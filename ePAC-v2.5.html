@@ -108,7 +108,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pre Anesthesia Checkup (PAC) Record, MPMMCC and HBCH Varanasi, IN-221005, v 2.4 (released 6 Nov 2024, Author: Prof. Jyotirmay Kirtania, Licence: GNU GPL v3)</title>
+    <title>Pre Anesthesia Checkup (PAC) Record, MPMMCC and HBCH Varanasi, IN-221005, v 2.5 (released 23 Dec 2026, Author: Prof. Jyotirmay Kirtania, Licence: GNU GPL v3)</title>
     <!--Inline jsPDF library code-->
 	<script>
 	/** @license
@@ -635,6 +635,17 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     addWrappedText("History of Severe COPD", document.querySelector('input[name="severeCOPD"]:checked')?.value || "");
     addWrappedText("Dialysis", document.querySelector('input[name="dialysis"]:checked')?.value || "");
     addWrappedText("Acute Renal Failure", document.querySelector('input[name="acuteRenalFailure"]:checked')?.value || "");
+	// --- Airway Assessment (aa1..aa10) -> PDF ---
+const airwaySelected = Array.from(document.querySelectorAll('input[id^="aa"]:checked'))
+  .map(cb => {
+    const lbl = document.querySelector(`label[for="${cb.id}"]`);
+    return lbl ? lbl.innerText.trim() : cb.id;
+  })
+  .filter(Boolean)
+  .join(", ");
+
+addWrappedText("Airway Assessment", airwaySelected);
+
 	 // Add the Clinical Laboratory Reports section if any value is entered
 	doc.setFont("helvetica", "bold");
 	doc.setFontSize(12);
@@ -921,7 +932,7 @@ document.getElementById("load_xml_input").addEventListener("change", function ()
 	
     <form id="pacForm">
         <!-- Header Information -->
-        <p><strong>Pre Anesthesia Checkup (PAC) Record, MPMMCC and HBCH Varanasi, IN-221005, v 2.4 (released 6 Nov 2024, Author: Prof. Jyotirmay Kirtania, Licence: GNU GPL v3)</strong></p>
+        <p><strong>Pre Anesthesia Checkup (PAC) Record, MPMMCC and HBCH Varanasi, IN-221005, v 2.5 (released 23 Dec 2025, Author: Prof. Jyotirmay Kirtania, Licence: GNU GPL v3)</strong></p>
 		<!-- Save & Print and Reset Buttons -->
         <button type="button" onclick="resetForm()" style="background-color: red; color: white;">Cancel and Start New Record</button>
 		<button type="button" onclick="generatePDF()">Save & Print</button>
@@ -1335,16 +1346,177 @@ function calculateBMI() {
 
 <!-- Airway Assessment Section -->
 <h3><strong>Airway Assessment (check all that apply)</strong></h3>
-<label><input type="checkbox" name="airwayAssessment" id="notAnticipated" value="Difficult airway is not anticipated"> Difficult airway is not anticipated</label><br>
-<label><input type="checkbox" name="airwayAssessment" value="Anticipated difficult mask ventilation"> Anticipated difficult mask ventilation (Age > 55y, BMI >26, Lack of dentition, Facial hair, History of snoring)</label><br>
-<label><input type="checkbox" name="airwayAssessment" value="Anticipated difficult Supraglottic Airway Device insertion"> Anticipated difficult Supraglottic Airway Device insertion (Reduced mouth opening, Obstructed airway, Distorted airway, Stiff neck, Stiff lungs)</label><br>
-<label><input type="checkbox" name="airwayAssessment" value="Anticipated difficult laryngoscopy & tracheal intubation"> Anticipated difficult laryngoscopy & tracheal intubation (Distorted airway, Obstructed airway, Mouth opening < 5 cm, Thyromental distance < 6 cm, Mallampati class III or IV, Neck mobility reduced, Neck Irradiation, Hard or non-compliant submental tissue)</label><br>
-<label><input type="checkbox" name="airwayAssessment" value="Anticipated difficult infra-glottic airway or tracheostomy or cricothyrotomy"> Anticipated difficult infra-glottic airway or tracheostomy or cricothyrotomy (Previous neck surgery, Neck hematoma or infection, Obesity, Neck irradiation, Pre-tracheal tumor)</label><br>
-<label><input type="checkbox" name="airwayAssessment" value="Anticipated difficult shared airway"> Anticipated difficult shared airway (endo-laryngeal procedures, tracheal resection, carinal resection, foreign body airway removal, tracheo-esophageal fistula repair, broncho-pleural fistula repair)</label><br>
-<label><input type="checkbox" name="airwayAssessment" value="Anticipated difficult extubation"> Anticipated difficult extubation (known difficult airway, airway bleeding, airway edema, airway trauma, obesity, obstructive sleep apnea, restricted access to airway, aspiration risk, cardiovascular or respiratory or neurological or metabolic risks)</label><br>
-<label><input type="checkbox" name="airwayAssessment" value="Elevated cardiovascular or respiratory risk during induction & intubation is present"> Elevated cardiovascular or respiratory risk during induction & intubation is present</label><br>
-<label><input type="checkbox" name="airwayAssessment" value="Pulmonary aspiration risk is present"> Pulmonary aspiration risk is present (Intestinal obstruction, Gastric outlet obstruction, Recent trauma, Inadequate fasting period, Diabetes mellitus, Chronic kidney disease, Opioids, Raised ICP, Pregnancy, Obesity, Hiatus hernia, GERD, Laparoscopic surgery, Lithotomy position, Trendelenberg position, GI surgery)</label><br>
-<label><input type="checkbox" name="airwayAssessment" value="History of previous airway difficulty is present"> History of previous airway difficulty is present</label><br>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Airway Assessment</title>
+  <style>
+    :root{
+      --green:#0a7a2a;
+      --red:#b00020;
+      --text:#111;
+      --muted:#444;
+      --border:#d7d7d7;
+    }
+    body{
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--text);
+      margin: 0;
+      padding: 18px;
+      background: #fff;
+    }
+    .page{
+      max-width: 900px;
+      margin: 0 auto;
+      border: 1px solid var(--border);
+      padding: 18px 18px 8px;
+      border-radius: 10px;
+    }
+    h1{
+      font-size: 20px;
+      margin: 0 0 12px;
+      font-weight: 700;
+    }
+    .item{
+      display: grid;
+      grid-template-columns: 26px 1fr;
+      gap: 10px;
+      padding: 10px 6px;
+      border-top: 1px solid #eee;
+    }
+    .item:first-of-type{ border-top: 0; }
+    .cb{
+      margin-top: 3px;
+      width: 18px;
+      height: 18px;
+      accent-color: #333;
+    }
+    .headline{
+      font-weight: 800;
+      margin: 0 0 4px;
+      line-height: 1.25;
+    }
+    .green{ color: var(--green); }
+    .red{ color: var(--red); }
+    .detail{
+      margin: 0;
+      line-height: 1.35;
+      color: var(--text);
+      font-size: 14px;
+    }
+    .detail .includes{
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    /* Print (A4) */
+    @media print{
+      body{ padding: 0; }
+      .page{
+        border: 0;
+        border-radius: 0;
+        padding: 0;
+        max-width: none;
+      }
+      .item{ break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page" role="document" aria-label="Airway Assessment">
+    <h1>Airway Assessment</h1>
+
+    <!-- 1 -->
+    <div class="item">
+      <input class="cb" type="checkbox" id="aa1" />
+      <div>
+        <p class="headline green"><label for="aa1">Difficult airway is not anticipated</label></p>
+      </div>
+    </div>
+
+    <!-- 2 -->
+    <div class="item">
+      <input class="cb" type="checkbox" id="aa2" />
+      <div>
+        <p class="headline red"><label for="aa2">History of previous airway difficulty is present</label></p>
+        <p class="detail"><span class="includes">Includes,</span> Documented difficult mask ventilation; difficult laryngoscopy; failed intubation; emergency surgical airway.</p>
+      </div>
+    </div>
+
+    <!-- 3 -->
+    <div class="item">
+      <input class="cb" type="checkbox" id="aa3" />
+      <div>
+        <p class="headline red"><label for="aa3">Anticipated difficult mask ventilation or oxygenation</label></p>
+        <p class="detail"><span class="includes">Includes,</span> Age &gt; 55 years; BMI &ge; 30 kg/m&sup2;; Beard / facial hair; Edentulous or poor dentition; History of snoring or obstructive sleep apnea; Reduced lung compliance (stiff lungs); Reduced chest wall or abdominal compliance; Central airway obstruction.</p>
+      </div>
+    </div>
+
+    <!-- 4 -->
+    <div class="item">
+      <input class="cb" type="checkbox" id="aa4" />
+      <div>
+        <p class="headline red"><label for="aa4">Anticipated difficult supraglottic airway device (SGA) insertion or ventilation</label></p>
+        <p class="detail"><span class="includes">Includes,</span> Reduced mouth opening (&lt; 2.5 cm); Upper airway obstruction; Distorted upper airway anatomy; Reduced cervical spine mobility; Reduced lung compliance (stiff lungs); Reduced chest wall or abdominal compliance; Central airway obstruction.</p>
+      </div>
+    </div>
+
+    <!-- 5 -->
+    <div class="item">
+      <input class="cb" type="checkbox" id="aa5" />
+      <div>
+        <p class="headline red"><label for="aa5">Anticipated difficult laryngoscopy and tracheal intubation</label></p>
+        <p class="detail"><span class="includes">Includes,</span> Distorted airway anatomy; Upper airway obstruction; Mouth opening &lt; 3 cm; Thyromental distance &lt; 6 cm; Mallampati class III or IV; Anterior sliding of mandible absent on upper lip bite test (ULBT); Reduced neck mobility; Prior neck surgery or irradiation; &quot;Woody&quot; or indurated or edematous submental space; Tongue edema or macroglossia.</p>
+      </div>
+    </div>
+
+    <!-- 6 -->
+    <div class="item">
+      <input class="cb" type="checkbox" id="aa6" />
+      <div>
+        <p class="headline red"><label for="aa6">Anticipated difficult infraglottic airway (tracheostomy / cricothyrotomy)</label></p>
+        <p class="detail"><span class="includes">Includes,</span> Previous neck surgery; Neck edema or hematoma or infection; Obesity; Neck irradiation or fibrosis; Pre-tracheal or neck tumor.</p>
+      </div>
+    </div>
+
+    <!-- 7 -->
+    <div class="item">
+      <input class="cb" type="checkbox" id="aa7" />
+      <div>
+        <p class="headline red"><label for="aa7">Anticipated shared airway</label></p>
+        <p class="detail"><span class="includes">Includes,</span> Endo laryngeal procedures; Endo tracheal and endo bronchial interventions; Tracheal resection; Carinal resection; Foreign body airway removal; Tracheoesophageal fistula stenting or repair; Bronchopleural fistula repair.</p>
+      </div>
+    </div>
+
+    <!-- 8 -->
+    <div class="item">
+      <input class="cb" type="checkbox" id="aa8" />
+      <div>
+        <p class="headline red"><label for="aa8">Anticipated difficult extubation</label></p>
+        <p class="detail"><span class="includes">Includes,</span> Known difficult airway; Airway bleeding; Airway edema; Airway trauma; Obesity or obstructive sleep apnea; Restricted postoperative access to airway; High aspiration risk; Significant cardiovascular, respiratory, neurological, or metabolic risk.</p>
+      </div>
+    </div>
+
+    <!-- 9 -->
+    <div class="item">
+      <input class="cb" type="checkbox" id="aa9" />
+      <div>
+        <p class="headline red"><label for="aa9">Elevated cardiovascular or hypoxia risk during induction and intubation</label></p>
+        <p class="detail"><span class="includes">Includes,</span> Reduced FRC, Acute or Chronic Hypoxia; Shock; Heart failure; Severe metabolic acidosis; Pulmonary hypertension or right ventricular dysfunction.</p>
+      </div>
+    </div>
+
+    <!-- 10 -->
+    <div class="item">
+      <input class="cb" type="checkbox" id="aa10" />
+      <div>
+        <p class="headline red"><label for="aa10">Increased risk of pulmonary aspiration</label></p>
+        <p class="detail"><span class="includes">Includes,</span> Inadequate fasting; Intestinal obstruction; Gastric outlet obstruction; Recent trauma; Pregnancy; Obesity; Hiatus hernia; Symptomatic GERD; Conditions associated with delayed gastric emptying (e.g., diabetic gastroparesis, uremia)</p>
+      </div>
+    </div>
+
+  </div>
+</body>
 <label><input type="checkbox" name="airwayAssessment" value="Loose teeth"> Loose teeth</label><br>
 <label><input type="checkbox" name="airwayAssessment" value="Artificial dentures"> Artificial dentures</label><br><br>
 
