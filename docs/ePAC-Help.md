@@ -1,4 +1,4 @@
-# ePAC: Pre Anesthesia Checkup Record (v2.5)
+# ePAC: Pre Anesthesia Checkup Record (v2.5.4)
 
 ### **Overview**
 The **ePAC** (Electronic Pre Anesthesia Checkup) tool is a specialized digital platform designed for anesthesiologists and clinicians at **MPMMCC and HBCH, Varanasi (Tata Memorial Centre)**. It streamlines the preoperative assessment process, ensuring that critical patient data, history, and physical findings are recorded systematically to optimize surgical safety.
@@ -32,9 +32,9 @@ The **ePAC** (Electronic Pre Anesthesia Checkup) tool is a specialized digital p
 
 ### **How to Use**
 
-1.  **Input Data:** Fill out the form sections. Fields marked in **blue/bold** are typically mandatory or critical for the PAC record.
+1.  **Input Data:** Fill out the form sections. Fields marked in **red/bold** are typically mandatory or critical for the PAC record.
 2.  **Review Risk:** Use the integrated ASA guide to assign the appropriate physical status grade.
-3.  **Generate Record:** Click the **"Save & Print"** button at the bottom of the form. This will generate a PDF file that can be saved to a digital medical record or printed for the physical file.
+3.  **Generate Record:** Click the **"Save & Print"** button at the bottom of the form. This will generate a PDF file and an XML file that can be saved to a digital medical record or printed for the physical file.
 4.  **Reset:** Use the **"Reset"** button to clear the form for the next patient.
 
 ---
