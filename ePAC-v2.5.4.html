@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+<head>
 <style>
     .mandatory-field {
         color: #0000FF; /* Bright blue */
@@ -98,18 +99,7 @@
 		
     </style>
 
-
-</head>
-<body>
-    <div class="form-container">
-        <h1>Pre Anesthesia Checkup (PAC) Record</h1>
-        <p class="note">* Fields marked in red are mandatory</p>
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pre Anesthesia Checkup (PAC) Record, MPMMCC and HBCH Varanasi, IN-221005, v 2.5 (released 23 Dec 2026, Author: Prof. Jyotirmay Kirtania, Licence: GNU GPL v3)</title>
-    <!--Inline jsPDF library code-->
+   <!--Inline jsPDF library code-->
 	<script>
 	/** @license
  *
@@ -635,7 +625,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     addWrappedText("History of Severe COPD", document.querySelector('input[name="severeCOPD"]:checked')?.value || "");
     addWrappedText("Dialysis", document.querySelector('input[name="dialysis"]:checked')?.value || "");
     addWrappedText("Acute Renal Failure", document.querySelector('input[name="acuteRenalFailure"]:checked')?.value || "");
-	// --- Airway Assessment (aa1..aa10) -> PDF ---
+	// --- Airway Assessment (aa1..aa12) -> PDF ---
 const airwaySelected = Array.from(document.querySelectorAll('input[id^="aa"]:checked'))
   .map(cb => {
     const lbl = document.querySelector(`label[for="${cb.id}"]`);
@@ -818,6 +808,8 @@ yPosition += 20;
 
             // Save the PDF
             doc.save(filename);
+            // Also save a canonical XML record alongside the PDF
+            try{ if(typeof window.autoDownloadXMLWithPacID === 'function') window.autoDownloadXMLWithPacID(pacID); }catch(e){ console.error(e); }
         }
 
         // Helper functions
@@ -870,73 +862,642 @@ yPosition += 20;
                 alert("Cannot delete the only row.");
             }
         }
-   
-   </script>
-	
-<script>
-// Function to create XML from form data and download with unique filename
-function downloadXML() {
-    const caseNumber = document.getElementById("case_number").value; // Adjust ID to match the actual field
-    const dateTime = new Date().toISOString().replace(/[:.-]/g, ""); // Format date-time as YYYYMMDDTHHMMSS
 
-    // Generate XML file name: CaseNumber-SystemDateTime.xml
-    const fileName = `${caseNumber}-${dateTime}.xml`;
+  // View toggle (PC/Mobile) - UI only
+  window.addEventListener('DOMContentLoaded', () => {
+    document.body.classList.add('view-pc');
 
-    // Construct XML data from form fields
-    let xmlData = `<Record>\n`;
-    const formElements = document.querySelectorAll("input, textarea, select");
-    formElements.forEach(el => {
-        if (el.name) {
-            xmlData += `  <${el.name}>${el.value}</${el.name}>\n`;
+    const btnPC = document.getElementById('btnPC');
+    const btnMobile = document.getElementById('btnMobile');
+    if (!btnPC || !btnMobile) return;
+
+    function setMode(mode){
+      document.body.classList.toggle('view-pc', mode === 'pc');
+      document.body.classList.toggle('view-mobile', mode === 'mobile');
+      btnPC.setAttribute('aria-pressed', mode === 'pc');
+      btnMobile.setAttribute('aria-pressed', mode === 'mobile');
+      try { localStorage.setItem('epac_view_mode', mode); } catch(e){}
+    }
+
+    try{
+      const saved = localStorage.getItem('epac_view_mode');
+      if(saved === 'mobile' || saved === 'pc') setMode(saved);
+    }catch(e){}
+
+    btnPC.addEventListener('click', ()=>setMode('pc'));
+    btnMobile.addEventListener('click', ()=>setMode('mobile'));
+  });
+
+/* ===================== ePAC: Import latest lab episode from EMR HTML/MHTML =====================
+   - DOES NOT change any existing input fields
+   - Manual entry remains fully available (import just populates values)
+   - Parser logic adapted from your ICU-lab-trends-alerts-v2.0 (EMR-tuned)
+=============================================================================================== */
+
+
+/* ===================== ePAC: Import latest labs (ALLReqReport) — robust, summary-only =====================
+   - Accepts .txt/.htm/.html/.mhtml/.mht/.xhtml/.xml
+   - Parses BOTH formats seen in TMH/MPMMCC exports:
+       A) single-line tabular rows: "1. HAEMOGLOBIN  Low  9.3  ..."
+       B) multi-line rows: "5." then "Serum Sodium" then "Normal" then "139" ...
+   - Computes latest value PER PARAMETER (dates may differ)
+   - Outputs a compact summary string in labImportStatusEPAC
+   - Does NOT fill form fields (by design, to avoid UI regressions)
+========================================================================================================== */
+(function EPAC_LabImport_SummaryOnly(){
+  function byId(id){ return document.getElementById(id); }
+
+  function setStatus(msg, isError){
+    const el = byId('labImportStatusEPAC');
+    if(!el) return;
+    el.textContent = msg || '';
+    el.style.color = isError ? '#b91c1c' : '#065f46';
+  }
+
+  function parseDateToKey(dateStr){
+    // supports dd/mm/yyyy, dd-mm-yyyy, yyyy-mm-dd, dd-Mon-yyyy
+    if(!dateStr) return '';
+    const s = String(dateStr).trim();
+    let m = s.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{4})$/);
+    if(m) return `${m[3]}-${m[2]}-${m[1]}`;
+    m = s.match(/^(\d{4})[\/\-](\d{2})[\/\-](\d{2})$/);
+    if(m) return `${m[1]}-${m[2]}-${m[3]}`;
+    m = s.match(/^(\d{1,2})[\/\-\s]([A-Za-z]{3,9})[\/\-\s](\d{4})$/);
+    if(m){
+      const mon = m[2].slice(0,3).toLowerCase();
+      const mm = ({jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'})[mon];
+      if(mm) return `${m[3]}-${mm}-${String(m[1]).padStart(2,'0')}`;
+    }
+    return '';
+  }
+
+  function cleanValue(raw){
+    const s = String(raw||'').trim();
+    if(!s) return '';
+    const m = s.match(/-?\d+(?:\.\d+)?/);
+    return m ? m[0] : '';
+  }
+
+  function toPlainText(raw){
+    if(!raw) return '';
+    let t = String(raw);
+
+    // If HTML-ish: preserve row separation by inserting newlines before stripping tags
+    if(/<\s*html|<\s*table|<\s*tr|<\s*td|<\s*body/i.test(t)){
+      t = t.replace(/<script[\s\S]*?<\/script>/gi, ' ');
+      t = t.replace(/<style[\s\S]*?<\/style>/gi, ' ');
+      t = t.replace(/<(br|\/p|\/div|\/tr|\/td|\/th|\/table)\b[^>]*>/gi, '\n');
+      t = t.replace(/<[^>]+>/g, ' ');
+      t = t.replace(/&nbsp;/gi,' ');
+      t = t.replace(/&amp;/gi,'&').replace(/&lt;/gi,'<').replace(/&gt;/gi,'>');
+    }
+
+    t = t.replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+    t = t.replace(/[ \t]+/g,' ');
+    t = t.replace(/\n{2,}/g,'\n');
+    return t;
+  }
+
+  // ---- Canonical keys (your ePAC terminology) ----
+  const KEY_ORDER = [
+    'Hb','TLC','ANC','Platelets',
+    'FBS','RBS','PPBS','HbA1c',
+    'Creatinine','Na','K',
+    'PT','INR','APTT',
+    'BilirubinT','BilirubinC','Albumin','ALT','AST',
+    'NTproBNP','TSH','FT4'
+  ];
+
+  // Strictly your mapping (with tolerant punctuation/spacing)
+  const PARAM_MAP = [
+    { key:'Hb',         rx:[/\bHAEMOGLOBIN\b/i] },
+    { key:'TLC',        rx:[/\bWBC\s*COUNT\b/i] },
+    { key:'ANC',        rx:[/\bNEUTROPHIL\s*ABS\b/i, /\bANC\b/i] }, // "NEUTROPHIL ABS (ANC)"
+    { key:'Platelets',  rx:[/\bPLATELETS\b/i] },
+
+    { key:'FBS',        rx:[/\bFASTING\s+BLOOD\s+GLUCOSE\b/i] },
+    { key:'RBS',        rx:[/\bRANDOM\s+BLOOD\s+GLUCOSE\b/i] },
+    { key:'PPBS',       rx:[/\bPOST\s*PRANDIAL\s+BLOOD\s+GLUCOSE\b/i] },
+
+    { key:'HbA1c',      rx:[/\bHBA1C\b/i, /\bGLYCOSYLATED\s+HEMOGLOBIN\b/i] },
+
+    { key:'Creatinine', rx:[/\bSERUM\s+CREATININE\b/i] },
+    { key:'Na',         rx:[/\bSERUM\s+SODIUM\b/i] },
+    { key:'K',          rx:[/\bSERUM\s+POTASSIUM\b/i] },
+
+    { key:'INR',        rx:[/^\s*INR\b/i, /\bINR\b/i] },
+    { key:'PT',         rx:[/^\s*PT\b/i, /\bPT\b/i] },
+    { key:'APTT',       rx:[/\bAPTT\b/i] },
+
+    { key:'BilirubinT', rx:[/\bTOTAL\s+BILIRUBIN\b/i] },
+    { key:'BilirubinC', rx:[/\bDIRECT\s+BILIRUBIN\b/i] },
+    { key:'Albumin',    rx:[/\bSERUM\s+ALBUMIN\b/i] },
+    { key:'ALT',        rx:[/\bSERUM\s+ALT\b/i] },
+    { key:'AST',        rx:[/\bSERUM\s+AST\b/i] },
+
+    { key:'NTproBNP',   rx:[/\bNT\s*[-]?\s*PRO\s*[-]?\s*BNP\b/i] },
+    { key:'TSH',        rx:[/\bSERUM\s+TSH\b/i] },
+    { key:'FT4',        rx:[/\bSERUM\s+FT4\b/i, /\bSERUM\s+FREE\s*T4\b/i, /\bFREE\s*T4\b/i] }
+  ];
+
+  function canonicalKeyForName(name){
+    const s = String(name||'');
+    for(const m of PARAM_MAP){
+      for(const rx of m.rx){
+        if(rx.test(s)) return m.key;
+      }
+    }
+    return null;
+  }
+
+  function extractBlocks(raw){
+    const text = toPlainText(raw);
+    const lines = text.split('\n').map(x=>x.trim()).filter(Boolean);
+
+    const blocks = []; // {dateStr,dateKey,entries:[{name,value}]}
+    let cur = null;
+
+    function startBlock(dateStr){
+      cur = { dateStr: dateStr || '', dateKey: parseDateToKey(dateStr) || '', entries: [] };
+      blocks.push(cur);
+    }
+    function ensureBlock(){ if(!cur) startBlock(''); }
+    function pushEntry(name, val){
+      const v = cleanValue(val);
+      if(!name || !v) return;
+      ensureBlock();
+      cur.entries.push({ name: String(name).trim(), value: v });
+    }
+    function nextUseful(idx){
+      for(let j=idx;j<Math.min(lines.length, idx+12);j++){
+        const s = lines[j];
+        if(!s) continue;
+        if(s === '...' || s === '....' || s === '-----') continue;
+        return { s, j };
+      }
+      return null;
+    }
+
+    for(let i=0;i<lines.length;i++){
+      const line = lines[i];
+
+      // "Report Date :* 24/12/2025" OR "Report Date : 24/12/2025"
+      const dm = line.match(/Report\s*Date\s*:\*?\s*(\d{2}[\/\-]\d{2}[\/\-]\d{4}|\d{4}[\/\-]\d{2}[\/\-]\d{2}|\d{1,2}\s*[A-Za-z]{3,9}\s*\d{4})/i);
+      if(dm){ startBlock(dm[1]); continue; }
+
+      // -------- Pattern A: numbered, tabular, single-line --------
+      // examples:
+      // "1. HAEMOGLOBIN Low 9.3 12.0-15.0"
+      // "2. WBC COUNT High 73.75 4.0-10.0"
+      // "3. NEUTROPHIL ABS (ANC) High 68.44 ..."
+      // "1. PT High 18.2 ..."
+      // "2. INR High 1.56 ..."
+      // "3. APTT High 36.2 ..."
+      const a = line.match(/^\s*\d+\.\s*([A-Za-z][A-Za-z0-9\-\(\)\s\/\+\.]*?)\s+(Normal|High|Low|Abnormal)\s+(-?\d+(?:\.\d+)?)/i);
+      if(a){
+        pushEntry(a[1], a[3]);
+        continue;
+      }
+
+      // Sometimes the report has the same but without the "Normal/High/Low" token,
+      // especially for INR/PT/APTT lines exported differently.
+      const a2 = line.match(/^\s*\d+\.\s*(PT|INR|APTT)\b[^\d\-]*(-?\d+(?:\.\d+)?)/i);
+      if(a2){
+        pushEntry(a2[1], a2[2]);
+        continue;
+      }
+
+      // -------- Pattern B: multi-line with "Sno." line: "5." then name/type/value --------
+      if(/^\d+\.$/.test(line)){
+        const n1 = nextUseful(i+1); if(!n1) continue;
+        const n2 = nextUseful(n1.j+1); if(!n2) continue;
+        const n3 = nextUseful(n2.j+1); if(!n3) continue;
+
+        const name = n1.s;
+        const type = n2.s;
+        let val = n3.s;
+
+        // if val is filler, skip ahead
+        if(val === '...'){
+          const n4 = nextUseful(n3.j+1);
+          if(n4) val = n4.s;
         }
+
+        // many chemistry blocks are exactly name / Normal|High|Low / value
+        if(/^(Normal|High|Low|Abnormal)$/i.test(type)){
+          pushEntry(name, val);
+          continue;
+        }
+
+        // sometimes type/value shift
+        const v2 = cleanValue(type);
+        if(v2){
+          pushEntry(name, v2);
+          continue;
+        }
+        const v3 = cleanValue(val);
+        if(v3){
+          pushEntry(name, v3);
+          continue;
+        }
+      }
+
+      // -------- Pattern C: name-line starts directly (chemistry), then type then value --------
+      // "Serum Sodium" then "Normal" then "139"
+      if(/^(Serum|Total|Direct|NT|Glycosylated|FASTING|RANDOM|POSTPRANDIAL|WBC|HAEMOGLOBIN|PLATELETS|NEUTROPHIL)/i.test(line)){
+        // only attempt if this line looks like a mapped test name
+        const key = canonicalKeyForName(line);
+        if(!key) continue;
+
+        const n1 = nextUseful(i+1); if(!n1) continue;
+        const n2 = nextUseful(n1.j+1); if(!n2) continue;
+
+        let type = n1.s;
+        let val = n2.s;
+
+        // swap if needed
+        if(!/^(Normal|High|Low|Abnormal)$/i.test(type) && /^(Normal|High|Low|Abnormal)$/i.test(val)){
+          type = val;
+          const n3 = nextUseful(n2.j+1);
+          if(!n3) continue;
+          val = n3.s;
+        }
+
+        // accept if value numeric
+        if(/^(Normal|High|Low|Abnormal)$/i.test(type)){
+          pushEntry(line, val);
+        }else{
+          // still accept if n1 itself is numeric
+          const maybe = cleanValue(type);
+          if(maybe) pushEntry(line, maybe);
+        }
+      }
+    }
+
+    return blocks.filter(b => (b.entries||[]).length>0);
+  }
+
+  function latestPerKey(blocks){
+    const out = {}; // key -> {value,dateStr,dateKey,sourceName}
+    for(const b of blocks){
+      for(const e of b.entries){
+        const key = canonicalKeyForName(e.name);
+        if(!key) continue;
+
+        const cand = {
+          value: e.value,
+          dateStr: b.dateStr || 'unknown',
+          dateKey: b.dateKey || '',
+          sourceName: e.name
+        };
+
+        const prev = out[key];
+        if(!prev){
+          out[key]=cand;
+          continue;
+        }
+
+        // prefer known dates; then later dateKey; else later occurrence
+        if(prev.dateKey === '' && cand.dateKey !== ''){
+          out[key]=cand; continue;
+        }
+        if(prev.dateKey !== '' && cand.dateKey !== ''){
+          if(cand.dateKey > prev.dateKey){ out[key]=cand; continue; }
+          if(cand.dateKey < prev.dateKey) continue;
+        }
+        // same dateKey or both unknown -> take later occurrence
+        out[key]=cand;
+      }
+    }
+    return out;
+  }
+
+  function summaryString(latest){
+    const parts = [];
+    for(const k of KEY_ORDER){
+      const rec = latest[k];
+      if(!rec) continue;
+      const d = rec.dateStr && rec.dateStr !== 'unknown' ? rec.dateStr : '';
+      parts.push(`${k}=${rec.value}${d ? ' ('+d+')' : ''}`);
+    }
+    return parts.join(' | ');
+  }
+
+  // ---- Apply parsed latest values into ePAC UI lab fields (non-destructive) ----
+  const FIELD_ID_MAP = {
+    Hb: 'hb',
+    TLC: 'tlc',
+    ANC: 'anc',
+    Platelets: 'platelets',
+    FBS: 'fbs',
+    RBS: 'rbs',
+    PPBS: 'ppbs',
+    HbA1c: 'hba1c',
+    Creatinine: 'creatinine',
+    Na: 'na',
+    K: 'k',
+    PT: 'pt',
+    INR: 'inr',
+    APTT: 'aptt',
+    BilirubinT: 'bilirubinT',
+    BilirubinC: 'bilirubinC',
+    Albumin: 'albumin',
+    ALT: 'alt',
+    AST: 'ast',
+    NTproBNP: 'nt-probnp',
+    TSH: 'tsh',
+    FT4: 'ft4'
+  };
+
+  function applyLatestToForm(latest){
+    if(!latest || typeof latest !== 'object') return;
+
+    let updated = 0, missing = 0;
+    for(const key of Object.keys(FIELD_ID_MAP)){
+      const rec = latest[key];
+      if(!rec || rec.value === undefined || rec.value === null || rec.value === '') continue;
+
+      const id = FIELD_ID_MAP[key];
+      const el = document.getElementById(id);
+      if(!el){
+        missing++;
+        continue;
+      }
+
+      // Only update if empty OR value differs; never clobber user's manual edits silently
+      const newVal = String(rec.value).trim();
+      const curVal = String(el.value || '').trim();
+      if(curVal !== newVal){
+        el.value = newVal;
+        updated++;
+      }
+
+      // Preserve the report date/source for audit (does not affect PDF unless you choose to print it)
+      const meta = (rec.dateStr && rec.dateStr !== 'unknown' ? rec.dateStr : '');
+      if(meta){
+        el.dataset.labDate = meta;
+        el.title = `${key} from ${meta}${rec.sourceName ? ' ('+rec.sourceName+')' : ''}`;
+      }
+    }
+    // Optional: show a gentle note in status if many fields were missing in UI
+    if(missing > 0){
+      console.info('[ePAC] Some lab keys had no matching UI field id (ignored):', missing);
+    }
+    return updated;
+  }
+
+  function bind(){
+    const btn = byId('btnImportLabs');
+    const fileInput = byId('labFileInputEPAC');
+    const statusEl = byId('labImportStatusEPAC');
+
+    if(!btn || !fileInput || !statusEl){
+      // do not throw; never break other app functionality
+      console.warn('[ePAC] Lab import UI elements not found.');
+      return;
+    }
+
+    // keep accept broad (supports AllReqReport exports)
+    fileInput.setAttribute('accept', '.txt,.text,.htm,.html,.mhtml,.mht,.xhtml,.xml');
+
+    btn.addEventListener('click', function(){
+      try{ fileInput.click(); }catch(e){ console.error(e); }
     });
-    xmlData += `</Record>`;
 
-    // Create blob and download as XML file
-    const blob = new Blob([xmlData], { type: "text/xml" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = fileName;
-    link.click();
-    URL.revokeObjectURL(link.href);
-}
+    fileInput.addEventListener('change', async function(ev){
+      const file = ev.target.files && ev.target.files[0];
+      if(!file){
+        setStatus('No lab file selected.', true);
+        return;
+      }
+      setStatus('Reading file: ' + file.name + ' ...', false);
 
-// Function to load XML into form fields
-function loadXML(file) {
+      try{
+        const raw = await file.text();
+        const blocks = extractBlocks(raw);
+        if(!blocks.length){
+          setStatus('Imported file, but no report blocks with results were detected.', true);
+          ev.target.value = '';
+          return;
+        }
+        const latest = latestPerKey(blocks);
+        const s = summaryString(latest);
+        if(!s){
+          setStatus('Imported file, but none of the lab parameters matched your terminology map.', true);
+          ev.target.value = '';
+          return;
+        }
+        setStatus(s, false);
+        try{ applyLatestToForm(latest); }catch(e){ console.error(e); }
+        ev.target.value = '';
+      }catch(err){
+        console.error(err);
+        setStatus('Import error: ' + (err && err.message ? err.message : String(err)), true);
+        ev.target.value = '';
+      }
+    });
+  }
+
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind);
+  else bind();
+})();
+;
+</script>
+
+
+
+<script>
+/* ==========================================================================================
+   Canonical XML export/import (SAFE: does not throw if optional UI elements are absent)
+   - Used automatically with PDF: generates PAC-<emr>-<ddMon-yyyy-HHmm>.xml
+   - Also supports manual XML download (if you wire a button to downloadXMLManual()).
+================================================================================================ */
+(function EPAC_XML(){
+  function xmlEscape(s){
+    return String(s ?? '')
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;')
+      .replace(/'/g,'&apos;');
+  }
+
+  function safeTagName(s){
+    // XML element names: start with letter/_; then letters/digits/_/-
+    const raw = String(s ?? '').trim();
+    if(!raw) return null;
+    const cleaned = raw.replace(/[^A-Za-z0-9_\-]/g, '_');
+    const startsOk = /^[A-Za-z_]/.test(cleaned) ? cleaned : ('f_' + cleaned);
+    return startsOk;
+  }
+
+  function getPACID(){
+    const emr = (document.getElementById('emrNumber')?.value || '').trim() || 'UNKNOWN';
+    // Prefer the same PAC timestamp logic as PDF if available
+    if(typeof window.formatDateTimeForPAC === 'function'){
+      const dt = window.formatDateTimeForPAC();
+      return `PAC-${emr}-${dt}`;
+    }
+    // fallback
+    const now = new Date();
+    const day = String(now.getDate()).padStart(2,'0');
+    const mon = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][now.getMonth()];
+    const yr = now.getFullYear();
+    const hh = String(now.getHours()).padStart(2,'0');
+    const mm = String(now.getMinutes()).padStart(2,'0');
+    return `PAC-${emr}-${day}${mon}-${yr}-${hh}${mm}`;
+  }
+
+  function buildCanonicalXML(pacID){
+    const createdAtISO = new Date().toISOString();
+    const els = Array.from(document.querySelectorAll('input, textarea, select'));
+
+    let xml = '';
+    xml += '<?xml version="1.0" encoding="UTF-8"?>\n';
+    xml += '<EPACRecord>\n';
+    xml += `  <pacID>${xmlEscape(pacID)}</pacID>\n`;
+    xml += `  <createdAtISO>${xmlEscape(createdAtISO)}</createdAtISO>\n`;
+    xml += '  <fields>\n';
+
+    for(const el of els){
+      const key = el.name || el.id;
+      const tag = safeTagName(key);
+      if(!tag) continue;
+
+      let val = '';
+      if(el.type === 'checkbox'){
+        val = el.checked ? (el.value || 'true') : '';
+      }else if(el.type === 'radio'){
+        if(!el.checked) continue;
+        val = el.value || 'true';
+      }else{
+        val = el.value ?? '';
+      }
+
+      // Skip truly empty values to keep XML compact
+      if(String(val).trim() === '') continue;
+
+      xml += `    <${tag}>${xmlEscape(val)}</${tag}>\n`;
+    }
+
+    xml += '  </fields>\n';
+    xml += '</EPACRecord>\n';
+    return xml;
+  }
+
+  function downloadTextFile(text, filename, mime){
+    const blob = new Blob([text], { type: mime || 'text/plain' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+  }
+
+  // Public: manual download (optional)
+  window.downloadXMLManual = function(){
+    const pacID = getPACID();
+    const xml = buildCanonicalXML(pacID);
+    downloadTextFile(xml, `${pacID}.xml`, 'text/xml');
+  };
+
+  // Public: used by generatePDF() for automatic canonical record
+  window.autoDownloadXMLWithPacID = function(pacID){
+    const safeID = (pacID && String(pacID).trim()) ? String(pacID).trim() : getPACID();
+    const xml = buildCanonicalXML(safeID);
+    downloadTextFile(xml, `${safeID}.xml`, 'text/xml');
+  };
+
+  // Optional: XML import (only if an input exists)
+  function loadXMLFile(file){
     const reader = new FileReader();
-    reader.onload = function (event) {
+    reader.onload = function(ev){
+      try{
         const parser = new DOMParser();
-        const xmlDoc = parser.parseFromString(event.target.result, "text/xml");
+        const xmlDoc = parser.parseFromString(ev.target.result, 'text/xml');
+        const root = xmlDoc.getElementsByTagName('fields')[0];
+        if(!root){ alert('Invalid XML: <fields> not found.'); return; }
 
-        // Populate form fields from XML
-        const formElements = document.querySelectorAll("input, textarea, select");
-        formElements.forEach(el => {
-            const xmlElement = xmlDoc.getElementsByTagName(el.name)[0];
-            if (xmlElement && xmlElement.childNodes[0]) {
-                el.value = xmlElement.childNodes[0].nodeValue;
-            }
-        });
+        const formEls = Array.from(document.querySelectorAll('input, textarea, select'));
+        for(const el of formEls){
+          const key = el.name || el.id;
+          const tag = safeTagName(key);
+          if(!tag) continue;
+
+          const node = root.getElementsByTagName(tag)[0];
+          if(!node || !node.childNodes || !node.childNodes[0]) continue;
+          const v = node.childNodes[0].nodeValue ?? '';
+
+          if(el.type === 'checkbox'){
+            // set checked if value is present (best-effort)
+            el.checked = String(v).trim() !== '';
+          }else if(el.type === 'radio'){
+            // match by value
+            if(String(el.value) === String(v)) el.checked = true;
+          }else{
+            el.value = v;
+          }
+        }
+      }catch(e){
+        console.error(e);
+        alert('XML import error: ' + (e?.message || String(e)));
+      }
     };
     reader.readAsText(file);
-}
+  }
 
-// Add event listener to file input for loading XML
-document.getElementById("load_xml_input").addEventListener("change", function () {
-    const file = this.files[0];
-    if (file) {
-        loadXML(file);
-    }
-});
-
-</script>	
+  function bind(){
+    const inp = document.getElementById('load_xml_input');
+    if(!inp) return; // do not break other functionality if not present
+    inp.addEventListener('change', function(){
+      const file = this.files && this.files[0];
+      if(file) loadXMLFile(file);
+    });
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind);
+  else bind();
+})();
+</script>
 	
+
+</head>
+<body>
+<div class="ui-topbar">
+  <div class="ui-topbar-inner">
+    <div class="ui-brand">
+      <div class="title">ePAC v2.5.4</div>
+    </div>
+
+    <div class="ui-actions">
+      <span class="hint">Switch view:</span>
+      <div class="seg" role="group" aria-label="Display mode">
+        <button type="button" id="btnPC" aria-pressed="true">PC</button>
+        <button type="button" id="btnMobile" aria-pressed="false">Mobile</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="viewport-frame">
+  <!-- keep ALL your existing content inside this frame -->
+
+    <div class="form-container">
+        <h1>Pre Anesthesia Checkup (PAC) Record</h1>
+        <p class="note">* Fields marked in red are mandatory</p>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pre Anesthesia Checkup (PAC) Record, MPMMCC and HBCH Varanasi, IN-221005, v 2.5.4 (released 25 Dec 2025, Author: Prof. Jyotirmay Kirtania, Licence: GNU GPL v3)</title>
+ 
     <form id="pacForm">
         <!-- Header Information -->
-        <p><strong>Pre Anesthesia Checkup (PAC) Record, MPMMCC and HBCH Varanasi, IN-221005, v 2.5 (released 23 Dec 2025, Author: Prof. Jyotirmay Kirtania, Licence: GNU GPL v3)</strong></p>
+        <p><strong>Pre Anesthesia Checkup (PAC) Record, MPMMCC and HBCH Varanasi, IN-221005, v 2.5.4 (released 25 Dec 2025, Author: Prof. Jyotirmay Kirtania, Licence: GNU GPL v3)</strong></p>
 		<!-- Save & Print and Reset Buttons -->
         <button type="button" onclick="resetForm()" style="background-color: red; color: white;">Cancel and Start New Record</button>
 		<button type="button" onclick="generatePDF()">Save & Print</button>
-       	<br><br>
+       	
 	   <!-- PAC Visit Type Section -->
 <label for="pacVisitType"class="mandatory-field"><strong>PAC Visit Type*:</strong></label>
 <select id="pacVisitType" name="pacVisitType" required>
@@ -945,20 +1506,20 @@ document.getElementById("load_xml_input").addEventListener("change", function ()
     <option value="Review PAC">Review PAC</option>
     <option value="Teleconsultation - New PAC">Teleconsultation - New PAC</option>
     <option value="Teleconsultation - Review PAC">Teleconsultation - Review PAC</option>
-</select><br><br>
+</select>
 
         <!-- Patient Information -->
        <!-- EMR Number (Case Number) Section -->
 <label for="emrNumber"class="mandatory-field"><strong>EMR Number (Case Number)*:</strong></label>
-<input type="text" id="emrNumber" name="emrNumber" maxlength="15" required placeholder="Enter case number"><br><br>
+<input type="text" id="emrNumber" name="emrNumber" maxlength="15" required placeholder="Enter case number">
 
 <!-- Name of Patient Section -->
 <label for="patientName"class="mandatory-field"><strong>Name of Patient*:</strong></label>
-<input type="text" id="patientName" name="patientName" maxlength="60" required placeholder="Enter patient's name"><br><br>
+<input type="text" id="patientName" name="patientName" maxlength="60" required placeholder="Enter patient's name">
 
 <!-- Age (years) Section -->
 <label for="age"class="mandatory-field"><strong>Age (years)*:</strong></label>
-<input type="text" id="age" name="age" maxlength="3" required placeholder="Enter age"><br><br>
+<input type="text" id="age" name="age" maxlength="3" required placeholder="Enter age">
 
 <!-- Gender Section -->
 <label for="gender"class="mandatory-field"><strong>Gender*:</strong></label>
@@ -966,7 +1527,7 @@ document.getElementById("load_xml_input").addEventListener("change", function ()
     <option value="" disabled selected>Select gender</option>
     <option value="Male">Male</option>
     <option value="Female">Female</option>
-</select><br><br>
+</select>
 
 <!-- Primary Diagnosis and Proposed Procedure Section -->
 <h3><strong, class="mandatory-field">Primary Diagnosis and Proposed Procedure*</strong></h3>
@@ -974,6 +1535,7 @@ document.getElementById("load_xml_input").addEventListener("change", function ()
 
        <!-- Clinical History and Lab Reports Section -->
 <!-- Clinical Details and Vitals Section -->
+
 <h3><strong>Clinical Details and Vitals</strong></h3>
 
 <label for="response"><strong>Select Response</strong></label>
@@ -984,38 +1546,38 @@ document.getElementById("load_xml_input").addEventListener("change", function ()
     <option value="V, Responded to verbal stimulus and shoulder tap">V - Responded to verbal stimulus and shoulder tap</option>
     <option value="P, Responded to only pain (jaw thrust)">P - Responded to only pain (jaw thrust)</option>
     <option value="U, Unresponsive to verbal stimulus, shoulder tap and pain">U - Unresponsive to verbal stimulus, shoulder tap and pain</option>
-</select><br><br>
+</select>
 
 <label for="height"><strong>Height (cm):</strong></label>
-<input type="text" id="height" name="height" maxlength="3" placeholder="Enter height" oninput="calculateBMI()"><br><br>
+<input type="text" id="height" name="height" maxlength="3" placeholder="Enter height" oninput="calculateBMI()">
 
 <label for="weight"><strong>Weight (kg):</strong></label>
-<input type="text" id="weight" name="weight" maxlength="3" placeholder="Enter weight" oninput="calculateBMI()"><br><br>
+<input type="text" id="weight" name="weight" maxlength="3" placeholder="Enter weight" oninput="calculateBMI()">
 
 <label for="bmi"><strong>BMI (kg/sq. m):</strong></label>
-<input type="text" id="bmi" name="bmi" readonly placeholder="Auto-calculated"><br><br>
+<input type="text" id="bmi" name="bmi" readonly placeholder="Auto-calculated">
 
 <label for="Temperature"><strong>Temperature (F):</strong></label>
-<input type="text" id="temperature" name="temperature" maxlength="4" placeholder="Enter Temperature"><br><br>
+<input type="text" id="temperature" name="temperature" maxlength="4" placeholder="Enter Temperature">
 
 <label for="bloodPressure"><strong>Blood Pressure (mmHg):</strong></label>
-<input type="text" id="bloodPressure" name="bloodPressure" maxlength="7" placeholder="Enter blood pressure"><br><br>
+<input type="text" id="bloodPressure" name="bloodPressure" maxlength="7" placeholder="Enter blood pressure">
 
 <label for="pulseRate"><strong>Pulse Rate (bpm):</strong></label>
-<input type="text" id="pulseRate" name="pulseRate" maxlength="3" placeholder="Enter pulse rate"><br><br>
+<input type="text" id="pulseRate" name="pulseRate" maxlength="3" placeholder="Enter pulse rate">
 
 <label for="respiratoryRate"><strong>Respiratory Rate (bpm):</strong></label>
-<input type="text" id="respiratoryRate" name="respiratoryRate" maxlength="2" placeholder="Enter respiratory rate"><br><br>
+<input type="text" id="respiratoryRate" name="respiratoryRate" maxlength="2" placeholder="Enter respiratory rate">
 
 <label for="spo2"><strong>SpO2 (%):</strong></label>
-<input type="text" id="spo2" name="spo2" maxlength="3" placeholder="Enter SpO2"><br><br>
+<input type="text" id="spo2" name="spo2" maxlength="3" placeholder="Enter SpO2">
 
 <label for="Room air or supplemental O2"><strong>Room air or supplemental O2</strong></label>
 <select id="O2" name="O2" required>
 	<option value="" disabled selected>Select response</option>
     <option value="Room Air">Room air</option>
 	<option value="Supplemental O2">Supplemental O2</option>
-</select><br><br>
+</select>
 
 <label for="bloodGroup"><strong>Blood Group & Rh type:</strong></label>
 <select id="bloodGroup" name="bloodGroup">
@@ -1029,7 +1591,7 @@ document.getElementById("load_xml_input").addEventListener("change", function ()
     <option value="A Negative">A Negative</option>
     <option value="AB Negative">AB Negative</option>
     <option value="Record not available">Record of blood group and type not available</option>
-</select><br><br>
+</select>
 
 <!-- JavaScript for BMI Calculation -->
 <script>
@@ -1053,15 +1615,15 @@ function calculateBMI() {
 
 <!-- Allergies Section -->
 <h3><strong>Allergies (check all options that apply)</strong></h3>
-<label><input type="checkbox" name="allergies" id="noAllergies" value="No known allergies"> No known allergies</label><br>
-<label><input type="checkbox" name="allergies" value="Penicillin and related antibiotics allergy history"> Penicillin and related antibiotics allergy history</label><br>
-<label><input type="checkbox" name="allergies" value="Sulfa drugs allergy history"> Sulfa drugs allergy history</label><br>
-<label><input type="checkbox" name="allergies" value="Aspirin, ibuprofen and other NSAIDs allergy history"> Aspirin, ibuprofen and other NSAIDs allergy history</label><br>
-<label><input type="checkbox" name="allergies" value="Chemotherapy drugs allergy history"> Chemotherapy drugs allergy history</label><br>
-<label><input type="checkbox" name="allergies" id="otherAllergyCheckbox" value="Other"> Other</label><br><br>
+<label><input type="checkbox" name="allergies" id="noAllergies" value="No known allergies"> No known allergies</label>
+<label><input type="checkbox" name="allergies" value="Penicillin and related antibiotics allergy history"> Penicillin and related antibiotics allergy history</label>
+<label><input type="checkbox" name="allergies" value="Sulfa drugs allergy history"> Sulfa drugs allergy history</label>
+<label><input type="checkbox" name="allergies" value="Aspirin, ibuprofen and other NSAIDs allergy history"> Aspirin, ibuprofen and other NSAIDs allergy history</label>
+<label><input type="checkbox" name="allergies" value="Chemotherapy drugs allergy history"> Chemotherapy drugs allergy history</label>
+<label><input type="checkbox" name="allergies" id="otherAllergyCheckbox" value="Other"> Other</label>
 
 <!-- Text box for "Other" allergy details, hidden initially -->
-<textarea id="otherAllergyDetails" maxlength="150" style="display: none; width: 100%; height: 50px;" placeholder="Please specify other allergies (maximum 150 characters)"></textarea><br>
+<textarea id="otherAllergyDetails" maxlength="150" style="display: none; width: 100%; height: 50px;" placeholder="Please specify other allergies (maximum 150 characters)"></textarea>
 
 <!-- JavaScript to toggle the visibility of the text box -->
 <script>
@@ -1124,29 +1686,29 @@ function calculateBMI() {
 
 <!-- Co-existing Illness Section -->
 <h3><strong>Co-existing illness (check all options that apply)</strong></h3>
-<label><input type="checkbox" name="illnesses" value="Anemia"> Anemia (Hb < 13 g/dL in males, Hb < 12 g/dL in females)</label><br>
-<label><input type="checkbox" name="illnesses" value="Hypertension"> Hypertension (BP > 140/90 mmHg on two separate occasions)</label><br>
-<label><input type="checkbox" name="illnesses" value="Diabetes Mellitus"> Diabetes Mellitus (FBS > 126 mg/dL, or RBS > 200 mg/dL, or PPBS > 180 mg/dL, or HbA1c > 6.5 g/dL)</label><br>
-<label><input type="checkbox" name="illnesses" value="Coronary Artery Disease"> Coronary Artery Disease (Ischemic Heart Disease)</label><br>
-<label><input type="checkbox" name="illnesses" value="Chronic Heart Failure"> Chronic Heart Failure</label><br>
-<label><input type="checkbox" name="illnesses" value="Cancer"> Cancer</label><br>
-<label><input type="checkbox" name="illnesses" value="Asthma"> Asthma</label><br>
-<label><input type="checkbox" name="illnesses" value="COPD"> COPD</label><br>
-<label><input type="checkbox" name="illnesses" value="Thyroid Disorders"> Thyroid Disorders</label><br>
-<label><input type="checkbox" name="illnesses" value="Cerebrovascular disease"> Cerebrovascular disease (history of stroke / TIA)</label><br>
-<label><input type="checkbox" name="illnesses" value="Chronic Kidney Disease"> Chronic Kidney Disease</label><br>
-<label><input type="checkbox" name="illnesses" value="Chronic Liver Disease"> Chronic Liver Disease</label><br>
-<label><input type="checkbox" name="illnesses" value="Seizure Disorder"> Seizure Disorder (Epilepsy)</label><br>
-<label><input type="checkbox" name="illnesses" value="Valvular Heart Disease"> Valvular Heart Disease</label><br>
-<label><input type="checkbox" name="illnesses" value="Congenital Heart Disease"> Congenital Heart Disease</label><br>
-<label><input type="checkbox" name="illnesses" value="Bleeding and Coagulation Disorders"> Bleeding and Coagulation Disorders</label><br>
-<label><input type="checkbox" name="illnesses" value="Chronic Pain"> Chronic Pain</label><br>
-<label><input type="checkbox" name="illnesses" value="Parkinsonism"> Parkinsonism</label><br>
-<label><input type="checkbox" name="illnesses" value="Dementia"> Dementia</label><br><br>
-<label><input type="checkbox" name="illnesses" id="otherIllnessCheckbox" value="Other"> Other</label><br><br>
+<label><input type="checkbox" name="illnesses" value="Anemia"> Anemia (Hb < 13 g/dL in males, Hb < 12 g/dL in females)</label>
+<label><input type="checkbox" name="illnesses" value="Hypertension"> Hypertension (BP > 140/90 mmHg on two separate occasions)</label>
+<label><input type="checkbox" name="illnesses" value="Diabetes Mellitus"> Diabetes Mellitus (FBS > 126 mg/dL, or RBS > 200 mg/dL, or PPBS > 180 mg/dL, or HbA1c > 6.5 g/dL)</label>
+<label><input type="checkbox" name="illnesses" value="Coronary Artery Disease"> Coronary Artery Disease (Ischemic Heart Disease)</label>
+<label><input type="checkbox" name="illnesses" value="Chronic Heart Failure"> Chronic Heart Failure</label>
+<label><input type="checkbox" name="illnesses" value="Cancer"> Cancer</label>
+<label><input type="checkbox" name="illnesses" value="Asthma"> Asthma</label>
+<label><input type="checkbox" name="illnesses" value="COPD"> COPD</label>
+<label><input type="checkbox" name="illnesses" value="Thyroid Disorders"> Thyroid Disorders</label>
+<label><input type="checkbox" name="illnesses" value="Cerebrovascular disease"> Cerebrovascular disease (history of stroke / TIA)</label>
+<label><input type="checkbox" name="illnesses" value="Chronic Kidney Disease"> Chronic Kidney Disease</label>
+<label><input type="checkbox" name="illnesses" value="Chronic Liver Disease"> Chronic Liver Disease</label>
+<label><input type="checkbox" name="illnesses" value="Seizure Disorder"> Seizure Disorder (Epilepsy)</label>
+<label><input type="checkbox" name="illnesses" value="Valvular Heart Disease"> Valvular Heart Disease</label>
+<label><input type="checkbox" name="illnesses" value="Congenital Heart Disease"> Congenital Heart Disease</label>
+<label><input type="checkbox" name="illnesses" value="Bleeding and Coagulation Disorders"> Bleeding and Coagulation Disorders</label>
+<label><input type="checkbox" name="illnesses" value="Chronic Pain"> Chronic Pain</label>
+<label><input type="checkbox" name="illnesses" value="Parkinsonism"> Parkinsonism</label>
+<label><input type="checkbox" name="illnesses" value="Dementia"> Dementia</label>
+<label><input type="checkbox" name="illnesses" id="otherIllnessCheckbox" value="Other"> Other</label>
 
 <!-- Text box for "Other" details, hidden initially -->
-<textarea id="otherIllnessDetails" name="otherIllnessDetails" rows="15" cols="100" maxlength="9000" placeholder="Other chronic illness (up to 9000 characters)"></textarea><br>
+<textarea id="otherIllnessDetails" name="otherIllnessDetails" rows="15" cols="100" maxlength="9000" placeholder="Other chronic illness (up to 9000 characters)"></textarea>
 
 <!-- JavaScript to toggle the visibility of the text box -->
 <script>
@@ -1191,29 +1753,29 @@ function calculateBMI() {
 <!-- Medications Section -->
 <h3><strong>List all medications taken in the last one month</strong></h3>
 <textarea id="medications" name="medications" rows="12" cols="100" maxlength="9000" placeholder="Enter medications (up to 9000 characters)"></textarea>
-<button type="button" onclick="alert('e.g. antihypertensive, antidiabetics, insulin, statins, antianginals, antiarrhythmics, antiplatelets, oral anticoagulants, LMWH, thyroxine, anti-thyroids, antiepileptics, psychotropics, etc.')">Info</button><br><br>
+<button type="button" onclick="alert('e.g. antihypertensive, antidiabetics, insulin, statins, antianginals, antiarrhythmics, antiplatelets, oral anticoagulants, LMWH, thyroxine, anti-thyroids, antiepileptics, psychotropics, etc.')">Info</button>
 
 <!-- Chemotherapy Section -->
 <h3><strong>Chemotherapy</strong></h3>
 <textarea id="chemotherapy" name="chemotherapy" rows="3" cols="100" maxlength="900" placeholder="Enter chemotherapy details (up to 900 characters)"></textarea>
-<button type="button" onclick="alert('e.g. 4# docetaxel, carboplatin, and trastuzumab, last dose 2 Nov 2024.')">Info</button><br><br>
+<button type="button" onclick="alert('e.g. 4# docetaxel, carboplatin, and trastuzumab, last dose 2 Nov 2024.')">Info</button>
 
 <!-- Radiotherapy Section -->
 <h3><strong>Radiotherapy</strong></h3>
 <textarea id="radiotherapy" name="radiotherapy" rows="3" cols="100" maxlength="900" placeholder="Enter radiotherapy details (up to 900 characters)"></textarea>
-<button type="button" onclick="alert('e.g. 50Gy/25#, last dose 2 Nov 2024.')">Info</button><br><br>
+<button type="button" onclick="alert('e.g. 50Gy/25#, last dose 2 Nov 2024.')">Info</button>
 
 <!-- Addictions Section --> 
 <h3><strong>Addictions (present and past) (Check all that apply)</strong></h3>
-<label><input type="checkbox" name="addictions" id="noAddictions" value="No addictions to declare"> No addictions to declare</label><br>
-<label><input type="checkbox" name="addictions" value="Smokeless Tobacco"> Smokeless Tobacco</label><br>
-<label><input type="checkbox" name="addictions" value="Smoking"> Smoking</label><br>
-<label><input type="checkbox" name="addictions" value="Cannabis"> Cannabis</label><br>
-<label><input type="checkbox" name="addictions" value="Alcohol"> Alcohol</label><br>
-<label><input type="checkbox" name="addictions" value="Opioid"> Opioid</label><br>
-<label><input type="checkbox" name="addictions" value="Amphetamine"> Amphetamine</label><br>
-<label><input type="checkbox" name="addictions" value="Cocaine"> Cocaine</label><br>
-<label><input type="checkbox" name="addictions" value="Other"> Other</label><br><br>
+<label><input type="checkbox" name="addictions" id="noAddictions" value="No addictions to declare"> No addictions to declare</label>
+<label><input type="checkbox" name="addictions" value="Smokeless Tobacco"> Smokeless Tobacco</label>
+<label><input type="checkbox" name="addictions" value="Smoking"> Smoking</label>
+<label><input type="checkbox" name="addictions" value="Cannabis"> Cannabis</label>
+<label><input type="checkbox" name="addictions" value="Alcohol"> Alcohol</label>
+<label><input type="checkbox" name="addictions" value="Opioid"> Opioid</label>
+<label><input type="checkbox" name="addictions" value="Amphetamine"> Amphetamine</label>
+<label><input type="checkbox" name="addictions" value="Cocaine"> Cocaine</label>
+<label><input type="checkbox" name="addictions" value="Other"> Other</label>
 
 <!-- JavaScript for mutual exclusivity logic -->
 <script>
@@ -1258,98 +1820,94 @@ function calculateBMI() {
 
 <!-- Steroid or Immunosuppressants Section -->
 <h3><strong>Steroid or immunosuppressants use for chronic conditions</strong></h3>
-<button type="button" onclick="alert('Regular administration of oral or parenteral corticosteroid medications or immunosuppressants for a chronic medical condition, within the 30 days prior to surgery, or at the time the patient is being considered as a candidate for surgery. A one-time pulse, limited short course, or a taper of less than 10 days duration would not qualify. Long-interval injections of long-acting agents would qualify.')">Info</button><br><br>
-<label><input type="radio" name="steroidUse" value="No" required> No</label><br>
+<button type="button" onclick="alert('Regular administration of oral or parenteral corticosteroid medications or immunosuppressants for a chronic medical condition, within the 30 days prior to surgery, or at the time the patient is being considered as a candidate for surgery. A one-time pulse, limited short course, or a taper of less than 10 days duration would not qualify. Long-interval injections of long-acting agents would qualify.')">Info</button>
+<label><input type="radio" name="steroidUse" value="No" required> No</label>
 <label><input type="radio" name="steroidUse" value="Yes"> Yes</label>
 
 
 <!-- Recent Fever or Cough Section -->
 <h3><strong>Recent fever or cough and cold within the last six weeks</strong></h3>
-<label><input type="radio" name="feverCough" value="No" required> No</label><br>
-<label><input type="radio" name="feverCough" value="Yes"> Yes</label><br><br>
+<label><input type="radio" name="feverCough" value="No" required> No</label>
+<label><input type="radio" name="feverCough" value="Yes"> Yes</label>
 
 <!-- Ascites Section -->
 <h3><strong>Ascites</strong></h3>
-<button type="button" onclick="alert('Ascites within the last 30 days. The presence of fluid accumulation in the peritoneal cavity noted on physical examination, abdominal ultrasound, or abdominal CT/MRI within the last 30 days. Documentation must state either active or a history of liver disease or must state secondary to malignancy.')">Info</button><br><br>
-<label><input type="radio" name="ascites" value="No" required> No</label><br>
+<button type="button" onclick="alert('Ascites within the last 30 days. The presence of fluid accumulation in the peritoneal cavity noted on physical examination, abdominal ultrasound, or abdominal CT/MRI within the last 30 days. Documentation must state either active or a history of liver disease or must state secondary to malignancy.')">Info</button>
+<label><input type="radio" name="ascites" value="No" required> No</label>
 <label><input type="radio" name="ascites" value="Yes"> Yes</label>
 
 
 <!-- Sepsis Section -->
 <h3><strong>Sepsis</strong></h3>
-<button type="button" onclick="alert('Systemic sepsis within the last 48 hours. Any of the following: Systemic Inflammatory Response Syndrome (SIRS), Sepsis, Septic Shock.')">Info</button><br><br>
-<label><input type="radio" name="sepsis" value="No" required> No</label><br>
+<button type="button" onclick="alert('Systemic sepsis within the last 48 hours. Any of the following: Systemic Inflammatory Response Syndrome (SIRS), Sepsis, Septic Shock.')">Info</button>
+<label><input type="radio" name="sepsis" value="No" required> No</label>
 <label><input type="radio" name="sepsis" value="Yes"> Yes</label>
 
 
 <!-- Ventilator Dependent Section -->
 <h3><strong>Ventilator dependent</strong></h3>
-<button type="button" onclick="alert('A patient requiring ventilator-assisted respiration at any time within the last 48 hours. This does not include the treatment of sleep apnea with CPAP.')">Info</button><br><br>
-<label><input type="radio" name="ventilator" value="No" required> No</label><br>
+<button type="button" onclick="alert('A patient requiring ventilator-assisted respiration at any time within the last 48 hours. This does not include the treatment of sleep apnea with CPAP.')">Info</button>
+<label><input type="radio" name="ventilator" value="No" required> No</label>
 <label><input type="radio" name="ventilator" value="Yes"> Yes</label>
 
 
 <!-- Disseminated Cancer Section -->
 <h3><strong>Disseminated Cancer</strong></h3>
-<button type="button" onclick="alert('The patient has a primary cancer that has metastasized to a major organ AND meets at least one of the following. Active treatment for the cancer within one year of the surgery date. If the surgical procedure is the treatment for the metastatic cancer, answer Yes. The patient has chosen not to receive treatment for the metastatic disease. The metastatic cancer has been deemed untreatable. Report Acute Lymphocytic Leukemia, Acute Myelogenous Leukemia, and Stage IV Lymphoma as Disseminated Cancer. Do not report Chronic Lymphocytic Leukemia, Chronic Myelogenous Leukemia, Stages I through III Lymphomas or Multiple Myeloma as Disseminated Cancer.')">Info</button><br><br>
-<label><input type="radio" name="disseminatedCancer" value="No" required> No</label><br>
+<button type="button" onclick="alert('The patient has a primary cancer that has metastasized to a major organ AND meets at least one of the following. Active treatment for the cancer within one year of the surgery date. If the surgical procedure is the treatment for the metastatic cancer, answer Yes. The patient has chosen not to receive treatment for the metastatic disease. The metastatic cancer has been deemed untreatable. Report Acute Lymphocytic Leukemia, Acute Myelogenous Leukemia, and Stage IV Lymphoma as Disseminated Cancer. Do not report Chronic Lymphocytic Leukemia, Chronic Myelogenous Leukemia, Stages I through III Lymphomas or Multiple Myeloma as Disseminated Cancer.')">Info</button>
+<label><input type="radio" name="disseminatedCancer" value="No" required> No</label>
 <label><input type="radio" name="disseminatedCancer" value="Yes"> Yes</label>
 
 
 <!-- Dyspnea Section -->
 <h3><strong>Dyspnea</strong></h3>
-<button type="button" onclick="alert('The dyspnea status when patient prior to the onset of the acute illness, within the 30 days prior to the time the patient is being considered a candidate for surgery.')">Info</button><br><br>
-<label><input type="radio" name="dyspnea" value="None" required> None</label><br>
-<label><input type="radio" name="dyspnea" value="Dyspnea with moderate exertion"> Dyspnea with moderate exertion</label><br>
+<button type="button" onclick="alert('The dyspnea status when patient prior to the onset of the acute illness, within the 30 days prior to the time the patient is being considered a candidate for surgery.')">Info</button>
+<label><input type="radio" name="dyspnea" value="None" required> None</label>
+<label><input type="radio" name="dyspnea" value="Dyspnea with moderate exertion"> Dyspnea with moderate exertion</label>
 <label><input type="radio" name="dyspnea" value="Dyspnea at rest"> Dyspnea at rest</label>
 
 <!-- Chronic Heart Failure Section -->
 <h3><strong>Chronic Heart Failure</strong></h3>
-<button type="button" onclick="alert('Chronic Heart Failure is diagnosed as per  Modified Framingham clinical criteria or, elevated serum NT-pro BNP or BNP. The diagnosis of heart failure requires that 2 major or 1 major and 2 minor criteria cannot be attributed to another medical condition. If weight loss is clearly related to heart failure treatment, it represents a major criterion. If the cause for weight loss is unclear, it represents a minor criterion. Major Criteria: Paroxysmal nocturnal dyspnea, Orthopnea, Elevated jugular venous pressure, Pulmonary rales, 3rd heart sound, Cardiomegaly on chest radiograph, Pulmonary edema on chest radiograph, Weight loss ≥4.5 kg in 5 days in response to treatment of presumed heart failure. Minor Criteria: Bilateral leg edema, Nocturnal cough, Dyspnea on ordinary exertion, Hepatomegaly, Pleural effusion, Tachycardia (heart rate ≥120 beats/min), Weight loss ≥4.5 kg in 5 days')">Info</button><br><br>
-<label><input type="radio" name="chronicHeartFailure" value="No" required> No</label><br>
+<button type="button" onclick="alert('Chronic Heart Failure is diagnosed as per  Modified Framingham clinical criteria or, elevated serum NT-pro BNP or BNP. The diagnosis of heart failure requires that 2 major or 1 major and 2 minor criteria cannot be attributed to another medical condition. If weight loss is clearly related to heart failure treatment, it represents a major criterion. If the cause for weight loss is unclear, it represents a minor criterion. Major Criteria: Paroxysmal nocturnal dyspnea, Orthopnea, Elevated jugular venous pressure, Pulmonary rales, 3rd heart sound, Cardiomegaly on chest radiograph, Pulmonary edema on chest radiograph, Weight loss ≥4.5 kg in 5 days in response to treatment of presumed heart failure. Minor Criteria: Bilateral leg edema, Nocturnal cough, Dyspnea on ordinary exertion, Hepatomegaly, Pleural effusion, Tachycardia (heart rate ≥120 beats/min), Weight loss ≥4.5 kg in 5 days')">Info</button>
+<label><input type="radio" name="chronicHeartFailure" value="No" required> No</label>
 <label><input type="radio" name="chronicHeartFailure" value="Yes"> Yes</label>
 
 <!-- Functional Status Section -->
 <h3><strong>Functional status</strong></h3>
-<button type="button" onclick="alert('The best functional status/level of self-care demonstrated by the patient within the 30 days prior surgery. Independent: The patient does not require assistance from another person for any activities of daily living. This includes a person who is able to function independently with prosthetics, equipment, or devices. Partially dependent: The patient requires some assistance from another person for activities of daily living. Totally dependent: The patient requires total assistance for all activities of daily living.')">Info</button><br><br>
-<label><input type="radio" name="functionalStatus" value="Independent" required> Independent</label><br>
-<label><input type="radio" name="functionalStatus" value="Partially dependent"> Partially dependent</label><br>
+<button type="button" onclick="alert('The best functional status/level of self-care demonstrated by the patient within the 30 days prior surgery. Independent: The patient does not require assistance from another person for any activities of daily living. This includes a person who is able to function independently with prosthetics, equipment, or devices. Partially dependent: The patient requires some assistance from another person for activities of daily living. Totally dependent: The patient requires total assistance for all activities of daily living.')">Info</button>
+<label><input type="radio" name="functionalStatus" value="Independent" required> Independent</label>
+<label><input type="radio" name="functionalStatus" value="Partially dependent"> Partially dependent</label>
 <label><input type="radio" name="functionalStatus" value="Totally dependent"> Totally dependent</label>
 
 
 <!-- Current Smoker Section -->
 <h3><strong>Current Smoker within 1 Year</strong></h3>
-<label><input type="radio" name="currentSmoker" value="No" required> No</label><br>
-<label><input type="radio" name="currentSmoker" value="Yes"> Yes</label><br><br>
+<label><input type="radio" name="currentSmoker" value="No" required> No</label>
+<label><input type="radio" name="currentSmoker" value="Yes"> Yes</label>
 
 <!-- History of Severe COPD Section -->
 <h3><strong>History of Severe COPD</strong></h3>
-<button type="button" onclick="alert('Chronic obstructive pulmonary disease (such as emphysema and/or chronic bronchitis) resulting in one or more of the following: Functional disability from COPD (for example, dyspnea, inability to perform ADLs). Hospitalization in the past for treatment of COPD. Chronic bronchodilator therapy with oral or inhaled agents. FEV1 of <75% of predicted. Do not include patients whose only pulmonary disease is asthma. Do not include patients with diffuse interstitial fibrosis or sarcoidosis')" >Info</button><br><br>
-<label><input type="radio" name="severeCOPD" value="No" required> No</label><br>
+<button type="button" onclick="alert('Chronic obstructive pulmonary disease (such as emphysema and/or chronic bronchitis) resulting in one or more of the following: Functional disability from COPD (for example, dyspnea, inability to perform ADLs). Hospitalization in the past for treatment of COPD. Chronic bronchodilator therapy with oral or inhaled agents. FEV1 of <75% of predicted. Do not include patients whose only pulmonary disease is asthma. Do not include patients with diffuse interstitial fibrosis or sarcoidosis')" >Info</button>
+<label><input type="radio" name="severeCOPD" value="No" required> No</label>
 <label><input type="radio" name="severeCOPD" value="Yes"> Yes</label>
 
 
 <!-- Dialysis Section -->
 <h3><strong>Dialysis</strong></h3>
-<button type="button" onclick="alert('Acute or chronic renal failure requiring treatment with peritoneal dialysis, hemodialysis, hemofiltration, hemodiafiltration, or ultrafiltration within 2 weeks prior to surgery. If a patient requires dialysis, but refuses it or dialysis not done, the answer to this variable will be Yes.')">Info</button><br><br>
-<label><input type="radio" name="dialysis" value="No" required> No</label><br>
+<button type="button" onclick="alert('Acute or chronic renal failure requiring treatment with peritoneal dialysis, hemodialysis, hemofiltration, hemodiafiltration, or ultrafiltration within 2 weeks prior to surgery. If a patient requires dialysis, but refuses it or dialysis not done, the answer to this variable will be Yes.')">Info</button>
+<label><input type="radio" name="dialysis" value="No" required> No</label>
 <label><input type="radio" name="dialysis" value="Yes"> Yes</label>
 
 
 <!-- Acute Renal Failure Section -->
 <h3><strong>Acute Renal Failure</strong></h3>
-<button type="button" onclick="alert('A clinical condition associated with rapid decline of kidney function. The patient meets one of the following: Increased Urea on two measurements AND two serum creatinine results > 3 mg/dL. Surgeon or physician has documented Acute Renal Failure AND one of the following: Increased Urea on two measurements, or two serum creatinine results > 3 mg/dL')">Info</button><br><br>
-<label><input type="radio" name="acuteRenalFailure" value="No" required> No</label><br>
+<button type="button" onclick="alert('A clinical condition associated with rapid decline of kidney function. The patient meets one of the following: Increased Urea on two measurements AND two serum creatinine results > 3 mg/dL. Surgeon or physician has documented Acute Renal Failure AND one of the following: Increased Urea on two measurements, or two serum creatinine results > 3 mg/dL')">Info</button>
+<label><input type="radio" name="acuteRenalFailure" value="No" required> No</label>
 <label><input type="radio" name="acuteRenalFailure" value="Yes"> Yes</label>
 
-</script>
-
 <!-- Airway Assessment Section -->
-<h3><strong>Airway Assessment (check all that apply)</strong></h3>
-<head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Airway Assessment</title>
+  <title>Airway Assessment (check all that apply)</title>
   <style>
     :root{
       --green:#0a7a2a;
@@ -1421,10 +1979,8 @@ function calculateBMI() {
       .item{ break-inside: avoid; }
     }
   </style>
-</head>
-<body>
   <div class="page" role="document" aria-label="Airway Assessment">
-    <h1>Airway Assessment</h1>
+    <h1>Airway Assessment (check all that apply)</h1>
 
     <!-- 1 -->
     <div class="item">
@@ -1515,10 +2071,21 @@ function calculateBMI() {
       </div>
     </div>
 
-  </div>
-</body>
-<label><input type="checkbox" name="airwayAssessment" value="Loose teeth"> Loose teeth</label><br>
-<label><input type="checkbox" name="airwayAssessment" value="Artificial dentures"> Artificial dentures</label><br><br>
+	<!-- 11 -->
+    <div class="item">
+      <input class="cb" type="checkbox" id="aa10" />
+      <div>
+        <p class="headline red"><label for="aa10">Loose teeth</label></p>
+      </div>
+    </div>
+
+	<!-- 12 -->
+    <div class="item">
+      <input class="cb" type="checkbox" id="aa10" />
+      <div>
+        <p class="headline red"><label for="aa10">Artificial dentures</label></p>
+      </div>
+    </div>
 
 <!-- JavaScript for mutual exclusivity logic -->
 <script>
@@ -1563,12 +2130,19 @@ function calculateBMI() {
 
 <!-- Chest Auscultation Section -->
 <h3><strong>Chest Auscultation</strong></h3>
-<textarea id="chestAuscultation" name="chestAuscultation" rows="5" cols="100" maxlength="900" placeholder="Enter chest auscultation details (up to 900 characters)"></textarea><br><br>
+<textarea id="chestAuscultation" name="chestAuscultation" rows="5" cols="100" maxlength="900" placeholder="Enter chest auscultation details (up to 900 characters)"></textarea>
 
 <!-- Clinical Laboratory Reports Section -->
+<!-- Import lab results (uses EMR-tuned parser from ICU-lab-trends-alerts-v2.0) -->
+<div id="labImportBar" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:6px 0 12px 0;">
+  <button type="button" id="btnImportLabs">Import latest labs (.mhtml/.html)</button>
+  <input type="file" id="labFileInputEPAC" accept=".html,.htm,.mhtml,.mht,.xhtml,.php,.asp,.aspx,.jsp" style="display:none;">
+  <div id="labImportStatusEPAC" style="font-size:12px; color:#6b7280;">
+    No lab file imported.
+  </div>
+</div>
 <h3><strong>Clinical Laboratory Reports</strong></h3>
 <button type="button" onclick="showLabReportInfo()">Info</button>
-<p><strong>Fetch and show the most recent values with dates from the LIS database.</strong></p>
 
 <!-- JavaScript for Lab Report Information Pop-Up -->
 <script>
@@ -1593,59 +2167,59 @@ Preoperative laboratory tests shall remain valid for twelve weeks, or till the p
         <!-- Lab Reports -->
         <h3><strong>Lab Reports</strong></h3>
         <label for="hb"><strong>Hb (g/dL):</strong></label>
-        <input type="text" id="hb" name="hb"><br><br>
+        <input type="text" id="hb" name="hb">
         <label for="tlc"><strong>TLC (×10^9/L):</strong></label>
-        <input type="text" id="tlc" name="tlc"><br><br>
+        <input type="text" id="tlc" name="tlc">
 		<label for="anc"><strong>ANC (×10^9/L):</strong></label>
-        <input type="text" id="anc" name="anc"><br><br>
+        <input type="text" id="anc" name="anc">
         <label for="platelets"><strong>Platelets (×10^9/L):</strong></label>
-        <input type="text" id="platelets" name="platelets"><br><br>
+        <input type="text" id="platelets" name="platelets">
         <label for="fbs"><strong>FBS (mg/dL):</strong></label>
-        <input type="text" id="fbs" name="fbs"><br><br>
+        <input type="text" id="fbs" name="fbs">
 		<label for="rbs"><strong>RBS (mg/dL):</strong></label>
-        <input type="text" id="rbs" name="rbs"><br><br>
+        <input type="text" id="rbs" name="rbs">
         <label for="ppbs"><strong>2hPPBS (mg/dL):</strong></label>
-        <input type="text" id="ppbs" name="ppbs"><br><br>
+        <input type="text" id="ppbs" name="ppbs">
 		<label for="hba1c"><strong>HbA1c (g/dL):</strong></label>
-        <input type="text" id="hba1c" name="hba1c"><br><br>
+        <input type="text" id="hba1c" name="hba1c">
         <label for="creatinine"><strong>S. Creatinine (mg/dL):</strong></label>
-        <input type="text" id="creatinine" name="creatinine"><br><br>
+        <input type="text" id="creatinine" name="creatinine">
         <label for="inr"><strong>INR:</strong></label>
-        <input type="text" id="inr" name="inr"><br><br>
+        <input type="text" id="inr" name="inr">
 		<label for="pt"><strong>PT (s):</strong></label>
-        <input type="text" id="pt" name="pt"><br><br>
+        <input type="text" id="pt" name="pt">
 		<label for="aptt"><strong>APTT (s):</strong></label>
-        <input type="text" id="aptt" name="aptt"><br><br>
+        <input type="text" id="aptt" name="aptt">
         <label for="bilirubinT"><strong>S. Bilirubin (T) (mg/dL):</strong></label>
-        <input type="text" id="bilirubinT" name="bilirubinT"><br><br>
+        <input type="text" id="bilirubinT" name="bilirubinT">
         <label for="bilirubinC"><strong>S. Bilirubin (C) (mg/dL):</strong></label>
-        <input type="text" id="bilirubinC" name="bilirubinC"><br><br>
+        <input type="text" id="bilirubinC" name="bilirubinC">
         <label for="albumin"><strong>S. Albumin (g/dL):</strong></label>
-        <input type="text" id="albumin" name="albumin"><br><br>
+        <input type="text" id="albumin" name="albumin">
         <label for="alt"><strong>S. ALT (U/L):</strong></label>
-        <input type="text" id="alt" name="alt"><br><br>
+        <input type="text" id="alt" name="alt">
         <label for="ast"><strong>S. AST (U/L):</strong></label>
-        <input type="text" id="ast" name="ast"><br><br>
+        <input type="text" id="ast" name="ast">
 		<label for="nt-probnp"><strong>S. NT-proBNP (pg/mL):</strong></label>
-        <input type="text" id="nt-probnp" name="nt-probnp"><br><br>
+        <input type="text" id="nt-probnp" name="nt-probnp">
 		<label for="tsh"><strong>S.TSH (mIU/L):</strong></label>
-        <input type="text" id="tsh" name="tsh"><br><br>
+        <input type="text" id="tsh" name="tsh">
 		<label for="ft4"><strong>S.FT4 (ng/dL):</strong></label>
-        <input type="text" id="ft4" name="ft4"><br><br>
+        <input type="text" id="ft4" name="ft4">
 		<label for="ecg"><strong>ECG:</strong></label>
-        <input type="text" id="ecg" name="ecg"><br><br>
+        <input type="text" id="ecg" name="ecg">
 		<label for="echocardiography"><strong>Resting Echocardiography:</strong></label>
-        <input type="text" id="echocardiography" name="echocardiography"><br><br>
+        <input type="text" id="echocardiography" name="echocardiography">
 		<label for="stressecg"><strong>Stress ECG:</strong></label>
-        <input type="text" id="stressecg" name="stressecg"><br><br>
+        <input type="text" id="stressecg" name="stressecg">
 		<label for="pft"><strong>Pulmonary Function Tests:</strong></label>
-        <input type="text" id="pft" name="pft"><br><br>
+        <input type="text" id="pft" name="pft">
 		<label for="cxr"><strong>Chest X Ray or CT Thorax:</strong></label>
-        <input type="text" id="cxr" name="cxr"><br><br>
+        <input type="text" id="cxr" name="cxr">
 
 <!-- Urgency of Surgery Section -->
 <h3><strong>Urgency of Surgery</strong></h3>
-<button type="button" onclick="alert('IMMEDIATE – Immediate life, limb or organ-saving intervention – resuscitation simultaneous with intervention. Normally within MINUTES of decision to operate. URGENT – Intervention for acute onset or clinical deterioration of potentially life-threatening conditions, for those conditions that may threaten the survival of limb or organ, for fixation of many fractures and for relief of pain or other distressing symptoms. Normally within HOURS of decision to operate. EXPEDITED – Patient requiring early treatment where the condition is not an immediate threat to life, limb or organ survival. Normally within DAYS OR FEW WEEKS of decision to operate. ELECTIVE – Intervention planned or booked in advance of routine admission to hospital. Timing to suit patient, hospital and staff.')">Info</button><br><br>
+<button type="button" onclick="alert('IMMEDIATE – Immediate life, limb or organ-saving intervention – resuscitation simultaneous with intervention. Normally within MINUTES of decision to operate. URGENT – Intervention for acute onset or clinical deterioration of potentially life-threatening conditions, for those conditions that may threaten the survival of limb or organ, for fixation of many fractures and for relief of pain or other distressing symptoms. Normally within HOURS of decision to operate. EXPEDITED – Patient requiring early treatment where the condition is not an immediate threat to life, limb or organ survival. Normally within DAYS OR FEW WEEKS of decision to operate. ELECTIVE – Intervention planned or booked in advance of routine admission to hospital. Timing to suit patient, hospital and staff.')">Info</button>
 <label for="surgeryUrgency"><strong>Select the urgency of surgery:</strong></label>
 <select id="surgeryUrgency" name="surgeryUrgency" required>
     <option value="" disabled selected>Select urgency of surgery</option>
@@ -1653,7 +2227,7 @@ Preoperative laboratory tests shall remain valid for twelve weeks, or till the p
     <option value="Expedited / Time Sensitive Cancer Surgery">Expedited / Time Sensitive Cancer Surgery</option>
     <option value="Urgent Surgery">Urgent Surgery</option>
     <option value="Emergency / Immediate Surgery">Emergency / Immediate Surgery</option>
-</select><br><br>
+</select>
 
 
 <!-- ASA Physical Status Section -->
@@ -1668,11 +2242,8 @@ Preoperative laboratory tests shall remain valid for twelve weeks, or till the p
     <option value="ASA PS V">ASA PS V</option>
     <option value="ASA PS VI">ASA PS VI</option>
 </select>
-<button type="button" onclick="showASADetails()">Info</button><br><br>
+<button type="button" onclick="showASADetails()">Info</button>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ASA Information Pop-Up</title>
@@ -1706,9 +2277,235 @@ Preoperative laboratory tests shall remain valid for twelve weeks, or till the p
             padding: 10px 20px;
             cursor: pointer;
         }
+		
+		<style>
+/* ---------- UI/UX upgrade (no field/functionality change) ---------- */
+
+/* Design tokens */
+:root{
+  --bg: #f6f7fb;
+  --surface: #ffffff;
+  --text: #1f2937;
+  --muted: #6b7280;
+  --border: rgba(17,24,39,0.10);
+  --shadow: 0 8px 24px rgba(17,24,39,0.08);
+  --shadow2: 0 2px 10px rgba(17,24,39,0.06);
+  --radius: 14px;
+  --radius2: 10px;
+  --gap: 14px;
+}
+
+body{
+  background: var(--bg);
+  color: var(--text);
+  margin: 0;
+  padding: 18px;
+}
+
+/* A "frame" to emulate mobile/desktop inside same browser window */
+.viewport-frame{
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* This is your existing form container; keep the same element, just re-skin it */
+.form-container{
+  background: transparent;          /* let cards carry the surface */
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  max-width: unset;                /* allow frame to control width */
+}
+
+/* Sticky top bar for mode toggle + quick actions (pure UI) */
+.ui-topbar{
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(246,247,251,0.88);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 8px;
+  margin: -18px -18px 14px -18px;
+}
+
+.ui-topbar-inner{
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+}
+
+.ui-brand{
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+.ui-brand .title{
+  font-weight: 800;
+  font-size: 15px;
+}
+.ui-brand .subtitle{
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* Segmented control */
+.seg{
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+  box-shadow: var(--shadow2);
+  background: var(--surface);
+}
+.seg button{
+  border: none;
+  background: transparent;
+  color: var(--text);
+  padding: 8px 12px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.seg button[aria-pressed="true"]{
+  background: #111827;
+  color: #fff;
+}
+
+/* Compact actions area (optional buttons you already have keep working; this bar is separate) */
+.ui-actions{
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.ui-actions .hint{
+  font-size: 12px;
+  color: var(--muted);
+  display: none;
+}
+@media (min-width: 800px){
+  .ui-actions .hint{ display: inline; }
+}
+
+/* Card layout: your existing .section becomes a clean card */
+.section{
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow2);
+  padding: 16px;
+  margin: 0 0 var(--gap) 0;
+}
+
+/* Headings: reduce visual noise but keep hierarchy */
+h1{
+  font-size: 22px;
+  margin: 4px 0 6px 0;
+}
+h3{
+  margin: 0 0 10px 0;
+  padding: 0 0 8px 0;
+  border-bottom: 1px solid var(--border);
+  color: #0f172a;
+  font-size: 16px;
+}
+
+/* Inputs: keep same elements; improve spacing + focus */
+label{
+  font-weight: 600;
+  margin-top: 10px;
+  margin-bottom: 6px;
+}
+
+input[type="text"], select, textarea{
+  width: 100%;
+  display: block;
+  margin: 6px 0 12px 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(17,24,39,0.18);
+  border-radius: var(--radius2);
+  background: #fff;
+  font-size: 14px;
+}
+
+input[type="text"]:focus, select:focus, textarea:focus{
+  outline: none;
+  border-color: rgba(17,24,39,0.35);
+  box-shadow: 0 0 0 4px rgba(17,24,39,0.08);
+}
+
+/* Checkbox/radio readability: increase hit-area without changing inputs */
+input[type="checkbox"], input[type="radio"]{
+  transform: scale(1.12);
+  margin-right: 8px;
+}
+label[for]{
+  cursor: pointer;
+}
+
+/* Tables: keep same table; make it easier to scan */
+table{
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  overflow: hidden;
+  border-radius: var(--radius2);
+}
+th{
+  background: #111827;
+  color: #fff;
+}
+table, th, td{
+  border: 1px solid rgba(17,24,39,0.12);
+}
+td, th{
+  padding: 10px;
+}
+
+/* Reduce cognitive load: add consistent vertical rhythm inside sections */
+.section > *:first-child{ margin-top: 0; }
+.section .note{
+  margin-top: 6px;
+  color: var(--muted);
+}
+
+/* ------- View mode toggle: “PC” vs “Mobile” inside the same browser ------- */
+body.view-pc .viewport-frame{
+  max-width: 1100px;
+}
+body.view-mobile .viewport-frame{
+  max-width: 420px;          /* emulate phone width */
+}
+body.view-mobile{
+  padding: 10px;
+}
+body.view-mobile .ui-topbar{
+  margin: -10px -10px 12px -10px;
+}
+body.view-mobile h1{
+  font-size: 18px;
+}
+body.view-mobile .section{
+  padding: 14px;
+  border-radius: 12px;
+}
+
+/* Optional: keep primary buttons looking consistent without touching their click handlers */
+button{
+  border-radius: 10px;
+  box-shadow: var(--shadow2);
+}
+button:hover{
+  filter: brightness(0.97);
+}
+
+/* End UI layer */
+</style>
+
     </style>
-</head>
-<body>
 
 <!-- Modal Structure -->
 <div id="asaModal">
@@ -1755,10 +2552,6 @@ Preoperative laboratory tests shall remain valid for twelve weeks, or till the p
     }
 </script>
 
-</body>
-</html>
-
-
 <script>
        // Function to allow user to select Patient is fit to undergo the proposed procedure under anesthesia with normal risk, only if ASA PS I is selected 
 		document.addEventListener("DOMContentLoaded", function() {
@@ -1784,34 +2577,34 @@ Preoperative laboratory tests shall remain valid for twelve weeks, or till the p
 
   <!-- Fitness of Patient for Proposed Procedure Section -->
 <h3><strong, class="mandatory-field">Fitness of patient for the proposed procedure under anesthesia*</strong></h3>
-<label><input type="radio" name="fitnessStatus" value="Patient is fit to undergo the proposed procedure under anesthesia with normal risk" required> Patient is fit to undergo the proposed procedure under anesthesia with normal risk</label><br>
-<label><input type="radio" name="fitnessStatus" value="Patient is fit to undergo the proposed procedure under anesthesia with elevated risk"> Patient is fit to undergo the proposed procedure under anesthesia with elevated risk</label><br>
-<label><input type="radio" name="fitnessStatus" value="Patient to be assessed again with reports of pending laboratory investigations or review of current medications"> Patient to be assessed again with reports of pending laboratory investigations, or review of prescriptions of current regular medications / medications taken within last one month</label><br>
-<label><input type="radio" name="fitnessStatus" value="Patient to be assessed again after acute medical illness subsides"> Patient to be assessed again after acute medical illness subside</label><br>
-<label><input type="radio" name="fitnessStatus" value="Patient to be assessed again after improvement of chronic medical illness"> Patient to be assessed again after improvement of chronic medical illness</label><br>
-<label><input type="radio" name="fitnessStatus" value="Patient to be assessed again after review by specialist"> Patient to be assessed again after review by cardiologist / physician / nephrologist / pulmonologist</label><br>
-<label><input type="radio" name="fitnessStatus" value="Patient is provisionally fit, pending compliance with preoperative advice"> Patient is provisionally fit to undergo the proposed procedure, subject to the compliance of pending lab. workup and / or preoperative advice</label><br>
-<label><input type="radio" name="fitnessStatus" value="Patient is unfit for elective major surgery due to high risks"> Patient is unfit for elective major surgery under anesthesia because the risks of non-modifiable risk factors are greater than expected benefits of the treatment</label><br>
+<label><input type="radio" name="fitnessStatus" value="Patient is fit to undergo the proposed procedure under anesthesia with normal risk" required> Patient is fit to undergo the proposed procedure under anesthesia with normal risk</label>
+<label><input type="radio" name="fitnessStatus" value="Patient is fit to undergo the proposed procedure under anesthesia with elevated risk"> Patient is fit to undergo the proposed procedure under anesthesia with elevated risk</label>
+<label><input type="radio" name="fitnessStatus" value="Patient to be assessed again with reports of pending laboratory investigations or review of current medications"> Patient to be assessed again with reports of pending laboratory investigations, or review of prescriptions of current regular medications / medications taken within last one month</label>
+<label><input type="radio" name="fitnessStatus" value="Patient to be assessed again after acute medical illness subsides"> Patient to be assessed again after acute medical illness subside</label>
+<label><input type="radio" name="fitnessStatus" value="Patient to be assessed again after improvement of chronic medical illness"> Patient to be assessed again after improvement of chronic medical illness</label>
+<label><input type="radio" name="fitnessStatus" value="Patient to be assessed again after review by specialist"> Patient to be assessed again after review by cardiologist / physician / nephrologist / pulmonologist</label>
+<label><input type="radio" name="fitnessStatus" value="Patient is provisionally fit, pending compliance with preoperative advice"> Patient is provisionally fit to undergo the proposed procedure, subject to the compliance of pending lab. workup and / or preoperative advice</label>
+<label><input type="radio" name="fitnessStatus" value="Patient is unfit for elective major surgery due to high risks"> Patient is unfit for elective major surgery under anesthesia because the risks of non-modifiable risk factors are greater than expected benefits of the treatment</label>
 <label><input type="radio" name="fitnessStatus" value="Other"> Other:</label>
-<input type="text" name="otherFitnessStatus" placeholder="Specify if other"><br><br>
+<input type="text" name="otherFitnessStatus" placeholder="Specify if other">
 
 <!-- Medications to Continue Section -->
 <h3><strong>Patient should CONTINUE the following medications through the day of surgery</strong></h3>
-<textarea id="continueMedications" name="continueMedications" rows="5" cols="100" maxlength="9000" placeholder="Enter medications to continue (up to 9000 characters)"></textarea><br><br>
+<textarea id="continueMedications" name="continueMedications" rows="5" cols="100" maxlength="9000" placeholder="Enter medications to continue (up to 9000 characters)"></textarea>
 
 <!-- Medications to Stop Section -->
 <h3><strong>Patient should temporarily STOP the following medications before surgery, and RESTART after surgery</strong></h3>
-<textarea id="stopMedications" name="stopMedications" rows="5" cols="100" maxlength="9000" placeholder="Enter medications to stop (up to 9000 characters)"></textarea><br><br>
+<textarea id="stopMedications" name="stopMedications" rows="5" cols="100" maxlength="9000" placeholder="Enter medications to stop (up to 9000 characters)"></textarea>
 
 <!-- Preoperative Advice Section -->
 <h3><strong>Preoperative Advice (check all that apply)</strong></h3>
-<label><input type="checkbox" name="preoperativeAdvice" value="Do not smoke, not use smokeless tobacco, and not take alcohol"> Do not smoke, not use smokeless tobacco, and not take alcohol</label><br>
-<label><input type="checkbox" name="preoperativeAdvice" value="No solid food, semi solid food, or drinks for at least 6 hours before surgery"> No solid food, no semi solid food, no drinks (no tea, coffee, milk, carbonated drinks) for at least 6 hours before surgery</label><br>
-<label><input type="checkbox" name="preoperativeAdvice" value="No heavy meals for at least 8 hours before surgery"> No heavy meals for at least 8 hours before surgery</label><br>
-<label><input type="checkbox" name="preoperativeAdvice" value="Fasted patients should take sips of ORS or glucose water every hour, up to 2 hours before OT"> Fasted patients should take sips (50 mL or 1/4th cup) of ORS or glucose water every hour, up to 2 hours before shifting to OT</label><br>
-<label><input type="checkbox" name="preoperativeAdvice" value="Tab. PANTOPRAZOLE 40 mg at 10 PM and 6 AM with water"> Tab. PANTOPRAZOLE 40 mg, 1 tab at 10 PM, night before surgery and 1 tab at 6 AM on the morning of surgery with 40 – 50 mL water</label><br>
-<label><input type="checkbox" name="preoperativeAdvice" value="Inj. FERRIC CARBOXYMALTOSE 500 mg/10 mL in 100 mL NS"> Inj. FERRIC CARBOXYMALTOSE 500 mg/10 mL in 100 mL NS intravenous infusion over 30 minutes at daycare or ward. Repeat after 7 days</label><br>
-<label><input type="checkbox" name="preoperativeAdvice" value="Tab. MULTIVITAMIN, 1 tab once daily for 15 days"> Tab. MULTIVITAMIN, 1 tab once daily after food for 15 days</label><br><br>
+<label><input type="checkbox" name="preoperativeAdvice" value="Do not smoke, not use smokeless tobacco, and not take alcohol"> Do not smoke, not use smokeless tobacco, and not take alcohol</label>
+<label><input type="checkbox" name="preoperativeAdvice" value="No solid food, semi solid food, or drinks for at least 6 hours before surgery"> No solid food, no semi solid food, no drinks (no tea, coffee, milk, carbonated drinks) for at least 6 hours before surgery</label>
+<label><input type="checkbox" name="preoperativeAdvice" value="No heavy meals for at least 8 hours before surgery"> No heavy meals for at least 8 hours before surgery</label>
+<label><input type="checkbox" name="preoperativeAdvice" value="Fasted patients should take sips of ORS or glucose water every hour, up to 2 hours before OT"> Fasted patients should take sips (50 mL or 1/4th cup) of ORS or glucose water every hour, up to 2 hours before shifting to OT</label>
+<label><input type="checkbox" name="preoperativeAdvice" value="Tab. PANTOPRAZOLE 40 mg at 10 PM and 6 AM with water"> Tab. PANTOPRAZOLE 40 mg, 1 tab at 10 PM, night before surgery and 1 tab at 6 AM on the morning of surgery with 40 – 50 mL water</label>
+<label><input type="checkbox" name="preoperativeAdvice" value="Inj. FERRIC CARBOXYMALTOSE 500 mg/10 mL in 100 mL NS"> Inj. FERRIC CARBOXYMALTOSE 500 mg/10 mL in 100 mL NS intravenous infusion over 30 minutes at daycare or ward. Repeat after 7 days</label>
+<label><input type="checkbox" name="preoperativeAdvice" value="Tab. MULTIVITAMIN, 1 tab once daily for 15 days"> Tab. MULTIVITAMIN, 1 tab once daily after food for 15 days</label>
 
 
         <!-- Medication Advice Section as Table -->
@@ -1835,16 +2628,16 @@ Preoperative laboratory tests shall remain valid for twelve weeks, or till the p
             </tbody>
         </table>
         <button type="button" onclick="addRow()">Add Row</button>
-        <button type="button" onclick="deleteRow()">Delete Row</button><br><br>
+        <button type="button" onclick="deleteRow()">Delete Row</button>
 
 	
 <!-- Doctor's Notes Section -->
 <h3><strong>Doctor’s Notes</strong></h3>
-<textarea id="doctorsNotes" name="doctorsNotes" rows="5" cols="100" maxlength="9000" placeholder="Enter doctor's notes (up to 9000 characters)"></textarea><br><br>
+<textarea id="doctorsNotes" name="doctorsNotes" rows="5" cols="100" maxlength="9000" placeholder="Enter doctor's notes (up to 9000 characters)"></textarea>
 
 <!-- CC Number of Doctor Section -->
 <h3><strong, class="mandatory-field">CC Number* of Doctor attended the patient</strong></h3>
-<input type="text" id="ccNumberDoctor" name="ccNumberDoctor" maxlength="6" placeholder="Enter CC number (up to 6 characters)" required><br><br>
+<input type="text" id="ccNumberDoctor" name="ccNumberDoctor" maxlength="6" placeholder="Enter CC number (up to 6 characters)" required>
 
 <!-- Time and Date Section -->
 <h3><strong>Time and Date*</strong></h3>
@@ -1868,20 +2661,14 @@ Preoperative laboratory tests shall remain valid for twelve weeks, or till the p
 
    // Auto-capture and format the date and time on page load
     document.getElementById("timeDate").value = formatDateTime();
-</script><br><br>
+</script>
 
 <!-- Save & Print and Reset Buttons -->
        <button type="button" onclick="resetForm()" style="background-color: red; color: white;">Cancel and Start New Record</button>
 		<button type="button" onclick="generatePDF()">Save & Print</button>
-		
-
-
-
 <details>
 <summary class="hint">License and Medical Disclaimer</summary>
 <section class="card">
-<body>Software License: GNU GPL v3. Copyright (C) [2025] [Prof. Jyotirmay Kirtania]. This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. Medical Disclaimer (Cognitive Assist & Record Keeping). IMPORTANT: PLEASE READ CAREFULLY BEFORE USE. NOT A MEDICAL DEVICE: This tool is a Clinical Decision Support System (CDSS) intended for educational and cognitive assistance purposes only. It has not been cleared or approved by the FDA, EMA, or any other regulatory body for use as a primary medical device. NO SUBSTITUTE FOR CLINICAL JUDGMENT: This tool is designed to assist, not replace, the clinical judgment of qualified healthcare professionals. All calculations and logic must be independently verified against institutional standards before clinical application. DATA PRIVACY: This tool is designed to run locally on the user's device. No data is transmitted to external servers by the software. The user is solely responsible for ensuring that the use of this tool complies with local patient data privacy laws (e.g., HIPAA, GDPR) and institutional IT policies. LIMITATION OF LIABILITY: In no event shall the authors or copyright holders be liable for any claim, damages, or other liability, whether in an action of contract, tort, or otherwise, arising from, out of, or in connection with the software or the use or other dealings in the software.  
-</body>  
-</html>
+Software License: GNU GPL v3. Copyright (C) [2025] [Prof. Jyotirmay Kirtania]. This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. Medical Disclaimer (Cognitive Assist & Record Keeping). IMPORTANT: PLEASE READ CAREFULLY BEFORE USE. NOT A MEDICAL DEVICE: This tool is a Clinical Decision Support System (CDSS) intended for educational and cognitive assistance purposes only. It has not been cleared or approved by the FDA, EMA, or any other regulatory body for use as a primary medical device. NO SUBSTITUTE FOR CLINICAL JUDGMENT: This tool is designed to assist, not replace, the clinical judgment of qualified healthcare professionals. All calculations and logic must be independently verified against institutional standards before clinical application. DATA PRIVACY: This tool is designed to run locally on the user's device. No data is transmitted to external servers by the software. The user is solely responsible for ensuring that the use of this tool complies with local patient data privacy laws (e.g., HIPAA, GDPR) and institutional IT policies. LIMITATION OF LIABILITY: In no event shall the authors or copyright holders be liable for any claim, damages, or other liability, whether in an action of contract, tort, or otherwise, arising from, out of, or in connection with the software or the use or other dealings in the software.  
 </body>
 </html>
