@@ -1,9 +1,9 @@
-# ePAC: Pre Anesthesia Checkup Record (v2.5.4)
+# ePAC: Pre Anesthesia Checkup Record (v3.0)
 
 ### **Overview**
 The **ePAC** (Electronic Pre Anesthesia Checkup) tool is a specialized digital platform designed for anesthesiologists and clinicians at **MPMMCC and HBCH, Varanasi (Tata Memorial Centre)**. It streamlines the preoperative assessment process, ensuring that critical patient data, history, and physical findings are recorded systematically to optimize surgical safety.
 
-* **Version:** 2.5.4
+* **Version:** 3.0
 * **Release Date:** 25-Dec-2025
 * **Author:** Prof. Jyotirmay Kirtania
 ---
@@ -16,7 +16,7 @@ The **ePAC** (Electronic Pre Anesthesia Checkup) tool is a specialized digital p
 * **History & Physical:** Structured checklists for medical history (HTN, DM, Asthma, CAD, etc.) and systemic examinations.
 
 #### **2. Specialized Airway Assessment**
-* Integrated checklist for identifying potential **Difficult Airways**.
+* Integrated checklist for identifying potential **Anatomically and Physiologically Difficult Airways**.
 * Screens for high-risk factors for **Pulmonary Aspiration**.
 * Specific documentation for high-risk airway procedures.
 
