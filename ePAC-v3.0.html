@@ -809,8 +809,86 @@ yPosition += 20;
             // Save the PDF
             doc.save(filename);
             // Also save a canonical XML record alongside the PDF
-            try{ if(typeof window.autoDownloadXMLWithPacID === 'function') window.autoDownloadXMLWithPacID(pacID); }catch(e){ console.error(e); }
+            try{ if(typeof window.autoDownloadXMLWithPacID === 'function') window.autoDownloadXMLWithPacID(pacID, filename); }catch(e){ console.error(e); }
         }
+
+        /* ===================== Canonical XML (auto-saved with PDF) ===================== */
+        function escapeXml(str){
+            return String(str ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&apos;');
+        }
+
+        function getLabelForId(id){
+            try{
+                if(!id) return '';
+                const sel = 'label[for="' + CSS.escape(id) + '"]';
+                const lab = document.querySelector(sel);
+                return (lab ? lab.innerText : '').trim();
+            }catch(e){
+                return '';
+            }
+        }
+
+        function collectCanonicalFields(){
+            const elements = Array.from(document.querySelectorAll('input, select, textarea'));
+            const out = [];
+            for(const el of elements){
+                if(!el || !el.id) continue;
+
+                const type = (el.type || '').toLowerCase();
+                if(type === 'button' || type === 'submit' || type === 'reset' || type === 'file') continue;
+
+                let val = '';
+                if(type === 'checkbox'){
+                    val = el.checked ? (el.value || 'true') : '';
+                }else if(type === 'radio'){
+                    // include only checked radios; keep group canonical by id
+                    if(!el.checked) continue;
+                    val = el.value || 'true';
+                }else{
+                    val = (el.value ?? '').toString();
+                }
+
+                const label = getLabelForId(el.id) || el.name || el.id;
+                out.push({ id: el.id, label, value: val });
+            }
+            return out;
+        }
+
+        // Exposed on window so generatePDF can call it safely
+        window.autoDownloadXMLWithPacID = function(pacID, baseFilename){
+            try{
+                const createdISO = new Date().toISOString();
+                const fields = collectCanonicalFields();
+
+                const appVersion = '3.0';
+                const rootOpen = `<ePACRecord app="ePAC" version="${appVersion}" pacID="${escapeXml(pacID)}" created="${escapeXml(createdISO)}">`;
+                let xml = `<?xml version="1.0" encoding="UTF-8"?>\n${rootOpen}\n`;
+
+                for(const f of fields){
+                    xml += `  <field id="${escapeXml(f.id)}" label="${escapeXml(f.label)}">${escapeXml(f.value)}</field>\n`;
+                }
+                xml += `</ePACRecord>\n`;
+
+                const fname = (baseFilename ? String(baseFilename).replace(/\.pdf$/i,'') : String(pacID)).trim() || 'epac-record';
+                const blob = new Blob([xml], { type: 'application/xml;charset=utf-8' });
+
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = fname + '.xml';
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(()=>{ try{ URL.revokeObjectURL(a.href); a.remove(); }catch(e){} }, 1500);
+            }catch(e){
+                console.error('XML export failed:', e);
+            }
+        };
+
+
 
         // Helper functions
         function formatDateTimeForPAC() {
@@ -970,24 +1048,24 @@ yPosition += 20;
 
   // Strictly your mapping (with tolerant punctuation/spacing)
   const PARAM_MAP = [
-    { key:'Hb',         rx:[/\bHAEMOGLOBIN\b/i] },
-    { key:'TLC',        rx:[/\bWBC\s*COUNT\b/i] },
-    { key:'ANC',        rx:[/\bNEUTROPHIL\s*ABS\b/i, /\bANC\b/i] }, // "NEUTROPHIL ABS (ANC)"
-    { key:'Platelets',  rx:[/\bPLATELETS\b/i] },
+    { key:'HbA1c',      rx:[/\bHBA1C\b/i, /\bGLYCOSYLATED\s+HEMOGLOBIN\b/i] },
+    { key:'Hb',         rx:[/\bHAEMOGLOBIN\b/i, /\bHEMOGLOBIN\b/i, /(?:^|\b)HB(?:\b|$)/i] },
+    { key:'TLC',        rx:[/\bWBC\s*COUNT\b/i, /\bTOTAL\s+LEUCOCYTE\s+COUNT\b/i, /\bTOTAL\s+LEUKOCYTE\s+COUNT\b/i, /\bTLC\b/i] },
+    { key:'ANC',        rx:[/\bNEUTROPHIL\s*ABS\b/i, /\bABS(?:OLUTE)?\s+NEUTROPHIL\s+COUNT\b/i, /\bANC\b/i] }, // "NEUTROPHIL ABS (ANC)"
+    { key:'Platelets',  rx:[/\bPLATELETS\b/i, /\bPLT\b/i, /\bPLATELET\s+COUNT\b/i] },
 
     { key:'FBS',        rx:[/\bFASTING\s+BLOOD\s+GLUCOSE\b/i] },
     { key:'RBS',        rx:[/\bRANDOM\s+BLOOD\s+GLUCOSE\b/i] },
     { key:'PPBS',       rx:[/\bPOST\s*PRANDIAL\s+BLOOD\s+GLUCOSE\b/i] },
 
-    { key:'HbA1c',      rx:[/\bHBA1C\b/i, /\bGLYCOSYLATED\s+HEMOGLOBIN\b/i] },
 
     { key:'Creatinine', rx:[/\bSERUM\s+CREATININE\b/i] },
     { key:'Na',         rx:[/\bSERUM\s+SODIUM\b/i] },
     { key:'K',          rx:[/\bSERUM\s+POTASSIUM\b/i] },
 
     { key:'INR',        rx:[/^\s*INR\b/i, /\bINR\b/i] },
-    { key:'PT',         rx:[/^\s*PT\b/i, /\bPT\b/i] },
-    { key:'APTT',       rx:[/\bAPTT\b/i] },
+    { key:'PT',         rx:[/^\s*PT\b/i, /\bPROTHROMBIN\s+TIME\b/i, /\bPT\b/i] },
+    { key:'APTT',       rx:[/\bAPTT\b/i, /\bACTIVATED\s+PARTIAL\s+THROMBOPLASTIN\s+TIME\b/i, /\bPTT\b/i] },
 
     { key:'BilirubinT', rx:[/\bTOTAL\s+BILIRUBIN\b/i] },
     { key:'BilirubinC', rx:[/\bDIRECT\s+BILIRUBIN\b/i] },
@@ -1010,18 +1088,136 @@ yPosition += 20;
     return null;
   }
 
-  function extractBlocks(raw){
-    const text = toPlainText(raw);
-    const lines = text.split('\n').map(x=>x.trim()).filter(Boolean);
+  function tryExtractHtmlFromMhtml(raw){
+    const t = String(raw||'');
+    const i1 = t.toLowerCase().indexOf('<html');
+    const i2 = t.toLowerCase().lastIndexOf('</html>');
+    if(i1 !== -1 && i2 !== -1 && i2 > i1) return t.slice(i1, i2 + 7);
+    return t;
+  }
 
-    const blocks = []; // {dateStr,dateKey,entries:[{name,value}]}
+  function extractBlocksFromDom(html){
+    const blocks = [];
     let cur = null;
 
     function startBlock(dateStr){
-      cur = { dateStr: dateStr || '', dateKey: parseDateToKey(dateStr) || '', entries: [] };
-      blocks.push(cur);
+      if(cur && cur.entries && cur.entries.length) blocks.push(cur);
+      cur = { dateStr: dateStr || 'unknown', entries: [] };
     }
-    function ensureBlock(){ if(!cur) startBlock(''); }
+    function ensureBlock(){ if(!cur) startBlock('unknown'); }
+    function pushEntry(name, val){
+      const v = cleanValue(val);
+      if(!name || !v) return;
+      ensureBlock();
+      cur.entries.push({ name: String(name).trim(), value: v });
+    }
+
+    try{
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const bodyText = (doc && doc.body && doc.body.innerText) ? doc.body.innerText : '';
+      // pick up the most recent "Report Date" header if present (All Requisitions export)
+      // (we still allow multiple dates later via separators found in rows)
+      const dm0 = bodyText.match(/Report\s*Date\s*:\*?\s*(\d{2}[\/\-]\d{2}[\/\-]\d{4}|\d{4}[\/\-]\d{2}[\/\-]\d{2}|\d{1,2}\s*[A-Za-z]{3,9}\s*\d{4})/i);
+      startBlock(dm0 ? dm0[1] : 'unknown');
+
+      const rows = Array.from(doc.querySelectorAll('tr'));
+      for(const tr of rows){
+        const cells = Array.from(tr.querySelectorAll('th,td'))
+          .map(c => (c.textContent||'').replace(/\s+/g,' ').trim())
+          .filter(Boolean);
+
+        if(!cells.length) continue;
+
+        // Separator rows that contain "Report Date"
+        const joined = cells.join(' | ');
+        const dm = joined.match(/Report\s*Date\s*:\*?\s*(\d{2}[\/\-]\d{2}[\/\-]\d{4}|\d{4}[\/\-]\d{2}[\/\-]\d{2}|\d{1,2}\s*[A-Za-z]{3,9}\s*\d{4})/i);
+        if(dm){
+          startBlock(dm[1]);
+          continue;
+        }
+
+        // Find the parameter cell: may be "1. HAEMOGLOBIN" (same cell), or "HAEMOGLOBIN"
+        let pIdx = -1, pKey = null;
+        for(let i=0;i<cells.length;i++){
+          const key = canonicalKeyForName(cells[i]);
+          if(key){
+            pIdx = i;
+            pKey = key;
+            break;
+          }
+        }
+        if(pIdx === -1) continue;
+
+        // Extract value from remaining cells (prefer to the right of parameter cell)
+        let val = '';
+        for(let j=pIdx+1;j<cells.length;j++){
+          const s = cells[j];
+
+          // skip status cells and pure serial-no cells
+          if(/^(Normal|High|Low|Abnormal)$/i.test(s)) continue;
+          if(/^\d+\.$/.test(s)) continue;
+
+          // skip times like 09:15
+          if(/^\d{1,2}:\d{2}/.test(s)) continue;
+
+          const m = s.match(/-?\d+(?:\.\d+)?/);
+          if(m){
+            val = m[0];
+            break;
+          }
+        }
+
+        // Fallback: sometimes value is in the same row but left-of-param (rare)
+        if(!val){
+          for(let j=0;j<pIdx;j++){
+            const s = cells[j];
+            if(/^\d+\.$/.test(s)) continue;
+            if(/^\d{1,2}:\d{2}/.test(s)) continue;
+            const m = s.match(/-?\d+(?:\.\d+)?/);
+            if(m){
+              val = m[0];
+              break;
+            }
+          }
+        }
+
+        // IMPORTANT: avoid falsely capturing the test serial number as a "value"
+        // (e.g., "9." in hematology). If val equals the leading "Sno" of the name, ignore it.
+        if(val){
+          const sno = String(cells[pIdx]).match(/^\s*(\d+)\.\s*/);
+          if(sno && val === sno[1]) val = '';
+        }
+
+        if(val) pushEntry(cells[pIdx], val);
+      }
+
+      if(cur && cur.entries && cur.entries.length) blocks.push(cur);
+      return blocks;
+    }catch(e){
+      console.warn('[ePAC] DOM parse failed, falling back to text parser:', e);
+      return [];
+    }
+  }
+
+  function extractBlocks(raw){
+    // Prefer DOM-table parsing for HTML/MHTML exports (more reliable for hematology/coag formats)
+    const html = tryExtractHtmlFromMhtml(raw);
+    if(/<\s*table\b/i.test(html)){
+      const domBlocks = extractBlocksFromDom(html);
+      if(domBlocks && domBlocks.length) return domBlocks;
+    }
+
+    // Fallback: plain-text heuristic parser
+    const text = toPlainText(raw);
+    const lines = text.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+    const blocks = [];
+    let cur = null;
+
+    function startBlock(dateStr){
+      if(cur && cur.entries.length) blocks.push(cur);
+      cur = { dateStr: dateStr || 'unknown', entries: [] };
+    }
+    function ensureBlock(){ if(!cur) startBlock('unknown'); }
     function pushEntry(name, val){
       const v = cleanValue(val);
       if(!name || !v) return;
@@ -1033,6 +1229,8 @@ yPosition += 20;
         const s = lines[j];
         if(!s) continue;
         if(s === '...' || s === '....' || s === '-----') continue;
+        // skip times like 09:15 that often appear in MHTML headers
+        if(/^\d{1,2}:\d{2}/.test(s)) continue;
         return { s, j };
       }
       return null;
@@ -1041,71 +1239,52 @@ yPosition += 20;
     for(let i=0;i<lines.length;i++){
       const line = lines[i];
 
-      // "Report Date :* 24/12/2025" OR "Report Date : 24/12/2025"
+      // New report block date
       const dm = line.match(/Report\s*Date\s*:\*?\s*(\d{2}[\/\-]\d{2}[\/\-]\d{4}|\d{4}[\/\-]\d{2}[\/\-]\d{2}|\d{1,2}\s*[A-Za-z]{3,9}\s*\d{4})/i);
       if(dm){ startBlock(dm[1]); continue; }
 
-      // -------- Pattern A: numbered, tabular, single-line --------
-      // examples:
-      // "1. HAEMOGLOBIN Low 9.3 12.0-15.0"
-      // "2. WBC COUNT High 73.75 4.0-10.0"
-      // "3. NEUTROPHIL ABS (ANC) High 68.44 ..."
-      // "1. PT High 18.2 ..."
-      // "2. INR High 1.56 ..."
-      // "3. APTT High 36.2 ..."
+      // Pattern A: "1. HAEMOGLOBIN Low 9.3 ..."
       const a = line.match(/^\s*\d+\.\s*([A-Za-z][A-Za-z0-9\-\(\)\s\/\+\.]*?)\s+(Normal|High|Low|Abnormal)\s+(-?\d+(?:\.\d+)?)/i);
       if(a){
         pushEntry(a[1], a[3]);
         continue;
       }
 
-      // Sometimes the report has the same but without the "Normal/High/Low" token,
-      // especially for INR/PT/APTT lines exported differently.
-      const a2 = line.match(/^\s*\d+\.\s*(PT|INR|APTT)\b[^\d\-]*(-?\d+(?:\.\d+)?)/i);
+      // Pattern A2: "9. PLATELETS" then next lines "Low" then "9"
+      const a2 = line.match(/^\s*\d+\.\s*([A-Za-z][A-Za-z0-9\-\(\)\s\/\+\.]*?)\s*$/i);
       if(a2){
-        pushEntry(a2[1], a2[2]);
+        const n1 = nextUseful(i+1); if(!n1) continue;
+        const n2 = nextUseful(n1.j+1); if(!n2) continue;
+
+        let type = n1.s;
+        let val  = n2.s;
+
+        // swap if needed
+        if(/-?\d+(?:\.\d+)?/.test(type) && /^(Normal|High|Low|Abnormal)$/i.test(val)){
+          const tmp = type; type = val; val = tmp;
+        }
+
+        if(/^(Normal|High|Low|Abnormal)$/i.test(type)){
+          // Avoid treating Sno as value
+          const sno = (line.match(/^\s*(\d+)\./) || [null,null])[1];
+          const v = cleanValue(val);
+          if(sno && v === sno) { /* ignore */ }
+          else pushEntry(a2[1], val);
+
+          i = n2.j;
+          continue;
+        }
+      }
+
+      // Pattern A3: INR/PT/APTT without explicit status
+      const a3 = line.match(/^\s*\d+\.\s*(PT|INR|APTT)\b[^\d\-]*(-?\d+(?:\.\d+)?)/i);
+      if(a3){
+        pushEntry(a3[1], a3[2]);
         continue;
       }
 
-      // -------- Pattern B: multi-line with "Sno." line: "5." then name/type/value --------
-      if(/^\d+\.$/.test(line)){
-        const n1 = nextUseful(i+1); if(!n1) continue;
-        const n2 = nextUseful(n1.j+1); if(!n2) continue;
-        const n3 = nextUseful(n2.j+1); if(!n3) continue;
-
-        const name = n1.s;
-        const type = n2.s;
-        let val = n3.s;
-
-        // if val is filler, skip ahead
-        if(val === '...'){
-          const n4 = nextUseful(n3.j+1);
-          if(n4) val = n4.s;
-        }
-
-        // many chemistry blocks are exactly name / Normal|High|Low / value
-        if(/^(Normal|High|Low|Abnormal)$/i.test(type)){
-          pushEntry(name, val);
-          continue;
-        }
-
-        // sometimes type/value shift
-        const v2 = cleanValue(type);
-        if(v2){
-          pushEntry(name, v2);
-          continue;
-        }
-        const v3 = cleanValue(val);
-        if(v3){
-          pushEntry(name, v3);
-          continue;
-        }
-      }
-
-      // -------- Pattern C: name-line starts directly (chemistry), then type then value --------
-      // "Serum Sodium" then "Normal" then "139"
+      // Pattern C: chemistry multi-line "Serum Sodium" then "Normal" then "139"
       if(/^(Serum|Total|Direct|NT|Glycosylated|FASTING|RANDOM|POSTPRANDIAL|WBC|HAEMOGLOBIN|PLATELETS|NEUTROPHIL)/i.test(line)){
-        // only attempt if this line looks like a mapped test name
         const key = canonicalKeyForName(line);
         if(!key) continue;
 
@@ -1115,26 +1294,28 @@ yPosition += 20;
         let type = n1.s;
         let val = n2.s;
 
-        // swap if needed
         if(!/^(Normal|High|Low|Abnormal)$/i.test(type) && /^(Normal|High|Low|Abnormal)$/i.test(val)){
-          type = val;
           const n3 = nextUseful(n2.j+1);
           if(!n3) continue;
+          type = val;
           val = n3.s;
         }
 
-        // accept if value numeric
         if(/^(Normal|High|Low|Abnormal)$/i.test(type)){
-          pushEntry(line, val);
+          // again avoid picking serial numbers as values
+          const sno = (line.match(/^\s*(\d+)\./) || [null,null])[1];
+          const v = cleanValue(val);
+          if(sno && v === sno) { /* ignore */ }
+          else pushEntry(line, val);
         }else{
-          // still accept if n1 itself is numeric
           const maybe = cleanValue(type);
           if(maybe) pushEntry(line, maybe);
         }
       }
     }
 
-    return blocks.filter(b => (b.entries||[]).length>0);
+    if(cur && cur.entries.length) blocks.push(cur);
+    return blocks;
   }
 
   function latestPerKey(blocks){
@@ -1246,6 +1427,109 @@ yPosition += 20;
     return updated;
   }
 
+// -------------------- Demographics import from EMR "ALL requisitions(ALL)" HTML/MHTML --------------------
+function normalizeGender(s){
+  const x = (s||'').toString().trim().toLowerCase();
+  if(!x) return '';
+  if(x.startsWith('m')) return 'M';
+  if(x.startsWith('f')) return 'F';
+  if(x.startsWith('o')) return 'Other';
+  return x.toUpperCase();
+}
+
+function extractHtmlSliceFromRaw(raw){
+  const s = String(raw||'');
+  const i = s.toLowerCase().indexOf('<html');
+  if(i < 0) return s; // may be plain text
+  const j = s.toLowerCase().lastIndexOf('</html>');
+  if(j > i) return s.slice(i, j+7);
+  return s.slice(i);
+}
+
+function extractPatientDemographics(raw){
+  const out = { caseNo:'', name:'', ageYears:'', gender:'' };
+  try{
+    const slice = extractHtmlSliceFromRaw(raw);
+    const doc = new DOMParser().parseFromString(slice, 'text/html');
+    const t = (doc && doc.body && doc.body.innerText) ? doc.body.innerText.replace(/\s+/g,' ').trim() : '';
+
+    // Case No. : 18F2025/020443  (may contain slash)
+    let m = t.match(/\bCase\s*No\.?\s*:\s*([A-Za-z0-9\/\-]+)\b/i);
+    if(m) out.caseNo = m[1].replace(/\s+/g,'');
+
+    // Patient Name : (often all-caps with extra spaces)
+    m = t.match(/\bPatient\s*Name\s*:\s*([A-Za-z][A-Za-z\s\.\-']{2,80})/i);
+    if(m) out.name = m[1].replace(/\s+/g,' ').trim();
+
+    // Sex/Age/Catg. : Male /57 yrs/ ...
+    m = t.match(/\bSex\s*\/\s*Age[^:]*:\s*([A-Za-z]+)\s*\/\s*(\d{1,3})\s*yrs?\b/i);
+    if(m){
+      out.gender = normalizeGender(m[1]);
+      out.ageYears = m[2];
+    }else{
+      // fallback: "Male /57 yrs"
+      m = t.match(/\b(Male|Female)\b\s*\/\s*(\d{1,3})\s*yrs?\b/i);
+      if(m){
+        out.gender = normalizeGender(m[1]);
+        out.ageYears = m[2];
+      }
+    }
+  }catch(e){
+    // never break app
+    console.warn('[ePAC] Demographics parse failed:', e);
+  }
+  return out;
+}
+
+function applyDemographicsToForm(demo){
+  if(!demo) return false;
+  const emrEl = byId('emrNumber');
+  const nameEl = byId('patientName');
+  const ageEl = byId('age');
+  const genderEl = byId('gender');
+  if(!emrEl || !nameEl || !ageEl || !genderEl) return false;
+
+  const changes = [];
+  function setIfDifferent(el, newVal, label){
+    const prev = (el.value||'').toString().trim();
+    const nv = (newVal||'').toString().trim();
+    if(!nv) return;
+    if(prev && prev !== nv) changes.push(label);
+    el.value = nv;
+    try{ el.dispatchEvent(new Event('input', { bubbles:true })); }catch(_){}
+    try{ el.dispatchEvent(new Event('change', { bubbles:true })); }catch(_){}
+  }
+
+  setIfDifferent(emrEl, demo.caseNo, 'EMR Number');
+  setIfDifferent(nameEl, demo.name, 'Name');
+  setIfDifferent(ageEl, demo.ageYears, 'Age');
+  if(demo.gender){
+    const prev = (genderEl.value||'').toString().trim();
+    const nv = demo.gender;
+    if(prev && prev !== nv) changes.push('Gender');
+    // map to existing option values if needed
+    const optVals = Array.from(genderEl.options||[]).map(o=>o.value);
+    if(optVals.includes(nv)) genderEl.value = nv;
+    else{
+      // tolerate 'Male'/'Female'
+      if(nv==='M' && optVals.includes('Male')) genderEl.value='Male';
+      else if(nv==='F' && optVals.includes('Female')) genderEl.value='Female';
+      else genderEl.value = nv;
+    }
+    try{ genderEl.dispatchEvent(new Event('change', { bubbles:true })); }catch(_){}
+  }
+
+  if(changes.length){
+    alert('Imported demographics from EMR report and OVERWROTE your manual entries for: ' + changes.join(', ') + '.\n\nThis is intentional to prevent mismatch/wrong lab report imports.');
+  }else{
+    // still inform user that demographics were imported if any field was set
+    if(demo.caseNo || demo.name || demo.ageYears || demo.gender){
+      console.info('[ePAC] Demographics imported from EMR report.');
+    }
+  }
+  return (demo.caseNo || demo.name || demo.ageYears || demo.gender) ? true : false;
+}
+
   function bind(){
     const btn = byId('btnImportLabs');
     const fileInput = byId('labFileInputEPAC');
@@ -1274,6 +1558,8 @@ yPosition += 20;
 
       try{
         const raw = await file.text();
+        // Import demographics first (case no / name / age / gender) and intentionally overwrite manual entry to prevent mismatch.
+        try{ const demo = extractPatientDemographics(raw); applyDemographicsToForm(demo); }catch(e){ console.warn(e); }
         const blocks = extractBlocks(raw);
         if(!blocks.length){
           setStatus('Imported file, but no report blocks with results were detected.', true);
@@ -1467,7 +1753,7 @@ yPosition += 20;
 <div class="ui-topbar">
   <div class="ui-topbar-inner">
     <div class="ui-brand">
-      <div class="title">ePAC v2.5.4</div>
+      <div class="title">ePAC v3.0</div>
     </div>
 
     <div class="ui-actions">
@@ -1489,11 +1775,11 @@ yPosition += 20;
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pre Anesthesia Checkup (PAC) Record, MPMMCC and HBCH Varanasi, IN-221005, v 2.5.4 (released 25 Dec 2025, Author: Prof. Jyotirmay Kirtania, Licence: GNU GPL v3)</title>
+    <title>Pre Anesthesia Checkup (PAC) Record, MPMMCC and HBCH Varanasi, IN-221005, v 3.0 (released 25 Dec 2025, Author: Prof. Jyotirmay Kirtania, Licence: GNU GPL v3)</title>
  
     <form id="pacForm">
         <!-- Header Information -->
-        <p><strong>Pre Anesthesia Checkup (PAC) Record, MPMMCC and HBCH Varanasi, IN-221005, v 2.5.4 (released 25 Dec 2025, Author: Prof. Jyotirmay Kirtania, Licence: GNU GPL v3)</strong></p>
+        <p><strong>Pre Anesthesia Checkup (PAC) Record, MPMMCC and HBCH Varanasi, IN-221005, v 3.0 (released 25 Dec 2025, Author: Prof. Jyotirmay Kirtania, Licence: GNU GPL v3)</strong></p>
 		<!-- Save & Print and Reset Buttons -->
         <button type="button" onclick="resetForm()" style="background-color: red; color: white;">Cancel and Start New Record</button>
 		<button type="button" onclick="generatePDF()">Save & Print</button>
@@ -2672,3 +2958,22 @@ button:hover{
 Software License: GNU GPL v3. Copyright (C) [2025] [Prof. Jyotirmay Kirtania]. This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. Medical Disclaimer (Cognitive Assist & Record Keeping). IMPORTANT: PLEASE READ CAREFULLY BEFORE USE. NOT A MEDICAL DEVICE: This tool is a Clinical Decision Support System (CDSS) intended for educational and cognitive assistance purposes only. It has not been cleared or approved by the FDA, EMA, or any other regulatory body for use as a primary medical device. NO SUBSTITUTE FOR CLINICAL JUDGMENT: This tool is designed to assist, not replace, the clinical judgment of qualified healthcare professionals. All calculations and logic must be independently verified against institutional standards before clinical application. DATA PRIVACY: This tool is designed to run locally on the user's device. No data is transmitted to external servers by the software. The user is solely responsible for ensuring that the use of this tool complies with local patient data privacy laws (e.g., HIPAA, GDPR) and institutional IT policies. LIMITATION OF LIABILITY: In no event shall the authors or copyright holders be liable for any claim, damages, or other liability, whether in an action of contract, tort, or otherwise, arising from, out of, or in connection with the software or the use or other dealings in the software.  
 </body>
 </html>
+
+
+<script>
+(function(){
+  function addImportButtons(){
+    const importBtn = document.getElementById('btnImportLabs');
+    if(!importBtn) return;
+    const saveButtons = document.querySelectorAll("button[onclick='generatePDF()']");
+    saveButtons.forEach(function(sb){
+      if(sb.parentElement.querySelector('.importLabClone')) return;
+      const clone = importBtn.cloneNode(true);
+      clone.classList.add('importLabClone');
+      clone.onclick = function(){ document.getElementById('labFileInputEPAC').click(); };
+      sb.parentElement.insertBefore(clone, sb.nextSibling);
+    });
+  }
+  document.addEventListener('DOMContentLoaded', addImportButtons);
+})();
+</script>
