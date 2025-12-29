@@ -13,7 +13,7 @@
 | **Patient Label Gen** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/Patient-label-generator-v1.5.html) | [📖 About & Help](./docs/Patient-Label-Help.md) |
 | **Vent Simulator** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/ICU-vent-sim-v%201.2.html) | [📖 About & Help](./docs/Vent-Sim-Help.md) |
 | **ePAC** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/ePAC-v3.0.html) | [📖 About & Help](./docs/ePAC-Help.md) |
-| **AIR** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/AIR-v2.9.html) | [📖 About & Help](./docs/AIR-Help.md) |
+| **AIR** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/AIR-v2.0.html) | [📖 About & Help](./docs/AIR-Help.md) |
 
 ---
 
