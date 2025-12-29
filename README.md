@@ -20,6 +20,7 @@ This repository hosts a suite of portable, offline-ready HTML applications desig
 | **Agitation Manager** | ICU Delirium | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/acute-agitation-v1.0.html) |
 | **Label Generator** | Workflow Efficiency | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/Patient-label-generator-v1.5.html) |
 |**ePAC** | Pre Anesthesia Checkup | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/ePAC-v3.0.html) |
+|**AIR** | Pre Anesthesia Checkup | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/AIR-2.0.html) |
 
 ## Core Principles
 * **Offline Capability:** Each tool is a single-file HTML/JS application. Once loaded, they function without an internet connection—ideal for high-stakes clinical environments.
@@ -46,8 +47,11 @@ Assists clinicians in finding the "optimal PEEP" for passive patients on Volume 
 ### NEWS2
 National Early Warning Score 2 (NEWS2) physiological scoring and response. It helps healthcare providers to screen and triage patients in the emergency room, clinic and wards for critical illness and sepsis.
 
-### ePAC (v2.5)
+### ePAC (v3.0)
 Healthcare providers may perform and record Pre Anesthesia Checkup (PAC) using this tool, with validated preoperative risk assessment parameters, and checklist of preoperative advice as per ERAS pathways. It helps healthcare providers a cognitive aid to do a structured PAC, and provide time stamped pdf output with unique filename with patient ID, date, and time for indexing and retrieval. 
+
+### AIR (v2.0)
+Healthcare providers may navigate and document Anesthesia Intraoperative Record  (AIR) using this tool, with validated parameters, safety checklists, and checklist of intraoperative ERAS pathways. It helps healthcare providers a cognitive aid to do document a structured AIR, and provide time stamped pdf output with unique filename with patient ID, date, and time for indexing and retrieval. 
 
 ## License
 This project is licensed under **GNU GPL v3**. 
