@@ -2470,7 +2470,7 @@ function bindLabImport
       </details>
 
       <details>
-        <summary>2) Latest all relevant lab data import with patient ID <span class="muted">
+        <summary>2) All relevant latest lab data import with patient ID <span class="muted">
 		</span></summary>
         <div class="details-body">
           <div class="row-actions">
@@ -2532,6 +2532,425 @@ function bindLabImport
                 <option value="" selected="selected" style="display:none"></option>
               </select>
             </div>
+<div class="col-12">
+<!-- Clinical Details and Vitals Section -->
+
+<h3><strong>Clinical Details and Vitals</strong></h3>
+
+<label for="response"><strong>Select Response</strong></label>
+<select id="response" name="response" required>
+    <option value="" disabled selected>Select response</option>
+    <option value="A, Awake and alert">A - Awake and alert</option>
+	<option value="C, Confusion (new onset or worsening)">C - Confusion (new onset or worsening)</option>
+    <option value="V, Responded to verbal stimulus and shoulder tap">V - Responded to verbal stimulus and shoulder tap</option>
+    <option value="P, Responded to only pain (jaw thrust)">P - Responded to only pain (jaw thrust)</option>
+    <option value="U, Unresponsive to verbal stimulus, shoulder tap and pain">U - Unresponsive to verbal stimulus, shoulder tap and pain</option>
+</select>
+
+<label for="height"><strong>Height (cm):</strong></label>
+<input type="text" id="height" name="height" maxlength="3" placeholder="Enter height" oninput="calculateBMI()">
+
+<label for="weight"><strong>Weight (kg):</strong></label>
+<input type="text" id="weight" name="weight" maxlength="3" placeholder="Enter weight" oninput="calculateBMI()">
+
+<label for="bmi"><strong>BMI (kg/sq. m):</strong></label>
+<input type="text" id="bmi" name="bmi" readonly placeholder="Auto-calculated">
+
+<label for="Temperature"><strong>Temperature (F):</strong></label>
+<input type="text" id="temperature" name="temperature" maxlength="4" placeholder="Enter Temperature">
+
+<label for="bloodPressure"><strong>Blood Pressure (mmHg):</strong></label>
+<input type="text" id="bloodPressure" name="bloodPressure" maxlength="7" placeholder="Enter blood pressure">
+
+<label for="pulseRate"><strong>Pulse Rate (bpm):</strong></label>
+<input type="text" id="pulseRate" name="pulseRate" maxlength="3" placeholder="Enter pulse rate">
+
+<label for="respiratoryRate"><strong>Respiratory Rate (bpm):</strong></label>
+<input type="text" id="respiratoryRate" name="respiratoryRate" maxlength="2" placeholder="Enter respiratory rate">
+
+<label for="spo2"><strong>SpO2 (%):</strong></label>
+<input type="text" id="spo2" name="spo2" maxlength="3" placeholder="Enter SpO2">
+
+<label for="Room air or supplemental O2"><strong>Room air or supplemental O2</strong></label>
+<select id="O2" name="O2" required>
+	<option value="" disabled selected>Select response</option>
+    <option value="Room Air">Room air</option>
+	<option value="Supplemental O2">Supplemental O2</option>
+</select>
+
+<label for="bloodGroup"><strong>Blood Group & Rh type:</strong></label>
+<select id="bloodGroup" name="bloodGroup">
+    <option value="" disabled selected>Select blood group</option>
+    <option value="O Positive">O Positive</option>
+    <option value="B Positive">B Positive</option>
+    <option value="A Positive">A Positive</option>
+    <option value="AB Positive">AB Positive</option>
+    <option value="O Negative">O Negative</option>
+    <option value="B Negative">B Negative</option>
+    <option value="A Negative">A Negative</option>
+    <option value="AB Negative">AB Negative</option>
+    <option value="Record not available">Record of blood group and type not available</option>
+</select>
+
+<!-- JavaScript for BMI Calculation -->
+<script>
+function calculateBMI() {
+    const heightElement = document.getElementById("height");
+    const weightElement = document.getElementById("weight");
+    const bmiElement = document.getElementById("bmi");
+
+    const height = parseFloat(heightElement.value) / 100; // Convert height from cm to meters
+    const weight = parseFloat(weightElement.value);
+
+    if (!isNaN(height) && !isNaN(weight) && height > 0 && weight > 0) {
+        const bmi = (weight / (height * height)).toFixed(1); // Calculate BMI and round to 1 decimal places
+        bmiElement.value = bmi;
+    } else {
+        bmiElement.value = ""; // Clear BMI field if input is invalid
+    }
+}
+
+</script>
+
+<!-- Allergies Section -->
+<h3><strong>Allergies (check all options that apply)</strong></h3>
+<label><input type="checkbox" name="allergies" id="noAllergies" value="No known allergies"> No known allergies</label>
+<label><input type="checkbox" name="allergies" value="Penicillin and related antibiotics allergy history"> Penicillin and related antibiotics allergy history</label>
+<label><input type="checkbox" name="allergies" value="Sulfa drugs allergy history"> Sulfa drugs allergy history</label>
+<label><input type="checkbox" name="allergies" value="Aspirin, ibuprofen and other NSAIDs allergy history"> Aspirin, ibuprofen and other NSAIDs allergy history</label>
+<label><input type="checkbox" name="allergies" value="Chemotherapy drugs allergy history"> Chemotherapy drugs allergy history</label>
+<label><input type="checkbox" name="allergies" id="otherAllergyCheckbox" value="Other"> Other</label>
+
+<!-- Text box for "Other" allergy details, hidden initially -->
+<textarea id="otherAllergyDetails" maxlength="150" style="display: none; width: 100%; height: 50px;" placeholder="Please specify other allergies (maximum 150 characters)"></textarea>
+
+<!-- JavaScript to toggle the visibility of the text box -->
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const otherAllergyCheckbox = document.getElementById("otherAllergyCheckbox");
+        const otherAllergyDetails = document.getElementById("otherAllergyDetails");
+
+        // Show or hide the text box based on "Other" checkbox state
+        otherAllergyCheckbox.addEventListener("change", function() {
+            if (otherAllergyCheckbox.checked) {
+                otherAllergyDetails.style.display = "block";
+            } else {
+                otherAllergyDetails.style.display = "none";
+                otherAllergyDetails.value = ""; // Clear the text box when hidden
+            }
+        });
+    });
+</script>
+
+<!-- JavaScript for mutual exclusivity logic -->
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const noAllergiesCheckbox = document.getElementById("noAllergies"); // "No known allergies" option
+        const otherAllergies = Array.from(document.querySelectorAll('input[name="allergies"]:not(#noAllergies)')); // All other allergy options
+
+        // Function to handle exclusivity for "No known allergies"
+        function handleNoAllergies() {
+            if (noAllergiesCheckbox.checked) {
+                // Disable all other options if "No known allergies" is checked
+                otherAllergies.forEach(option => {
+                    option.disabled = true;
+                    option.checked = false; // Uncheck if already selected
+                });
+            } else {
+                // Enable all other options if "No known allergies" is unchecked
+                otherAllergies.forEach(option => option.disabled = false);
+            }
+        }
+
+        // Function to handle exclusivity for other options
+        function handleOtherAllergies() {
+            if (otherAllergies.some(option => option.checked)) {
+                // Disable "No known allergies" if any other option is checked
+                noAllergiesCheckbox.disabled = true;
+                noAllergiesCheckbox.checked = false;
+            } else {
+                // Enable "No known allergies" if no other options are checked
+                noAllergiesCheckbox.disabled = false;
+            }
+        }
+
+        // Event listeners for "No known allergies"
+        noAllergiesCheckbox.addEventListener("change", handleNoAllergies);
+
+        // Event listeners for other allergy options
+        otherAllergies.forEach(option => option.addEventListener("change", handleOtherAllergies));
+    });
+</script>
+
+
+<!-- Co-existing Illness Section -->
+<h3><strong>Co-existing illness (check all options that apply)</strong></h3>
+<label><input type="checkbox" name="illnesses" value="Anemia"> Anemia (Hb < 13 g/dL in males, Hb < 12 g/dL in females)</label>
+<label><input type="checkbox" name="illnesses" value="Hypertension"> Hypertension (BP > 140/90 mmHg on two separate occasions)</label>
+<label><input type="checkbox" name="illnesses" value="Diabetes Mellitus"> Diabetes Mellitus (FBS > 126 mg/dL, or RBS > 200 mg/dL, or PPBS > 180 mg/dL, or HbA1c > 6.5 g/dL)</label>
+<label><input type="checkbox" name="illnesses" value="Coronary Artery Disease"> Coronary Artery Disease (Ischemic Heart Disease)</label>
+<label><input type="checkbox" name="illnesses" value="Chronic Heart Failure"> Chronic Heart Failure</label>
+<label><input type="checkbox" name="illnesses" value="Cancer"> Cancer</label>
+<label><input type="checkbox" name="illnesses" value="Asthma"> Asthma</label>
+<label><input type="checkbox" name="illnesses" value="COPD"> COPD</label>
+<label><input type="checkbox" name="illnesses" value="Thyroid Disorders"> Thyroid Disorders</label>
+<label><input type="checkbox" name="illnesses" value="Cerebrovascular disease"> Cerebrovascular disease (history of stroke / TIA)</label>
+<label><input type="checkbox" name="illnesses" value="Chronic Kidney Disease"> Chronic Kidney Disease</label>
+<label><input type="checkbox" name="illnesses" value="Chronic Liver Disease"> Chronic Liver Disease</label>
+<label><input type="checkbox" name="illnesses" value="Seizure Disorder"> Seizure Disorder (Epilepsy)</label>
+<label><input type="checkbox" name="illnesses" value="Valvular Heart Disease"> Valvular Heart Disease</label>
+<label><input type="checkbox" name="illnesses" value="Congenital Heart Disease"> Congenital Heart Disease</label>
+<label><input type="checkbox" name="illnesses" value="Bleeding and Coagulation Disorders"> Bleeding and Coagulation Disorders</label>
+<label><input type="checkbox" name="illnesses" value="Chronic Pain"> Chronic Pain</label>
+<label><input type="checkbox" name="illnesses" value="Parkinsonism"> Parkinsonism</label>
+<label><input type="checkbox" name="illnesses" value="Dementia"> Dementia</label>
+<label><input type="checkbox" name="illnesses" id="otherIllnessCheckbox" value="Other"> Other</label>
+
+<!-- Text box for "Other" details, hidden initially -->
+<textarea id="otherIllnessDetails" name="otherIllnessDetails" rows="15" cols="100" maxlength="9000" placeholder="Other chronic illness, medication history, chemotherapy, radiotheapy details  (up to 9000 characters)"></textarea>
+
+<!-- JavaScript to toggle the visibility of the text box -->
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const otherIllnessCheckbox = document.getElementById("otherIllnessCheckbox");
+        const otherIllnessDetails = document.getElementById("otherIllnessDetails");
+
+        // Show or hide the text box based on "Other" checkbox state
+        otherIllnessCheckbox.addEventListener("change", function() {
+            if (otherIllnessCheckbox.checked) {
+                otherIllnessDetails.style.display = "block";
+            } else {
+                otherIllnessDetails.style.display = "none";
+                otherIllnessDetails.value = ""; // Clear the text box when hidden
+            }
+        });
+    });
+</script>
+
+
+<!-- Airway Assessment Section -->
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Airway Assessment (check all that apply)</title>
+  <style>
+    :root{
+      --green:#0a7a2a;
+      --red:#b00020;
+      --text:#111;
+      --muted:#444;
+      --border:#d7d7d7;
+    }
+    body{
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--text);
+      margin: 0;
+      padding: 18px;
+      background: #fff;
+    }
+    .page{
+      max-width: 900px;
+      margin: 0 auto;
+      border: 1px solid var(--border);
+      padding: 18px 18px 8px;
+      border-radius: 10px;
+    }
+    h1{
+      font-size: 20px;
+      margin: 0 0 12px;
+      font-weight: 700;
+    }
+    .item{
+      display: grid;
+      grid-template-columns: 26px 1fr;
+      gap: 10px;
+      padding: 10px 6px;
+      border-top: 1px solid #eee;
+    }
+    .item:first-of-type{ border-top: 0; }
+    .cb{
+      margin-top: 3px;
+      width: 18px;
+      height: 18px;
+      accent-color: #333;
+    }
+    .headline{
+      font-weight: 800;
+      margin: 0 0 4px;
+      line-height: 1.25;
+    }
+    .green{ color: var(--green); }
+    .red{ color: var(--red); }
+    .detail{
+      margin: 0;
+      line-height: 1.35;
+      color: var(--text);
+      font-size: 14px;
+    }
+    .detail .includes{
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    /* Print (A4) */
+    @media print{
+      body{ padding: 0; }
+      .page{
+        border: 0;
+        border-radius: 0;
+        padding: 0;
+        max-width: none;
+      }
+      .item{ break-inside: avoid; }
+    }
+  </style>
+  <div class="page" role="document" aria-label="Airway Assessment">
+    <h1>Airway Assessment (check all that apply)</h1>
+
+    <!-- 1 -->
+    <div class="item">
+      <input class="cb" type="checkbox" id="aa1" />
+      <div>
+        <p class="headline green"><label for="aa1">Difficult airway is not anticipated</label></p>
+      </div>
+    </div>
+
+    <!-- 2 -->
+    <div class="item">
+      <input class="cb" type="checkbox" id="aa2" />
+      <div>
+        <p class="headline red"><label for="aa2">History of previous airway difficulty is present</label></p>
+        <p class="detail"><span class="includes">Includes,</span> Documented difficult mask ventilation; difficult laryngoscopy; failed intubation; emergency surgical airway.</p>
+      </div>
+    </div>
+
+    <!-- 3 -->
+    <div class="item">
+      <input class="cb" type="checkbox" id="aa3" />
+      <div>
+        <p class="headline red"><label for="aa3">Anticipated difficult mask ventilation or oxygenation</label></p>
+        <p class="detail"><span class="includes">Includes,</span> Age &gt; 55 years; BMI &ge; 30 kg/m&sup2;; Beard / facial hair; Edentulous or poor dentition; History of snoring or obstructive sleep apnea; Reduced lung compliance (stiff lungs); Reduced chest wall or abdominal compliance; Central airway obstruction.</p>
+      </div>
+    </div>
+
+    <!-- 4 -->
+    <div class="item">
+      <input class="cb" type="checkbox" id="aa4" />
+      <div>
+        <p class="headline red"><label for="aa4">Anticipated difficult supraglottic airway device (SGA) insertion or ventilation</label></p>
+        <p class="detail"><span class="includes">Includes,</span> Reduced mouth opening (&lt; 2.5 cm); Upper airway obstruction; Distorted upper airway anatomy; Reduced cervical spine mobility; Reduced lung compliance (stiff lungs); Reduced chest wall or abdominal compliance; Central airway obstruction.</p>
+      </div>
+    </div>
+
+    <!-- 5 -->
+    <div class="item">
+      <input class="cb" type="checkbox" id="aa5" />
+      <div>
+        <p class="headline red"><label for="aa5">Anticipated difficult laryngoscopy and tracheal intubation</label></p>
+        <p class="detail"><span class="includes">Includes,</span> Distorted airway anatomy; Upper airway obstruction; Mouth opening &lt; 3 cm; Thyromental distance &lt; 6 cm; Mallampati class III or IV; Anterior sliding of mandible absent on upper lip bite test (ULBT); Reduced neck mobility; Prior neck surgery or irradiation; &quot;Woody&quot; or indurated or edematous submental space; Tongue edema or macroglossia.</p>
+      </div>
+    </div>
+
+    <!-- 6 -->
+    <div class="item">
+      <input class="cb" type="checkbox" id="aa6" />
+      <div>
+        <p class="headline red"><label for="aa6">Anticipated difficult infraglottic airway (tracheostomy / cricothyrotomy)</label></p>
+        <p class="detail"><span class="includes">Includes,</span> Previous neck surgery; Neck edema or hematoma or infection; Obesity; Neck irradiation or fibrosis; Pre-tracheal or neck tumor.</p>
+      </div>
+    </div>
+
+    <!-- 7 -->
+    <div class="item">
+      <input class="cb" type="checkbox" id="aa7" />
+      <div>
+        <p class="headline red"><label for="aa7">Anticipated shared airway</label></p>
+        <p class="detail"><span class="includes">Includes,</span> Endo laryngeal procedures; Endo tracheal and endo bronchial interventions; Tracheal resection; Carinal resection; Foreign body airway removal; Tracheoesophageal fistula stenting or repair; Bronchopleural fistula repair.</p>
+      </div>
+    </div>
+
+    <!-- 8 -->
+    <div class="item">
+      <input class="cb" type="checkbox" id="aa8" />
+      <div>
+        <p class="headline red"><label for="aa8">Anticipated difficult extubation</label></p>
+        <p class="detail"><span class="includes">Includes,</span> Known difficult airway; Airway bleeding; Airway edema; Airway trauma; Obesity or obstructive sleep apnea; Restricted postoperative access to airway; High aspiration risk; Significant cardiovascular, respiratory, neurological, or metabolic risk.</p>
+      </div>
+    </div>
+
+    <!-- 9 -->
+    <div class="item">
+      <input class="cb" type="checkbox" id="aa9" />
+      <div>
+        <p class="headline red"><label for="aa9">Elevated cardiovascular or hypoxia risk during induction and intubation</label></p>
+        <p class="detail"><span class="includes">Includes,</span> Reduced FRC, Acute or Chronic Hypoxia; Shock; Heart failure; Severe metabolic acidosis; Pulmonary hypertension or right ventricular dysfunction.</p>
+      </div>
+    </div>
+
+    <!-- 10 -->
+    <div class="item">
+      <input class="cb" type="checkbox" id="aa10" />
+      <div>
+        <p class="headline red"><label for="aa10">Increased risk of pulmonary aspiration</label></p>
+        <p class="detail"><span class="includes">Includes,</span> Inadequate fasting; Intestinal obstruction; Gastric outlet obstruction; Recent trauma; Pregnancy; Obesity; Hiatus hernia; Symptomatic GERD; Conditions associated with delayed gastric emptying (e.g., diabetic gastroparesis, uremia)</p>
+      </div>
+    </div>
+
+	<!-- 11 -->
+    <div class="item">
+      <input class="cb" type="checkbox" id="aa10" />
+      <div>
+        <p class="headline red"><label for="aa10">Loose teeth</label></p>
+      </div>
+    </div>
+
+	<!-- 12 -->
+    <div class="item">
+      <input class="cb" type="checkbox" id="aa10" />
+      <div>
+        <p class="headline red"><label for="aa10">Artificial dentures</label></p>
+      </div>
+    </div>
+
+<!-- JavaScript for mutual exclusivity logic -->
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const notAnticipatedCheckbox = document.getElementById("notAnticipated"); // "Difficult airway is not anticipated" option
+        const otherOptions = Array.from(document.querySelectorAll('input[name="airwayAssessment"]:not(#notAnticipated)')); // All other airway options
+
+        // Function to handle exclusivity for "Difficult airway is not anticipated"
+        function handleNotAnticipated() {
+            if (notAnticipatedCheckbox.checked) {
+                // Disable all other options if "Difficult airway is not anticipated" is checked
+                otherOptions.forEach(option => {
+                    option.disabled = true;
+                    option.checked = false; // Uncheck if already selected
+                });
+            } else {
+                // Enable all other options if "Difficult airway is not anticipated" is unchecked
+                otherOptions.forEach(option => option.disabled = false);
+            }
+        }
+
+        // Function to handle exclusivity for other options
+        function handleOtherOptions() {
+            if (otherOptions.some(option => option.checked)) {
+                // Disable "Difficult airway is not anticipated" if any other option is checked
+                notAnticipatedCheckbox.disabled = true;
+                notAnticipatedCheckbox.checked = false;
+            } else {
+                // Enable "Difficult airway is not anticipated" if no other options are checked
+                notAnticipatedCheckbox.disabled = false;
+            }
+        }
+
+        // Event listeners for "Difficult airway is not anticipated"
+        notAnticipatedCheckbox.addEventListener("change", handleNotAnticipated);
+
+        // Event listeners for other options
+        otherOptions.forEach(option => option.addEventListener("change", handleOtherOptions));
+    });
+</script>
+
 
             <div class="col-6">
               <label>Surgery Urgency Category</label>
@@ -2572,6 +2991,22 @@ function bindLabImport
               <input id="completedProcedure" name="completedProcedure" type="text" maxlength="150" />
             </div>
 
+			<div class="col-6">
+              <label>Anesthesia Procedure</label>
+              <select id="anesthProcedure" name="anesthesiaProcedure">
+			  <option value="General Anesthesia">General Anesthesia</option>
+	<option value="General Anesthesia with Epidural Analgesia">General Anesthesia with Epidural Analgesia</option>
+	<option value="General Anethesia with Intrathecal Analgesia">General Anethesia with Intrathecal Analgesia</option>
+	<option value="General Anesthesia with Peripheral Nerve Block">General Anesthesia with Peripheral Nerve Block</option>
+	<option value="Subarachnoid Block (Spinal Anesthesia)">Subarachnoid Block (Spinal Anesthesia)</option>
+	<option value="Epidural Anesthesia">Epidural Anesthesia</option>
+	<option value="Combined Spinal Epidural Anesthesia (CSE)">Combined Spinal Epidural Anesthesia (CSE)</option>
+	<option value="Peripheral Nerve Block">Peripheral Nerve Block</option>
+	<option value="Monitored Anesthesia Care with Sedation">Monitored Anesthesia Care with Sedation</option>
+	<option value="Monitored Anesthesia Care without sedation">Monitored Anesthesia Care without sedation</option>
+	<option value="" selected="selected" style="display:none"></option>  
+			</select>
+            </div>
             <div class="col-3">
               <label><input id="eyeProtection" name="eyeProtection" type="checkbox" /> Eye Protection</label>
             </div>
@@ -4469,6 +4904,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
 });
 </script>
-
+<details>
+<summary class="hint">License and Medical Disclaimer</summary>
+<section class="card">
+Software License: GNU GPL v3. Copyright (C) [2025] [Prof. Jyotirmay Kirtania]. This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. Medical Disclaimer (Cognitive Assist & Record Keeping). IMPORTANT: PLEASE READ CAREFULLY BEFORE USE. NOT A MEDICAL DEVICE: This tool is a Clinical Decision Support System (CDSS) intended for educational and cognitive assistance purposes only. It has not been cleared or approved by the FDA, EMA, or any other regulatory body for use as a primary medical device. NO SUBSTITUTE FOR CLINICAL JUDGMENT: This tool is designed to assist, not replace, the clinical judgment of qualified healthcare professionals. All calculations and logic must be independently verified against institutional standards before clinical application. DATA PRIVACY: This tool is designed to run locally on the user's device. No data is transmitted to external servers by the software. The user is solely responsible for ensuring that the use of this tool complies with local patient data privacy laws (e.g., HIPAA, GDPR) and institutional IT policies. LIMITATION OF LIABILITY: In no event shall the authors or copyright holders be liable for any claim, damages, or other liability, whether in an action of contract, tort, or otherwise, arising from, out of, or in connection with the software or the use or other dealings in the software.  
 </body>
 </html>
