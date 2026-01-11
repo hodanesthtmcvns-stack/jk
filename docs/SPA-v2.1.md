@@ -463,7 +463,7 @@ server {
 
 ## 📧 Contact
 
-- **Email**: [jyotirmay@mpmmcc.tmc.gov.in)
+- **Email**: jyotirmay@mpmmcc.tmc.gov.in
 
 ---
 
