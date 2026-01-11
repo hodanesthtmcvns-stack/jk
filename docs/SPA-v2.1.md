@@ -42,9 +42,6 @@ python -m http.server 8000
 # Then visit http://localhost:8000
 ```
 
-### Option 3: GitHub Pages
-Visit the live demo: `https://yourusername.github.io/septic-shock-perfusion-analyzer/`
-
 ## 📖 How to Use
 
 ### 1. Patient Assessment Tab
@@ -306,8 +303,6 @@ If you use this tool in research or education, please cite:
 ```
 
 ---
-
-## 📸 Screenshots
 
 ### Patient Assessment Interface
 *Clean, intuitive interface for rapid data entry during critical situations*
