@@ -12,11 +12,13 @@ This repository hosts a suite of portable, offline-ready HTML applications desig
 | Tool | Clinical Focus | Launch Link |
 | :--- | :--- | :--- |
 | **ICU Help & Support** | Documentation & Orders | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/ICU-Help-Support-v2.4.html) |
-| **BEAT-C** | Empiric Antibiotics | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/BEAT-C-v1.0.html) |
+| **NEWS2 Triage** | Clinical Severity Assessment and Triage | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/NEWS2.html) |
+| **SPA** | Clinical Decision Support | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/SPA-v2.1.html) |
+| **BEAT-C** | Empiric Antibiotics in Sepsis | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/BEAT-C-v1.0.html) |
 | **PEEP Titrator** | Optimal PEEP Selection | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/PEEP-titration-v1.4.html) |
-| **NEWS2 Triage** | Severity Assessment | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/NEWS2.html) |
+
 | **Ventilator Simulator** | Respiratory Education | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/ICU-vent-sim-v%201.2.html) |
-| **Lab Trends & Alerts** | Decision Support | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/ICU-lab-trends-alerts-v2.0.html) |
+| **Lab Trends & Alerts** | Clinical Decision Support | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/ICU-lab-trends-alerts-v2.0.html) |
 | **Agitation Manager** | ICU Delirium | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/acute-agitation-v1.0.html) |
 | **Label Generator** | Workflow Efficiency | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/Patient-label-generator-v1.5.html) |
 |**ePAC** | Pre Anesthesia Checkup | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/ePAC-v3.0.html) |
@@ -31,6 +33,9 @@ This repository hosts a suite of portable, offline-ready HTML applications desig
 
 ### ICU Help & Support (v2.4)
 The central hub for ICU workflow. It features an **Order Composer** with tick-box bundles, a **Progress Note generator** (Daily/Short Rounds/Macros), and integrated **ICU Calculators** (SOFA, MPM-III, GCS). It includes "Keeper Mode" for custom JSON template management and integration with the CRIL AI assistant.
+
+### SPA (v2.1)
+A cognitive decision support tool for ICU residents to assess peripheral perfusion in septic shock patients.
 
 ### BEAT-C (v1.0)
 A probabilistic engine for initial empiric antibiotic selection. It balances suspected infection sources against local antibiogram data while applying safety guardrails for renal function, allergies, and pregnancy.
