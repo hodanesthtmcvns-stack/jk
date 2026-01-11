@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Septic Shock Perfusion Analyzer (SPA) version 2.1</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+            color: #2d3748;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            color: #2d3748;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            color: #718096;
+            font-size: 14px;
+        }
+
+        .tab-nav {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            min-width: 120px;
+            padding: 12px 20px;
+            background: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .card h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-danger { background: #fee; color: #c53030; }
+        .badge-warning { background: #fef5e7; color: #d97706; }
+        .badge-success { background: #e6fffa; color: #047857; }
+        .badge-info { background: #e0f2fe; color: #0369a1; }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border 0.3s;
+        }
+
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        #copyButtons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+        }
+
+        #copyButtons .btn {
+            margin-bottom: 0;
+        }
+
+        .copy-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #047857;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            animation: slideIn 0.3s ease-out;
+            z-index: 1000;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(400px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+
+        .alert-danger {
+            background: #fee;
+            color: #c53030;
+            border-left: 4px solid #c53030;
+        }
+
+        .alert-warning {
+            background: #fef5e7;
+            color: #d97706;
+            border-left: 4px solid #d97706;
+        }
+
+        .alert-success {
+            background: #e6fffa;
+            color: #047857;
+            border-left: 4px solid #047857;
+        }
+
+        .alert-info {
+            background: #e0f2fe;
+            color: #0369a1;
+            border-left: 4px solid #0369a1;
+        }
+
+        .result-box {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .result-box h3 {
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: #2d3748;
+        }
+
+        .result-box ul {
+            list-style-position: inside;
+            color: #4a5568;
+            line-height: 1.8;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #cbd5e0;
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -24px;
+            top: 5px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #667eea;
+        }
+
+        .guide-section {
+            margin-bottom: 20px;
+        }
+
+        .guide-section h3 {
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: #2d3748;
+        }
+
+        .guide-section p, .guide-section li {
+            color: #4a5568;
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-card h4 {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        table th, table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        table th {
+            background: #f7fafc;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .history-log {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .history-entry {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .history-entry .time {
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .history-entry .data {
+            color: #4a5568;
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 { font-size: 20px; }
+            .tab-btn { min-width: 100px; padding: 10px 15px; }
+            .grid { grid-template-columns: 1fr; }
+        }
+
+        .crt-timer {
+            text-align: center;
+            padding: 30px;
+        }
+
+        .crt-timer .display {
+            font-size: 72px;
+            font-weight: bold;
+            color: #667eea;
+            margin: 20px 0;
+        }
+
+        .crt-timer .instructions {
+            font-size: 14px;
+            color: #718096;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏥 SPA (Septic Shock Perfusion Analyzer) version 2.1</h1>
+            <p>Clinical Decision Support Tool for ICU Residents; Software License: GNU GPL v3. Copyright (C) [2026] [Prof. Jyotirmay Kirtania]. </p>
+        </div>
+
+        <div class="tab-nav">
+            <button class="tab-btn active" onclick="switchTab('assess')">📊 Assess</button>
+            <button class="tab-btn" onclick="switchTab('timer')">⏱️ CRT Timer</button>
+            <button class="tab-btn" onclick="switchTab('guide')">📚 Guide</button>
+            <button class="tab-btn" onclick="switchTab('algorithm')">🔄 Algorithm</button>
+            <button class="tab-btn" onclick="switchTab('history')">📋 History</button>
+        </div>
+
+        <!-- Assessment Tab -->
+        <div id="assess" class="tab-content active">
+            <div class="card">
+                <h2>Patient Assessment</h2>
+                
+                <div class="input-group">
+                    <label>Patient First Name, Case Number</label>
+                    <input type="text" id="patientId" placeholder="e.g., Anand, 16F2026/001234">
+                </div>
+
+                <div class="input-group">
+                    <label>Capillary Refill Time (CRT) - seconds (will be auto calculated from the CRT timer)</label>
+                    <input type="number" id="crt" placeholder="e.g., 3.5" step="0.5" min="0" max="10">
+                </div>
+
+                <div class="input-group">
+                    <label>Measurement Site</label>
+                    <select id="crtSite">
+                        <option value="fingertip">Fingertip</option>
+                        <option value="earlobe">Earlobe</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label>Mottling Score (0-5)</label>
+                    <select id="mottling">
+                        <option value="0">0 - No mottling</option>
+                        <option value="1">1 - Small central area (< 2.5 cm)</option>
+                        <option value="2">2 - Moderate area (2.5-5 cm)</option>
+                        <option value="3">3 - Beyond 5 cm, not mid-thigh</option>
+                        <option value="4">4 - Reaching mid-thigh</option>
+                        <option value="5">5 - Beyond mid-thigh</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label>Temperature Measurements - °C</label>
+                    <div class="grid" style="gap: 10px;">
+                        <div>
+                            <label style="font-size: 14px; color: #718096;">Forearm Temp</label>
+                            <input type="number" id="forearmTemp" placeholder="e.g., 34.5" step="0.1" oninput="calculateTempGradients()">
+                        </div>
+                        <div>
+                            <label style="font-size: 14px; color: #718096;">Fingertip Temp</label>
+                            <input type="number" id="fingertipTemp" placeholder="e.g., 30.2" step="0.1" oninput="calculateTempGradients()">
+                        </div>
+                    </div>
+                    <div class="result-box" id="tskinDiffResult" style="margin-top: 10px; display: none;">
+                        <strong>Tskin-diff (Forearm-Fingertip):</strong> <span id="tskinDiffValue"></span>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Core & Peripheral Temperature - °C</label>
+                    <div class="grid" style="gap: 10px;">
+                        <div>
+                            <label style="font-size: 14px; color: #718096;">Central/Tympanic Temp</label>
+                            <input type="number" id="centralTemp" placeholder="e.g., 37.5" step="0.1" oninput="calculateTempGradients()">
+                        </div>
+                        <div>
+                            <label style="font-size: 14px; color: #718096;">Great Toe Temp</label>
+                            <input type="number" id="toeTemp" placeholder="e.g., 27.3" step="0.1" oninput="calculateTempGradients()">
+                        </div>
+                    </div>
+                    <div class="result-box" id="tcToeResult" style="margin-top: 10px; display: none;">
+                        <strong>Tc-toe (Central-Toe):</strong> <span id="tcToeValue"></span>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Peripheral Perfusion Index (PPI / PI) - from the SpO2 monitor</label>
+                    <input type="number" id="ppi" placeholder="e.g., 0.5" step="0.1" min="0">
+                </div>
+
+                <div class="input-group">
+                    <label>MAP (mmHg)</label>
+                    <input type="number" id="map" placeholder="e.g., 68" min="0">
+                </div>
+
+                <div class="input-group">
+                    <label>Lactate (mmol/L)</label>
+                    <input type="number" id="lactate" placeholder="e.g., 3.5" step="0.1" min="0">
+                </div>
+
+                <button class="btn btn-primary" onclick="assessPatient()">Analyze & Generate Recommendations</button>
+                <button class="btn btn-secondary" onclick="clearForm()">Clear Form</button>
+
+                <div id="results"></div>
+                <div id="copyButtons" style="display:none; margin-top: 15px;">
+                    <button class="btn btn-secondary" onclick="copyToCIS('txt')">📋 Copy as Text</button>
+                    <button class="btn btn-secondary" onclick="copyToCIS('csv')">📋 Copy as CSV</button>
+                    <button class="btn btn-secondary" onclick="copyToCIS('tsv')">📋 Copy as TSV</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- CRT Timer Tab -->
+        <div id="timer" class="tab-content">
+            <div class="card">
+                <h2>⏱️ CRT Measurement Timer</h2>
+                <div class="crt-timer">
+                    <div class="instructions">
+                        Press START, apply pressure for 5 seconds, release when timer shows "RELEASE", then press STOP when color returns
+                    </div>
+                    <div class="display" id="timerDisplay">0.0s</div>
+                    <div class="badge badge-info" id="timerPhase">Ready</div>
+                    <button class="btn btn-primary" id="timerBtn" onclick="toggleTimer()">START</button>
+                    <div class="result-box" id="timerResult" style="display:none;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Guide Tab -->
+        <div id="guide" class="tab-content">
+            <div class="card">
+                <h2>📚 Quick Reference Guide</h2>
+                
+                <div class="guide-section">
+                    <h3>Normal Values</h3>
+                    <table>
+                        <tr><th>Parameter</th><th>Normal</th><th>Abnormal</th></tr>
+                        <tr><td>CRT</td><td>&lt; 3 seconds</td><td>≥ 3 seconds</td></tr>
+                        <tr><td>Mottling Score</td><td>0-2</td><td>≥ 3</td></tr>
+                        <tr><td>Tskin-diff</td><td>0.0-0.2°C</td><td>&gt; 4.6°C</td></tr>
+                        <tr><td>Tc-toe</td><td>5-7°C</td><td>≥ 10°C</td></tr>
+                        <tr><td>PPI</td><td>&gt; 1.4</td><td>&lt; 0.7-1.4</td></tr>
+                    </table>
+                    <div class="alert alert-info" style="margin-top: 15px;">
+                        <strong>💡 Temperature Measurements:</strong> Use infrared non-contact thermometer. Ambient temperature should be controlled (20-24°C). The app automatically calculates gradients for you!
+                    </div>
+                </div>
+
+                <div class="guide-section">
+                    <h3>CRT Measurement Protocol</h3>
+                    <ol>
+                        <li>Apply firm pressure with glass slide to fingertip/earlobe for 5 seconds</li>
+                        <li>Count aloud: "1001, 1002, 1003, 1004, 1005" during compression</li>
+                        <li>Release at "1005" and continue counting</li>
+                        <li>Stop when color returns: "1006, 1007, 1008..."</li>
+                        <li>CRT = total count minus 1005</li>
+                    </ol>
+                </div>
+
+                <div class="guide-section">
+                    <h3>Resuscitation Timing</h3>
+                    <ul>
+                        <li><strong>Initial:</strong> Measure CRT every 10-15 minutes during active resuscitation</li>
+                        <li><strong>Post-bolus:</strong> Reassess at 10-12 minutes (peak response time)</li>
+                        <li><strong>Stable:</strong> Hourly CRT monitoring</li>
+                        <li><strong>Temperature gradients:</strong> Every 2-4 hours</li>
+                    </ul>
+                </div>
+
+                <div class="guide-section">
+                    <h3>Fluid Bolus Protocol</h3>
+                    <ul>
+                        <li>500 mL balanced crystalloid (RL/Plasma-Lyte) over 15-30 minutes</li>
+                        <li>Reassess CRT at 10-12 minutes</li>
+                        <li>If improved but still ≥3 sec: Consider additional bolus</li>
+                        <li>If no improvement: Consider cardiac dysfunction or excessive vasoconstriction</li>
+                    </ul>
+                </div>
+
+                <div class="guide-section">
+                    <h3>Hemodynamic Dissociation Red Flags</h3>
+                    <div class="alert alert-danger">
+                        <strong>Danger:</strong> MAP ≥65 mmHg + adequate CO BUT persistent poor peripheral perfusion
+                    </div>
+                    <p><strong>Actions:</strong></p>
+                    <ul>
+                        <li>Reassess fluid status (echo, dynamic parameters)</li>
+                        <li>Consider reducing vasopressor if excessive</li>
+                        <li>Trial inotrope (dobutamine 2.5-5 mcg/kg/min)</li>
+                        <li>Consider low-dose vasodilator (NTG 10-20 mcg/min)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Algorithm Tab -->
+        <div id="algorithm" class="tab-content">
+            <div class="card">
+                <h2>🔄 Clinical Decision Algorithm</h2>
+                
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <strong>Step 1: Initial Assessment</strong>
+                        <p>Measure CRT, Mottling, Temperature Gradients, PPI alongside lactate, MAP, UOP</p>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <strong>Step 2: Is CRT ≥ 3 seconds?</strong>
+                        <p><span class="badge badge-danger">YES</span> → Proceed to Step 3</p>
+                        <p><span class="badge badge-success">NO</span> → Continue standard care, reassess hourly</p>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <strong>Step 3: Fluid Resuscitation</strong>
+                        <p>Give 500 mL balanced crystalloid over 15-30 minutes</p>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <strong>Step 4: Wait & Reassess</strong>
+                        <p>Wait 10-12 minutes, then reassess CRT</p>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <strong>Step 5: Did CRT improve?</strong>
+                        <p><span class="badge badge-success">YES but still ≥3</span> → Consider additional bolus</p>
+                        <p><span class="badge badge-warning">NO improvement</span> → Check MAP/CO adequate?</p>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <strong>Step 6: MAP/CO Adequate but Poor Perfusion?</strong>
+                        <p><strong>Consider:</strong></p>
+                        <ul>
+                            <li>Reduce vasopressor if excessive (check dose)</li>
+                            <li>Add inotrope (dobutamine)</li>
+                            <li>Trial low-dose vasodilator (NTG)</li>
+                            <li>POCUS for cardiac function</li>
+                            <li>Address anemia, hypoxemia, metabolic issues</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="alert alert-info" style="margin-top: 20px;">
+                    <strong>💡 Pro Tip:</strong> Always document trends, not just single values. Serial measurements are more valuable than isolated readings.
+					</div>
+            </div>
+        </div>
+					<p>Software License: GNU GPL v3. Copyright (C) [2026] [Prof. Jyotirmay Kirtania]. This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. Medical Disclaimer (Cognitive Assist & Record Keeping). IMPORTANT: PLEASE READ CAREFULLY BEFORE USE. NOT A MEDICAL DEVICE: This tool is a Clinical Decision Support System (CDSS) intended for educational and cognitive assistance purposes only. It has not been cleared or approved by the FDA, EMA, or any other regulatory body for use as a primary medical device. NO SUBSTITUTE FOR CLINICAL JUDGMENT: This tool is designed to assist, not replace, the clinical judgment of qualified healthcare professionals. All calculations and logic must be independently verified against institutional standards before clinical application. DATA PRIVACY: This tool is designed to run locally on the user's device. No data is transmitted to external servers by the software. The user is solely responsible for ensuring that the use of this tool complies with local patient data privacy laws (e.g., HIPAA, GDPR) and institutional IT policies. LIMITATION OF LIABILITY: In no event shall the authors or copyright holders be liable for any claim, damages, or other liability, whether in an action of contract, tort, or otherwise, arising from, out of, or in connection with the software or the use or other dealings in the software.<p/>
+<p> References:<p/>
+<p>1. Guo, Q., Liu, D., Wang, X. et al. Early peripheral perfusion monitoring in septic shock. Eur J Med Res 29, 477 (2024). doi: 10.1186/s40001-024-02074-1<p/>
+<p>2. Hernández G, et al. Effect of a Resuscitation Strategy Targeting Peripheral Perfusion Status vs Serum Lactate Levels on 28-Day Mortality Among Patients With Septic Shock: The ANDROMEDA-SHOCK Randomized Clinical Trial. JAMA. 2019 Feb 19;321(7):654-664. doi: 10.1001/jama.2019.0071.<p/> 
+<p>3. Ait-Oufella H, et al. Capillary refill time exploration during septic shock. Intensive Care Med. 2014 Jul;40(7):958-64. doi: 10.1007/s00134-014-3326-4.<p/>
+<p>4. Lima A, Bakker J. Clinical assessment of peripheral circulation. Curr Opin Crit Care. 2015 Jun;21(3):226-31. doi: 10.1097/MCC.0000000000000194.<p/>
+					
+                
+
+        <!-- History Tab -->
+        <div id="history" class="tab-content">
+            <div class="card">
+                <h2>📋 Assessment History</h2>
+                <button class="btn btn-secondary" onclick="clearHistory()">Clear All History</button>
+                <div class="history-log" id="historyLog">
+                    <p style="color: #718096; text-align: center; padding: 20px;">No assessments recorded yet</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Timer functionality
+        let timerInterval;
+        let startTime;
+        let timerRunning = false;
+        let releaseTime = 5000; // 5 seconds
+
+        function toggleTimer() {
+            const btn = document.getElementById('timerBtn');
+            const display = document.getElementById('timerDisplay');
+            const phase = document.getElementById('timerPhase');
+            const result = document.getElementById('timerResult');
+
+            if (!timerRunning) {
+                // Start timer
+                startTime = Date.now();
+                timerRunning = true;
+                btn.textContent = 'STOP (when color returns)';
+                btn.style.background = '#c53030';
+                phase.textContent = 'Applying pressure...';
+                phase.className = 'badge badge-warning';
+                result.style.display = 'none';
+
+                timerInterval = setInterval(() => {
+                    const elapsed = Date.now() - startTime;
+                    const seconds = (elapsed / 1000).toFixed(1);
+                    display.textContent = seconds + 's';
+
+                    if (elapsed >= releaseTime && phase.textContent !== 'RELEASE pressure NOW!') {
+                        phase.textContent = 'RELEASE pressure NOW!';
+                        phase.className = 'badge badge-danger';
+                    }
+                }, 100);
+            } else {
+                // Stop timer
+                clearInterval(timerInterval);
+                const elapsed = Date.now() - startTime;
+                const totalSeconds = (elapsed / 1000).toFixed(1);
+                const crtValue = (elapsed - releaseTime) / 1000;
+                
+                timerRunning = false;
+                btn.textContent = 'START';
+                btn.style.background = '';
+                phase.textContent = 'Measurement Complete';
+                phase.className = 'badge badge-success';
+
+                result.style.display = 'block';
+                result.innerHTML = `
+                    <h3>CRT Result: ${crtValue.toFixed(1)} seconds</h3>
+                    <p><strong>Interpretation:</strong> ${crtValue < 3 ? '<span class="badge badge-success">NORMAL</span>' : '<span class="badge badge-danger">ABNORMAL - Impaired perfusion</span>'}</p>
+                    <p style="margin-top: 10px; color: #718096;">Total time: ${totalSeconds}s | Compression: 5.0s</p>
+                `;
+
+                // Auto-fill in assessment tab
+                document.getElementById('crt').value = crtValue.toFixed(1);
+            }
+        }
+
+        // Tab switching
+        function switchTab(tabName) {
+            const tabs = document.querySelectorAll('.tab-content');
+            const btns = document.querySelectorAll('.tab-btn');
+            
+            tabs.forEach(tab => tab.classList.remove('active'));
+            btns.forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Store current assessment globally for copy function
+        let currentAssessment = null;
+
+        // Calculate temperature gradients automatically
+        function calculateTempGradients() {
+            const forearmTemp = parseFloat(document.getElementById('forearmTemp').value);
+            const fingertipTemp = parseFloat(document.getElementById('fingertipTemp').value);
+            const centralTemp = parseFloat(document.getElementById('centralTemp').value);
+            const toeTemp = parseFloat(document.getElementById('toeTemp').value);
+
+            // Calculate Tskin-diff
+            if (!isNaN(forearmTemp) && !isNaN(fingertipTemp)) {
+                const tskinDiff = Math.abs(forearmTemp - fingertipTemp);
+                const resultBox = document.getElementById('tskinDiffResult');
+                const valueSpan = document.getElementById('tskinDiffValue');
+                
+                resultBox.style.display = 'block';
+                valueSpan.textContent = tskinDiff.toFixed(1) + '°C';
+                
+                // Color code the result
+                if (tskinDiff > 4.6) {
+                    resultBox.style.borderLeftColor = '#c53030';
+                    valueSpan.innerHTML = tskinDiff.toFixed(1) + '°C <span class="badge badge-danger">ABNORMAL</span>';
+                } else {
+                    resultBox.style.borderLeftColor = '#047857';
+                    valueSpan.innerHTML = tskinDiff.toFixed(1) + '°C <span class="badge badge-success">NORMAL</span>';
+                }
+            } else {
+                document.getElementById('tskinDiffResult').style.display = 'none';
+            }
+
+            // Calculate Tc-toe
+            if (!isNaN(centralTemp) && !isNaN(toeTemp)) {
+                const tcToe = Math.abs(centralTemp - toeTemp);
+                const resultBox = document.getElementById('tcToeResult');
+                const valueSpan = document.getElementById('tcToeValue');
+                
+                resultBox.style.display = 'block';
+                valueSpan.textContent = tcToe.toFixed(1) + '°C';
+                
+                // Color code the result
+                if (tcToe >= 10) {
+                    resultBox.style.borderLeftColor = '#c53030';
+                    valueSpan.innerHTML = tcToe.toFixed(1) + '°C <span class="badge badge-danger">ABNORMAL</span>';
+                } else if (tcToe >= 5 && tcToe < 10) {
+                    resultBox.style.borderLeftColor = '#047857';
+                    valueSpan.innerHTML = tcToe.toFixed(1) + '°C <span class="badge badge-success">NORMAL</span>';
+                } else {
+                    resultBox.style.borderLeftColor = '#d97706';
+                    valueSpan.innerHTML = tcToe.toFixed(1) + '°C <span class="badge badge-warning">CHECK</span>';
+                }
+            } else {
+                document.getElementById('tcToeResult').style.display = 'none';
+            }
+        }
+
+        // Copy to CIS function
+        function copyToCIS(format) {
+            if (!currentAssessment) {
+                showNotification('No assessment data to copy', 'error');
+                return;
+            }
+
+            let text = '';
+            const timestamp = new Date().toLocaleString();
+            
+            if (format === 'txt') {
+                // Plain text format - readable, easy to paste
+                text = `PERIPHERAL PERFUSION ASSESSMENT - ${timestamp}\n`;
+                text += `Patient: ${currentAssessment.patientId}\n`;
+                text += `${'='.repeat(50)}\n\n`;
+                
+                text += `MEASUREMENTS:\n`;
+                if (currentAssessment.crt) text += `  CRT: ${currentAssessment.crt} sec (${currentAssessment.crtSite})\n`;
+                if (currentAssessment.mottling >= 0) text += `  Mottling Score: ${currentAssessment.mottling}\n`;
+                if (currentAssessment.forearmTemp && currentAssessment.fingertipTemp) {
+                    text += `  Forearm Temp: ${currentAssessment.forearmTemp}°C, Fingertip Temp: ${currentAssessment.fingertipTemp}°C\n`;
+                    text += `  Tskin-diff: ${currentAssessment.tskinDiff}°C\n`;
+                }
+                if (currentAssessment.centralTemp && currentAssessment.toeTemp) {
+                    text += `  Central Temp: ${currentAssessment.centralTemp}°C, Toe Temp: ${currentAssessment.toeTemp}°C\n`;
+                    text += `  Tc-toe: ${currentAssessment.tcToe}°C\n`;
+                }
+                if (currentAssessment.ppi) text += `  PPI: ${currentAssessment.ppi}\n`;
+                if (currentAssessment.map) text += `  MAP: ${currentAssessment.map} mmHg\n`;
+                if (currentAssessment.lactate) text += `  Lactate: ${currentAssessment.lactate} mmol/L\n`;
+                
+                text += `\nASSESSMENT:\n`;
+                text += `  Risk Level: ${currentAssessment.riskLevel.toUpperCase()}\n`;
+                
+                if (currentAssessment.findings && currentAssessment.findings.length > 0) {
+                    text += `\nFINDINGS:\n`;
+                    currentAssessment.findings.forEach(f => text += `  - ${f}\n`);
+                }
+                
+                if (currentAssessment.recommendations && currentAssessment.recommendations.length > 0) {
+                    text += `\nRECOMMENDATIONS:\n`;
+                    currentAssessment.recommendations.forEach((r, i) => text += `  ${i+1}. ${r}\n`);
+                }
+                
+            } else if (format === 'csv') {
+                // CSV format - easy for spreadsheets
+                text = `Timestamp,Patient_ID,CRT_sec,CRT_Site,Mottling,Forearm_T_C,Fingertip_T_C,Tskin_diff_C,Central_T_C,Toe_T_C,Tc_toe_C,PPI,MAP_mmHg,Lactate_mmol_L,Risk_Level\n`;
+                text += `${timestamp},${currentAssessment.patientId},`;
+                text += `${currentAssessment.crt || ''},${currentAssessment.crtSite || ''},`;
+                text += `${currentAssessment.mottling >= 0 ? currentAssessment.mottling : ''},`;
+                text += `${currentAssessment.forearmTemp || ''},${currentAssessment.fingertipTemp || ''},${currentAssessment.tskinDiff || ''},`;
+                text += `${currentAssessment.centralTemp || ''},${currentAssessment.toeTemp || ''},${currentAssessment.tcToe || ''},`;
+                text += `${currentAssessment.ppi || ''},${currentAssessment.map || ''},`;
+                text += `${currentAssessment.lactate || ''},${currentAssessment.riskLevel}\n`;
+                
+                if (currentAssessment.recommendations && currentAssessment.recommendations.length > 0) {
+                    text += `\nRecommendations:\n`;
+                    currentAssessment.recommendations.forEach(r => text += `"${r}"\n`);
+                }
+                
+            } else if (format === 'tsv') {
+                // TSV format - tab-separated
+                text = `Timestamp\tPatient_ID\tCRT_sec\tCRT_Site\tMottling\tForearm_T_C\tFingertip_T_C\tTskin_diff_C\tCentral_T_C\tToe_T_C\tTc_toe_C\tPPI\tMAP_mmHg\tLactate_mmol_L\tRisk_Level\n`;
+                text += `${timestamp}\t${currentAssessment.patientId}\t`;
+                text += `${currentAssessment.crt || ''}\t${currentAssessment.crtSite || ''}\t`;
+                text += `${currentAssessment.mottling >= 0 ? currentAssessment.mottling : ''}\t`;
+                text += `${currentAssessment.forearmTemp || ''}\t${currentAssessment.fingertipTemp || ''}\t${currentAssessment.tskinDiff || ''}\t`;
+                text += `${currentAssessment.centralTemp || ''}\t${currentAssessment.toeTemp || ''}\t${currentAssessment.tcToe || ''}\t`;
+                text += `${currentAssessment.ppi || ''}\t${currentAssessment.map || ''}\t`;
+                text += `${currentAssessment.lactate || ''}\t${currentAssessment.riskLevel}\n`;
+                
+                if (currentAssessment.recommendations && currentAssessment.recommendations.length > 0) {
+                    text += `\nRecommendations:\n`;
+                    currentAssessment.recommendations.forEach(r => text += `${r}\n`);
+                }
+            }
+
+            // Copy to clipboard
+            navigator.clipboard.writeText(text).then(() => {
+                showNotification(`Copied to clipboard as ${format.toUpperCase()}!`, 'success');
+            }).catch(err => {
+                // Fallback for older browsers
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+                document.body.appendChild(textarea);
+                textarea.select();
+                try {
+                    document.execCommand('copy');
+                    showNotification(`Copied to clipboard as ${format.toUpperCase()}!`, 'success');
+                } catch (e) {
+                    showNotification('Failed to copy. Please try again.', 'error');
+                }
+                document.body.removeChild(textarea);
+            });
+        }
+
+        // Show notification
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = 'copy-notification';
+            notification.textContent = message;
+            if (type === 'error') {
+                notification.style.background = '#c53030';
+            }
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => notification.remove(), 300);
+            }, 2500);
+        }
+
+        // Assessment function
+        function assessPatient() {
+            const patientId = document.getElementById('patientId').value || 'Unknown';
+            const crt = parseFloat(document.getElementById('crt').value);
+            const crtSite = document.getElementById('crtSite').value;
+            const mottling = parseInt(document.getElementById('mottling').value);
+            
+            // Get individual temperature measurements
+            const forearmTemp = parseFloat(document.getElementById('forearmTemp').value);
+            const fingertipTemp = parseFloat(document.getElementById('fingertipTemp').value);
+            const centralTemp = parseFloat(document.getElementById('centralTemp').value);
+            const toeTemp = parseFloat(document.getElementById('toeTemp').value);
+            
+            // Calculate gradients
+            const tskinDiff = (!isNaN(forearmTemp) && !isNaN(fingertipTemp)) ? 
+                              Math.abs(forearmTemp - fingertipTemp) : NaN;
+            const tcToe = (!isNaN(centralTemp) && !isNaN(toeTemp)) ? 
+                          Math.abs(centralTemp - toeTemp) : NaN;
+            
+            const ppi = parseFloat(document.getElementById('ppi').value);
+            const map = parseFloat(document.getElementById('map').value);
+            const lactate = parseFloat(document.getElementById('lactate').value);
+
+            let results = '<div class="result-box"><h3>Assessment Results</h3>';
+            let recommendations = [];
+            let findings = [];
+            let riskLevel = 'low';
+
+            // CRT Analysis
+            if (!isNaN(crt)) {
+                if (crt >= 3) {
+                    results += '<div class="alert alert-danger"><strong>CRT: ' + crt + ' sec (ABNORMAL)</strong> - Impaired peripheral perfusion detected</div>';
+                    findings.push('CRT ' + crt + ' sec - Impaired peripheral perfusion');
+                    recommendations.push('Administer 500 mL balanced crystalloid over 15-30 minutes');
+                    recommendations.push('Reassess CRT in 10-12 minutes');
+                    riskLevel = 'high';
+                } else {
+                    results += '<div class="alert alert-success"><strong>CRT: ' + crt + ' sec (NORMAL)</strong></div>';
+                    findings.push('CRT ' + crt + ' sec - Normal perfusion');
+                }
+            }
+
+            // Mottling Analysis
+            if (!isNaN(mottling)) {
+                if (mottling >= 3) {
+                    results += '<div class="alert alert-danger"><strong>Mottling Score: ' + mottling + ' (HIGH RISK)</strong> - Predicts hemodynamic deterioration</div>';
+                    findings.push('Mottling score ' + mottling + ' - High risk of deterioration');
+                    recommendations.push('High risk of hemodynamic worsening - intensify monitoring');
+                    riskLevel = 'high';
+                } else {
+                    results += '<div class="alert alert-success"><strong>Mottling Score: ' + mottling + ' (LOW RISK)</strong></div>';
+                    findings.push('Mottling score ' + mottling + ' - Low risk');
+                }
+            }
+
+            // Temperature Gradient Analysis
+            if (!isNaN(tskinDiff)) {
+                if (tskinDiff > 4.6) {
+                    results += '<div class="alert alert-warning"><strong>Tskin-diff: ' + tskinDiff.toFixed(1) + '°C (ABNORMAL)</strong> - Peripheral vasoconstriction<br>';
+                    results += '<small>Forearm: ' + forearmTemp.toFixed(1) + '°C, Fingertip: ' + fingertipTemp.toFixed(1) + '°C</small></div>';
+                    findings.push('Tskin-diff ' + tskinDiff.toFixed(1) + '°C - Peripheral vasoconstriction');
+                    recommendations.push('Consider reducing vasopressor if dose is high');
+                    if (riskLevel === 'low') riskLevel = 'moderate';
+                } else {
+                    results += '<div class="alert alert-success"><strong>Tskin-diff: ' + tskinDiff.toFixed(1) + '°C (NORMAL)</strong><br>';
+                    results += '<small>Forearm: ' + forearmTemp.toFixed(1) + '°C, Fingertip: ' + fingertipTemp.toFixed(1) + '°C</small></div>';
+                    findings.push('Tskin-diff ' + tskinDiff.toFixed(1) + '°C - Normal');
+                }
+            }
+
+            if (!isNaN(tcToe)) {
+                if (tcToe >= 10) {
+                    results += '<div class="alert alert-warning"><strong>Tc-toe: ' + tcToe.toFixed(1) + '°C (ABNORMAL)</strong> - Systemic perfusion deficit<br>';
+                    results += '<small>Central: ' + centralTemp.toFixed(1) + '°C, Toe: ' + toeTemp.toFixed(1) + '°C</small></div>';
+                    findings.push('Tc-toe ' + tcToe.toFixed(1) + '°C - Systemic perfusion deficit');
+                    if (riskLevel === 'low') riskLevel = 'moderate';
+                } else {
+                    results += '<div class="alert alert-success"><strong>Tc-toe: ' + tcToe.toFixed(1) + '°C (NORMAL)</strong><br>';
+                    results += '<small>Central: ' + centralTemp.toFixed(1) + '°C, Toe: ' + toeTemp.toFixed(1) + '°C</small></div>';
+                    findings.push('Tc-toe ' + tcToe.toFixed(1) + '°C - Normal');
+                }
+            }
+
+            // PPI Analysis
+            if (!isNaN(ppi)) {
+                if (ppi < 0.7) {
+                    results += '<div class="alert alert-danger"><strong>PPI: ' + ppi + ' (VERY LOW)</strong> - High risk of complications</div>';
+                    findings.push('PPI ' + ppi + ' - Very low, high risk');
+                    recommendations.push('High risk for AKI and extubation failure');
+                    riskLevel = 'high';
+                } else if (ppi < 1.4) {
+                    results += '<div class="alert alert-warning"><strong>PPI: ' + ppi + ' (LOW)</strong> - Increased risk</div>';
+                    findings.push('PPI ' + ppi + ' - Low, increased risk');
+                    if (riskLevel === 'low') riskLevel = 'moderate';
+                } else {
+                    results += '<div class="alert alert-success"><strong>PPI: ' + ppi + ' (NORMAL)</strong></div>';
+                    findings.push('PPI ' + ppi + ' - Normal');
+                }
+            }
+
+            // Hemodynamic Dissociation Check
+            if (!isNaN(map) && map >= 65 && ((crt >= 3) || (mottling >= 3) || (ppi < 1.4))) {
+                results += '<div class="alert alert-danger"><strong>⚠️ HEMODYNAMIC DISSOCIATION DETECTED</strong><br>MAP adequate but peripheral perfusion poor - consider:</div>';
+                findings.push('HEMODYNAMIC DISSOCIATION: MAP adequate but poor peripheral perfusion');
+                recommendations.push('POCUS to assess cardiac function');
+                recommendations.push('Consider inotrope support (dobutamine 2.5-5 mcg/kg/min)');
+                recommendations.push('Trial low-dose vasodilator (NTG 10-20 mcg/min) if appropriate');
+                recommendations.push('Reduce vasopressor if dose is excessive');
+            }
+
+            // Recommendations
+            if (recommendations.length > 0) {
+                results += '<h3 style="margin-top: 20px;">Recommended Actions:</h3><ul>';
+                recommendations.forEach(rec => {
+                    results += '<li>' + rec + '</li>';
+                });
+                results += '</ul>';
+            } else {
+                results += '<div class="alert alert-success" style="margin-top: 20px;"><strong>✓ All parameters within normal limits</strong><br>Continue standard care and reassess hourly</div>';
+            }
+
+            results += '</div>';
+            document.getElementById('results').innerHTML = results;
+
+            // Store current assessment for copy function
+            currentAssessment = {
+                patientId,
+                timestamp: new Date().toISOString(),
+                crt,
+                crtSite,
+                mottling,
+                forearmTemp,
+                fingertipTemp,
+                tskinDiff: !isNaN(tskinDiff) ? tskinDiff.toFixed(1) : null,
+                centralTemp,
+                toeTemp,
+                tcToe: !isNaN(tcToe) ? tcToe.toFixed(1) : null,
+                ppi,
+                map,
+                lactate,
+                riskLevel,
+                findings,
+                recommendations
+            };
+
+            // Show copy buttons
+            document.getElementById('copyButtons').style.display = 'grid';
+
+            // Save to history
+            saveToHistory(currentAssessment);
+        }
+
+        // History management
+        function saveToHistory(data) {
+            let history = JSON.parse(localStorage.getItem('perfusionHistory') || '[]');
+            history.unshift(data);
+            if (history.length > 50) history = history.slice(0, 50); // Keep last 50
+            localStorage.setItem('perfusionHistory', JSON.stringify(history));
+            loadHistory();
+        }
+
+        function loadHistory() {
+            const history = JSON.parse(localStorage.getItem('perfusionHistory') || '[]');
+            const historyLog = document.getElementById('historyLog');
+            
+            if (history.length === 0) {
+                historyLog.innerHTML = '<p style="color: #718096; text-align: center; padding: 20px;">No assessments recorded yet</p>';
+                return;
+            }
+
+            let html = '';
+            history.forEach((entry, index) => {
+                const date = new Date(entry.timestamp);
+                const riskBadge = entry.riskLevel === 'high' ? 'badge-danger' : 
+                                 entry.riskLevel === 'moderate' ? 'badge-warning' : 'badge-success';
+                
+                html += `
+                    <div class="history-entry">
+                        <div class="time">${date.toLocaleString()} - ${entry.patientId}</div>
+                        <div class="data">
+                            <span class="badge ${riskBadge}">${entry.riskLevel.toUpperCase()} RISK</span>
+                            ${entry.crt ? ' | CRT: ' + entry.crt + 's' : ''}
+                            ${entry.mottling >= 0 ? ' | Mottling: ' + entry.mottling : ''}
+                            ${entry.ppi ? ' | PPI: ' + entry.ppi : ''}
+                            ${entry.map ? ' | MAP: ' + entry.map : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            historyLog.innerHTML = html;
+        }
+
+        function clearHistory() {
+            if (confirm('Are you sure you want to clear all assessment history?')) {
+                localStorage.removeItem('perfusionHistory');
+                loadHistory();
+            }
+        }
+
+        function clearForm() {
+            document.getElementById('patientId').value = '';
+            document.getElementById('crt').value = '';
+            document.getElementById('mottling').value = '0';
+            document.getElementById('forearmTemp').value = '';
+            document.getElementById('fingertipTemp').value = '';
+            document.getElementById('centralTemp').value = '';
+            document.getElementById('toeTemp').value = '';
+            document.getElementById('ppi').value = '';
+            document.getElementById('map').value = '';
+            document.getElementById('lactate').value = '';
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('copyButtons').style.display = 'none';
+            document.getElementById('tskinDiffResult').style.display = 'none';
+            document.getElementById('tcToeResult').style.display = 'none';
+            currentAssessment = null;
+        }
+
+        // Load history on page load
+        window.onload = function() {
+            loadHistory();
+        };
+    </script>
+</body>
+</html>
