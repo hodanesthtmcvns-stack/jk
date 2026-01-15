@@ -43,10 +43,20 @@
   .danger{color:#ffc7c7}
   .no-print{ }
   .print-only{ display:none }
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
+
   @media print{
     .no-print{ display:none !important }
-    .print-only{ display:inline-block !important }
+    .print-only{ display:block !important }
     .wrap{max-width:100%}
+	.title, #t_intro { display:none !important; }
+    /* Print only the Results card (PDF should contain exactly the Results block) */
+    #inputsCard, #refCard, #footerBlock{ display:none !important }
+    body{ background:#ffffff !important; color:#000000 !important }
+    .card{ box-shadow:none !important; border:1px solid #999 !important; background:#ffffff !important; color:#000000 !important }
+    .pill{ background:#ffffff !important; color:#000000 !important; border:1px solid #999 !important }
+    .muted{ color:#000000 !important; opacity:0.75 }
+    .table th,.table td{ border:1px solid #999 !important; color:#000000 !important }
   }
 </style>
 </head>
@@ -78,7 +88,7 @@
   <p class="hint" id="t_intro">For adults (≥16 yr). Designed for patients, families, and nurses to estimate the National Early Warning Score (NEWS2) and get a location-of-care prompt (Home / Day Care / IPD / ICU). This tool does not replace clinical judgment or emergency care.</p>
 
   <div class="grid g2">
-    <div class="card">
+    <div class="card" id="inputsCard">
       <h3 style="margin-top:6px" id="t_inputs">Patient Inputs</h3>
       <div class="grid g2">
         <!-- Meta -->
@@ -142,6 +152,7 @@
         <button class="btn no-print" id="calc" type="button"><span id="t_calc">Calculate NEWS2</span></button>
         <button class="btn-ghost no-print" id="reset" type="button"><span id="t_reset">Reset</span></button>
         <button class="btn-ghost no-print" id="print" type="button"><span id="t_print">Print / Save PDF</span></button>
+        <button class="btn-ghost no-print" id="saveTxt" type="button">Save TXT</button>
       </div>
       <p class="hint" style="margin-top:10px" id="t_scale_hint">
         Only use SpO₂ <b>Scale 2</b> when a qualified clinician has told you that the target saturation range is 88–92% (e.g., chronic hypercapnic respiratory failure).
@@ -154,8 +165,13 @@
       <div class="row" style="margin-bottom:8px">
         <span class="pill" id="metaCase">Case #: —</span>
         <span class="pill" id="metaName">Name: —</span>
-        <span class="pill" id="metaStampLive">Generated: —</span>
+        <span class="pill no-print" id="metaStampLive">Generated: —</span>
         <span class="pill print-only" id="metaStamp">Generated: —</span>
+      </div>
+
+      <!-- PRINT-ONLY summary block (matches requested PDF/TXT structure) -->
+      <div class="print-only" id="printSummary" style="margin:10px 0 12px 0">
+        <!-- Filled by JS -->
       </div>
 
       <div class="row" style="justify-content:space-between">
@@ -187,7 +203,10 @@
         </table>
       </div>
 
-      <details style="margin-top:12px">
+      <!-- Hidden live TXT cache (not shown; used for Save TXT) -->
+      <textarea id="txtCache" class="no-print" style="position:absolute;left:-9999px;top:-9999px;height:1px;width:1px" aria-hidden="true"></textarea>
+
+      <details style="margin-top:12px" class="no-print">
         <summary id="t_bands_title">What the bands mean (and what to do next)</summary>
         <ul id="bands_list">
           <li id="t_band_low"><b>Low (0–1)</b>: Home care with advice and re-check in 6–12 h if still unwell. Seek help sooner if worse.</li>
@@ -203,7 +222,7 @@
     </div>
   </div>
 
-  <div class="card" style="margin-top:12px">
+  <div class="card" style="margin-top:12px" id="refCard">
     <details open>
       <summary id="t_ref_title">Scoring reference (concise)</summary>
       <div class="grid g3" style="margin-top:10px">
@@ -234,7 +253,7 @@
     </details>
   </div>
 
-  <div class="footer" style="margin-top:14px">
+  <div class="footer no-print" style="margin-top:14px" id="footerBlock">
     <p id="t_priv">For offline use. No data leaves your device. Print or save as PDF to share with clinicians.</p>
     <p class="hint" id="t_copyright">NEWS2 © Royal College of Physicians. This app implements the scoring rules referenced from the official NEWS2 observation chart (Dec 2022). Built by Prof. (Dr.) Jyotirmay Kirtania (ORCID ID 0000-0002-4426-6877), adapted for cancer patients.</p>
     <p><b id="t_refs_lbl">References:</b></p>
@@ -309,6 +328,7 @@
     }
     setText('metaStamp', txt);       // print-only
     setText('metaStampLive', txt);   // on-screen
+    return txt;
   }
 
   var stampTimer = null;
@@ -328,6 +348,99 @@
       '≥39.1°C (≥' + cToF(39.1) + '°F):2'
     ];
     setHTML('t_temp_bins', bins.join(' | '));
+  }
+
+  /* ---------- TXT + PRINT summary builders ---------- */
+  var lastTxt = '';
+
+  function safeStr(x){ return (x===undefined || x===null) ? '' : String(x); }
+
+  function getISTFilenameStamp(){
+    try{
+      var d = new Date();
+      // Use en-GB parts in Asia/Kolkata
+      var parts = new Intl.DateTimeFormat('en-GB', {
+        timeZone:'Asia/Kolkata',
+        year:'numeric', month:'short', day:'2-digit',
+        hour:'2-digit', minute:'2-digit',
+        hour12:false
+      }).formatToParts(d);
+      var obj = {};
+      for(var i=0;i<parts.length;i++){
+        if(parts[i].type !== 'literal') obj[parts[i].type] = parts[i].value;
+      }
+      // ddMMMyyyyHHmm (e.g., 15Jan20261706)
+      return (obj.day||'') + (obj.month||'') + (obj.year||'') + (obj.hour||'') + (obj.minute||'');
+    }catch(e){
+      return String(Date.now());
+    }
+  }
+
+  function buildTxtOutput(metaCase, metaName, generatedLine, total, riskBandTxt, triageTxt, redFlagYesNo, parts){
+    var lines = [];
+    lines.push('Results');
+    lines.push('Case #: ' + (metaCase || '—'));
+    lines.push('Name: ' + (metaName || '—'));
+    lines.push('Generated: ' + (generatedLine || '—'));
+    lines.push('TOTAL NEWS2');
+    lines.push(String(total));
+    lines.push('Risk band');
+    lines.push(riskBandTxt);
+    lines.push('Triage prompt');
+    lines.push(triageTxt);
+    lines.push('Red flag (any score of 3)?');
+    lines.push(redFlagYesNo);
+    lines.push('Parameter\tValue\tScore');
+    for(var i=0;i<parts.length;i++){
+      lines.push(parts[i].name + '\t' + parts[i].value + '\t' + parts[i].score);
+    }
+    return lines.join('\n');
+  }
+
+  function buildPrintSummaryHTML(metaCase, metaName, generatedLine, total, riskBandTxt, triageTxt, redFlagYesNo){
+    // Keep structure exactly as requested (PDF will include this + the table below)
+    var h = '';
+    h += '<div class="mono" style="font-size:12px;line-height:1.35">';
+    h += '<div style="font-weight:700;font-size:14px;margin-bottom:6px">Results</div>';
+    h += '<div>Case #: ' + safeStr(metaCase || '—') + '</div>';
+    h += '<div>Name: ' + safeStr(metaName || '—') + '</div>';
+    h += '<div>Generated: ' + safeStr(generatedLine || '—') + '</div>';
+    h += '<div style="margin-top:8px;font-weight:700">TOTAL NEWS2</div>';
+    h += '<div>' + safeStr(total) + '</div>';
+    h += '<div style="margin-top:8px;font-weight:700">Risk band</div>';
+    h += '<div>' + safeStr(riskBandTxt) + '</div>';
+    h += '<div style="margin-top:8px;font-weight:700">Triage prompt</div>';
+    h += '<div>' + safeStr(triageTxt) + '</div>';
+    h += '<div style="margin-top:8px;font-weight:700">Red flag (any score of 3)?</div>';
+    h += '<div>' + safeStr(redFlagYesNo) + '</div>';
+    h += '</div>';
+    return h;
+  }
+
+  function saveTxtToFile(txt){
+    try{
+      var cn = $('caseNo').value.trim();
+      var base = (cn ? cn : 'news2').toLowerCase().replace(/\s+/g,'');
+      var stamp = getISTFilenameStamp();
+      var filename = base + '_' + stamp + '.txt';
+
+      var blob = new Blob([txt], {type:'text/plain;charset=utf-8'});
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function(){
+        try{ URL.revokeObjectURL(url); }catch(e){}
+        try{ document.body.removeChild(a); }catch(e){}
+      }, 0);
+    }catch(e){
+      // fallback: copy to clipboard prompt
+      try{
+        window.prompt('Copy TXT output:', txt);
+      }catch(_e){}
+    }
   }
 
   /* ---------- calculation ---------- */
@@ -377,9 +490,40 @@
       if(tb){ tb.appendChild(tr); }
     }
 
-    try{ localStorage.setItem('news2_saved', JSON.stringify({rr:onO2?rr:rr, onO2:onO2, spo2:spo2, scale:scale, sbp:sbp, hr:hr, tempF:tempF, avpu:avpu})); }catch(e){}
+    try{ localStorage.setItem('news2_saved', JSON.stringify({rr:rr, onO2:onO2, spo2:spo2, scale:scale, sbp:sbp, hr:hr, tempF:tempF, avpu:avpu})); }catch(e){}
     updateMeta();
-    stampNow();
+    var genLine = stampNow(); // includes "Generated: ..."
+    // Extract the timestamp portion for the requested block (without repeated prefix)
+    var genValue = genLine.replace((i18n[currentLang].generated + ' '), '');
+
+    // Build TXT + PRINT summary to match required structure
+    var cn = $('caseNo').value.trim();
+    var fn = $('firstName').value.trim();
+    var txt = buildTxtOutput(
+      cn || '—',
+      fn || '—',
+      genValue || '—',
+      isNaN(total)?'–':String(total),
+      rb.band,
+      tri.text,
+      any3 ? i18n[currentLang].yes : i18n[currentLang].no,
+      parts
+    );
+    lastTxt = txt;
+    var cache = $('txtCache'); if(cache){ cache.value = txt; }
+
+    var ps = $('printSummary');
+    if(ps){
+      ps.innerHTML = buildPrintSummaryHTML(
+        cn || '—',
+        fn || '—',
+        genValue || '—',
+        isNaN(total)?'–':String(total),
+        rb.band,
+        tri.text,
+        any3 ? i18n[currentLang].yes : i18n[currentLang].no
+      );
+    }
   }
 
   function resetForm(){
@@ -399,6 +543,9 @@
     setText('metaName', i18n[currentLang].meta_name + ' —');
     setText('metaStamp', i18n[currentLang].generated + ' —');
     setText('metaStampLive', i18n[currentLang].generated + ' —');
+    var ps = $('printSummary'); if(ps){ ps.innerHTML=''; }
+    lastTxt = '';
+    var cache = $('txtCache'); if(cache){ cache.value=''; }
     try{ localStorage.removeItem('news2_saved'); localStorage.removeItem('news2_meta'); }catch(e){}
   }
 
@@ -455,17 +602,17 @@
       band_high:'<b>उच्च (≥7)</b>: ICU/क्रिटिकल केयर टीम को तुरंत बुलाएँ; ICU ट्रांसफर की तैयारी करें।',
       band_low_txt:'लो (0–1)', band_lomed_txt:'लो-मॉडरेट (2–4)', band_med_txt:'मध्यम (5–6) या रेड-फ्लैग (कोई 3)', band_high_txt:'उच्च (≥7)',
       tri_low:'घरेलू देखभाल व सुरक्षा-सलाह', tri_lomed:'डे-केयर/ऑब्जर्वेशन व नर्स समीक्षा', tri_med:'IPD भर्ती व तत्काल डॉक्टर समीक्षा', tri_high:'ICU (क्रिटिकल केयर टीम को अभी बुलाएँ)',
-      emerg_hint:'यदि तीव्र साँस फूलना, नीले/स्लेटी होंठ, तेज सीने में दर्द, दौरे या जगाने में कठिनाई हो तो <b class="danger">इसे आपাতकाल</b> मानें और नज़दीकी आपातकालीन विभाग जाएँ।',
+      emerg_hint:'यदि तीव्र साँस फूलना, नीले/स्लेटी होंठ, तेज सीने में दर्द, दौरे या जगाने में कठिनाई हो तो <b class="danger">इसे आपातकाल</b> मानें और नज़दीकी आपातकालीन विभाग जाएँ।',
       ref_title:'स्कोरिंग संदर्भ (संक्षेप)', rr_head:'श्वसन दर (सांस/मिनट)',
       rr_bins:'≤8:3 | 9–11:1 | 12–20:0 | 21–24:2 | ≥25:3', o2_head:'पूरक ऑक्सीजन', o2_bins:'नहीं:0 | हाँ:2',
       avpu_head:'होश (AVPU/C)', avpu_bins:'सचेत:0 | नया भ्रम या V/P/U:3',
       sbp_head:'सिस्टोलिक BP (mmHg)', sbp_bins:'≤90:3 | 91–100:2 | 101–110:1 | 111–219:0 | ≥220:3',
       hr_head:'नाड़ी (धड़कन/मिनट)', hr_bins:'≤40:3 | 41–50:1 | 51–90:0 | 91–110:1 | 111–130:2 | ≥131:3',
-      temp_head:'तापमान – थ्रেশोल्ड °C पर आधारित', temp_bins:'',
+      temp_head:'तापमान – थ्रेशोल्ड °C पर आधारित', temp_bins:'',
       sp1_head:'SpO₂ – स्केल 1', sp1_bins:'≤91:3 | 92–93:2 | 94–95:1 | 96–100:0',
       sp2_head:'SpO₂ – स्केल 2*', sp2_bins:'≤83:3 | 84–85:2 | 86–87:1 | 88–92:0 | 93–94:1 | 95–96:2 | ≥97:3',
       sp2_hint:'*केवल तब जब चिकित्सक ने 88–92% लक्ष्य बताया हो।',
-      priv:'यह ऐप ऑफ़लाइन काम करता है। कोई डेटा आपके डिवाइस से बाहर नहीं जाता। प्रিন्ट/PDF कर के डॉक्टर को दिखाएँ।',
+      priv:'यह ऐप ऑफ़लाइन काम करता है। कोई डेटा आपके डिवाइस से बाहर नहीं जाता। प्रिन्ट/PDF कर के डॉक्टर को दिखाएँ।',
       refs_lbl:'संदर्भ:', yes:'हाँ', no:'नहीं',
       p_rr:'श्वसन दर', p_spo2:'SpO₂', p_o2:'पूरक ऑक्सीजन', p_sbp:'सिस्टोलिक BP', p_hr:'नाड़ी', p_temp:'तापमान (°F)', p_avpu:'होश (AVPU/C)',
       meta_case:'केस #:', meta_name:'नाम:', generated:'निर्मित:'
@@ -568,10 +715,16 @@
     // events
     $('calc').addEventListener('click', calculate, false);
     $('reset').addEventListener('click', resetForm, false);
-    $('print').addEventListener('click', function(){ stampNow(); window.print(); }, false);
-    window.addEventListener('beforeprint', stampNow, false);
-    $('caseNo').addEventListener('input', updateMeta, false);
-    $('firstName').addEventListener('input', updateMeta, false);
+    $('print').addEventListener('click', function(){ if(!lastTxt){ calculate(); } stampNow(); window.print(); }, false);
+    window.addEventListener('beforeprint', function(){ if(!lastTxt){ calculate(); } stampNow(); }, false);
+
+    $('saveTxt').addEventListener('click', function(){
+      if(!lastTxt){ calculate(); }
+      saveTxtToFile(lastTxt || '');
+    }, false);
+
+    $('caseNo').addEventListener('input', function(){ updateMeta(); if(lastTxt){ calculate(); } }, false);
+    $('firstName').addEventListener('input', function(){ updateMeta(); if(lastTxt){ calculate(); } }, false);
     $('langSel').addEventListener('change', function(e){ setLang(e.target.value); calculate(); }, false);
     document.addEventListener('visibilitychange', function(){ if(!document.hidden){ stampNow(); } }, false);
 
@@ -585,9 +738,17 @@
   }
 })();
 </script>
-<details>
+
+<details class="no-print">
 <summary class="hint">License and Medical Disclaimer</summary>
 <section class="card">
-<body><small>Software License: GNU GPL v3. Copyright (C) [2025] [Prof. Jyotirmay Kirtania]. This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. Medical Disclaimer (Cognitive Assist & Record Keeping). IMPORTANT: PLEASE READ CAREFULLY BEFORE USE. NOT A MEDICAL DEVICE: This tool is a Clinical Decision Support System (CDSS) intended for educational and cognitive assistance purposes only. It has not been cleared or approved by the FDA, EMA, or any other regulatory body for use as a primary medical device. NO SUBSTITUTE FOR CLINICAL JUDGMENT: This tool is designed to assist, not replace, the clinical judgment of qualified healthcare professionals. All calculations and logic must be independently verified against institutional standards before clinical application. DATA PRIVACY: This tool is designed to run locally on the user's device. No data is transmitted to external servers by the software. The user is solely responsible for ensuring that the use of this tool complies with local patient data privacy laws (e.g., HIPAA, GDPR) and institutional IT policies. LIMITATION OF LIABILITY: In no event shall the authors or copyright holders be liable for any claim, damages, or other liability, whether in an action of contract, tort, or otherwise, arising from, out of, or in connection with the software or the use or other dealings in the software.</small>  
-</body>  
+<small>
+Software License: GNU GPL v3. Copyright (C) [2025] [Prof. Jyotirmay Kirtania]. This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+Medical Disclaimer (Cognitive Assist & Record Keeping). IMPORTANT: PLEASE READ CAREFULLY BEFORE USE. NOT A MEDICAL DEVICE: This tool is a Clinical Decision Support System (CDSS) intended for educational and cognitive assistance purposes only. It has not been cleared or approved by the FDA, EMA, or any other regulatory body for use as a primary medical device. NO SUBSTITUTE FOR CLINICAL JUDGMENT: This tool is designed to assist, not replace, the clinical judgment of qualified healthcare professionals. All calculations and logic must be independently verified against institutional standards before clinical application. DATA PRIVACY: This tool is designed to run locally on the user's device. No data is transmitted to external servers by the software. The user is solely responsible for ensuring that the use of this tool complies with local patient data privacy laws (e.g., HIPAA, GDPR) and institutional IT policies. LIMITATION OF LIABILITY: In no event shall the authors or copyright holders be liable for any claim, damages, or other liability, whether in an action of contract, tort, or otherwise, arising from, out of, or in connection with the software or the use or other dealings in the software.
+</small>
+</section>
+</details>
+
+</body>
 </html>
