@@ -7,7 +7,7 @@
 | **ICU Help & Support** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/ICU-Help-Support-v2.4.html) | [📖 About & Help](./docs/ICU-help-support-v2.4-Help.md) |
 | **BEAT-C Antibiotics** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/BEAT-C-v1.0.html) | [📖 About & Help](./docs/BEAT-C-Help.md) |
 | **NEWS2 Triage** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/NEWS2.html) | [📖 About & Help](./docs/NEWS2-Help.md) |
-| **ABG Interpreter** |🚀 [Launch App](https://hodanesthtmcvns-stack.github.io/jk/ABG-Interpreter-v2.0.html) | [📖 About & Help](./docs/ABG-Interpreter-v2.0-Help.md) |
+| **ABG Interpreter** |🚀 [Launch](https://hodanesthtmcvns-stack.github.io/jk/ABG-Interpreter-v2.0.html) | [📖 About & Help](./docs/ABG-Interpreter-v2.0-Help.md) |
 | **SPA (Septic Shock Perfusion Analyzer)** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/SPA-v2.1.html) | [📖 About & Help](./docs/SPA-v2.1-Help.md) |
 | **PEEP Titrator** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/PEEP-titration-v1.4.html) | [📖 About & Help](./docs/PEEP-titration-v1.4-Help.md) |
 | **Agitation Manager** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/acute-agitation-v1.0.html) | [📖 About & Help](./docs/Agitation-Manager-Help.md) |
