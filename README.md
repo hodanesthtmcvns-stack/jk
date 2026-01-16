@@ -37,6 +37,9 @@ The central hub for ICU workflow. It features an **Order Composer** with tick-bo
 ### SPA (v2.1)
 A cognitive decision support tool for ICU residents to assess peripheral perfusion in septic shock patients.
 
+### ABG Interpreter (v2.0)
+A cognitive decision support tool for ICU residents for step-wise in-depth analysis of acid base disturbances from ABG report.
+
 ### BEAT-C (v1.0)
 A probabilistic engine for initial empiric antibiotic selection. It balances suspected infection sources against local antibiogram data while applying safety guardrails for renal function, allergies, and pregnancy.
 
