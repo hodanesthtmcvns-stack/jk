@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>ABG Interpreter v2.0</title>
+<style>
+  :root{
+    --bg:#0b1220; --card:#121a2b; --ink:#e7eefb; --muted:#9fb3d9;
+    --ok:#2e7d32; --warn:#f9a825; --bad:#c62828; --brand:#4f8cff; --line:#23304e;
+    --field:#0f1728; --shadow: 0 10px 25px rgba(0,0,0,.25);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial;
+    background:var(--bg); color:var(--ink);
+  }
+  .wrap{max-width:1280px; margin:0 auto; padding:14px}
+  header{
+    display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;
+    margin-bottom:10px;
+  }
+  h1{font-size:16px; margin:0; font-weight:750; letter-spacing:.2px}
+  .sub{font-size:12px; color:var(--muted); margin-top:2px}
+  .topbar{
+    display:flex; gap:8px; flex-wrap:wrap; align-items:center; justify-content:flex-end;
+  }
+  .pill{
+    display:inline-flex; align-items:center; gap:8px;
+    border:1px solid var(--line); background:var(--field);
+    padding:7px 10px; border-radius:999px; font-size:12px; color:var(--muted);
+  }
+  .pill b{color:var(--ink)}
+  .grid{display:grid; gap:12px}
+  @media (min-width: 980px){
+    .grid{grid-template-columns: 1.05fr 1.35fr}
+  }
+  .card{
+    background:var(--card); border:1px solid var(--line);
+    border-radius:14px; padding:12px; box-shadow:var(--shadow);
+  }
+  .sectionTitle{font-size:13px; color:var(--muted); margin:14px 0 8px; font-weight:700}
+  .row{display:grid; grid-template-columns: 1fr 1fr; gap:10px}
+  @media (max-width: 720px){
+    .row{grid-template-columns:1fr}
+  }
+  label{display:block; font-size:12px; color:var(--muted); margin:0 0 6px}
+  input,select,textarea{
+    width:100%;
+    background:var(--field);
+    border:1px solid var(--line);
+    color:var(--ink);
+    padding:10px 10px;
+    border-radius:10px;
+    font-size:14px;
+    outline:none;
+  }
+  input::placeholder{color:#4a5875; opacity:1}
+  input:focus,select:focus,textarea:focus{border-color:#3a61b4}
+  textarea{min-height:92px; resize:vertical}
+  .btns{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px}
+  button{
+    border:1px solid var(--line);
+    background:var(--field);
+    color:var(--ink);
+    padding:10px 12px;
+    border-radius:10px;
+    cursor:pointer;
+    font-weight:700;
+    font-size:13px;
+  }
+  button.primary{background:var(--brand); color:#061126; border-color:transparent}
+  button.danger{background:#2a1020; border-color:#4b203a}
+  .kpis{display:flex; flex-wrap:wrap; gap:8px}
+  .status{
+    margin-top:10px;
+    padding:10px;
+    border-radius:12px;
+    border:1px solid var(--line);
+    background:var(--field);
+  }
+  .status.ok{border-color:#1f3a25}
+  .status.warn{border-color:#4a3b12}
+  .status.bad{border-color:#4a1b1b}
+  .out{
+    white-space:pre-wrap;
+    background:#081022;
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:10px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    font-size:12.5px;
+    line-height:1.45;
+    overflow:auto;
+    max-height:72vh;
+  }
+  details summary{cursor:pointer; color:var(--muted); font-size:12px}
+  .tiny{font-size:11px; color:var(--muted); line-height:1.35}
+  .hr{height:1px; background:var(--line); margin:10px 0}
+  .two{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+  @media (max-width: 720px){ .two{grid-template-columns:1fr} }
+  .ddx-section{
+    margin-top:12px;
+    padding:10px;
+    background:#0a1528;
+    border:1px solid var(--line);
+    border-radius:10px;
+  }
+  .ddx-title{
+    font-size:12px;
+    font-weight:700;
+    color:var(--brand);
+    margin-bottom:8px;
+  }
+  .ddx-list{
+    font-size:11px;
+    line-height:1.5;
+    color:var(--muted);
+  }
+  .ddx-item{
+    margin-bottom:4px;
+  }
+  body.force-mobile .grid{grid-template-columns:1fr !important}
+  body.force-mobile .row{grid-template-columns:1fr !important}
+  body.force-mobile .wrap{max-width:860px}
+  body.force-desktop .grid{grid-template-columns: 1.05fr 1.35fr !important}
+  body.force-desktop .row{grid-template-columns: 1fr 1fr !important}
+  body.force-desktop .wrap{max-width:1280px}
+  @media print{
+    body{background:white; color:black}
+    .wrap{max-width:none; padding:0}
+    .card{box-shadow:none; border-color:#bbb}
+    button,.btns,details,header .topbar{display:none !important}
+    .out{max-height:none}
+  }
+  button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>ABG Interpreter v2.0</h1>
+      <div class="sub">Software License: GNU GPL v3. Copyright (C) [2026] [Prof. Jyotirmay Kirtania]</div>
+    </div>
+    <div class="topbar">
+      <div class="pill" title="Force layout">
+        <span>View</span>
+        <select id="viewMode" style="padding:6px 8px;border-radius:10px;font-size:12px">
+          <option value="auto" selected>Auto</option>
+          <option value="mobile">Mobile</option>
+          <option value="desktop">Desktop</option>
+        </select>
+      </div>
+      <div class="pill">
+        <span>Units</span>
+        <select id="pUnit" style="padding:6px 8px;border-radius:10px;font-size:12px">
+          <option value="mmHg" selected>mmHg</option>
+          <option value="kPa">kPa</option>
+        </select>
+      </div>
+      <div class="pill">
+        <button id="btnSave" style="padding:6px 10px;border-radius:999px;font-size:12px">Save</button>
+        <button id="btnLoad" style="padding:6px 10px;border-radius:999px;font-size:12px">Load</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="grid">
+    <div class="card">
+      <div class="row">
+        <div>
+          <label>Case ID (for filename)</label>
+          <input id="caseNo" placeholder="e.g., 16F2026001234" autocomplete="off" />
+        </div>
+        <div>
+          <label>Age (years)</label>
+          <input id="age" type="number" step="1" placeholder="45" inputmode="numeric" />
+        </div>
+      </div>
+
+      <div class="sectionTitle">Core ABG Parameters</div>
+      <div class="row">
+        <div>
+          <label>pH</label>
+          <input id="ph" type="number" step="0.001" min="6.800" max="7.800" placeholder="7.400" inputmode="decimal" />
+        </div>
+        <div>
+          <label>pCO₂</label>
+          <input id="paco2" type="number" step="0.1" placeholder="40.0" inputmode="decimal" />
+        </div>
+        <div>
+          <label>pO₂</label>
+          <input id="pao2" type="number" step="0.1" placeholder="90.0" inputmode="decimal" />
+        </div>
+        <div>
+          <label>HCO₃⁻ (std, mmol/L)</label>
+          <input id="hco3st" type="number" step="0.1" placeholder="24.0" inputmode="decimal" />
+        </div>
+        <div>
+          <label>cBase(Ecf,ox) (mmol/L, optional)</label>
+          <input id="baseecf" type="number" step="0.1" placeholder="0.0" inputmode="decimal" />
+        </div>
+        <div>
+          <label>sO₂ (%)</label>
+          <input id="sao2" type="number" step="0.1" min="0" max="100" placeholder="97.0" inputmode="decimal" />
+        </div>
+        <div>
+          <label>Hemoglobin (g/dL)</label>
+          <input id="hb" type="number" step="0.1" placeholder="14.0" inputmode="decimal" />
+        </div>
+        <div>
+          <label>Calcium (total, mg/dL) (optional)</label>
+          <input id="ca" type="number" step="0.01" placeholder="e.g., 8.5" inputmode="decimal" />
+        </div>
+      </div>
+
+      <div class="sectionTitle">Electrolytes & Metabolites</div>
+      <div class="row">
+        <div><label>Sodium (Na⁺, mmol/L)</label><input id="na" type="number" step="0.1" placeholder="140.0" inputmode="decimal" /></div>
+        <div><label>Chloride (Cl⁻, mmol/L)</label><input id="cl" type="number" step="0.1" placeholder="102.0" inputmode="decimal" /></div>
+        <div><label>Potassium (K⁺, mmol/L)</label><input id="k" type="number" step="0.1" placeholder="4.0" inputmode="decimal" /></div>
+        <div><label>Calcium ionized (Ca²⁺, mmol/L)</label><input id="caion" type="number" step="0.01" placeholder="1.17" inputmode="decimal" /></div>
+        <div>
+          <label>Glucose</label>
+          <div class="two">
+            <input id="glu" type="number" step="0.1" placeholder="99" inputmode="decimal" />
+            <select id="gluUnit">
+              <option value="mg/dL" selected>mg/dL</option>
+              <option value="mmol/L">mmol/L</option>
+            </select>
+          </div>
+        </div>
+        <div><label>Lactate (mmol/L)</label><input id="lac" type="number" step="0.1" placeholder="1.0" inputmode="decimal" /></div>
+        <div>
+          <label>Magnesium (Mg²⁺)</label>
+          <div class="two">
+            <input id="mg" type="number" step="0.01" placeholder="2.0" inputmode="decimal" />
+            <select id="mgUnit">
+              <option value="mg/dL" selected>mg/dL</option>
+              <option value="mmol/L">mmol/L</option>
+            </select>
+          </div>
+        </div>
+        <div style="visibility:hidden"><input /></div>
+      </div>
+
+      <div class="sectionTitle">Stewart Weak Acids</div>
+      <div class="row">
+        <div>
+          <label>Albumin</label>
+          <div class="two">
+            <input id="alb" type="number" step="0.01" placeholder="4.0" inputmode="decimal" />
+            <select id="albUnit">
+              <option value="g/dL" selected>g/dL</option>
+              <option value="g/L">g/L</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label>Phosphorus (serum)</label>
+          <div class="two">
+            <input id="phos" type="number" step="0.01" placeholder="3.5" inputmode="decimal" />
+            <select id="phosUnit">
+              <option value="mg/dL" selected>mg/dL</option>
+              <option value="mmol/L">mmol/L</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="sectionTitle">Oxygenation Context</div>
+      <div class="row">
+        <div>
+          <label>FiO₂</label>
+          <div class="two">
+            <input id="fio2" type="number" step="0.1" placeholder="21.0" inputmode="decimal" />
+            <select id="fio2Unit">
+              <option value="percent" selected>%</option>
+              <option value="fraction">fraction</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label>PEEP/CPAP (cmH₂O)</label>
+          <input id="peep" type="number" step="0.5" placeholder="5.0" inputmode="decimal" />
+        </div>
+        <div>
+          <label>Barometric Pressure</label>
+          <div class="two">
+            <input id="patm" type="number" step="1" placeholder="760" inputmode="numeric" />
+            <select id="patmUnit">
+              <option value="mmHg" selected>mmHg</option>
+              <option value="kPa">kPa</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label>PH₂O at 37°C</label>
+          <input id="ph2o" type="number" step="0.1" placeholder="47.0" inputmode="decimal" />
+        </div>
+        <div>
+          <label>Respiratory Quotient (RQ)</label>
+          <input id="rq" type="number" step="0.01" placeholder="0.80" inputmode="decimal" />
+        </div>
+        <div>
+          <label>Mixed Venous sO₂ (%, optional)</label>
+          <input id="svo2" type="number" step="0.1" placeholder="75.0" inputmode="decimal" />
+        </div>
+        <div>
+          <label>Mixed Venous pO₂ (optional)</label>
+          <input id="pvo2" type="number" step="0.1" placeholder="40.0" inputmode="decimal" />
+        </div>
+        <div>
+          <label>Assume ScO₂ = 100%?</label>
+          <select id="scAssume">
+            <option value="yes" selected>Yes</option>
+            <option value="no">No</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="sectionTitle">Clinical Notes</div>
+      <textarea id="note" placeholder="Clinical context, medications, recent interventions..."></textarea>
+
+      <div class="btns">
+        <button class="primary" id="btnInterpret">Interpret ABG</button>
+        <button id="btnCopy">Copy Report</button>
+        <button id="btnTXT">Download TXT</button>
+        <button class="danger" id="btnClear">Clear All</button>
+      </div>
+
+      <details style="margin-top:10px">
+        <summary>Software License and Clinical Disclaimer</summary>
+        <div class="tiny" style="margin-top:8px">
+          This tool provides decision support only. Always verify sampling technique, analyzer calibration, and clinical context. Repeat ABG if results are internally inconsistent or clinically implausible. Not a substitute for clinical judgment.
+		  GNU GPL v3. Copyright (C) [2026] [Prof. Jyotirmay Kirtania]. This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. Medical Disclaimer (Cognitive Assist & Record Keeping). IMPORTANT: PLEASE READ CAREFULLY BEFORE USE. NOT A MEDICAL DEVICE: This tool is a Clinical Decision Support System (CDSS) intended for educational and cognitive assistance purposes only. It has not been cleared or approved by the FDA, EMA, or any other regulatory body for use as a primary medical device. NO SUBSTITUTE FOR CLINICAL JUDGMENT: This tool is designed to assist, not replace, the clinical judgment of qualified healthcare professionals. All calculations and logic must be independently verified against institutional standards before clinical application. DATA PRIVACY: This tool is designed to run locally on the user's device. No data is transmitted to external servers by the software. The user is solely responsible for ensuring that the use of this tool complies with local patient data privacy laws (e.g., HIPAA, GDPR) and institutional IT policies. LIMITATION OF LIABILITY: In no event shall the authors or copyright holders be liable for any claim, damages, or other liability, whether in an action of contract, tort, or otherwise, arising from, out of, or in connection with the software or the use or other dealings in the software.
+        </div>
+      </details>
+    </div>
+
+    <div class="card">
+      <div class="kpis" id="kpis"></div>
+      <div class="status" id="statusBox">
+        <div class="tiny">Enter ABG values and press <b>Interpret ABG</b> to generate comprehensive acid-base analysis with differential diagnosis.</div>
+      </div>
+      <div id="ddxContainer"></div>
+      <div class="sectionTitle">Detailed Interpretation Report</div>
+      <div class="out" id="txtOut">—</div>
+    </div>
+  </div>
+</div>
+
+<script>
+
+(function(){
+  const MMHG_PER_KPA = 7.50062;
+  const $ = (id)=>document.getElementById(id);
+
+  // Differential diagnosis database
+  const DDX_DATABASE = {
+    metabolic_acidosis_high_ag: {
+      title: "High Anion Gap Metabolic Acidosis (GOLDMARK)",
+      causes: [
+        "Diabetic ketoacidosis (DKA) — most common",
+        "Lactic acidosis (type A: shock, sepsis, hypoxemia; type B: medications, malignancy)",
+        "Renal failure / uremia",
+        "Toxic ingestions: methanol, ethylene glycol, propylene glycol, salicylates",
+        "Starvation ketoacidosis",
+        "Alcoholic ketoacidosis",
+        "Pyroglutamic acidosis (acetaminophen + renal dysfunction)",
+        "5-oxoproline acidosis"
+      ]
+    },
+    metabolic_acidosis_normal_ag: {
+      title: "Normal Anion Gap Metabolic Acidosis (Non-AG / Hyperchloremic)",
+      causes: [
+        "Diarrhea / GI losses — most common",
+        "Renal tubular acidosis (RTA types 1, 2, 4)",
+        "Ureterosigmoidostomy or ureteral diversions",
+        "Carbonic anhydrase inhibitors (acetazolamide, topiramate)",
+        "Early renal failure (before uremia develops)",
+        "Recovery phase of DKA (as ketones clear)",
+        "Rapid saline administration (dilutional acidosis)",
+        "Hyperalimentation",
+        "Toluene toxicity (late phase)"
+      ]
+    },
+    metabolic_alkalosis: {
+      title: "Metabolic Alkalosis",
+      causes: [
+        "Vomiting / nasogastric suction — most common",
+        "Diuretic therapy (loop or thiazide)",
+        "Hypokalemia / hypomagnesemia",
+        "Hyperaldosteronism (primary or secondary)",
+        "Cushing syndrome or exogenous steroids",
+        "Bartter or Gitelman syndrome",
+        "Massive blood transfusion (citrate metabolism)",
+        "Milk-alkali syndrome",
+        "Post-hypercapnia (correction of chronic respiratory acidosis)",
+        "Contraction alkalosis (volume depletion)"
+      ]
+    },
+    respiratory_acidosis_acute: {
+      title: "Acute Respiratory Acidosis",
+      causes: [
+        "Airway obstruction (foreign body, laryngospasm, severe bronchospasm)",
+        "Pneumonia with respiratory failure",
+        "Pulmonary edema (cardiogenic or non-cardiogenic)",
+        "Pneumothorax / hemothorax",
+        "CNS depression (opioids, sedatives, anesthesia)",
+        "Neuromuscular blockade or weakness (myasthenia crisis, Guillain-Barré)",
+        "Chest wall trauma / flail chest",
+        "Status asthmaticus",
+        "Severe acute exacerbation of COPD"
+      ]
+    },
+    respiratory_acidosis_chronic: {
+      title: "Chronic Respiratory Acidosis",
+      causes: [
+        "COPD (chronic bronchitis, emphysema) — most common",
+        "Obesity hypoventilation syndrome (OHS)",
+        "Obstructive sleep apnea (severe, untreated)",
+        "Neuromuscular disorders (ALS, muscular dystrophy, post-polio)",
+        "Severe kyphoscoliosis or chest wall deformity",
+        "Chronic interstitial lung disease (end-stage)",
+        "Myxedema (severe hypothyroidism)",
+        "Central alveolar hypoventilation syndromes"
+      ]
+    },
+    respiratory_alkalosis_acute: {
+      title: "Acute Respiratory Alkalosis",
+      causes: [
+        "Anxiety / panic attack / hyperventilation syndrome — most common",
+        "Pain (acute)",
+        "Hypoxemia (pneumonia, PE, high altitude, pulmonary edema)",
+        "Early sepsis or systemic inflammatory response",
+        "Iatrogenic hyperventilation (mechanical ventilation)",
+        "CNS lesions (stroke, tumor, trauma, infection)",
+        "Salicylate toxicity (early phase)",
+        "Pregnancy (progesterone effect)",
+        "Fever / hyperthermia",
+        "Hepatic encephalopathy"
+      ]
+    },
+    respiratory_alkalosis_chronic: {
+      title: "Chronic Respiratory Alkalosis",
+      causes: [
+        "Chronic hypoxemia (interstitial lung disease, chronic heart failure, cyanotic heart disease)",
+        "Chronic liver disease / cirrhosis",
+        "Pregnancy (sustained progesterone effect)",
+        "Chronic anxiety disorder",
+        "CNS lesions (brainstem tumors)",
+        "High altitude residence",
+        "Chronic salicylate use",
+        "Hyperthyroidism",
+        "Chronic mechanical ventilation (over-ventilation)"
+      ]
+    },
+    mixed_disorders: {
+      title: "Mixed Acid-Base Disorders",
+      causes: [
+        "DKA + vomiting (high AG acidosis + metabolic alkalosis)",
+        "COPD exacerbation + diuretics (respiratory acidosis + metabolic alkalosis)",
+        "Septic shock (lactic acidosis + respiratory alkalosis)",
+        "Renal failure + respiratory failure (metabolic acidosis + respiratory acidosis)",
+        "Liver failure with ascites on diuretics (respiratory alkalosis + metabolic alkalosis)",
+        "Post-cardiac arrest (lactic acidosis + respiratory acidosis)",
+        "Aspirin overdose (respiratory alkalosis + high AG metabolic acidosis)",
+        "Multi-organ dysfunction syndrome (variable combinations)"
+      ]
+    }
+  };
+
+  function num(v){
+    const s = String(v ?? "").trim();
+    if(!s) return null;
+    const x = Number(s);
+    return Number.isFinite(x) ? x : null;
+  }
+  function pad2(x){ return String(x).padStart(2,"0"); }
+  function mon3(m){ return ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][m]; }
+  function tsStamp(d){ return `${pad2(d.getDate())}${mon3(d.getMonth())}${d.getFullYear()}${pad2(d.getHours())}${pad2(d.getMinutes())}`; }
+  function safeCaseNo(raw){
+  const s = (raw || "")
+    .toUpperCase()          // enforce uppercase (16F2026...)
+    .replace(/\s+/g, "")   // remove spaces
+    .replace(/[^A-Z0-9]/g, ""); // allow only A–Z and digits
+
+  return s || "CASE";
+}
+
+  function fio2Fraction(v, unit){
+    if(v===null) return null;
+    return unit==="fraction" ? v : (v/100);
+  }
+  function toMMHG(p, unit){ return (p===null) ? null : (unit==="kPa" ? p*MMHG_PER_KPA : p); }
+  function fmt(x, dp){ return (x===null || !Number.isFinite(x)) ? "—" : x.toFixed(dp); }
+  function sign(x, dp){
+    if(x===null || !Number.isFinite(x)) return "—";
+    return (x>=0?"+":"") + x.toFixed(dp);
+  }
+  function albToGdL(v, unit){ if(v===null) return null; return unit==="g/L" ? v/10 : v; }
+  function phosToMmolL(v, unit){
+    if(v===null) return null;
+    return unit==="mg/dL" ? v*0.3229 : v;
+  }
+  function gluToMmolL(v, unit){
+    if(v===null) return null;
+    return unit==="mg/dL" ? v*0.0555 : v;
+  }
+  function mgToMmolL(v, unit){
+    if(v===null) return null;
+    return unit==="mg/dL" ? v*0.4114 : v;
+  }
+
+  function applyViewMode(mode){
+    document.body.classList.remove("force-mobile","force-desktop");
+    if(mode==="mobile") document.body.classList.add("force-mobile");
+    if(mode==="desktop") document.body.classList.add("force-desktop");
+    localStorage.setItem("abg_view_mode_v2", mode);
+  }
+
+  function classifyPH(ph){
+    if(ph===null) return {state:"Unknown", note:"pH not provided."};
+    if(ph < 7.35) return {state:"Acidemia", note:"pH indicates acidosis as primary or dominant disorder."};
+    if(ph > 7.45) return {state:"Alkalemia", note:"pH indicates alkalosis as primary or dominant disorder."};
+    return {state:"Normal pH", note:"pH within normal range; may represent compensation or mixed disorder."};
+  }
+
+  function primaryProcess(ph, paco2, hco3st){
+    if(ph===null || paco2===null || hco3st===null) return {text: "Insufficient data for primary process determination.", ddx: []};
+
+    const phDir = ph>7.40 ? 1 : (ph<7.40 ? -1 : 0);
+    const co2Dir = paco2>40 ? 1 : (paco2<40 ? -1 : 0);
+    const hco3Dir = hco3st>24 ? 1 : (hco3st<24 ? -1 : 0);
+
+    const resp = (phDir!==0 && co2Dir!==0 && phDir===-co2Dir);
+    const met  = (phDir!==0 && hco3Dir!==0 && phDir===hco3Dir);
+
+    let ddxKeys = [];
+    let text = "";
+
+    if(resp && !met){
+      if(phDir<0){
+        text = "Primary respiratory acidosis.";
+        ddxKeys = ["respiratory_acidosis_acute", "respiratory_acidosis_chronic"];
+      } else {
+        text = "Primary respiratory alkalosis.";
+        ddxKeys = ["respiratory_alkalosis_acute", "respiratory_alkalosis_chronic"];
+      }
+    } else if(met && !resp){
+      if(phDir<0){
+        text = "Primary metabolic acidosis.";
+        ddxKeys = ["metabolic_acidosis_high_ag", "metabolic_acidosis_normal_ag"];
+      } else {
+        text = "Primary metabolic alkalosis.";
+        ddxKeys = ["metabolic_alkalosis"];
+      }
+    } else if(resp && met){
+      text = "Mixed disorder (respiratory + metabolic components detected).";
+      ddxKeys = ["mixed_disorders"];
+    } else {
+      text = "Indeterminate pattern; evaluate compensation and anion gap.";
+      ddxKeys = ["mixed_disorders"];
+    }
+
+    return {text, ddx: ddxKeys};
+  }
+
+  function expectedCompensation(ph, paco2, hco3st){
+    if(ph===null || paco2===null || hco3st===null) return {text:"Insufficient data for compensation analysis.", flags:[]};
+    const flags = [];
+    const isAcid = ph < 7.35;
+    const isAlk  = ph > 7.45;
+    const dCO2 = paco2 - 40;
+    const dHCO3 = hco3st - 24;
+
+    let primary = "unknown";
+    if(isAcid){
+      primary = (dHCO3 < -2) ? "met_acid" : "resp_acid";
+    }else if(isAlk){
+      primary = (dHCO3 > 2) ? "met_alk" : "resp_alk";
+    }else{
+      primary = (Math.abs(dHCO3) >= (Math.abs(dCO2)/4)) ? (dHCO3<0?"met_acid":"met_alk") : (dCO2>0?"resp_acid":"resp_alk");
+    }
+
+    function outside(x, lo, hi){ return x<lo || x>hi; }
+
+    if(primary==="met_acid"){
+      const exp = 1.5*hco3st + 8;
+      const lo = exp-2, hi = exp+2;
+      let t = `Metabolic acidosis: expected pCO₂ ≈ 1.5×HCO₃⁻ + 8 (±2) → ${fmt(exp,1)} mmHg (range ${fmt(lo,1)}–${fmt(hi,1)}).`;
+      if(outside(paco2, lo, hi)) flags.push("pCO₂ outside Winter's formula range → consider additional respiratory disorder.");
+      return {text:t, flags};
+    }
+    if(primary==="met_alk"){
+      const exp = 40 + 0.7*(hco3st-24);
+      const lo = exp-5, hi = exp+5;
+      let t = `Metabolic alkalosis: expected pCO₂ rise ≈ 0.7 mmHg per 1 mmol/L HCO₃⁻ increase → ~${fmt(exp,1)} mmHg (range ${fmt(lo,1)}–${fmt(hi,1)}).`;
+      if(outside(paco2, lo, hi)) flags.push("pCO₂ not in expected range → possible mixed disorder or ventilatory limitation.");
+      return {text:t, flags};
+    }
+    if(primary==="resp_acid"){
+      const expAc = 24 + 1*(dCO2/10);
+      const expCh = 24 + 3.5*(dCO2/10);
+      const lo = Math.min(expAc, expCh)-2, hi = Math.max(expAc, expCh)+2;
+      let t = `Respiratory acidosis: expected HCO₃⁻ — acute ≈ ${fmt(expAc,1)} mmol/L; chronic ≈ ${fmt(expCh,1)} mmol/L.`;
+      if(outside(hco3st, lo, hi)) flags.push("HCO₃⁻ outside acute/chronic range → likely mixed metabolic component.");
+      return {text:t, flags};
+    }
+    if(primary==="resp_alk"){
+      const d = Math.abs(dCO2);
+      const expAc = 24 - 2*(d/10);
+      const expCh = 24 - 5*(d/10);
+      const lo = Math.min(expAc, expCh)-2, hi = Math.max(expAc, expCh)+2;
+      let t = `Respiratory alkalosis: expected HCO₃⁻ — acute ≈ ${fmt(expAc,1)} mmol/L; chronic ≈ ${fmt(expCh,1)} mmol/L.`;
+      if(outside(hco3st, lo, hi)) flags.push("HCO₃⁻ outside acute/chronic range → likely mixed metabolic component.");
+      return {text:t, flags};
+    }
+    return {text:"Unable to determine expected compensation.", flags:["Indeterminate primary process."]};
+  }
+
+  function calcHCO3_HH(ph, paco2_mmhg){
+    if(ph===null || paco2_mmhg===null) return null;
+    return 0.03 * paco2_mmhg * Math.pow(10, (ph - 6.1));
+  }
+
+  function calcSBE(ph, hco3){
+    if(ph===null || hco3===null) return null;
+    return 0.9287 * (hco3 - 24.4 + 14.83*(ph - 7.4));
+  }
+
+  function anionGap(na, k, cl, hco3st){
+    if(na===null || cl===null || hco3st===null) return null;
+    return (na + (k||0)) - (cl + hco3st);
+  }
+
+  function sida(na,k,ca_mgdl,mg,cl,lac){
+  if(na===null || cl===null) return null;
+
+  // Convert total calcium from mg/dL → mmol/L
+  // Ca (mmol/L) = Ca (mg/dL) × 0.2495
+  const ca = (ca_mgdl===null) ? 0 : ca_mgdl * 0.2495;
+
+  return (na + (k||0) + ca + (mg||0)) - (cl + (lac||0));
+}
+
+
+  function weakAcidsCharge(ph, alb_gdL, phos_mmolL){
+    if(ph===null) return null;
+    const albTerm = (alb_gdL===null) ? 0 : (10*alb_gdL) * (0.123*ph - 0.631);
+    const phosTerm = (phos_mmolL===null) ? 0 : phos_mmolL * (0.309*ph - 0.469);
+    if((alb_gdL===null) && (phos_mmolL===null)) return null;
+    return albTerm + phosTerm;
+  }
+
+  function sig(sidaVal, weakA, hco3st){
+    if(sidaVal===null || hco3st===null) return null;
+    return sidaVal - (weakA||0) - hco3st;
+  }
+
+  function calcPAO2(patm_mmhg, ph2o_mmhg, fio2, paco2_mmhg, rq){
+    if(patm_mmhg===null || ph2o_mmhg===null || fio2===null || paco2_mmhg===null || rq===null) return null;
+    return (patm_mmhg - ph2o_mmhg) * fio2 - (paco2_mmhg / rq);
+  }
+
+  function calcPF(pao2_mmhg, fio2){
+    if(pao2_mmhg===null || fio2===null || fio2===0) return null;
+    return pao2_mmhg / fio2;
+  }
+
+  function expectedAA(age){
+    if(age===null) return null;
+    return (age + 10) / 4;
+  }
+
+  function berlinBin(pf, peep){
+    if(pf===null) return "P/F ratio not computed.";
+    if(peep===null) return "PEEP/CPAP not provided (Berlin criteria require ≥5 cmH₂O).";
+    if(peep < 5) return "PEEP/CPAP <5 cmH₂O (Berlin ARDS criteria not applicable).";
+    if(pf > 300) return "P/F >300 (does not meet ARDS oxygenation threshold).";
+    if(pf > 200) return "Berlin ARDS: Mild (P/F 200–300) with PEEP ≥5 cmH₂O.";
+    if(pf > 100) return "Berlin ARDS: Moderate (P/F 100–200) with PEEP ≥5 cmH₂O.";
+    return "Berlin ARDS: Severe (P/F ≤100) with PEEP ≥5 cmH₂O.";
+  }
+
+  function CaO2(hb, sO2pct, pao2){
+    if(hb===null || sO2pct===null || pao2===null) return null;
+    const s = sO2pct/100;
+    return 1.34*hb*s + 0.003*pao2;
+  }
+
+  function CvO2(hb, svO2pct, pvo2){
+    if(hb===null || svO2pct===null || pvo2===null) return null;
+    const s = svO2pct/100;
+    return 1.34*hb*s + 0.003*pvo2;
+  }
+
+  function CcO2(hb, pao2_alv){
+    if(hb===null || pao2_alv===null) return null;
+    return 1.34*hb*1.0 + 0.003*pao2_alv;
+  }
+
+  function shuntFrac(cc, ca, cv){
+    if(cc===null || ca===null || cv===null) return null;
+    const denom = (cc - cv);
+    if(denom===0) return null;
+    return (cc - ca) / denom;
+  }
+
+  function renderDDX(ddxKeys, ag){
+    const container = $("ddxContainer");
+    container.innerHTML = "";
+
+    if(!ddxKeys || ddxKeys.length === 0) return;
+
+    let relevantDDX = [];
+    for(const key of ddxKeys){
+      if(key === "metabolic_acidosis_high_ag" && ag !== null && ag <= 16) continue;
+      if(key === "metabolic_acidosis_normal_ag" && ag !== null && ag > 16) continue;
+      if(DDX_DATABASE[key]) relevantDDX.push(DDX_DATABASE[key]);
+    }
+
+    if(relevantDDX.length === 0) return;
+
+    for(const ddx of relevantDDX){
+      const div = document.createElement("div");
+      div.className = "ddx-section";
+      let html = `<div class="ddx-title">${ddx.title}</div><div class="ddx-list">`;
+      ddx.causes.forEach((cause, idx) => {
+        html += `<div class="ddx-item">${idx+1}. ${cause}</div>`;
+      });
+      html += `</div>`;
+      div.innerHTML = html;
+      container.appendChild(div);
+    }
+  }
+
+  function setKPIs(items){
+    const wrap = $("kpis");
+    wrap.innerHTML = "";
+    for(const it of items){
+      const d = document.createElement("div");
+      d.className = "pill";
+      d.innerHTML = `<span>${it.label}</span> <b>${it.value}</b>`;
+      wrap.appendChild(d);
+    }
+  }
+
+  function setStatus(kind, html){
+    const box = $("statusBox");
+    box.className = "status " + (kind||"");
+    box.innerHTML = html;
+  }
+
+  function getFormState(){
+    const ids = [
+      "caseNo","age","pUnit","viewMode",
+      "ph","paco2","pao2","hco3st","baseecf","sao2","hb","ca",
+      "na","cl","k","caion","glu","gluUnit","lac","mg","mgUnit",
+      "alb","albUnit","phos","phosUnit",
+      "fio2","fio2Unit","peep","patm","patmUnit","ph2o","rq",
+      "svo2","pvo2","scAssume","note"
+    ];
+    const st = {};
+    for(const id of ids){
+      const el = $(id);
+      if(el) st[id] = el.value;
+    }
+    return st;
+  }
+
+  function setFormState(st){
+    if(!st) return;
+    for(const id of Object.keys(st)){
+      const el = $(id);
+      if(el) el.value = st[id];
+    }
+  }
+
+  function saveLocal(){
+    localStorage.setItem("abg_stewart_v2", JSON.stringify(getFormState()));
+    setStatus("ok", `<div><b>Saved locally.</b></div><div class="tiny">Data stored in browser localStorage.</div>`);
+  }
+
+  function loadLocal(){
+    const raw = localStorage.getItem("abg_stewart_v2");
+    if(!raw){
+      setStatus("warn", `<div><b>No saved data found.</b></div>`);
+      return;
+    }
+    try{
+      setFormState(JSON.parse(raw));
+      applyViewMode($("viewMode").value);
+      setStatus("ok", `<div><b>Data loaded successfully.</b></div>`);
+    }catch(e){
+      setStatus("bad", `<div><b>Load failed.</b></div><div class="tiny">${String(e)}</div>`);
+    }
+  }
+
+  function downloadText(filename, content){
+    const blob = new Blob([content], {type:"text/plain;charset=utf-8"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  async function copyToClipboard(text){
+    try{
+      await navigator.clipboard.writeText(text);
+      return true;
+    }catch(_){
+      // fallback
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position='fixed';
+      ta.style.left='-9999px';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      let ok=false;
+      try{ ok = document.execCommand('copy'); }catch(__){ ok=false; }
+      ta.remove();
+      return ok;
+    }
+  }
+
+  function interpret(){
+    const pUnit = $("pUnit").value;
+    const caseNoRaw = $("caseNo").value;
+    const age = num($("age").value);
+
+    const ph = num($("ph").value);
+    const paco2_in = num($("paco2").value);
+    const pao2_in  = num($("pao2").value);
+    const hco3st = num($("hco3st").value);
+    const baseecf = num($("baseecf").value);
+    const sao2 = num($("sao2").value);
+    const hb = num($("hb").value);
+    const caTot = num($("ca").value);
+
+    const na = num($("na").value);
+    const cl = num($("cl").value);
+    const k  = num($("k").value);
+    const caion = num($("caion").value);
+    const glu = num($("glu").value);
+    const gluUnit = $("gluUnit").value;
+    const lac = num($("lac").value);
+    const mg = num($("mg").value);
+    const mgUnit = $("mgUnit").value;
+
+    const alb = num($("alb").value);
+    const albUnit = $("albUnit").value;
+    const phos = num($("phos").value);
+    const phosUnit = $("phosUnit").value;
+
+    const fio2v = num($("fio2").value);
+    const fio2Unit = $("fio2Unit").value;
+    const peep = num($("peep").value);
+
+    const patm = num($("patm").value);
+    const patmUnit = $("patmUnit").value;
+    const ph2o = num($("ph2o").value);
+    const rq = num($("rq").value);
+
+    const svo2 = num($("svo2").value);
+    const pvo2_in = num($("pvo2").value);
+    const scAssume = $("scAssume").value;
+    const note = ($("note").value||"").trim();
+
+    const paco2 = toMMHG(paco2_in, pUnit);
+    const pao2  = toMMHG(pao2_in,  pUnit);
+    const pvo2  = (pvo2_in===null) ? 40 : toMMHG(pvo2_in, pUnit);
+
+    const patm_mmhg = toMMHG(patm ?? 760, patmUnit);
+    const ph2o_mmhg = toMMHG(ph2o ?? 47, patmUnit);
+    const fio2 = fio2Fraction(fio2v, fio2Unit);
+    const rqv = rq ?? 0.80;
+
+    const alb_gdL = albToGdL(alb, albUnit);
+    const phos_mmolL = phosToMmolL(phos, phosUnit);
+    const glu_mmolL = gluToMmolL(glu, gluUnit);
+    const mg_mmolL = mgToMmolL(mg, mgUnit);
+
+    const phClass = classifyPH(ph);
+    const primary = primaryProcess(ph, paco2, hco3st);
+    const comp = expectedCompensation(ph, paco2, hco3st);
+
+    const hco3_hh = calcHCO3_HH(ph, paco2);
+    const sbe_calc = calcSBE(ph, hco3st);
+
+    const ag = anionGap(na, k, cl, hco3st);
+    const dAG = (ag===null) ? null : (ag - 12);
+    const dHCO3 = (hco3st===null) ? null : (24 - hco3st);
+    const dRatio = (dAG===null || dHCO3===null || dHCO3===0) ? null : (dAG/dHCO3);
+
+    const sidaVal = sida(na,k,caion,mg_mmolL,cl,lac);
+    const weakA = weakAcidsCharge(ph, alb_gdL, phos_mmolL);
+    const sigVal = sig(sidaVal, weakA, hco3st);
+
+    const pao2_alv = calcPAO2(patm_mmhg, ph2o_mmhg, fio2, paco2, rqv);
+    const aa = (pao2_alv===null || pao2===null) ? null : (pao2_alv - pao2);
+    const aaExp = expectedAA(age);
+    const aaExcess = (aa===null || aaExp===null) ? null : (aa - aaExp);
+    const pf = calcPF(pao2, fio2);
+    const berlin = berlinBin(pf, peep);
+
+    let shunt = null;
+    if(scAssume==="yes" && hb!==null && sao2!==null && pao2!==null && pao2_alv!==null && svo2!==null){
+      const caO2 = CaO2(hb, sao2, pao2);
+      const cvO2 = CvO2(hb, svo2, pvo2);
+      const ccO2 = CcO2(hb, pao2_alv);
+      shunt = shuntFrac(ccO2, caO2, cvO2);
+    }
+
+    setKPIs([
+      {label:"pH", value: ph===null ? "—" : ph.toFixed(3)},
+      {label:`pCO₂ (${pUnit})`, value: paco2_in===null ? "—" : paco2_in.toFixed(1)},
+      {label:`pO₂ (${pUnit})`, value: pao2_in===null ? "—" : pao2_in.toFixed(1)},
+      {label:"HCO₃⁻ (std)", value: hco3st===null ? "—" : hco3st.toFixed(1)},
+      {label:"cBase(Ecf,ox)", value: baseecf===null ? "—" : sign(baseecf,1)},
+      {label:"SBE (calc)", value: sbe_calc===null ? "—" : sign(sbe_calc,1)},
+      {label:"AG", value: ag===null ? "—" : ag.toFixed(1)},
+      {label:"SIG", value: sigVal===null ? "—" : sign(sigVal,1)},
+      {label:"P/F", value: pf===null ? "—" : pf.toFixed(0)},
+      {label:"A–a", value: aa===null ? "—" : aa.toFixed(1)}
+    ]);
+
+    const flags=[];
+    if(ph!==null && (ph < 7.20 || ph > 7.60)) flags.push("Extreme pH (critical)");
+    if(hco3st!==null && hco3_hh!==null && Math.abs(hco3st - hco3_hh) > 4) flags.push("HCO₃⁻ discrepancy >4 mmol/L");
+    if(ag!==null && ag > 20) flags.push("Very high AG (>20)");
+    else if(ag!==null && ag > 16) flags.push("Elevated AG");
+    if(sigVal!==null && Math.abs(sigVal) > 10) flags.push("Abnormal SIG");
+    if(aaExcess!==null && aaExcess > 15) flags.push("A–a gradient significantly elevated");
+
+    const kind = flags.length >= 2 ? "bad" : (flags.length === 1 ? "warn" : "ok");
+
+    setStatus(kind, `
+      <div style="font-weight:800;margin-bottom:6px">${phClass.state}</div>
+      <div class="tiny" style="margin-bottom:8px">${phClass.note}</div>
+      <div class="tiny"><b>Primary Process:</b> ${primary.text}</div>
+      <div class="tiny" style="margin-top:6px"><b>Compensation:</b> ${comp.text}</div>
+      ${comp.flags.length ? `<div class="tiny" style="margin-top:6px">${comp.flags.map(x=>"⚠ "+x).join("<br>")}</div>` : ""}
+      ${flags.length ? `<div class="hr"></div><div class="tiny"><b>Clinical Flags:</b> ${flags.join(" | ")}</div>` : ""}
+      <div class="hr"></div>
+      <div class="tiny"><b>Oxygenation:</b> ${berlin}</div>
+    `);
+
+    renderDDX(primary.ddx, ag);
+
+    const dt = new Date();
+    const stamp = tsStamp(dt);
+
+    const lines = [];
+    lines.push("═══════════════════════════════════════════════════════════════");
+    lines.push("ABG INTERPRETATION REPORT (Enhanced v2.0 — debug-fixed)");
+    lines.push("Acid-Base Analysis + Stewart/Strong-Ion + Oxygenation Assessment");
+    lines.push("═══════════════════════════════════════════════════════════════");
+    lines.push(`Case ID: ${caseNoRaw || "—"}`);
+    lines.push(`Timestamp: ${stamp}`);
+    lines.push(`Units: Pressure=${pUnit} (calculations in mmHg); Electrolytes=mmol/L`);
+    lines.push("");
+
+    lines.push("───────────────────────────────────────────────────────────────");
+    lines.push("SECTION 1: ABG & LABORATORY INPUTS");
+    lines.push("───────────────────────────────────────────────────────────────");
+    lines.push(`• pH = ${ph===null?"—":ph.toFixed(3)}`);
+    lines.push(`• pCO₂ = ${paco2_in===null?"—":paco2_in.toFixed(1)} ${pUnit}`);
+    lines.push(`• pO₂ = ${pao2_in===null?"—":pao2_in.toFixed(1)} ${pUnit}`);
+    lines.push(`• HCO₃⁻ (standard) = ${hco3st===null?"—":hco3st.toFixed(1)} mmol/L`);
+    lines.push(`• cBase(Ecf,ox) (reported) = ${baseecf===null?"—":sign(baseecf,1)} mmol/L`);
+    lines.push(`• sO₂ = ${sao2===null?"—":sao2.toFixed(1)}%`);
+    lines.push(`• Hemoglobin = ${hb===null?"—":hb.toFixed(1)} g/dL`);
+    if(caTot!==null) lines.push(`• Ca (total) = ${caTot.toFixed(2)} mmol/L`);
+    lines.push("");
+
+    lines.push("Electrolytes & metabolites:");
+    lines.push(`• Na⁺ = ${na===null?"—":na.toFixed(1)} mmol/L`);
+    lines.push(`• Cl⁻ = ${cl===null?"—":cl.toFixed(1)} mmol/L`);
+    lines.push(`• K⁺ = ${k===null?"—":k.toFixed(1)} mmol/L`);
+    if(caion!==null) lines.push(`• Ca²⁺ (ionized) = ${caion.toFixed(2)} mmol/L`);
+    if(lac!==null) lines.push(`• Lactate = ${lac.toFixed(1)} mmol/L`);
+    if(glu!==null) lines.push(`• Glucose = ${glu.toFixed(gluUnit==='mg/dL'?0:1)} ${gluUnit} (≈${glu_mmolL===null?'—':glu_mmolL.toFixed(1)} mmol/L)`);
+    if(mg!==null) lines.push(`• Magnesium = ${mg.toFixed(2)} ${mgUnit} (≈${mg_mmolL===null?'—':mg_mmolL.toFixed(2)} mmol/L)`);
+    if(alb!==null) lines.push(`• Albumin = ${alb.toFixed(2)} ${albUnit} (≈${alb_gdL===null?'—':alb_gdL.toFixed(2)} g/dL)`);
+    if(phos!==null) lines.push(`• Phosphate = ${phos.toFixed(2)} ${phosUnit} (≈${phos_mmolL===null?'—':phos_mmolL.toFixed(2)} mmol/L)`);
+    lines.push("");
+
+    lines.push("───────────────────────────────────────────────────────────────");
+    lines.push("SECTION 2: INTERNAL CONSISTENCY CHECK");
+    lines.push("───────────────────────────────────────────────────────────────");
+    if(hco3st!==null && hco3_hh!==null){
+      const diff = hco3st - hco3_hh;
+      lines.push(`• HCO₃⁻ (reported) = ${hco3st.toFixed(1)} mmol/L`);
+      lines.push(`• HCO₃⁻ (calculated from pH + pCO₂) = ${hco3_hh.toFixed(1)} mmol/L`);
+      lines.push(`• Difference (reported − calculated) = ${sign(diff,1)} mmol/L`);
+      if(Math.abs(diff)>4){
+        lines.push("  ⚠ ALERT: Large discrepancy (>4 mmol/L) detected → consider sampling/handling/analyzer issue; repeat ABG.");
+      } else if(Math.abs(diff)>2){
+        lines.push("  ⓘ NOTE: Moderate discrepancy (2–4 mmol/L). Clinical correlation advised.");
+      } else {
+        lines.push("  ✓ Internal consistency acceptable (Δ <2 mmol/L).");
+      }
+    }else{
+      lines.push("• Internal consistency check: Insufficient data (need pH + pCO₂ + HCO₃⁻).");
+    }
+    lines.push("");
+
+    lines.push("───────────────────────────────────────────────────────────────");
+    lines.push("SECTION 3: pH STATUS & ACID-BASE STATE");
+    lines.push("───────────────────────────────────────────────────────────────");
+    lines.push(`• ${phClass.state}`);
+    lines.push(`• ${phClass.note}`);
+    lines.push("");
+
+    lines.push("───────────────────────────────────────────────────────────────");
+    lines.push("SECTION 4: PRIMARY DISTURBANCE");
+    lines.push("───────────────────────────────────────────────────────────────");
+    lines.push(`• ${primary.text}`);
+    lines.push("");
+
+    lines.push("───────────────────────────────────────────────────────────────");
+    lines.push("SECTION 5: COMPENSATION ANALYSIS (Mixed Disorder Screening)");
+    lines.push("───────────────────────────────────────────────────────────────");
+    lines.push(`• ${comp.text}`);
+    if(comp.flags.length > 0){
+      lines.push("");
+      comp.flags.forEach(f=>lines.push(`  ⚠ ${f}`));
+    }
+    lines.push("");
+
+    lines.push("───────────────────────────────────────────────────────────────");
+    lines.push("SECTION 6: ANION GAP & DELTA ANALYSIS");
+    lines.push("───────────────────────────────────────────────────────────────");
+    if(ag===null){
+      lines.push("• Anion Gap: Insufficient data (requires Na⁺, Cl⁻, HCO₃⁻).");
+    }else{
+      lines.push(`• Anion Gap = (Na⁺${k===null?"":" + K⁺"}) − (Cl⁻ + HCO₃⁻) = ${ag.toFixed(1)} mmol/L`);
+      lines.push("  Reference range: 8–12 (without K⁺) or 12–16 (with K⁺), method-dependent.");
+      if(ag > 20) lines.push("  ⚠ Marked elevation → high AG metabolic acidosis component likely.");
+      else if(ag > 16) lines.push("  ⚠ Elevated AG → high AG metabolic acidosis component possible.");
+      else if(ag < 8) lines.push("  ⓘ Low AG → consider hypoalbuminemia/paraproteinemia or lab issue.");
+      else lines.push("  ✓ AG within conventional range.");
+
+      lines.push("");
+      lines.push(`• ΔAG = AG − 12 = ${dAG===null?"—":dAG.toFixed(1)} mmol/L`);
+      lines.push(`• ΔHCO₃⁻ = 24 − HCO₃⁻ = ${dHCO3===null?"—":dHCO3.toFixed(1)} mmol/L`);
+      if(dRatio!==null){
+        lines.push(`• ΔAG/ΔHCO₃⁻ = ${dRatio.toFixed(2)}`);
+        if(dRatio < 0.4) lines.push("  → <0.4: predominant normal AG metabolic acidosis.");
+        else if(dRatio < 1) lines.push("  → 0.4–1.0: mixed high AG + normal AG metabolic acidosis.");
+        else if(dRatio <= 2) lines.push("  → 1.0–2.0: predominant high AG metabolic acidosis.");
+        else lines.push("  → >2.0: high AG metabolic acidosis + concurrent metabolic alkalosis.");
+      }
+    }
+    lines.push("");
+
+    lines.push("───────────────────────────────────────────────────────────────");
+    lines.push("SECTION 7: BASE EXCESS ANALYSIS");
+    lines.push("───────────────────────────────────────────────────────────────");
+    if(baseecf!==null){
+      lines.push(`• cBase(Ecf,ox) (reported) = ${sign(baseecf,1)} mmol/L`);
+      lines.push("  Reference: −2 to +2 mmol/L (method dependent)."
+      );
+      if(baseecf < -2) lines.push("  → Negative BE suggests metabolic acidosis component.");
+      else if(baseecf > 2) lines.push("  → Positive BE suggests metabolic alkalosis component.");
+      else lines.push("  ✓ BE within conventional range.");
+    } else {
+      lines.push("• cBase(Ecf,ox): Not provided.");
+    }
+    if(sbe_calc!==null){
+      lines.push(`• SBE (calculated from pH + HCO₃⁻) = ${sign(sbe_calc,1)} mmol/L`);
+      if(baseecf!==null){
+        const dd = baseecf - sbe_calc;
+        lines.push(`• (Reported BE − calculated SBE) = ${sign(dd,1)} mmol/L`);
+        if(Math.abs(dd) < 2) lines.push("  ✓ Good agreement." );
+        else lines.push("  ⓘ Differences can occur due to analyzer-specific algorithms." );
+      }
+    }
+    lines.push("");
+
+    lines.push("───────────────────────────────────────────────────────────────");
+    lines.push("SECTION 8: STEWART / STRONG ION APPROACH");
+    lines.push("───────────────────────────────────────────────────────────────");
+    if(sidaVal!==null){
+      lines.push(`• SIDa = ${sidaVal.toFixed(1)} mEq/L`);
+      if(sidaVal < 38) lines.push("  → Low SIDa suggests strong ion acidosis (often hyperchloremia)." );
+      else if(sidaVal > 44) lines.push("  → High SIDa suggests strong ion alkalosis." );
+    } else {
+      lines.push("• SIDa: Insufficient data (need at least Na⁺ and Cl⁻)." );
+    }
+    if(weakA!==null){
+      lines.push(`• A⁻ (albumin+phosphate charge) ≈ ${weakA.toFixed(1)} mEq/L`);
+    } else {
+      lines.push("• Weak acids: Insufficient data (need pH + albumin/phosphate)." );
+    }
+    if(sigVal!==null){
+      lines.push(`• SIG (unmeasured ions) = ${sigVal.toFixed(1)} mEq/L`);
+      if(sigVal > 5) lines.push("  ⚠ Elevated SIG → unmeasured anions possible (ketones/toxins/etc.)." );
+      else if(sigVal < -5) lines.push("  ⓘ Negative SIG → unmeasured cations or measurement issues." );
+      else lines.push("  ✓ SIG within conventional range." );
+    } else {
+      lines.push("• SIG: cannot be computed (need SIDa + HCO₃⁻)." );
+    }
+    lines.push("");
+
+    lines.push("───────────────────────────────────────────────────────────────");
+    lines.push("SECTION 9: OXYGENATION & GAS EXCHANGE");
+    lines.push("───────────────────────────────────────────────────────────────");
+    if(fio2===null){
+      lines.push("• FiO₂ not provided → P/F, PAO₂, and A–a not computed.");
+    } else {
+      lines.push(`• FiO₂ = ${fio2.toFixed(3)} (fraction) = ${(fio2*100).toFixed(1)}%`);
+      lines.push(`• PEEP/CPAP = ${peep===null?"—":peep.toFixed(1)} cmH₂O`);
+      if(pf!==null){
+        lines.push(`• P/F ratio = ${pf.toFixed(0)} mmHg`);
+        lines.push(`• ${berlin}`);
+      } else {
+        lines.push("• P/F ratio: cannot compute (need PaO₂ and FiO₂)." );
+      }
+      if(pao2_alv!==null){
+        lines.push(`• PAO₂ (alveolar gas equation) ≈ ${pao2_alv.toFixed(1)} mmHg`);
+      }
+      if(aa!==null){
+        lines.push(`• A–a gradient = PAO₂ − PaO₂ ≈ ${aa.toFixed(1)} mmHg`);
+        if(aaExp!==null){
+          lines.push(`• Expected A–a (age-adjusted) ≈ ${(aaExp).toFixed(1)} mmHg`);
+          if(aaExcess!==null) lines.push(`• Excess above expected ≈ ${aaExcess.toFixed(1)} mmHg`);
+        }
+      } else {
+        lines.push("• A–a gradient: insufficient inputs (need PaO₂, PaCO₂, FiO₂; Patm/PH₂O/RQ assumed if blank)." );
+      }
+      if(shunt!==null){
+        lines.push(`• Shunt fraction (Qs/Qt) ≈ ${(shunt*100).toFixed(1)}% (requires Hb, SaO₂, SvO₂, assumes ScO₂=100%)`);
+      }
+    }
+    lines.push("");
+
+    if(note){
+      lines.push("───────────────────────────────────────────────────────────────");
+      lines.push("CLINICAL NOTES");
+      lines.push("───────────────────────────────────────────────────────────────");
+      lines.push(note);
+      lines.push("");
+    }
+
+    const report = lines.join("\n");
+    $("txtOut").textContent = report;
+
+    // store latest report for copy/txt
+    window.__abg_latest_report = report;
+    window.__abg_latest_stamp = stamp;
+  }
+
+  function clearAll(){
+    const st = getFormState();
+    for(const k of Object.keys(st)){
+      const el = $(k);
+      if(!el) continue;
+      if(el.tagName === 'SELECT'){
+        // keep defaults
+        continue;
+      }
+      el.value = '';
+    }
+    $("txtOut").textContent = "—";
+    $("ddxContainer").innerHTML = "";
+    $("kpis").innerHTML = "";
+    setStatus("", `<div class="tiny">Cleared. Enter values and press <b>Interpret ABG</b>.</div>`);
+  }
+
+  function init(){
+    // View mode persistence
+    const vm = localStorage.getItem("abg_view_mode_v2") || "auto";
+    $("viewMode").value = vm;
+    applyViewMode(vm);
+
+    $("viewMode").addEventListener('change', e=>applyViewMode(e.target.value));
+
+    $("btnInterpret").addEventListener('click', interpret);
+    $("btnSave").addEventListener('click', saveLocal);
+    $("btnLoad").addEventListener('click', loadLocal);
+    $("btnClear").addEventListener('click', clearAll);
+
+    $("btnCopy").addEventListener('click', async ()=>{
+      const rep = window.__abg_latest_report || $("txtOut").textContent;
+      const ok = await copyToClipboard(rep);
+      setStatus(ok?"ok":"warn", ok?`<div><b>Copied.</b></div><div class="tiny">Report copied to clipboard.</div>`:`<div><b>Copy failed.</b></div><div class="tiny">Browser blocked clipboard. Long-press in output and copy manually.</div>`);
+    });
+
+    $("btnTXT").addEventListener('click', ()=>{
+      const rep = window.__abg_latest_report || $("txtOut").textContent;
+      const stamp = window.__abg_latest_stamp || tsStamp(new Date());
+      const caseNo = safeCaseNo($("caseNo").value);
+      const fname = `${caseNo}${stamp}_abg.txt`;
+      downloadText(fname, rep);
+    });
+  }
+
+  init();
+})();
+
+</script>
+</body>
+</html>
