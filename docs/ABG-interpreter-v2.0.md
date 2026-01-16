@@ -58,10 +58,10 @@ The interpreter utilizes the following physiological equations:
 | Component | Formula / Method |
 | --- | --- |
 | **Bicarbonate (HH)** |Bicarbonate (HH),0.03×pCO2​×10(pH−6.1)|
-| **Anion Gap (AG)** |(Na++K+)−(Cl−+HCO3−​)|
+| **Anion Gap (AG)** |(Na+K)−(Cl+HCO3)|
 | **Winter’s Formula** |Expected pCO2​=1.5×HCO3−​+8±2|
 | **Alveolar Gas (PAO2​)** |(Patm​−PH2​O​)×FiO2​−(pCO2​/RQ)|
-| **Stewart SIDa​** |(Na++K++Ca2++Mg2+)−(Cl−+Lactate−)|
+| **Stewart SIDa​** |(Na+K+Ca+Mg)−(Cl+Lactate)|
 | **Expected A–a** |(Age+10)/4|
 
 ---
