@@ -41,7 +41,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h1>Daily Duty Rota Transcriptor, WhatsApp-ready Text (HBCH and MPMMCC Varanasi), version 1.2 (Jan2026)</h1>
+ <h1>Daily Duty Rota Transcriptor, WhatsApp-ready Text (HBCH and MPMMCC Varanasi), version 1.2 (Jan2026)</h1>
   <h4>License: GNU GPL v3. Copyright (C) [2026] [Prof. Jyotirmay Kirtania]</h4>
   <div class="small">
     Client-side only. Input: <b>Excel (.xlsx)</b> upload or <b>public Google Sheet CSV</b>. Output: copy/download text.
@@ -441,6 +441,18 @@ function generateLockedText(matrix, dateIso, prefs){
 
   const hbchSeniors = doctorsWithPredicate(docCode, (code)=>startsWithG8(code) || code==="S0");
   const hbchSeniorOne = pickSingleByPreference(hbchSeniors, HBCH_SENIOR_PREF);
+  const HBCH_MAJOR_S9_PREF = ["Dr Vandita", "Dr Aastha", "Dr Artee", "Dr Aayushi", "Dr Nancy", "Dr Aakriti"];
+  // pick one preferred S9 for HBCH Major OT on Wed/Sat (consumed from S9 pool later)
+  const s9AllToday = doctorsWithPredicate(docCode, (code)=>code==="S9");
+  let hbchMajorS9 = null;
+  if (dname === "Wednesday" || dname === "Saturday"){
+    // find first preferred available (match by display name)
+    for (const p of HBCH_MAJOR_S9_PREF){
+      const idx = s9AllToday.findIndex(n => displayName(n).toLowerCase() === p.toLowerCase());
+      if (idx >= 0){ hbchMajorS9 = s9AllToday[idx]; break; }
+    }
+    if (!hbchMajorS9 && s9AllToday.length) hbchMajorS9 = s9AllToday[0];
+  }
   const hbchDay = doctorsWithPredicate(docCode, (code)=>code==="Z6H");
   const hbchEve = doctorsWithPredicate(docCode, (code)=>code==="Z7H");
   const hbchNight = doctorsWithPredicate(docCode, (code)=>code==="NIH");
@@ -452,14 +464,39 @@ function generateLockedText(matrix, dateIso, prefs){
   const mpmmccNight = doctorsWithPredicate(docCode, (code)=>code==="NI");
 
   const g8Pool = doctorsWithPredicate(docCode, (code)=>isG8ForOT(code)).slice();
-  const s9Pool = doctorsWithPredicate(docCode, (code)=>code==="S9").slice();
+  const s9Pool = doctorsWithPredicate(docCode, (code)=>code==="S9").filter(n => !hbchMajorS9 || n !== hbchMajorS9).slice();
 
   const ot = {};
-  const order = ["OT1","OT2","OT3","OT4","OT5","OT6","OT7","OT8"];
+  // initialize all OT slots (so OT5–OT8 print Nil on Saturdays)
+  ["OT1","OT2","OT3","OT4","OT5","OT6","OT7","OT8"].forEach(k=>{ ot[k] = {g8:null, s9:null}; });
+  const order = (dname === "Saturday") ? ["OT1","OT2","OT3","OT4"] : ["OT1","OT2","OT3","OT4","OT5","OT6","OT7","OT8"];
   for (const k of order){
     const g8 = pickByPreference(g8Pool, prefs?.otG8Preferred?.[k] || []);
     const s9 = pickByPreference(s9Pool, prefs?.otS9Preferred?.[k] || []);
     ot[k] = { g8, s9 };
+  }
+
+  // ---- Post-OT allocation: handle leftover S9 and leftover G8 (user rules) ----
+  // At this point, g8Pool and s9Pool contain unallocated doctors (CONSUME already applied for OT1–OT8).
+  const leftoverS9 = s9Pool.slice();   // remaining S9 after OT assignment
+  const leftoverG8 = g8Pool.slice();   // remaining G8 after OT assignment
+
+  let pacExtraS9 = [];
+  let minorExtraS9 = [];
+  let icuDayExtraS9 = [];
+
+  let satAfternoonOT = [];
+
+  if (dname === "Saturday") {
+    // Saturday: all leftover S9 go to Afternoon OT (1pm–8pm)
+    satAfternoonOT = leftoverS9.slice();
+  } else if (["Monday","Tuesday","Wednesday","Thursday","Friday"].includes(dname)) {
+    // Mon–Fri: distribute leftover S9 in order of preference:
+    // 1) PAC (one), 2) Minor OT GA (one), 3) MPMMCC ICU Day (rest)
+    const tmp = leftoverS9.slice();
+    if (tmp.length) pacExtraS9.push(tmp.shift());
+    if (tmp.length) minorExtraS9.push(tmp.shift());
+    if (tmp.length) icuDayExtraS9 = tmp.slice();
   }
 
   const noraDoc = (isTue || isThu) ? ot.OT2?.s9 : null;
@@ -490,15 +527,15 @@ function generateLockedText(matrix, dateIso, prefs){
   L.push(`${hbchSeniorOne}`);
   L.push("HBCH Major OT:");
   if (isWed || isSat){
-    L.push(`${hbchSeniorOne}`);
+    L.push(`${hbchSeniorOne}${hbchMajorS9 ? ", " + displayName(hbchMajorS9) : ""}`);
   } else {
     L.push("Nil");
   }
   L.push("");
 
   L.push("MPMMCC ICU");
-  L.push(`${mpmmccSeniorOne}`);
-  L.push(`Day (9am–5:30pm): ${joinNames(mpmmccDay)}`);
+  L.push(`${mpmmccSeniorOne}${(dname === "Saturday" && leftoverG8.length) ? ", " + leftoverG8.map(displayName).join(", ") : ""}`);
+  L.push(`Day (9am–5:30pm): ${joinNames(mpmmccDay)}${(leftoverG8.length || icuDayExtraS9.length) ? (joinNames(mpmmccDay) === "Nil" ? "" : ", ") + [...((dname === "Saturday") ? [] : leftoverG8), ...icuDayExtraS9].map(displayName).join(", ") : ""}`);
   L.push(`Evening (1pm-9pm): ${joinNames(mpmmccEve)}`);
   L.push(`Night (9pm–9am): ${joinNames(mpmmccNight)}`);
   L.push("");
@@ -507,7 +544,7 @@ function generateLockedText(matrix, dateIso, prefs){
   L.push(`Brachy OT: ${brachy ? brachy : "Nil"}`);
   L.push("");
   L.push("MPMMC PAC");
-  L.push(`${pacDoc ? displayName(pacDoc) : "Nil"}`);
+  L.push(`${pacDoc ? displayName(pacDoc) : "Nil"}${pacExtraS9.length ? ", " + pacExtraS9.map(displayName).join(", ") : ""}`);
   L.push("");
 
   L.push("MPMMC Major OT");
@@ -527,7 +564,10 @@ function generateLockedText(matrix, dateIso, prefs){
   L.push(fmtOT(6,"OT6"));
   L.push(fmtOT(7,"OT7"));
   L.push(fmtOT(8,"OT8"));
-  L.push(`IR / Minor OT GA – ${irDoc ? displayName(irDoc) : "Nil"}`);
+  L.push(`IR / Minor OT GA – ${irDoc ? displayName(irDoc) : "Nil"}${minorExtraS9.length ? ", " + minorExtraS9.map(displayName).join(", ") : ""}`);
+  if (dname === "Saturday"){
+    L.push(`Afternoon OT (1pm–8pm): ${satAfternoonOT.length ? satAfternoonOT.map(displayName).join(", ") : "Nil"}`);
+  }
   L.push("");
 
   L.push("Em OT");
