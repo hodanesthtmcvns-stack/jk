@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TRACHY Score – Airway Management in Head & Neck Cancer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 0.75rem;
+      background: #f5f5f5;
+      color: #222;
+    }
+    .app-container {
+      max-width: 720px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 1rem 1.25rem 1.5rem;
+      border-radius: 0.75rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 0.25rem;
+    }
+    h2 {
+      font-size: 1.1rem;
+      margin-top: 1.5rem;
+      margin-bottom: 0.35rem;
+    }
+    p {
+      margin: 0.25rem 0;
+      line-height: 1.4;
+      font-size: 0.92rem;
+    }
+    small {
+      font-size: 0.8rem;
+      color: #555;
+    }
+    fieldset {
+      border: 1px solid #ddd;
+      border-radius: 0.5rem;
+      padding: 0.5rem 0.75rem 0.75rem;
+      margin-top: 0.75rem;
+      background: #fafafa;
+    }
+    legend {
+      font-weight: 600;
+      font-size: 0.95rem;
+      padding: 0 0.25rem;
+    }
+    label {
+      display: block;
+      margin-top: 0.25rem;
+      font-size: 0.9rem;
+    }
+    .hint {
+      font-size: 0.8rem;
+      color: #666;
+      margin-top: 0.15rem;
+    }
+    .buttons {
+      margin-top: 1rem;
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+    button {
+      padding: 0.5rem 0.9rem;
+      border-radius: 0.5rem;
+      border: none;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button#calcBtn {
+      background: #005eb8;
+      color: #fff;
+    }
+    button#resetBtn {
+      background: #e0e0e0;
+      color: #222;
+    }
+    .result-box {
+      margin-top: 1rem;
+      padding: 0.75rem;
+      border-radius: 0.5rem;
+      background: #eef4ff;
+      border: 1px solid #c5d4ff;
+      display: none;
+    }
+    .result-title {
+      font-weight: 600;
+      margin-bottom: 0.35rem;
+    }
+    .result-score {
+      font-size: 1rem;
+      margin-bottom: 0.25rem;
+    }
+    .result-interpretation {
+      font-size: 0.95rem;
+      margin-bottom: 0.25rem;
+    }
+    .result-note {
+      font-size: 0.8rem;
+      color: #444;
+    }
+    .footer {
+      margin-top: 1.25rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid #ddd;
+    }
+  </style>
+</head>
+<body>
+<div class="app-container">
+  <header>
+    <h1>TRACHY Score Calculator</h1>
+    <p><strong>Purpose.</strong> The TRACHY score is a simple, clinically oriented tool to guide
+      post-operative airway management in patients with head and neck cancer undergoing resection
+      with primary flap reconstruction. It helps identify patients who can be managed safely with
+      endotracheal intubation alone and those in whom an elective tracheostomy is indicated.</p>
+    <p>
+      <small>
+        Based on: Mohamedbhai H, Ali S, Dimasi I, Kalavrezos N.
+        TRACHY score: a simple and effective guide to management of the airway in head and neck cancer.
+        Br J Oral Maxillofac Surg. 2018;56:709–714.
+      </small>
+    </p>
+  </header>
+
+  <section aria-label="TRACHY Score Inputs">
+    <h2>Enter pre-operative variables</h2>
+
+    <!-- T: T-stage -->
+    <fieldset>
+      <legend>T – Tumour T-stage (TNM)</legend>
+      <label>
+        <input type="radio" name="tStage" value="0">
+        T1–T2 (score 0)
+      </label>
+      <label>
+        <input type="radio" name="tStage" value="1">
+        T3–T4 (score 1)
+      </label>
+      <div class="hint">Use the clinical T-stage used for surgical planning.</div>
+    </fieldset>
+
+    <!-- R: Reconstruction -->
+    <fieldset>
+      <legend>R – Type of reconstruction</legend>
+      <label>
+        <input type="radio" name="reconstruction" value="0">
+        Fasciocutaneous flap (e.g., radial forearm, anterolateral thigh) – score 0
+      </label>
+      <label>
+        <input type="radio" name="reconstruction" value="1">
+        Myocutaneous or composite flap – score 1
+      </label>
+      <label>
+        <input type="radio" name="reconstruction" value="3">
+        Two flaps – score 3
+      </label>
+      <div class="hint">Select the single category that best describes the planned reconstruction.</div>
+    </fieldset>
+
+    <!-- A: Anatomy (site category) -->
+    <fieldset>
+      <legend>A – Anatomy of tumour (site category)</legend>
+      <label>
+        <input type="radio" name="anatomy" value="0">
+        Lateral or central – score 0
+      </label>
+      <label>
+        <input type="radio" name="anatomy" value="2">
+        Anterior or oropharyngeal – score 2
+      </label>
+      <div class="hint">
+        Categories as per original study (e.g., anterior floor of mouth / oropharyngeal sites vs
+        lateral or central oral cavity). Reference: Schache A, Lieger O, Rogers P, et al. Predictors of swallowing outcome in patients treated with surgery and radiotherapy for advanced oral and oropharyngeal cancer. Oral Oncol 2009;45:803–9.
+      </div>
+    </fieldset>
+
+    <!-- C: Coexisting conditions (ASA grade) -->
+    <fieldset>
+      <legend>C – Coexisting conditions (ASA grade)</legend>
+      <label>
+        <input type="radio" name="asa" value="0">
+        ASA I–II – score 0
+      </label>
+      <label>
+        <input type="radio" name="asa" value="1">
+        ASA III – score 1
+      </label>
+      <div class="hint">
+        ASA = American Society of Anesthesiologists physical status classification.
+      </div>
+    </fieldset>
+
+    <!-- H: History of previous treatment -->
+    <fieldset>
+      <legend>H – History of previous treatment for head &amp; neck cancer</legend>
+      <label>
+        <input type="radio" name="history" value="0">
+        No previous operation or radiotherapy – score 0
+      </label>
+      <label>
+        <input type="radio" name="history" value="1">
+        Previous operation on the head and neck – score 1
+      </label>
+      <label>
+        <input type="radio" name="history" value="3">
+        Previous radiotherapy to the head and neck – score 3
+      </label>
+      <div class="hint">
+        If both operation and radiotherapy are present, score according to radiotherapy (higher risk).
+      </div>
+    </fieldset>
+
+    <!-- Y: Laterality (neck dissection) -->
+    <fieldset>
+      <legend>Y – Laterality (neck dissection)</legend>
+      <label>
+        <input type="radio" name="laterality" value="0">
+        Unilateral neck dissection or none – score 0
+      </label>
+      <label>
+        <input type="radio" name="laterality" value="3">
+        Bilateral neck dissection – score 3
+      </label>
+    </fieldset>
+
+    <div class="buttons">
+      <button id="calcBtn" type="button">Calculate TRACHY Score</button>
+      <button id="resetBtn" type="button">Reset</button>
+    </div>
+  </section>
+
+  <section id="resultSection" class="result-box" aria-live="polite">
+    <div class="result-title">Result</div>
+    <div id="scoreText" class="result-score"></div>
+    <div id="interpretationText" class="result-interpretation"></div>
+    <div class="result-note">
+      Threshold as per original study: a TRACHY score of
+      <strong>4 or more</strong> indicated tracheostomy with sensitivity 91.4%,
+      specificity 90.8%, positive predictive value 90.9%, and negative predictive
+      value 88.2%. This app reproduces that model and is intended as an adjunct to,
+      not a replacement for, multidisciplinary clinical judgement and local protocols.
+    </div>
+  </section>
+
+  <footer class="footer">
+    <p>
+      <strong>TRACHY app for Head &amp; Neck Surgery:</strong>
+      Prof. Jyotirmay Kirtania, Varanasi. Version 1.0, 15 Nov 2025.
+    </p>
+    <p>
+      <small>
+        License: GNU General Public License, version 3 (GPLv3).
+        You may redistribute and modify this program under the terms of the GPL as
+        published by the Free Software Foundation.
+      </small>
+    </p>
+  </footer>
+</div>
+
+<script>
+  function getRadioValue(name) {
+    var nodes = document.getElementsByName(name);
+    for (var i = 0; i < nodes.length; i++) {
+      if (nodes[i].checked) {
+        return parseInt(nodes[i].value, 10);
+      }
+    }
+    return null;
+  }
+
+  function allInputsSelected(values) {
+    for (var key in values) {
+      if (values.hasOwnProperty(key) && values[key] === null) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  function calculateTRACHY() {
+    var inputs = {
+      tStage:      getRadioValue('tStage'),
+      reconstruction: getRadioValue('reconstruction'),
+      anatomy:     getRadioValue('anatomy'),
+      asa:         getRadioValue('asa'),
+      history:     getRadioValue('history'),
+      laterality:  getRadioValue('laterality')
+    };
+
+    if (!allInputsSelected(inputs)) {
+      alert('Please complete all TRACHY variables (T, R, A, C, H, Y) before calculating.');
+      return;
+    }
+
+    var total =
+      inputs.tStage +
+      inputs.reconstruction +
+      inputs.anatomy +
+      inputs.asa +
+      inputs.history +
+      inputs.laterality;
+
+    var scoreText = 'Total TRACHY score: ' + total;
+    var interpretation;
+
+    // Threshold as per original publication:
+    // Score ≥ 4 = tracheostomy indicated
+    // Score < 4 = manage with endotracheal tube alone
+    if (total >= 4) {
+      interpretation =
+        'Interpretation: TRACHY score \u2265 4 – tracheostomy is indicated for safe airway management.';
+    } else {
+      interpretation =
+        'Interpretation: TRACHY score < 4 – patient can probably be managed with endotracheal tube alone.';
+    }
+
+    document.getElementById('scoreText').textContent = scoreText;
+    document.getElementById('interpretationText').textContent = interpretation;
+
+    var resultSection = document.getElementById('resultSection');
+    resultSection.style.display = 'block';
+  }
+
+  function resetForm() {
+    var radios = document.querySelectorAll('input[type="radio"]');
+    for (var i = 0; i < radios.length; i++) {
+      radios[i].checked = false;
+    }
+    var resultSection = document.getElementById('resultSection');
+    resultSection.style.display = 'none';
+    document.getElementById('scoreText').textContent = '';
+    document.getElementById('interpretationText').textContent = '';
+  }
+
+  document.getElementById('calcBtn').addEventListener('click', calculateTRACHY);
+  document.getElementById('resetBtn').addEventListener('click', resetForm);
+</script>
+</body>
+</html>
