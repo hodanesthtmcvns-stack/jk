@@ -16,6 +16,7 @@
 | **Vent Simulator** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/ICU-vent-sim-v%201.2.html) | [📖 About & Help](./docs/Vent-Sim-Help.md) |
 | **ePAC** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/ePAC-v3.0.html) | [📖 About & Help](./docs/ePAC-Help.md) |
 | **AIR** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/AIR-v2.0.html) | [📖 About & Help](./docs/AIR-Help.md) |
+|**TRACHY-score** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/TRACHY-score-v1.0.html) | [📖 About & Help](./docs/TRACHY-score-v1.0-Help.md) |
 
 ---
 
