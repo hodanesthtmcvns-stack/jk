@@ -23,6 +23,7 @@ This repository hosts a suite of portable, offline-ready HTML applications desig
 | **Label Generator** | Workflow Efficiency | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/Patient-label-generator-v1.5.html) |
 |**ePAC** | Pre Anesthesia Checkup | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/ePAC-v3.0.html) |
 |**AIR** | Anesthesia Intraoperative Record | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/AIR-v2.0.html) |
+|**TRACHY-score** | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/TRACHY-score-v1.0.html) | 
 
 ## Core Principles
 * **Offline Capability:** Each tool is a single-file HTML/JS application. Once loaded, they function without an internet connection—ideal for high-stakes clinical environments.
@@ -60,6 +61,9 @@ Healthcare providers may perform and record Pre Anesthesia Checkup (PAC) using t
 
 ### AIR (v2.0)
 Healthcare providers may navigate and document Anesthesia Intraoperative Record  (AIR) using this tool, with validated parameters, safety checklists, and checklist of intraoperative ERAS pathways. It helps healthcare providers a cognitive aid to do document a structured AIR, and provide time stamped pdf output with unique filename with patient ID, date, and time for indexing and retrieval. 
+
+### AIR (v2.0)
+The TRACHY score is a simple, clinically oriented tool to guide post-operative airway management in patients with head and neck cancer undergoing resection with primary flap reconstruction. It helps identify patients who can be managed safely with endotracheal intubation alone and those in whom an elective tracheostomy is indicated.
 
 ## License
 This project is licensed under **GNU GPL v3**. 
