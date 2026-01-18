@@ -37,6 +37,9 @@
   .hr{height:1px;background:var(--border);margin:10px 0}
   details{border:1px solid var(--border);border-radius:12px;padding:10px;background:#0d1430}
   summary{cursor:pointer;font-weight:700;color:#dfe3ff}
+
+  .danger{background:transparent;border:1px solid rgba(230,70,70,.6);color:#ffd0d0}
+  .danger:hover{border-color:rgba(230,70,70,.95)}
 </style>
 </head>
 <body>
@@ -44,7 +47,7 @@
  <h1>Daily Duty Rota Transcriptor, WhatsApp-ready Text (HBCH and MPMMCC Varanasi), version 1.2 (Jan2026)</h1>
   <h4>License: GNU GPL v3. Copyright (C) [2026] [Prof. Jyotirmay Kirtania]</h4>
   <div class="small">
-    Client-side only. Input: <b>Excel (.xlsx)</b> upload or <b>public Google Sheet CSV</b>. Output: copy/download text.
+    Client-side only. Input: <b>Excel (.xlsx)</b> upload or <b>public Google Sheet CSV</b>. Optional: quick download from Google Sheet (manual) → then upload/load. Output: copy/download text.
     <span class="pill" id="libState" style="margin-left:8px">XLSX: loading…</span>
   </div>
 
@@ -64,18 +67,38 @@
 
       <div class="hr"></div>
 
-      <div class="row" style="gap:14px; align-items:flex-end">
+      <div class="row" style="margin-top:10px">
         <div style="flex:1">
           <label>Option A: Upload Excel (.xlsx)</label><br/>
           <input id="xlsxFile" type="file" accept=".xlsx,.xlsm,.xlsb,.xls"/>
           <div class="small muted">Your file stays on your computer (no upload).</div>
-        </div>
+      </div>
 
+      <div class="row" style="margin-top:10px">
         <div style="flex:1">
           <label>Option B: Public Google Sheet (published as CSV)</label><br/>
           <input id="csvUrl" type="text" placeholder="Paste published CSV link (or /export?format=csv&gid=...)"/>
           <div class="small muted">Must be direct CSV URL (CORS required). If it fails, use Excel download instead.</div>
+          <div style="margin-top:10px"></div>
+          <label class="small">OR upload a local CSV file</label><br/>
+          <input id="csvFile" type="file" accept=".csv,text/csv" />
+          <div class="small muted">If you downloaded a CSV (e.g., from Google Sheets export), upload it here.</div>
+      </div>
+
+<div class="row" style="gap:14px; align-items:flex-end; margin-top:12px">
+        <div style="flex:1">
+          <label>Quick Download (manual) — from the public Google Sheet</label><br/>
+          <input id="gsViewUrl" type="text" value="https://docs.google.com/spreadsheets/d/1CDBxYfzQ0XVAPZ6lP5ZCw258L4e-gPUKsMs9wNLrGcQ/edit?usp=sharing"
+                 placeholder="Paste Google Sheet public link (advanced: replace with your own)"/>
+          <div class="small muted">This does <b>not</b> auto-load data into the app. It only downloads the file to your browser Downloads folder. Then use Option A (upload) as usual.</div>
         </div>
+        <div class="row" style="gap:10px">
+          <button id="btnDlXlsx" class="secondary" type="button">Download Excel (.xlsx)</button>
+          <button id="btnDlCsv" class="secondary" type="button">Download CSV (gid from link)</button>
+        </div>
+      </div>
+
+</div>
       </div>
 
       <div class="row" style="margin-top:10px">
@@ -83,6 +106,7 @@
         <button id="btnGenerate" class="secondary" disabled>Generate Text</button>
         <button id="btnCopy" class="ghost" disabled>Copy</button>
         <button id="btnDownload" class="ghost" disabled>Download .txt</button>
+        <button id="btnReset" class="danger" type="button">Reset</button>
         <span id="status" class="small muted"></span>
       </div>
 
@@ -109,7 +133,7 @@
           • If date not found, the app will show the available date range for that sheet.
         </div>
       </details>
-    </div>
+    
 
     <div class="card">
       <div style="font-weight:800">Guarantees</div>
@@ -120,7 +144,10 @@
         “S0” behaves as Saturday G8; “S0^” behaves as Saturday G8^ (internally).
       </div>
     </div>
-  </div>
+  
+</div>
+
+    </div>
 </div>
 
 <script>
@@ -158,6 +185,25 @@ function parseISODate(iso){
 function dayNameFromISO(iso){
   const d = parseISODate(iso);
   return d ? WEEKDAYS[d.getDay()] : "";
+}
+
+
+// --- Quick Download helpers (manual workflow) ---
+function extractSpreadsheetId(url){
+  const s = (url || "").trim();
+  const m = s.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+  return m ? m[1] : null;
+}
+function extractGid(url){
+  const s = (url || "").trim();
+  const m = s.match(/[?&#]gid=(\d+)/);
+  return m ? m[1] : "0";
+}
+function buildExportUrl(viewUrl, format){
+  const id = extractSpreadsheetId(viewUrl);
+  if(!id) throw new Error("Invalid Google Sheet link (cannot find /d/<ID>/).");
+  const gid = extractGid(viewUrl);
+  return `https://docs.google.com/spreadsheets/d/${id}/export?format=${format}&gid=${gid}`;
 }
 
 function normalizeCode(code){
@@ -605,6 +651,14 @@ async function loadFromCSV(url){
   setStatus("CSV loaded.", "ok");
 }
 
+async function loadFromCSVFile(file){
+  const text = await file.text();
+  loaded.kind = "csv";
+  loaded.table = parseCSV(text);
+  loaded.sheetName = "CSV (" + (file.name || "local") + ")";
+  setStatus("CSV file loaded.", "ok");
+}
+
 function getAOAForActiveSheet(){
   if(loaded.kind === "xlsx"){
     const ws = loaded.workbook.Sheets[loaded.sheetName];
@@ -629,6 +683,67 @@ function enableOutputButtons(hasText){
   $("tzInfo").value = Intl.DateTimeFormat().resolvedOptions().timeZone || "Local";
   $("prefs").value = JSON.stringify(DEFAULT_PREFS, null, 2);
 
+  // Reset (clears loaded source + output; does not touch any external files)
+  $("btnReset").addEventListener("click", ()=>{
+    const ok = confirm("Reset this rota generator?\n\nThis will clear:\n• Loaded rota source (Excel/CSV)\n• Selected date\n• Preferences JSON\n• Output text\n\nYour original files are NOT affected.");
+    if(!ok) return;
+
+    loaded.kind = null;
+    loaded.workbook = null;
+    loaded.table = null;
+    loaded.sheetName = null;
+
+    try{
+      $("xlsxFile").value = "";
+      $("csvUrl").value = "";
+      if($("csvFile")) $("csvFile").value = "";
+      if($("datePick")) $("datePick").value = "";
+      if($("prefs")) $("prefs").value = JSON.stringify(DEFAULT_PREFS, null, 2);
+      if($("output")) $("output").value = "";
+      $("btnGenerate").disabled = true;
+      enableOutputButtons(false);
+      setStatus("Reset done. Load a source and pick a date.", "muted");
+    }catch(e){
+      console.error(e);
+      setStatus("Reset done.", "ok");
+    }
+  });
+
+
+  // Quick Download buttons (manual step: download → then upload via Option A)
+  $("btnDlXlsx").addEventListener("click", ()=>{
+    try{
+      const url = buildExportUrl($("gsViewUrl").value, "xlsx");
+      const a = document.createElement("a");
+      a.href = url;
+      a.target = "_blank";
+      a.rel = "noopener";
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(()=>a.remove(), 0);
+      setStatus("Opening Excel download in a new tab… (save it, then upload via Option A).", "ok");
+    }catch(e){
+      setStatus(e.message, "err");
+    }
+  });
+
+  $("btnDlCsv").addEventListener("click", ()=>{
+    try{
+      const url = buildExportUrl($("gsViewUrl").value, "csv");
+      const a = document.createElement("a");
+      a.href = url;
+      a.target = "_blank";
+      a.rel = "noopener";
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(()=>a.remove(), 0);
+      setStatus("Opening CSV download in a new tab… (save it, then load via Option B or upload Excel).", "ok");
+    }catch(e){
+      setStatus(e.message, "err");
+    }
+  });
+
+
   $("datePick").addEventListener("change", ()=>{
     const d=parseISODate($("datePick").value);
     $("dateHuman").textContent = d ? toHumanDate(d) : "—";
@@ -638,13 +753,16 @@ function enableOutputButtons(hasText){
     try{
       setStatus("Loading…", "muted");
       const f = $("xlsxFile").files && $("xlsxFile").files[0] ? $("xlsxFile").files[0] : null;
+      const cf = $("csvFile") && $("csvFile").files && $("csvFile").files[0] ? $("csvFile").files[0] : null;
       const url = $("csvUrl").value.trim();
       if (f){
         await loadFromExcel(f);
+      } else if (cf){
+        await loadFromCSVFile(cf);
       } else if (url){
         await loadFromCSV(url);
       } else {
-        throw new Error("Upload an Excel file OR paste a CSV link.");
+        throw new Error("Upload an Excel file OR upload a CSV file OR paste a CSV link.");
       }
       $("btnGenerate").disabled = false;
       outEl.value = "";
