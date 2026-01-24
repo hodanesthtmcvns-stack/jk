@@ -69,7 +69,7 @@ The Simple Text To Speech (STTS) utility provides high-fidelity audio playback f
 
 ## License
 This project is licensed under **GNU GPL v3**. 
-* **Attribution:** Credit must be given to the creator, **Prof. (Dr.) Jyotirmay Kirtania**.
+* **Attribution:** Credit must be given to the author and creator, **Prof. (Dr.) Jyotirmay Kirtania**.
 
 ## Medical Disclaimer
 These tools are intended for **clinical decision support and educational purposes only**. They do not replace professional medical judgment, bedside physical examination, or institutional clinical protocols.
