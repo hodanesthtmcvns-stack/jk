@@ -1,4 +1,4 @@
-# hodanesthtmcvns-stack is a set of Critical Care & Anesthesia Bedside Software Tools written by Prof. Jyotirmay Kirtania
+# hodanesthtmcvns-stack is a set of Software Tools written by Prof. Jyotirmay Kirtania for Critical Care & Anesthesia Applications, Point of Care Decision Support and Training of Residents 
 
 **Mission:** Bridging the gap between theory and bedside practice through open-access, physiologically-weighted, evidence-based decision support and documentation tools for anesthesia and intensive care.
 
