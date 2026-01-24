@@ -23,7 +23,8 @@ This repository hosts a suite of portable, offline-ready HTML applications desig
 | **Label Generator** | Workflow Efficiency | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/Patient-label-generator-v1.5.html) |
 |**ePAC** | Pre Anesthesia Checkup | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/ePAC-v3.0.html) |
 |**AIR** | Anesthesia Intraoperative Record | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/AIR-v2.0.html) |
-|**TRACHY-score** | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/TRACHY-score-v1.0.html) | 
+|**TRACHY-score** | Assess need of postoperative tracheostomy after H&N surgeries | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/TRACHY-score-v1.0.html) | 
+|**STTS** | Simple Text To Speech in any language | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/STTS-v1.4.html) | 
 
 ## Core Principles
 * **Offline Capability:** Each tool is a single-file HTML/JS application. Once loaded, they function without an internet connection—ideal for high-stakes clinical environments.
