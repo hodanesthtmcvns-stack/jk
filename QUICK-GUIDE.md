@@ -17,6 +17,8 @@
 | **ePAC** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/ePAC-v3.0.html) | [📖 About & Help](./docs/ePAC-Help.md) |
 | **AIR** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/AIR-v2.0.html) | [📖 About & Help](./docs/AIR-Help.md) |
 |**TRACHY-score** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/TRACHY-score-v1.0.html) | [📖 About & Help](./docs/TRACHY-score-v1.0-Help.md) |
+|**STTS (Simple Text to Speech)** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/STTS-v-1.4.html) | [📖 About & Help](./docs/STTS-v1.4-About-Help.md) |
+
 
 ---
 
