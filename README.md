@@ -63,8 +63,11 @@ Healthcare providers may perform and record Pre Anesthesia Checkup (PAC) using t
 ### AIR (v2.0)
 Healthcare providers may navigate and document Anesthesia Intraoperative Record  (AIR) using this tool, with validated parameters, safety checklists, and checklist of intraoperative ERAS pathways. It helps healthcare providers a cognitive aid to do document a structured AIR, and provide time stamped pdf output with unique filename with patient ID, date, and time for indexing and retrieval. 
 
-### AIR (v2.0)
+### TRACHY
 The TRACHY score is a simple, clinically oriented tool to guide post-operative airway management in patients with head and neck cancer undergoing resection with primary flap reconstruction. It helps identify patients who can be managed safely with endotracheal intubation alone and those in whom an elective tracheostomy is indicated.
+
+### STTS
+The Simple Text To Speech (STTS) utility provides high-fidelity audio playback for clinical, scientific, academic, and official documents across all browser-supported languages. It features a LLM artefact cleaner that strips away "AI noise" like markdown artifacts and emojis while utilizing an editable symbol dictionary to ensure technical terms and units are pronounced accurately. Designed as a study and training aid, it allows students to navigate sections of books, articles, or notes through smart heading detection and customizable looping of specific text selections for repeated hearing and user customizable playback speeds. As a single-file, offline-first application, it ensures that sensitive clinical, official, professional or academic data remains entirely private by processing everything locally within the browser.
 
 ## License
 This project is licensed under **GNU GPL v3**. 
