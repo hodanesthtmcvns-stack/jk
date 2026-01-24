@@ -1,4 +1,4 @@
-# Simple Text To Speech (STTS) v1.4
+# Simple Text To Speech (STTS) v1.5
 
 **A clinical-grade, privacy-focused, offline-first Text-to-Speech tool for the browser.**
 
