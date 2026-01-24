@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Simple Text To Speech (STTS) (v1.4)</title>
+<style>
+  :root{
+    --primary:#2563eb; --bg:#f8fafc; --card:#ffffff; --ink:#1e293b; --muted:#64748b;
+    --soft:#f1f5f9; --ok:#10b981; --bad:#ef4444; --warn:#f59e0b;
+  }
+  *{box-sizing:border-box}
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial;background:var(--bg);
+       padding:1.5rem;color:var(--ink);margin:0}
+  .container{max-width:1000px;margin:0 auto;background:var(--card);padding:1.75rem;border-radius:20px;
+             box-shadow:0 10px 25px rgba(0,0,0,0.05)}
+  h2{margin:0 0 1rem 0;color:var(--primary);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .badge{font-size:.7rem;background:#dcfce7;color:#166534;padding:4px 8px;border-radius:10px;text-transform:uppercase}
+  .topbar{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:1rem}
+  .filebox{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  input[type="file"]{font-size:.85rem}
+  .mini{font-size:.82rem;color:var(--muted)}
+  textarea{width:100%;height:320px;padding:1rem;border:2px solid #e2e8f0;border-radius:12px;font-size:1rem;
+           resize:vertical;margin:0;line-height:1.35}
+  textarea:focus{border-color:var(--primary);outline:none}
+  .row{display:grid;grid-template-columns:1fr;gap:1rem;margin-top:1rem}
+  @media(min-width:980px){ .row{grid-template-columns: 1fr 320px;} }
+  .controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-top:1rem}
+  .box{background:var(--soft);padding:1rem;border-radius:12px}
+  label{font-size:.7rem;font-weight:800;text-transform:uppercase;color:var(--muted);margin-bottom:8px;display:block}
+  select,input[type="range"],input[type="number"]{width:100%;cursor:pointer}
+  .playback-bar{display:flex;flex-wrap:wrap;gap:10px;margin-top:1rem}
+  button{padding:12px 14px;border:none;border-radius:10px;font-weight:800;cursor:pointer;transition:.15s;flex:1;min-width:140px}
+  button:active{transform:translateY(1px)}
+  .play-btn{background:var(--primary);color:white}
+  .stop-btn{background:var(--bad);color:white}
+.ghost-btn{background:#e2e8f0;color:#0f172a}
+  .warn-btn{background:var(--warn);color:#0f172a}
+  .stack{display:grid;gap:.75rem}
+  .pill{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .pill > *{flex:1}
+  .status{font-size:.9rem;margin-top:1rem;color:var(--muted);font-style:italic}
+  .small{font-size:.78rem;color:var(--muted);line-height:1.25}
+  .kpi{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:.5rem}
+  .kpi span{font-size:.8rem;color:var(--muted)}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
+  details{background:var(--soft);padding:.75rem 1rem;border-radius:12px}
+  summary{cursor:pointer;font-weight:800;color:#0f172a}
+  table{width:100%;border-collapse:collapse;margin-top:.5rem}
+  th,td{border-bottom:1px solid #dbeafe;padding:.4rem .25rem;font-size:.85rem;text-align:left}
+  th{color:#0f172a}
+  .muted{color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="topbar">
+    <h2>Simple Text To Speech (STTS) (v1.4)<span class="badge">Offline / Local</span><span class="mini">License: GNU GPL v3. Copyright (C) [2026] [Prof. Jyotirmay Kirtania]</span></h2>
+    <div class="filebox">
+      <input type="file" id="fileInput" accept=".txt,.md,.html,.htm,.pdf">
+      <button class="ghost-btn" id="clearBtn" type="button">Clear</button>
+    </div>
+  </div>
+
+  <div class="kpi">
+    <span class="mono" id="browserInfo">Browser: detecting…</span>
+    <span class="mono" id="charCount">0 / 1,000,000</span>
+  </div>
+
+  <textarea id="textInput" maxlength="1000000" placeholder="Paste up to 1,000,000 characters here… (TXT / MD / HTML only). For PDF, use file upload (or paste/drop the PDF file here)."></textarea>
+
+  <div class="row" style="margin-top:1rem">
+    <div class="box">
+      <label>Paste behavior</label>
+      <div class="pill" style="gap:12px;align-items:center">
+        <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:260px">
+          <input type="checkbox" id="llmCleanToggle" checked style="width:18px;height:18px;cursor:pointer" />
+          <div>
+            <div style="font-weight:900">Clean LLM output on paste</div>
+            <div class="small">Default ON. Removes emoji/markdown noise, preserves clinical symbols + punctuation.</div>
+          </div>
+        </div>
+        <button class="ghost-btn" id="previewBtn" type="button" style="flex:0;min-width:170px">Preview cleaned</button>
+      </div>
+
+      <details id="previewDetails" style="margin-top:.75rem">
+        <summary>Preview — cleaned text (read-only)</summary>
+        <textarea id="cleanPreview" readonly style="height:220px;margin-top:.75rem;background:#fff;border:2px solid #dbeafe"></textarea>
+        <div class="small muted">Preview uses the same cleaner used on paste. It does not change your text unless you paste with the toggle ON (or use “Apply to text” in the dictionary panel).</div>
+      </details>
+    </div>
+
+    <div class="box">
+      <label>Symbol dictionary (editable)</label>
+      <textarea id="symbolDict" class="mono" style="height:220px" spellcheck="false"></textarea>
+      <div class="small">Format: one mapping per line: <span class="mono">token = spoken</span>. Empty lines and lines starting with <span class="mono">#</span> are ignored.</div>
+      <div class="pill" style="margin-top:.6rem">
+        <button class="ghost-btn" id="resetDictBtn" type="button">Reset dictionary</button>
+        <button class="ghost-btn" id="applyDictBtn" type="button">Apply to text</button>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="controls">
+    <div class="box">
+      <label>Native Browser Voices (Auto-detected)</label>
+      <select id="voiceSelect"></select>
+      <div class="small" id="voiceMeta">…</div>
+    </div>
+
+    <div class="box">
+      <label>Read mode (fidelity)</label>
+      <select id="readMode">
+        <option value="plain">Plain (no stripping)</option>
+        <option value="clean" selected>Clean (remove markup)</option>
+        <option value="aggressive">Aggressive clean (extra symbols removed)</option>
+      </select>
+      <div class="small">Tip: use <b>Plain</b> for maximum fidelity (esp. medical text).</div>
+    </div>
+
+    <div class="box">
+      <label>Speed: <span id="vRate">1.0</span>x</label>
+      <input type="range" id="rate" min="0.5" max="2.5" step="0.1" value="1">
+    </div>
+
+    <div class="box">
+      <label>Pitch: <span id="vPitch">1.0</span></label>
+      <input type="range" id="pitch" min="0.1" max="2" step="0.1" value="1">
+    </div>
+
+    <div class="box">
+      <label>Jump sections</label>
+      <select id="sectionSelect"></select>
+      <div class="pill" style="margin-top:.6rem">
+        <button class="ghost-btn" id="prevSectionBtn" type="button">Prev section</button>
+        <button class="ghost-btn" id="nextSectionBtn" type="button">Next section</button>
+      </div>
+      <div class="small">Auto-detected from headings / blank-line blocks. Works for TXT/MD/HTML-ish content.</div>
+    </div>
+
+    <div class="box">
+      <label>Loop</label>
+      <div class="pill">
+        <select id="loopTarget">
+          <option value="off" selected>Off</option>
+          <option value="selection">Loop selection</option>
+          <option value="section">Loop section</option>
+          <option value="all">Loop all</option>
+        </select>
+        <input type="number" id="loopCount" min="1" step="1" value="2" title="Number of loops">
+      </div>
+      <div class="small">Loop count applies after reaching end. Stop cancels looping.</div>
+    </div>
+  </div>
+
+  <div class="playback-bar">
+    <button class="play-btn" id="playAllBtn" type="button">Play all</button>
+    <button class="warn-btn" id="playSectionBtn" type="button">Play section</button>
+    <button class="ghost-btn" id="playSelectionBtn" type="button">Play selection</button>
+    <button class="ghost-btn" id="rewBtn" type="button">⟲ Rewind</button>
+    <button class="ghost-btn" id="ffBtn" type="button">Fast-forward ⟳</button>
+    <button class="stop-btn" id="stopBtn" type="button">Stop</button>
+  </div>
+
+  <details style="margin-top:1rem">
+    <summary>Detected TTS engines (voices) — browser-native</summary>
+    <div class="small muted">This lists the voices returned by <span class="mono">speechSynthesis.getVoices()</span> on this device/browser profile.</div>
+    <div id="voicesTableWrap"></div>
+  </details>
+
+  <div class="status" id="status">Ready (detecting voices…)</div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+
+  // Only allow these file types (upload / drop / paste-file)
+  const ALLOWED_FILE_EXTS = new Set(["txt","md","html","htm","pdf"]); 
+
+  // ---------------------------
+  // Core references
+  // ---------------------------
+  const synth = window.speechSynthesis;
+  const textInput = document.getElementById('textInput');
+  const voiceSelect = document.getElementById('voiceSelect');
+  const status = document.getElementById('status');
+  const sectionSelect = document.getElementById('sectionSelect');
+  const voicesTableWrap = document.getElementById('voicesTableWrap');
+  const browserInfo = document.getElementById('browserInfo');
+  const charCount = document.getElementById('charCount');
+  const readMode = document.getElementById('readMode');
+  const loopTarget = document.getElementById('loopTarget');
+  const loopCountEl = document.getElementById('loopCount');
+  const voiceMeta = document.getElementById('voiceMeta');
+
+  // LLM-clean + preview + symbol dictionary
+  const llmCleanToggle = document.getElementById('llmCleanToggle');
+  const previewBtn = document.getElementById('previewBtn');
+  const cleanPreview = document.getElementById('cleanPreview');
+  const previewDetails = document.getElementById('previewDetails');
+  const symbolDict = document.getElementById('symbolDict');
+  const resetDictBtn = document.getElementById('resetDictBtn');
+  const applyDictBtn = document.getElementById('applyDictBtn');
+
+  // ---------------------------
+  // Symbol dictionary (clinical-safe defaults)
+  // ---------------------------
+  const DEFAULT_SYMBOL_DICT = `
+# Core comparators / arrows
+≥ = greater than or equal to
+≤ = less than or equal to
+≈ = approximately
+≃ = approximately
+≅ = approximately
+≠ = not equal to
+→ = leads to
+← = from
+↔ = two-way
+⇒ = therefore
+± = plus minus
+× = times
+÷ = divided by
+% = percent
+
+# Units / common clinical
+mmHg = millimeters of mercury
+bpm = beats per minute
+SpO₂ = SpO2
+FiO₂ = FiO2
+PaO₂ = PaO2
+PaCO₂ = PaCO2
+HCO₃ = HCO3
+Na⁺ = sodium
+K⁺ = potassium
+Ca²⁺ = calcium
+Mg²⁺ = magnesium
+Cl⁻ = chloride
+µg = micrograms
+µL = microliters
+µm = micrometers
+° = degrees
+
+# Make common decorative symbols silent
+• =
+✅ =
+☑ =
+☐ =
+◻ =
+▪ =
+
+# Normalize dashes
+— = -
+– = -
+`.trim();
+
+  function loadDictFromStorage(){
+    const saved = localStorage.getItem("stts_symbol_dict_v1");
+    symbolDict.value = saved ? saved : DEFAULT_SYMBOL_DICT;
+  }
+  function saveDictToStorage(){
+    localStorage.setItem("stts_symbol_dict_v1", symbolDict.value || "");
+  }
+
+  function parseSymbolDict(text){
+    const map = new Map();
+    (text || "").split(/\n/).forEach(line => {
+      const raw = line.trim();
+      if (!raw || raw.startsWith("#")) return;
+      const idx = raw.indexOf("=");
+      if (idx === -1) return;
+      const key = raw.slice(0, idx).trim();
+      const val = raw.slice(idx+1).trim();
+      if (!key) return;
+      map.set(key, val);
+    });
+    return map;
+  }
+
+  function applySymbolMap(input, map){
+    let out = input || "";
+    if (!map || !map.size) return out;
+
+    const keys = Array.from(map.keys()).sort((a,b)=> b.length - a.length);
+    for (const k of keys){
+      const v = map.get(k);
+      const escaped = k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const re = new RegExp(escaped, "g");
+      out = out.replace(re, (v ? v : " "));
+    }
+    return out;
+  }
+
+  // ---------------------------
+  // LLM adaptive cleaner (paste + preview)
+  // ---------------------------
+  function stripEmoji(text){
+    return (text || "")
+      .replace(/[\u{1F300}-\u{1FAFF}]/gu, "")
+      .replace(/[\u{2600}-\u{27BF}]/gu, "")
+      .replace(/[\uFE0E\uFE0F]/g, "")
+      .replace(/\u200D/g, "");
+  }
+
+  function cleanLLMText(raw){
+    let t = (raw || "").replace(/\r\n/g, "\n");
+
+    // Remove fenced code blocks; keep inline code content
+    t = t.replace(/```[\s\S]*?```/g, " ");
+    t = t.replace(/`([^`]+)`/g, "$1");
+
+    // Remove markdown links target, keep visible text
+    t = t.replace(/\[([^\]]+)\]\(([^\)]+)\)/g, "$1");
+
+    // Remove HTML tags but keep content
+    t = t.replace(/<script[\s\S]*?<\/script>/gi, " ");
+    t = t.replace(/<style[\s\S]*?<\/style>/gi, " ");
+    t = t.replace(/<[^>]*>/g, " ");
+
+    // Line-wise cleanup: headings, bullets, quotes, checkboxes
+    t = t.split("\n").map(line => {
+      let s = line;
+
+      s = s.replace(/^\s{0,3}(#{1,6})\s+/, "");      // headings
+      s = s.replace(/^\s{0,3}>\s?/, "");             // blockquote
+      s = s.replace(/^\s{0,3}[-*•]+\s+/, "");        // bullets
+      s = s.replace(/^\s{0,3}\[(x|X| )\]\s+/, ""); // checkboxes
+
+      // emphasis markers
+      s = s.replace(/\*\*([^*]+)\*\*/g, "$1");
+      s = s.replace(/__([^_]+)__/g, "$1");
+      s = s.replace(/~~([^~]+)~~/g, "$1");
+
+      return s;
+    }).join("\n");
+
+    // Remove emoji + common ASCII emoticons
+    t = stripEmoji(t);
+    t = t.replace(/(^|\s)(:-\)|:\)|:-\(|:\(|;\)|;\-\)|:D|:-D|XD|xD|:\/|:-\/|:\\|:-\\)(?=\s|$)/g, " ");
+
+    // Normalize punctuation spacing (keep punctuation)
+    t = t.replace(/\s+([,.;:!?])/g, "$1");
+    t = t.replace(/([,.;:!?])(\S)/g, "$1 $2");
+
+    // Convert decorative dividers to paragraph break
+    t = t.replace(/\n\s*([\-_=*]{3,})\s*\n/g, "\n\n");
+
+    // Apply dictionary
+    const map = parseSymbolDict(symbolDict.value || DEFAULT_SYMBOL_DICT);
+    t = applySymbolMap(t, map);
+
+    // Collapse whitespace while preserving paragraph breaks
+    t = t.replace(/[ \t]{2,}/g, " ");
+    t = t.replace(/\n{3,}/g, "\n\n");
+    t = t.split("\n").map(x => x.trimEnd()).join("\n").trim();
+
+    // If the text looks like a list (many short lines), treat single newlines as sentence breaks.
+    const lines = t.split("\n");
+    const nonEmpty = lines.filter(x => x.trim()).length;
+    const shortLines = lines.filter(x => x.trim() && x.trim().length <= 80).length;
+    const looksLikeList = (nonEmpty >= 8) && (shortLines / Math.max(1, nonEmpty) >= 0.6);
+    if (looksLikeList){
+      t = t.replace(/\n(?!\n)/g, ".\n"); // force a pause
+      t = t.replace(/\.\n\n/g, "\n\n"); // don't double punctuate before paragraph break
+    }
+
+    // Ensure paragraphs end with punctuation when they are long without it (light touch)
+    t = t.replace(/([A-Za-z0-9\)\]\}])(\n\n)/g, "$1.$2");
+
+    return t;
+  }
+
+
+  // Chunked playback state (enables fast-forward / rewind)
+  let chunks = [];
+  let chunkIndex = 0;
+  let activeUtterance = null;
+  let lastSpokenContext = { kind: "all", text: "" }; // all | section | selection
+  let loopsDone = 0;
+
+  // Sections state
+  let sections = []; // [{title, text}]
+  let currentSectionIndex = 0;
+
+  // ---------------------------
+  // Helpers
+  // ---------------------------
+  function setStatus(msg){ status.textContent = msg; }
+  function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
+
+  function getSelectedVoice(){
+    const voices = synth.getVoices();
+    return voices.find(v => v.name === voiceSelect.value) || voices[0] || null;
+  }
+
+  function detectBrowser(){
+    const ua = navigator.userAgent || "";
+    let name = "Browser";
+    if (/Edg\//.test(ua)) name = "Microsoft Edge";
+    else if (/Chrome\//.test(ua) && !/Edg\//.test(ua)) name = "Google Chrome";
+    else if (/Firefox\//.test(ua)) name = "Mozilla Firefox";
+    else if (/Safari\//.test(ua) && !/Chrome\//.test(ua)) name = "Apple Safari";
+    browserInfo.textContent = `${name} | UA: ${ua.slice(0, 90)}${ua.length>90?'…':''}`;
+  }
+
+  function updateCharCount(){
+    const len = (textInput.value || "").length;
+    charCount.textContent = `${len.toLocaleString()} / 1,000,000`;
+  }
+
+  // Fidelity-preserving text cleanup modes
+  function sanitize(text){
+    const mode = readMode.value;
+
+    if (mode === "plain") {
+      // Minimal changes: normalize whitespace only.
+      return (text || "").replace(/\r\n/g, "\n").trim();
+    }
+
+    if (mode === "clean") {
+      // Similar to your previous behavior, but keep more punctuation.
+      return (text || "")
+        .replace(/\r\n/g, "\n")
+        .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1')     // keep link text
+        .replace(/<script[\s\S]*?<\/script>/gi, ' ')  // drop scripts
+        .replace(/<style[\s\S]*?<\/style>/gi, ' ')    // drop styles
+        .replace(/<[^>]*>/g, ' ')                     // drop HTML tags
+        .replace(/[ \t]+\n/g, "\n")
+        .replace(/\n{3,}/g, "\n\n")
+        .replace(/[ \t]{2,}/g, " ")
+        .trim();
+    }
+
+    // aggressive
+    return (text || "")
+      .replace(/\r\n/g, "\n")
+      .replace(/[#*|>_~`]/g, ' ')
+      .replace(/--+/g, ' ')
+      .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1')
+      .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+      .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  // Chunking: split to manageable utterances; keeps sentence-ish boundaries.
+  function buildChunks(text, maxLen=520){
+    const t = (text || "").trim();
+    if (!t) return [];
+
+    const normalized = t.replace(/\r\n/g, "\n").replace(/[ \t]+\n/g, "\n");
+
+    // Paragraphs
+    const paras = normalized.replace(/\n{3,}/g, "\n\n").split(/\n\n/g);
+
+    const candidates = [];
+    for (const para of paras){
+      const p = para.trim();
+      if (!p) continue;
+
+      // Single newline inside paragraph becomes a comma pause
+      const p2 = p.replace(/\n(?!\n)/g, " , ");
+
+      // Sentence boundary: punctuation + common danda.
+      const sent = p2.split(/(?<=[\.!?;:।。！？])\s+/g);
+      for (const s of sent){
+        const x = s.replace(/\s+/g, " ").trim();
+        if (x) candidates.push(x);
+      }
+    }
+
+    // Assemble chunks
+    const out = [];
+    let buf = "";
+    for (const c of candidates){
+      if (!buf){
+        buf = c;
+        continue;
+      }
+      if ((buf.length + 1 + c.length) <= maxLen){
+        buf = buf + " " + c;
+      } else {
+        out.push(buf);
+        buf = c;
+      }
+    }
+    if (buf) out.push(buf);
+
+    // Hard-wrap any oversize
+    const finalOut = [];
+    for (const ch of out){
+      if (ch.length <= maxLen){
+        finalOut.push(ch);
+      } else {
+        for (let i=0; i<ch.length; i+=maxLen){
+          finalOut.push(ch.slice(i, i+maxLen));
+        }
+      }
+    }
+    return finalOut;
+  }
+
+
+  // Section detection from MD headings / HTML headings / blank-line blocks.
+  function detectSections(rawText){
+    const original = (rawText || "");
+    const lines = original.replace(/\r\n/g, "\n").split("\n");
+
+    // 1) Markdown headings
+    const mdHeadIdx = [];
+    for (let i=0;i<lines.length;i++){
+      const m = lines[i].match(/^\s{0,3}(#{1,6})\s+(.+?)\s*$/);
+      if (m) mdHeadIdx.push({i, title:m[2].trim()});
+    }
+    if (mdHeadIdx.length >= 2){
+      const secs = [];
+      for (let k=0;k<mdHeadIdx.length;k++){
+        const start = mdHeadIdx[k].i;
+        const end = (k+1<mdHeadIdx.length) ? mdHeadIdx[k+1].i : lines.length;
+        const title = mdHeadIdx[k].title || `Section ${k+1}`;
+        const body = lines.slice(start, end).join("\n");
+        secs.push({title, text: body});
+      }
+      return secs;
+    }
+
+    // 2) HTML headings (best-effort) if present in text
+    const htmlHeads = [];
+    const html = original;
+    const re = /<(h[1-6])[^>]*>([\s\S]*?)<\/\1>/gi;
+    let m;
+    while ((m = re.exec(html)) !== null){
+      const title = (m[2] || "").replace(/<[^>]*>/g, " ").replace(/\s+/g," ").trim();
+      if (title) htmlHeads.push(title);
+      if (htmlHeads.length > 2) break;
+    }
+    if (htmlHeads.length >= 2){
+      // fallback: split by headings text occurrences
+      const secs = [];
+      let cursor = 0;
+      for (let k=0;k<htmlHeads.length;k++){
+        const t = htmlHeads[k];
+        const idx = html.indexOf(t, cursor);
+        const nextIdx = (k+1<htmlHeads.length) ? html.indexOf(htmlHeads[k+1], idx+ t.length) : html.length;
+        const slice = html.slice(idx, nextIdx);
+        secs.push({title:t, text:slice});
+        cursor = nextIdx;
+      }
+      return secs;
+    }
+
+    // 3) Blank-line blocks (paragraph-style sections)
+    const clean = original.replace(/\r\n/g, "\n").trim();
+    if (!clean) return [];
+    const blocks = clean.split(/\n{2,}/g).map(s => s.trim()).filter(Boolean);
+    const secs = [];
+    for (let i=0;i<blocks.length;i++){
+      const firstLine = blocks[i].split("\n")[0].trim();
+      const title = (firstLine.length<=60) ? firstLine : `Block ${i+1}`;
+      secs.push({title, text: blocks[i]});
+    }
+    return secs;
+  }
+
+  function refreshSections(){
+    sections = detectSections(textInput.value);
+    if (!sections.length){
+      sections = [{title:"(All text)", text: textInput.value || ""}];
+    }
+    sectionSelect.innerHTML = sections.map((s, i) => {
+      const t = (s.title || `Section ${i+1}`).replace(/</g,"&lt;").replace(/>/g,"&gt;");
+      return `<option value="${i}">${String(i+1).padStart(2,'0')}. ${t}</option>`;
+    }).join("");
+    currentSectionIndex = 0;
+    sectionSelect.value = "0";
+  }
+
+  function getTextFor(kind){
+    if (kind === "selection"){
+      const start = textInput.selectionStart ?? 0;
+      const end = textInput.selectionEnd ?? 0;
+      if (end > start) return textInput.value.slice(start, end);
+      return "";
+    }
+    if (kind === "section"){
+      const idx = parseInt(sectionSelect.value || "0", 10);
+      const s = sections[idx] || sections[0];
+      return s ? s.text : "";
+    }
+    return textInput.value || "";
+  }
+
+  function resetPlayback(){
+    chunks = [];
+    chunkIndex = 0;
+    activeUtterance = null;
+    loopsDone = 0;
+  }
+
+  // ---------------------------
+  // Voices: load + list engines
+  // ---------------------------
+  function renderVoicesTable(voices){
+    if (!voices || !voices.length){
+      voicesTableWrap.innerHTML = "<div class='small muted'>No voices returned by this browser profile.</div>";
+      return;
+    }
+    const rows = voices
+      .slice()
+      .sort((a,b) => (a.lang||"").localeCompare(b.lang||"") || (a.name||"").localeCompare(b.name||""))
+      .map(v => {
+        const ls = (typeof v.localService === "boolean") ? (v.localService ? "Local" : "Remote") : "—";
+        const dv = v.default ? "Yes" : "";
+        return `<tr>
+          <td>${escapeHtml(v.name||"")}</td>
+          <td>${escapeHtml(v.lang||"")}</td>
+          <td>${escapeHtml(ls)}</td>
+          <td>${escapeHtml(dv)}</td>
+        </tr>`;
+      }).join("");
+
+    voicesTableWrap.innerHTML = `
+      <table>
+        <thead><tr><th>Voice</th><th>Lang</th><th>Service</th><th>Default</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  }
+
+  function escapeHtml(s){
+    return String(s)
+      .replace(/&/g,"&amp;")
+      .replace(/</g,"&lt;")
+      .replace(/>/g,"&gt;")
+      .replace(/"/g,"&quot;")
+      .replace(/'/g,"&#039;");
+  }
+
+  function loadVoices(){
+    const voices = synth.getVoices();
+    if (!voices || !voices.length){
+      voiceSelect.innerHTML = `<option value="">(No voices found)</option>`;
+      voiceMeta.textContent = "No voices detected. Try another browser profile, or enable system voices.";
+      renderVoicesTable([]);
+      setStatus("Ready (no voices returned).");
+      return;
+    }
+
+    voiceSelect.innerHTML = voices
+      .slice()
+      .sort((a,b)=> (a.name||"").localeCompare(b.name||""))
+      .map(v => `<option value="${escapeHtml(v.name)}">${escapeHtml(v.name)} (${escapeHtml(v.lang||"")})</option>`)
+      .join("");
+
+    // Auto-select a "natural" voice when possible
+    const natural = voices.find(v => /Natural|Neural|Online/i.test(v.name));
+    if (natural) voiceSelect.value = natural.name;
+
+    const selected = getSelectedVoice();
+    voiceMeta.textContent = `${voices.length} voices detected. Selected: ${selected ? selected.name : "—"}`;
+    renderVoicesTable(voices);
+
+    setStatus("Ready (system voices detected).");
+  }
+
+  // Chrome/Edge/Safari compatibility for voice loading
+  if (speechSynthesis.onvoiceschanged !== undefined) {
+    speechSynthesis.onvoiceschanged = loadVoices;
+  }
+  loadVoices();
+
+  // ---------------------------
+  // Speaking: sequential chunks
+  // ---------------------------
+  function speakFrom(index){
+    handleStop(); // stop current speech
+    const voice = getSelectedVoice();
+    if (!voice){
+      alert("No TTS voice detected in this browser profile.");
+      return;
+    }
+    if (!chunks.length){
+      setStatus("Nothing to speak.");
+      return;
+    }
+    chunkIndex = clamp(index, 0, chunks.length-1);
+
+    const utterance = new SpeechSynthesisUtterance(chunks[chunkIndex]);
+    activeUtterance = utterance;
+
+    utterance.voice = voice;
+    utterance.rate = parseFloat(document.getElementById('rate').value);
+    utterance.pitch = parseFloat(document.getElementById('pitch').value);
+
+    utterance.onstart = () => {
+      setStatus(`Speaking: ${voice.name} | chunk ${chunkIndex+1}/${chunks.length}`);
+    };
+
+    utterance.onerror = (e) => {
+      setStatus(`TTS error: ${e.error || "unknown"} (try another voice/browser)`);
+};
+
+    utterance.onend = () => {
+      // advance
+      if (chunkIndex < chunks.length - 1){
+        chunkIndex++;
+        speakFrom(chunkIndex);
+        return;
+      }
+
+      // finished this run
+      const loopMode = loopTarget.value;
+      const wantLoop = (loopMode !== "off");
+      const maxLoops = clamp(parseInt(loopCountEl.value || "1", 10), 1, 9999);
+
+      if (wantLoop){
+        loopsDone++;
+        if (loopsDone < maxLoops){
+          setStatus(`Loop ${loopsDone}/${maxLoops} complete. Restarting…`);
+          speakFrom(0);
+          return;
+        }
+      }
+
+      setStatus("Finished.");
+};
+
+    synth.speak(utterance);
+  }
+
+  function prepareAndPlay(kind){
+    const raw = getTextFor(kind);
+    if (!raw || !raw.trim()){
+      if (kind === "selection") return alert("No text selected.");
+      return alert("Text area is empty.");
+    }
+    const processed = sanitize(raw);
+
+    if (!processed.trim()){
+      alert("After cleaning, nothing remained to read. Try Read mode = Plain.");
+      return;
+    }
+
+    resetPlayback();
+    lastSpokenContext = {kind, text: raw};
+    chunks = buildChunks(processed, 900);
+    if (!chunks.length){
+      alert("Unable to chunk the text. Try simpler content.");
+      return;
+    }
+    speakFrom(0);
+  }
+
+  function handleStop(){
+    synth.cancel();
+    activeUtterance = null;
+    setStatus("Stopped.");
+  }
+
+  function fastForward(){
+    if (!chunks.length) return;
+    // Jump ahead ~3 chunks (approx "fast-forward")
+    const step = 3;
+    const next = clamp(chunkIndex + step, 0, chunks.length - 1);
+    if (next === chunkIndex) return;
+    speakFrom(next);
+  }
+
+  function rewind(){
+    if (!chunks.length) return;
+    const step = 3;
+    const prev = clamp(chunkIndex - step, 0, chunks.length - 1);
+    speakFrom(prev);
+  }
+
+  // ---------------------------
+  // File loading: high-fidelity paths + optional parsers
+  // ---------------------------
+  async function loadFile(file){
+    if (!file) return;
+    const name = (file.name || "").toLowerCase();
+    const ext = name.includes(".") ? name.split(".").pop() : "";
+
+    if (!ALLOWED_FILE_EXTS.has(ext)){
+      setStatus(`Unsupported file type: .${ext || "?"}. Allowed: .txt, .md, .html/.htm, .pdf (clean text).`);
+      return;
+    }
+
+    // Text-like formats
+    const textExts = new Set(["txt","md","html","htm"]);
+    if (textExts.has(ext)){
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        textInput.value = ev.target.result || "";
+        updateCharCount();
+        refreshSections();
+        setStatus(`Loaded: ${file.name} (as text)`);
+      };
+      reader.readAsText(file);
+      return;
+    }
+
+    // PDF (optional PDF.js)
+    if (ext === "pdf"){
+      if (!window.pdfjsLib){
+        setStatus("PDF detected. This app supports clean text PDFs only. For offline extraction, include a local PDF.js build (pdfjsLib). Otherwise, export PDF → TXT and paste/load the text.");
+        return;
+      }
+      try{
+        setStatus("PDF detected. Extracting text (PDF.js)…");
+        const buf = await file.arrayBuffer();
+        const pdf = await window.pdfjsLib.getDocument({data: buf}).promise;
+        let fullText = "";
+        for (let p=1; p<=pdf.numPages; p++){
+          const page = await pdf.getPage(p);
+          const content = await page.getTextContent();
+          const strings = content.items.map(it => it.str);
+          fullText += strings.join(" ") + "\n\n";
+        }
+        textInput.value = fullText.trim();
+        updateCharCount();
+        refreshSections();
+        setStatus(`Loaded: ${file.name} (PDF.js text extract).`);
+      } catch(e){
+        setStatus("PDF extraction failed. This app supports clean text PDFs only. If your PDF is scanned, export/convert it to text first (OCR not included).");
+      }
+      return;
+    }
+    setStatus(`Unsupported file type: ${file.name}. Allowed: TXT, MD, HTML (.htm), or clean text PDF.`);
+  }
+
+  // ---------------------------
+  // UI wiring
+  // ---------------------------
+  document.getElementById('fileInput').addEventListener('change', (e) => {
+    const file = e.target.files && e.target.files[0];
+    loadFile(file);
+    e.target.value = ""; // allow reloading same file
+  });
+
+  // Allow paste/drop of allowed files directly into the input box
+  // (Some browsers let you paste a file object; drag-drop is common.)
+  function fileFromDataTransfer(dt){
+    if (!dt) return null;
+    if (dt.files && dt.files.length) return dt.files[0];
+    return null;
+  }
+
+  function extOfFile(f){
+    const n = (f && f.name ? f.name : "").toLowerCase();
+    return n.includes(".") ? n.split(".").pop() : "";
+  }
+
+  function tryLoadDroppedOrPastedFile(file, sourceLabel){
+    if (!file) return false;
+    const ext = extOfFile(file);
+    if (!ALLOWED_FILE_EXTS.has(ext)){
+      setStatus(`Unsupported ${sourceLabel} file type: .${ext || "?"}. Allowed: .txt, .md, .html/.htm, .pdf (clean text).`);
+      return true; // handled (rejected)
+    }
+    loadFile(file);
+    return true;
+  }
+
+  textInput.addEventListener('paste', (e) => {
+    const file = fileFromDataTransfer(e.clipboardData);
+    if (file){
+      e.preventDefault();
+      tryLoadDroppedOrPastedFile(file, "pasted");
+      return;
+    }
+
+    const clip = (e.clipboardData && e.clipboardData.getData) ? e.clipboardData.getData("text/plain") : "";
+    if (!clip) return;
+
+    if (llmCleanToggle && llmCleanToggle.checked){
+      e.preventDefault();
+      const cleaned = cleanLLMText(clip);
+
+      const start = textInput.selectionStart ?? textInput.value.length;
+      const end = textInput.selectionEnd ?? textInput.value.length;
+      const before = textInput.value.slice(0, start);
+      const after = textInput.value.slice(end);
+      textInput.value = before + cleaned + after;
+
+      const pos = (before + cleaned).length;
+      textInput.selectionStart = textInput.selectionEnd = pos;
+
+      updateCharCount();
+      scheduleSectionsRefresh();
+      setStatus("Pasted (LLM-clean ON).");
+    }
+  });
+
+
+  textInput.addEventListener('dragover', (e) => {
+    e.preventDefault();
+  });
+
+  textInput.addEventListener('drop', (e) => {
+    const file = fileFromDataTransfer(e.dataTransfer);
+    if (file){
+      e.preventDefault();
+      tryLoadDroppedOrPastedFile(file, "dropped");
+    }
+  });
+
+  
+  // Dictionary + preview wiring
+  loadDictFromStorage();
+
+  symbolDict.addEventListener('input', () => {
+    saveDictToStorage();
+  });
+
+  resetDictBtn.addEventListener('click', () => {
+    if (!confirm("Reset symbol dictionary to defaults?")) return;
+    symbolDict.value = DEFAULT_SYMBOL_DICT.trim();
+    saveDictToStorage();
+    setStatus("Symbol dictionary reset.");
+  });
+
+  applyDictBtn.addEventListener('click', () => {
+    const raw = textInput.value || "";
+    if (!raw.trim()) return;
+    const map = parseSymbolDict(symbolDict.value || DEFAULT_SYMBOL_DICT);
+    textInput.value = applySymbolMap(raw, map);
+    updateCharCount();
+    refreshSections();
+    setStatus("Applied dictionary to text.");
+  });
+
+  previewBtn.addEventListener('click', () => {
+    const raw = textInput.value || "";
+    cleanPreview.value = raw ? cleanLLMText(raw) : "";
+    previewDetails.open = true;
+    setStatus("Preview updated.");
+  });
+
+document.getElementById('clearBtn').addEventListener('click', () => {
+    handleStop();
+    textInput.value = "";
+    updateCharCount();
+    refreshSections();
+    setStatus("Cleared.");
+  });
+
+  document.getElementById('rate').addEventListener('input', (e) => document.getElementById('vRate').textContent = e.target.value);
+  document.getElementById('pitch').addEventListener('input', (e) => document.getElementById('vPitch').textContent = e.target.value);
+
+  document.getElementById('playAllBtn').addEventListener('click', () => {
+    loopTarget.value = (loopTarget.value === "selection" || loopTarget.value === "section") ? "all" : loopTarget.value; // keep user intent
+    prepareAndPlay("all");
+  });
+  document.getElementById('playSectionBtn').addEventListener('click', () => prepareAndPlay("section"));
+  document.getElementById('playSelectionBtn').addEventListener('click', () => prepareAndPlay("selection"));
+  document.getElementById('stopBtn').addEventListener('click', () => handleStop());
+document.getElementById('ffBtn').addEventListener('click', fastForward);
+  document.getElementById('rewBtn').addEventListener('click', rewind);
+
+  sectionSelect.addEventListener('change', () => {
+    currentSectionIndex = parseInt(sectionSelect.value || "0", 10);
+  });
+
+  document.getElementById('prevSectionBtn').addEventListener('click', () => {
+    if (!sections.length) return;
+    currentSectionIndex = clamp(currentSectionIndex - 1, 0, sections.length - 1);
+    sectionSelect.value = String(currentSectionIndex);
+  });
+
+  document.getElementById('nextSectionBtn').addEventListener('click', () => {
+    if (!sections.length) return;
+    currentSectionIndex = clamp(currentSectionIndex + 1, 0, sections.length - 1);
+    sectionSelect.value = String(currentSectionIndex);
+  });
+
+  // If user selects "loop selection/section/all", keep it consistent.
+  loopTarget.addEventListener('change', () => {
+    const v = loopTarget.value;
+    if (v === "selection"){
+      const sel = getTextFor("selection");
+      if (!sel) setStatus("Loop selection: select text in the box first.");
+    }
+  });
+
+  // Live updates
+  textInput.addEventListener('input', () => {
+    updateCharCount();
+    // Avoid heavy section detection on each keystroke for huge text:
+    // refresh only after brief idle.
+    scheduleSectionsRefresh();
+  });
+
+  let sectionTimer = null;
+  function scheduleSectionsRefresh(){
+    if (sectionTimer) clearTimeout(sectionTimer);
+    sectionTimer = setTimeout(() => {
+      refreshSections();
+    }, 450);
+  }
+
+  // Initialize
+  detectBrowser();
+  updateCharCount();
+  refreshSections();
+
+})();
+</script>
+</body>
+</html>
