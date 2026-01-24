@@ -1,7 +1,5 @@
-# Prof. Jyotirmay Kirtania
-Bridging the gap between theory and bedside practice through open-access, physiologically-weighted, evidence-based, decision support and documentation tools for anesthesia and intensive care.
+# hodanesthtmcvns-stack is a set of Critical Care & Anesthesia Bedside Software Tools written by Prof. Jyotirmay Kirtania
 
-# hodanesthtmcvns-stack: Critical Care & Anesthesia Bedside Tools
 **Mission:** Bridging the gap between theory and bedside practice through open-access, physiologically-weighted, evidence-based decision support and documentation tools for anesthesia and intensive care.
 
 This repository hosts a suite of portable, offline-ready HTML applications designed for intensivists, anesthesiologists, and frontline caregivers. These tools transform complex physiological data into actionable bedside insights.
