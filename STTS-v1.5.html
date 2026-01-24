@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Simple Text To Speech (STTS) (v1.4)</title>
+<title>Simple Text To Speech (STTS) (v1.5)</title>
 <style>
   :root{
     --primary:#2563eb; --bg:#f8fafc; --card:#ffffff; --ink:#1e293b; --muted:#64748b;
@@ -55,7 +55,7 @@
 <body>
 <div class="container">
   <div class="topbar">
-    <h2>Simple Text To Speech (STTS) (v1.4)<span class="badge">Offline / Local</span><span class="mini">License: GNU GPL v3. Copyright (C) [2026] [Prof. Jyotirmay Kirtania]</span></h2>
+    <h2>Simple Text To Speech (STTS) (v1.5)<span class="badge">Offline / Local</span><span class="mini">License: GNU GPL v3. Copyright (C) [2026] [Prof. Jyotirmay Kirtania]</span></h2>
     <div class="filebox">
       <input type="file" id="fileInput" accept=".txt,.md,.html,.htm,.pdf">
       <button class="ghost-btn" id="clearBtn" type="button">Clear</button>
@@ -158,6 +158,7 @@
     <button class="play-btn" id="playAllBtn" type="button">Play all</button>
     <button class="warn-btn" id="playSectionBtn" type="button">Play section</button>
     <button class="ghost-btn" id="playSelectionBtn" type="button">Play selection</button>
+    <button class="ghost-btn" id="pauseBtn" type="button">Pause</button>
     <button class="ghost-btn" id="rewBtn" type="button">⟲ Rewind</button>
     <button class="ghost-btn" id="ffBtn" type="button">Fast-forward ⟳</button>
     <button class="stop-btn" id="stopBtn" type="button">Stop</button>
@@ -696,6 +697,7 @@ Cl⁻ = chloride
 
     utterance.onstart = () => {
       setStatus(`Speaking: ${voice.name} | chunk ${chunkIndex+1}/${chunks.length}`);
+      updatePauseBtn();
     };
 
     utterance.onerror = (e) => {
@@ -725,9 +727,11 @@ Cl⁻ = chloride
       }
 
       setStatus("Finished.");
+      updatePauseBtn();
 };
 
     synth.speak(utterance);
+    updatePauseBtn();
   }
 
   function prepareAndPlay(kind){
@@ -757,6 +761,7 @@ Cl⁻ = chloride
     synth.cancel();
     activeUtterance = null;
     setStatus("Stopped.");
+    updatePauseBtn();
   }
 
   function fastForward(){
@@ -774,6 +779,47 @@ Cl⁻ = chloride
     const prev = clamp(chunkIndex - step, 0, chunks.length - 1);
     speakFrom(prev);
   }
+
+ // ---------------------------
+// Pause / Resume (native)
+// ---------------------------
+function updatePauseBtn(){
+  const btn = document.getElementById('pauseBtn');
+  if (!btn) return;
+
+  if (!synth.speaking){
+    btn.textContent = "Pause / Resume";
+    btn.disabled = true;
+    return;
+  }
+
+  btn.disabled = false;
+
+  if (synth.paused){
+    btn.textContent = "Pause / Resume";
+  } else {
+    btn.textContent = "Pause / Resume";
+  }
+}
+
+function togglePauseResume(){
+  if (!synth.speaking){
+    setStatus("Nothing is playing.");
+    updatePauseBtn();
+    return;
+  }
+
+  if (synth.paused){
+    synth.resume();
+    setStatus("Playing");
+  } else {
+    synth.pause();
+    setStatus("Paused");
+  }
+
+  updatePauseBtn();
+}
+
 
   // ---------------------------
   // File loading: high-fidelity paths + optional parsers
@@ -960,6 +1006,8 @@ document.getElementById('clearBtn').addEventListener('click', () => {
 document.getElementById('ffBtn').addEventListener('click', fastForward);
   document.getElementById('rewBtn').addEventListener('click', rewind);
 
+  document.getElementById('pauseBtn').addEventListener('click', togglePauseResume);
+
   sectionSelect.addEventListener('change', () => {
     currentSectionIndex = parseInt(sectionSelect.value || "0", 10);
   });
@@ -1005,6 +1053,7 @@ document.getElementById('ffBtn').addEventListener('click', fastForward);
   detectBrowser();
   updateCharCount();
   refreshSections();
+  updatePauseBtn();
 
 })();
 </script>
