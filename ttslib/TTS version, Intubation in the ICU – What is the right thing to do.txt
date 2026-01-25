@@ -1,0 +1,196 @@
+﻿Why is intubation in the ICU riskier than in the elective operating room?
+Procedure is not elective - you can’t choose to simply call off the procedure without an equivalent substitute.
+The patient is not optimized and often not optimizable.
+The caregivers are usually under stress and often less experienced. 
+
+ICU intubation = high-risk procedure in a physiologically fragile patient performed by care givers under stress
+This is not about how to intubate quickly, but how to intubate safely in the physiologically deteriorating patient.
+
+Epidemiology & Risk factors are:
+Peri-intubation complications: 20 to 40 percent,
+Severe hypoxemia: 10 to 25 percent,
+Hypotension: 20 to 30 percent,
+Cardiac arrest: 1 to 4 percent,
+These numbers are consistent across large ICU registries.
+
+The Three Axes of ICU Intubation Risk are:
+Physiologic difficulty,
+Anatomic difficulty,
+Caregiver factors.
+
+OT intubation mainly focuses on anatomy. 
+ICU intubation focuses on decompensated physiology and operator performance under stress, in addition to anatomical factors (if present).
+
+Common phenotypes of physiologic difficulty in ICU intubations are
+Hypoxemia (due to ARDS, pneumonia, cardiogenic pulmonary edema or a combination),
+Shock (due to sepsis, hemorrhage),
+Severe metabolic acidosis,
+RV failure or pulmonary hypertension,
+Raised intra cranial pressure,
+Pulmonary aspiration risk.
+
+Most cardiac arrests during intubation in ICU are due to physiologic decompensation, rarely airway-anatomy-related.
+
+Core Principles of Physiologic Optimization Before Intubation in ICU are:
+Improve Oxygenation to SpO2 greater than 95% by HFNC (FiO2 100%, Flow 30 to 60 liters per minute), or mask ventilation or SGA on PSV+PEEP.
+Hemodynamics: Achieve MAP greater than 70 mmHg by vasopressors, for example mephentermine 6 to 12 mg IV boluses, repeated as necessary while noradrenaline infusion is being set up and takes effect. Achieve MAP 80 to 100 mmHg by NTG infusion if hypertensive heart failure with acute pulmonary edema and hypoxia.
+RV protection - avoid excessive PEEP (greater than 8 cm H2O), correct hypoxia and hypercarbia.
+Acid–base balance. If bicarbonate is given before intubation, ensure the patient can increase spontaneous minute ventilation to eliminate generated CO₂. Don’t give bicarbonate when there are non-normal breaths with tracheal tug. After intubation, immediately match pre-intubation minute ventilation to prevent pH drop. Adjust ventilation to avoid respiratory acidosis and try to maintain pH greater than 7.20.
+
+Don’t intubate without optimization unless crashing. 
+Crashing = refractory hypoxemia (SpO₂ less than 80% despite maximal non-invasive oxygen support), impending cardiac arrest (MAP  less than 50 mmHg despite pressors), or cardiac arrest. If crashing - use a mask with NPA or OPA, or a 2nd generation SGA (for example, i-gel, LMA supreme, etc) temporarily for oxygenation & ventilation. These are not perfect, but faster, easier, and familiar. 
+
+Oxygenation Strategy (Preoxygenation) are:
+HFNC (preferred in hypoxemia) - FiO2 100 percent, Flow 60 liters per minute.
+Using dual nasal cannula (15 liters per minute plus 15 liters per minute, flow from each cannula), from two adjacent O2 flowmeters to achieve about 30 LPM flow with 100 percent FiO2 - if HFNC is unavailable.
+NIV (if patient is cooperative & time permits) - FiO2 100 percent, IPAP 12 to 15 cmH2O, EPAP 5 to 8 cmH2O.
+Ramped up position - to increase FRC and reduce aspiration risk from regurgitation. Position the patient so that the external auditory meatus is at the same level as the sternal notch (Ear-to-Sternal Notch alignment - for ease of intubation). Suction and remove NGT if in situ, reinsert later after intubation. 
+Hemodynamic Optimization with
+MAP greater than 70 mmHg before induction.
+Early vasopressor (noradrenaline infusion preferred); give mephentermine 6 - 12 mg IV boluses to increase MAP till noradrenaline infusion takes effect.
+Avoidance of induction-induced vasoplegia.
+
+Never intubate in shock without pressor support ready, and MAP  less than 70 mmHg.
+If cardiac arrest happens in the process, start CPR and ventilate with a mask (with or without NPA or OPA), or with a second generation supraglottic airway device.
+
+Severe Metabolic Acidosis is a precursor of cardiac arrest
+Severe metabolic acidosis = high minute ventilation demand.
+Hypoventilation and apnea causes rapid pH decline due to respiratory acidosis, over and above the severe metabolic acidosis, leading to cardiac arrest.
+
+If pH less than 7.20, 
+Minimize apnea,
+Consider awake or delayed sequence intubation,
+Match Pre-intubation Minute Ventilation immediately after intubation. The pH takes priority over the low tidal volume (5 to 8 mL per kg approach) in the first 30 minutes of intubation in patients with diabetic ketoacidosis with coma.
+
+RV failure in the peri-intubation period
+Right ventricular stroke volume declines rapidly even with a small rise in pulmonary vascular resistance (RV afterload). 
+Hypoxia, Hypercarbia, and Acidosis (metabolic or respiratory)  increase RV afterload & reduce RV stroke volume and worsens RV failure. 
+Triggers of collapse from RV failure leading to bi-ventricular failure and cardiac arrest are:
+Severe Hypoxia,
+Severe Hypercapnia,
+Excessive PIP, Pplat and PEEP,
+Induction agents (direct myocardial depressant effect on inotropy and chronotropy),
+
+Remember - RV stroke volume declines steeply if RV afterload increases. 
+If RV dysfunction is severe, consider inotropic support (dobutamine 2.5 to 5 micrograms per kg per minute, after attaining MAP more than 70 mmHg with noradrenaline), before induction to maintain ventricular contractility during transition to positive pressure ventilation.
+
+Anatomical Airway Assessment in the ICU - check all of these even if you are in a great hurry:
+Mouth opening,
+Neck mobility,
+Facial and upper airway edema,
+Blood, vomitus, secretions.
+
+Do a short (fast), focused, actionable anatomical assessment of the airway.
+
+Environmental and Care-giver factors are:
+Night shift,
+Limited staff,
+Unfamiliar equipment,
+Unfamiliar technique,  
+Care giver stressed from anticipation of failure and patient harm, anticipation of peer criticism, and rapid task-switching.
+
+Environmental factors amplify small errors.
+
+The four buckets for preparation for ICU intubation are: 
+People,
+Equipment,
+Drugs,
+Airway Plan B and Plan C.
+
+Checklist saves lives.
+
+People include:
+Intubator (most experienced available),
+Airway assistant,
+Drug nurse,
+Monitoring and vasopressor handler.
+
+If you have checked everything beforehand, you won’t need to shout at and curse one another during ICU intubation.
+
+Equipment include:
+IV access. Never induce a shocked patient without two IV accesses - that are checked and verified that the IVs are actually running.
+Video Laryngoscope is always the first choice for intubation in the ICU. VL monitor placed directly in the operator's line of sight (not to the extreme right or left of the operator). 
+Keep Direct Laryngoscope as backup if VL camera is snowed out from massive hematemesis or thick secretions.
+Suction running and checked, and tuck the Yankauer under the right side of the pillow.
+Bougie.
+Correct ETT size.
+Rescue airway (2nd generation SGA, like i-gel, LMA-supreme).
+Waveform capnography turned on and sampling line attached to the breathing system.
+
+If VL is available, DL should not be the first choice in ICU. All residents and staff attending ICU patients must develop proficiency in VL. 
+
+Drugs include:
+Ketamine. Suitable for most ICU patient phenotypes, 1.5 to 2 mg per kg IV bolus. In a patient with depleted catecholamines (decompensated shock), Ketamine acts as a direct myocardial depressant and can cause paradoxically severe hypotension. In shock, low and slow (for example, 0.5 to 1 mg per kg and repeated if necessary) is often safer.
+Etomidate (in selected cases), 0.2 to 0.3 mg per kg IV. Maximum dose is up to 20 mg, irrespective of body weight.
+Neuromuscular blockade with Rocuronium (1 to 1.2 mg per kg) is preferred. Avoid half paralysis. Inadequate paralysis reduces first-attempt success rate of intubation. If rocuronium is unavailable, succinylcholine 1.5 mg per kg remains acceptable unless contraindicated. Common contraindications of succinylcholine include hyperkalemia, massive trauma, post burn injury, severely raised intracranial pressure, unstable bradycardia, spinal cord injury, muscular dystrophies.
+Adequate muscle paralysis improves first-pass intubation success and reduces complications.
+
+Intubation Strategy – The Golden Rules
+First pass success is everything.
+Video laryngoscopy - always and first choice.
+Bougie - always and first choice.
+Limit attempts (not more than two attempts).
+Every additional attempt increases hypoxia, hypercarbia, and hypotension.
+
+Apneic Period Management
+HFNC or high flow nasal oxygen continued during laryngoscopy.
+Gentle bag-mask ventilation or PSV+PEEP if desaturation.
+Avoid prolonged apnea.
+
+ICU intubation principles should override RSI dogma.
+
+Consider Awake Intubation or Delayed Sequence Intubation in the following situations:
+Severe hypoxemia.
+Severe acidosis.
+Anticipated anatomically difficult airway.
+RV failure.
+
+Awake tracheal intubation (ATI) in the ICU:
+ATI can be done if the patient is conscious and cooperative.
+Either an orotracheal or a nasotracheal route can be used. Avoid nasotracheal intubation if coagulation is abnormal (INR greater than 1.4, APTT greater than 1.5 times control, or platelet is less than 80,000 per microliter), or there is nasal or nasopharyngeal obstruction. Use a bite block (or a Mac 2 laryngoscope blade as bite block) for flexible bronchoscopic orotracheal  intubation.
+Always premedicate with glycopyrolate, otherwise the 4% lignocaine will be flushed away by saliva & LA won't work, and saliva will obscure view.  
+Apply topical anesthesia of the upper airway by mucosal atomisation of 3 mL of lignocaine 4 percent (with MADgic device) plus translaryngeal block with 2 mL of  4 percent lignocaine using a 22G scalp vein set. Avoid translaryngeal block in coagulopathy, low platelets & large neck mass. Use only mucosal atomisation and instillation of lignocaine in such cases. 
+Use a flexible video bronchoscope for nasotracheal ATI in ICU, only if you are familiar with its use, and the patient has normal coagulation & platelets, and no nasal or nasopharyngeal obstruction. Otherwise do ATI with video laryngoscopy (and bougie or ETT loaded on a preformed stylet). Use jaw thrust, tongue protrusion, along with alignment of external auditory meatus with suprasternal notch, for facilitating the ATI. 
+Anticipated anatomically difficult airway (for example, very little mouth opening, base of tongue cancer, post neck-irradiation fibrosis & lymphedema) - go for awake nasotracheal intubation with extreme caution by an expert. Else, go for tracheostomy under local anesthesia. Keep emergency cricothyrotomy items (16G needle, 5 mL syringe, size 15 scalpel blade, bougie, 5.5 mm ID cuffed ETT), ready as rescue oxygenation technique, using the scalpel-finger-bougie-ETT technique.
+Maintain oxygenation with spontaneous breathing on HFNC throughout ATI. 
+
+Post-Intubation – The Danger Zone:
+Common immediate consequence of intubation and initiation of mechanical ventilation are:
+Hypotension (due to reduced sympathetic tone and positive pressure ventilation). 
+Hypoxemia (due to worsening ventilation-perfusion mismatch).
+Right mainstem bronchus intubation.
+Ventilator synchrony causing hypoxia, hypercarbia, barotrauma.
+
+A secured airway is not equal to a secure patient in the ICU.
+Immediate Post-Intubation Checklist include:
+Waveform capnography confirmed.
+Bilateral chest rise confirmed.
+BP normalized & vasopressor escalated or titrated.
+Ventilator settings adjusted.
+Sedation ensured (for example Fentanyl 1 to 3 micrograms per kg per hour), and if necessary, muscle relaxant (for example atracurium 0.6 - 0.8 mg per kg per hour) continued for the next few hours.
+
+Initial ventilator settings are volume control mode, tidal volume 6 to 8 mL per kg ideal body weight, respiratory rate (RR) 15 to 20 per min, (use 8 to 10 mL per kg  tidal volume in severe acidosis with RR to match pre-intubation minute ventilation), PEEP 5 to 8 cmH₂O and FiO₂ 100 percent. Adjust ventilator settings based on ABG (pH, PCO2, PO2), driving pressure (that is plateau pressure  minus PEEP), and auto-PEEP.
+
+The events in the first 10 minutes after intubation in ICU decide the outcome of the next six hours.
+
+
+Specific Situations
+ARDS - avoid hypoxia & hypercarbia to avoid worsening of RV failure & cardiac arrest during intubation. 
+Septic shock - increase MAP to more than 70 mmHg by RL or PlasmaLyte bolus & vasopressors prior to intubation to avoid cardiac arrest upon induction agents & positive pressure ventilation.
+DKA & Severe Metabolic Acidosis - these patients have an extremely high minute ventilation demand. Because apnea causes a rapid pH collapse that can lead to immediate arrest, you must minimize the apnea period and match their pre-intubation minute ventilation immediately after the tube is placed. In the first 30 to 60 minutes, pH takes priority over the tidal volume rule of 5 to 8 mL per kg. For example, if a DKA patient has a respiratory rate of 35 and a tidal volume of 600mL, do not put them on a RR of 12 per minute with tidal volume of 380 mL; you must start high (for example,  600 mL tidal volume, 30 per minute RR. Usually heavy sedation and short duration muscle paralysis) is required during this time to prevent patient-ventilator asynchrony. Then reduce the tidal volume to 5 to 8 mL per kg and reduce the RR as the pH stabilizes from other therapies.
+Raised ICP - full dose induction agent and muscle relaxation (for example, Etomidate 0.3 mg per kg, maximum dose 20 mg IV + Rocuronium 1.2 mg per kg) to avoid induction hypotension (by mephentermine bolus) as well as prevent ICP rise and prevent hypertension due to laryngoscopy & intubation. 
+
+Common ICU Airway Errors include:
+Rushing without optimization.
+Overconfidence in DL.
+Underestimating shock.
+Poor post-intubation care.
+
+These errors are predictable, and preventable.
+
+
+Key Message:
+The safest ICU intubation is the one where nothing dramatic happens.
+
+Intubation in the ICU. What is the right thing to do? 
+A Clinical Commentary by Prof. J Kirtania, 24 Jan 2026
