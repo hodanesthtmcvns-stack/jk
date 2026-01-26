@@ -1,0 +1,39 @@
+HBCH and MPMMCC (Tata Memorial Centre) Varanasi
+Protocol (version2, 26Jan2026) for preparation and topical anesthesia of airway for awake flexible video bronchoscopy, awake video laryngoscopy for awake tracheal intubation. This protocol can also be used for other awake bronchoscopic procedures, including deployment of endotracheal or endobronchial brachytherapy therapy devices.
+
+Contraindications:
+Known lignocaine or methylparaben or sodium metabisulfite allergy. ...
+Severe coagulopathy (INR more than 2, or platelets less than fifty thousand per microliter) for translaryngeal block. ...
+Active airway bleeding. ...
+Patient inability to cooperate. ...
+
+Procedure:
+First. ... Explain to the patient the benefits of the procedure and that the procedure will be done by a thin flexible telescope after numbing his or her nose, throat and windpipe. There will be mild discomfort but no pain during the procedure. There might be a temporary feeling of pressure in the nose and throat during the procedure. There will be a temporary dryness of mouth and hoarseness of voice due to medications used for the procedure. Reassure that the whole procedure will be done in the awake condition, and takes about two minutes for scope insertion and examination. Almost all adult patients tolerate the procedure well.
+Second. ... Insert an intravenous cannula 20 or 22 Gauge in the peripheral vein of the hand. Attach monitor: ECG, SpO2, N.I.B.P. ... Record baseline vitals.
+Third. ... Give injection Glycopyrrolate (0point2mg) (1mL) IV bolus (as anti-sialagogue), at least 5 to 10 minutes prior to procedure. This is the key to successful topical anesthesia. Otherwise the lignocaine will trigger salivation and saliva will flush away the 4percent lignocaine and mucosal topical anesthesia won't be achieved. Excess salivation will also obscure video-bronchoscopic and video-laryngoscopic view.
+Fourth. ... Instill (0point5mL) (3 to 4 drops in each nostril - total 6 to 8 drops) of 4percent lignocaine solution into nostrils. Apply (0point05)percent oxymetazoline spray in both nostrils. Apply nasal pledgets or single layer gauze smeared with 2percent lignocaine jelly to both nostrils. Leave for 3 to 5 minutes. Remove pledgets before scope insertion.
+Fifth. ... Trans-laryngeal block: Patient supine with neck extended (unless contraindicated). Draw (2point5)mL 4percent lignocaine in a 5mL syringe. Attach a 22 Gauge Scalp Vein Set to the syringe. Identify and mark the cricothyroid membrane with a skin marker pen. Stabilize the larynx by laryngeal handshake. Puncture the cricothyroid membrane while keeping the Scalp Vein Set Needle stabilized by its wings by the non-dominant hand. Aspirate continuously while advancing to detect intravascular placement (puncture confirmed by aspiration of air in the syringe). Use extension of the thumb to gently aspirate air (not the whole dominant-hand). If blood is aspirated, withdraw and redirect. Stabilize the Scalp Vein Set Needle, check the correct position again, inside the larynx by aspirating air.
+On average, you will get a successful cricothyroid membrane puncture at a depth of 8mm to 20mm (less than an inch depth) in adults.
+The above process can be simplified (if necessary) by using in-plane USG needling for puncturing the cricothyroid membrane. Use a linear probe set at 4cm depth, thyroid or carotid exam type, probe aligned in the short axis (antero-posterior axis) of the larynx on the lateral wall of the larynx, at the level of the cricothyroid membrane. Visualize needle tip entering airway lumen in real-time before injection. Then instill (2point5)mL 4percent lignocaine. Encourage vigorous coughing for thirty seconds. If the patient coughs after the drug is instilled, it will spread well and anesthetize the supraglottic and infra-glottic airway spaces.
+If subcutaneous emphysema occurs, abort injection and proceed with alternative (point no 6) below.
+Sixth. ... Upper airway mucosal atomization: Use 3mL 4percent lignocaine atomization using MADgic atomizer nozzle attached to a 5mL syringe filled with lignocaine 4percent, to reach near the base of the tongue through the mouth - at about 4 to 8 cm insertion depth. Even in severe trismus, you can enter the oral cavity posterior to the molar teeth and atomize the base of the tongue, vallecula, both pyriform fossae and vocal cords.
+For patients with tumor or induration obscuring the thyroid and or cricoid cartilage or trans-laryngeal block cannot be given or aborted, upper airway mucosal atomization becomes the main technique along with 1mL lignocaine 4percent for instillation through bronchoscope's working channel upon entry into larynx (spray as you go).
+If MADgic device is not available: Patient should be semi-sitting. Instill 3mL 4percent lignocaine into the pharynx with a 5 or 6 French size infant feeding tube inserted to about 10 to 12cm depth through the nose into the pharynx. Ask the patient to cough vigorously.
+Total lignocaine dose: approximately, (0point5)+(2point5)+3 = 6mL of 4percent lignocaine = 240mg for a 60kg adult. Maximum safe dose: 4 to 5mg per kg (240 to 300mg for 60kg patient). Do not exceed this limit with additional topicalization.
+
+Ready for Procedure:
+The patient is ready for awake flexible bronchoscopy or awake video laryngoscopy guided procedure. No sedation should be given before or during the procedure.
+Insufflate O₂ at 4 to 6 liters per minute (2 liters per minute in COPD) by nasal oxygen cannula (nasal prongs) during the procedure if the patient is already hypoxic preoperatively.
+
+Pre-Procedure Checklist:
+IV access secured, monitors attached, baseline vitals recorded.
+Glycopyrrolate given (at least 5 to 10 minutes before topical lignocaine).
+Patient counseled, understands - no pain, some pressure during the laryngoscopy and bronchoscopy.
+Nasal topicalization complete, pledgets removed.
+Trans-laryngeal block performed and pharyngeal atomization done; Or, only pharyngeal atomization done, and 1mL 4percent lignocaine saved for laryngobronchial instillation upon bronchoscope entry into larynx.
+Suction available, emergency airway equipment ready.
+
+Post-Procedure Care:
+Nil orally by mouth for 1 to 2 hours until gag reflex returns.
+Monitor for 1 hour for lignocaine toxicity (perioral tingling, tinnitus, confusion, seizures).
+Warn the patient about temporary hoarseness and throat discomfort.
