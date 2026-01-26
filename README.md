@@ -21,7 +21,8 @@ This repository hosts a suite of portable, offline-ready HTML applications desig
 | **Label Generator** | Workflow Efficiency | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/Patient-label-generator-v1.5.html) |
 |**ePAC** | Pre Anesthesia Checkup | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/ePAC-v3.0.html) |
 |**AIR** | Anesthesia Intraoperative Record | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/AIR-v2.0.html) |
-|**TRACHY-score** | Assess need of postoperative tracheostomy after H&N surgeries | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/TRACHY-score-v1.0.html) | 
+|**TRACHY-score** | Assess need of postoperative tracheostomy after H&N surgeries | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/TRACHY-score-v1.0.html) |
+|**IBIDA** | Inpatient Basal Insulin Dosing Assistant | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/IBIDA-v1.4.html) | 
 |**STTS** | Simple Text To Speech in any language | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/STTS-v1.5.html) | 
 
 ## Core Principles
@@ -63,6 +64,9 @@ Healthcare providers may navigate and document Anesthesia Intraoperative Record 
 
 ### TRACHY
 The TRACHY score is a simple, clinically oriented tool to guide post-operative airway management in patients with head and neck cancer undergoing resection with primary flap reconstruction. It helps identify patients who can be managed safely with endotracheal intubation alone and those in whom an elective tracheostomy is indicated.
+
+### IBIDA
+The IBIDA (Inpatient Basal Insulin Dosing Assistant) app is an offline clinical calculator designed to help physicians determine the initial dose and next-day adjustments for once-daily insulin glargine in hospitalized patients. It utilizes patient-specific data—including weight, morning blood sugar, and renal function (eGFR/CrCl)—to standardize basal insulin management during perioperative fasting periods.
 
 ### STTS
 The Simple Text To Speech (STTS) utility provides high-fidelity audio playback for clinical, scientific, academic, and official documents across all browser-supported languages. It features a LLM artefact cleaner that strips away "AI noise" like markdown artifacts and emojis while utilizing an editable symbol dictionary to ensure technical terms and units are pronounced accurately. Designed as a study and training aid, it allows students to navigate sections of books, articles, or notes through smart heading detection and customizable looping of specific text selections for repeated hearing and user customizable playback speeds. As a single-file, offline-first application, it ensures that sensitive clinical, official, professional or academic data remains entirely private by processing everything locally within the browser.
