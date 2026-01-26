@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>IBIDA v1.4 (26Jan2026) — Inpatient Basal Insulin Dosing Assistant (Offline)</title>
+<style>
+  :root{
+    --bg:#0b1220; --card:#121a2b; --ink:#e7eefb; --muted:#9fb3d9;
+    --line:#243152; --brand:#4f8cff; --ok:#2e7d32; --warn:#f9a825; --bad:#c62828;
+  }
+  html,body{height:100%}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial;background:var(--bg);color:var(--ink)}
+  .wrap{max-width:980px;margin:0 auto;padding:18px}
+  h1{font-size:18px;margin:0 0 6px 0}
+  .sub{color:var(--muted);font-size:13px;line-height:1.35;margin-bottom:14px}
+  .grid{display:grid;grid-template-columns:1fr;gap:12px}
+  @media(min-width:880px){ .grid{grid-template-columns: 1.1fr 0.9fr} }
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:0 10px 22px rgba(0,0,0,.18)}
+  .card h2{font-size:14px;margin:0 0 10px 0;color:#cfe0ff}
+  .row{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:10px}
+  @media(min-width:620px){ .row{grid-template-columns: 1fr 1fr} }
+  label{display:block;font-size:12px;color:var(--muted);margin:0 0 6px 0}
+  input,select{
+    width:100%;box-sizing:border-box;background:#0f182a;color:var(--ink);
+    border:1px solid var(--line);border-radius:10px;padding:10px 10px;font-size:14px;
+    outline:none;
+  }
+  input:focus,select:focus{border-color:rgba(79,140,255,.85);box-shadow:0 0 0 3px rgba(79,140,255,.15)}
+  .hint{font-size:12px;color:var(--muted);line-height:1.35;margin-top:4px}
+  .pill{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:999px;padding:7px 10px;background:#0f182a}
+  .pill input{width:auto;margin:0}
+  .pill span{font-size:12px;color:var(--muted)}
+  .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+  button{
+    border:1px solid var(--line);background:#0f182a;color:var(--ink);
+    border-radius:12px;padding:10px 12px;font-size:13px;cursor:pointer
+  }
+  button.primary{background:rgba(79,140,255,.18);border-color:rgba(79,140,255,.55)}
+  button:active{transform:translateY(1px)}
+  .badge{display:inline-block;padding:3px 8px;border-radius:999px;font-size:12px;border:1px solid var(--line);background:#0f182a;color:var(--muted)}
+  .badge.ok{border-color:rgba(46,125,50,.6);color:#a5f2b0}
+  .badge.warn{border-color:rgba(249,168,37,.6);color:#ffe39a}
+  .badge.bad{border-color:rgba(198,40,40,.6);color:#ffb0b0}
+
+  /* FORMATTED OUTPUT (high contrast) */
+  .orderBox{
+    background:#07111f;
+    border:2px solid rgba(79,140,255,.55);
+    border-radius:14px;
+    padding:12px;
+  }
+  .orderTitle{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px
+  }
+  .orderTitle b{color:#d8e6ff}
+  .orderSteps{
+    margin:0;padding-left:18px
+  }
+  .orderSteps li{
+    margin:8px 0;
+    font-weight:800;
+    color:#ffffff;
+    letter-spacing:0.1px;
+    line-height:1.35;
+  }
+  .orderSteps li span{
+    font-weight:900;
+    color:#ffffff;
+  }
+
+  /* ONLY NUMERICAL DOSE IN RED BOLD */
+  .doseRed{
+    color:#ff2b2b;
+    font-weight:900;
+  }
+
+  .dangerNote{
+    color:#ffb0b0;
+    font-weight:900;
+  }
+
+  /* Plain text output */
+  .outPlain{
+    margin-top:10px;
+    background:#0f182a;border:1px dashed rgba(159,179,217,.35);
+    border-radius:14px;padding:12px;white-space:pre-wrap;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,"Liberation Mono","Courier New",monospace;
+    font-size:13px;line-height:1.42;
+  }
+
+  details{border:1px solid var(--line);border-radius:14px;padding:10px;background:#0f182a}
+  details summary{cursor:pointer;color:#cfe0ff;font-size:13px}
+  footer{margin-top:14px;color:var(--muted);font-size:12px;line-height:1.45}
+  .tiny{font-size:11px;color:var(--muted)}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+  <h1>IBIDA (Inpatient Basal Insulin Dosing Assistant) — v1.4 (26Jan2026)</h1>
+  <div class="sub">
+    Offline tool for an <b>initial once-daily insulin glargine PFS dose</b> and <b>next-day adjustment</b> using weight, last 06:00 FBS, and renal function.
+    Optional: HbA1c, previous Total Daily Insulin (TDD). Excludes shock/hypothermia.
+    <br><b>Perioperative fasting here means:</b> total fasting time (pre-op + post-op) expected to be <b>&gt; 12 hours</b>.
+	<b>[Author & Copyright: © Prof J Kirtania, 2026]</b>
+  </div>
+
+  <div class="grid">
+    <!-- INPUTS -->
+    <div class="card">
+      <h2>1) Mandatory inputs</h2>
+
+      <div class="row">
+        <div>
+          <label>Actual body weight (kg) *</label>
+          <input id="wt" type="number" inputmode="decimal" min="20" step="0.1" placeholder="e.g., 62.0">
+        </div>
+        <div>
+          <label>Last 06:00 AM FBS (mg/dL) *</label>
+          <input id="fbs" type="number" inputmode="numeric" min="40" step="1" placeholder="e.g., 176">
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Age (years) *</label>
+          <input id="age" type="number" inputmode="numeric" min="18" step="1" placeholder="e.g., 54">
+        </div>
+        <div>
+          <label>Sex *</label>
+          <select id="sex">
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Serum creatinine *</label>
+          <div style="display:flex; gap:10px; align-items:center">
+            <input id="scr" type="number" inputmode="decimal" min="0.2" step="0.01" placeholder="e.g., 1.20">
+            <select id="scrUnit" style="max-width:140px">
+              <option value="mgdl">mg/dL</option>
+              <option value="umol">µmol/L</option>
+            </select>
+          </div>
+          <div class="hint">If µmol/L: app converts to mg/dL (divide by 88.4).</div>
+        </div>
+        <div>
+          <label>Height (cm) (optional; for BMI display only)</label>
+          <input id="ht" type="number" inputmode="numeric" min="120" step="1" placeholder="e.g., 168">
+        </div>
+      </div>
+
+      <h2 style="margin-top:14px">2) Optional inputs</h2>
+      <div class="row">
+        <div>
+          <label>HbA1c (%) (optional)</label>
+          <input id="a1c" type="number" inputmode="decimal" min="4" max="18" step="0.1" placeholder="e.g., 9.2">
+        </div>
+        <div>
+          <label>Previous Total Daily Insulin (TDD, units/day) (optional)</label>
+          <input id="tdd" type="number" inputmode="decimal" min="0" step="1" placeholder="e.g., 42">
+          <div class="hint">If provided (&gt;0), app uses it only to <b>estimate total glargine dose</b>. No subtraction/balance is performed.</div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="pill">
+          <input id="npo" type="checkbox" checked>
+          <span>Perioperative fasting (pre-op + post-op total) expected &gt; 12 hours</span>
+        </div>
+        <div class="pill">
+          <input id="noShock" type="checkbox" checked>
+          <span>No shock &amp; no hypothermia (required)</span>
+        </div>
+      </div>
+
+      <div class="btns">
+        <button class="primary" id="calcBtn">Calculate</button>
+        <button id="resetBtn">Reset</button>
+      </div>
+
+      </div>
+
+    <!-- OUTPUT -->
+    <div class="card">
+      <h2>Output</h2>
+      <div id="statusLine" class="hint"></div>
+
+      <!-- Formatted orders -->
+      <div id="orderBox" class="orderBox" style="display:none">
+        <div class="orderTitle">
+          <b>Basal Insulin Orders on IPD Admission</b>
+          <span id="ckdBadge" class="badge"></span>
+        </div>
+        <ol class="orderSteps" id="orderSteps"></ol>
+      </div>
+
+      <!-- Plain text output -->
+      <div id="plainOut" class="outPlain">Enter inputs → “Calculate”.</div>
+
+      <div class="btns">
+        <button id="copyPlainBtn">Copy plain text (for CIS)</button>
+        <button id="downloadTxtBtn">Download TXT</button>
+      </div>
+
+      <details style="margin-top:12px">
+        <summary>Show caveats</summary>
+        <div class="hint" style="margin-top:10px;line-height:1.5">
+          <b>Clinical caveats (minimum):</b><br>
+          • For DKA/HHS, shock, vasopressors, severe sepsis, hypothermia, pregnancy → follow critical care / IV insulin protocols.<br>
+          • If type 1 diabetes or pancreatogenic diabetes: basal insulin is mandatory; avoid under-dosing; monitor closely.<br>
+          • CKD (eGFR &lt; 60) increases hypoglycemia risk → conservative dose and closer monitoring.<br>
+          • Steroids, infection, enteral/TPN feeds can increase insulin requirement substantially.<br>
+          • Hypoglycemia treatment in this order uses <b>D25 100 mL IV stat;</b>ensure local availability.
+        </div>
+      </details>
+    </div>
+  </div>
+
+  <footer>
+    <details>
+      <summary>License &amp; Disclaimer</summary>
+      <div style="margin-top:10px">
+        <div><b>Author &amp; Copyright:</b> © Prof J Kirtania, 2026</div>
+        <div style="margin-top:8px">
+          <b>License:</b> GNU General Public License, version 3 (GPL-3.0) or (at your option) any later version.
+          <br>“This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.”
+          <br>“This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.”
+        </div>
+        <div class="tiny" style="margin-top:6px">
+          License text: https://www.gnu.org/licenses/gpl-3.0.html
+        </div>
+        <div style="margin-top:10px">
+          <b>Medical Disclaimer (Not SaMD):</b> This tool is for clinician convenience/education only. It does not diagnose, treat, or provide patient-specific medical advice.
+          The user remains solely responsible for verifying inputs, interpreting outputs, and ensuring patient safety.
+          This software is <b>not</b> certified as Software as a Medical Device (SaMD).
+        </div>
+      </div>
+    </details>
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const $ = (id)=>document.getElementById(id);
+
+  function roundUnits(x){
+    if (!isFinite(x)) return null;
+    const r = Math.round(x);
+    return (r < 0) ? 0 : r;
+  }
+
+  function toMgDl(scr, unit){
+    const v = Number(scr);
+    if (!isFinite(v) || v<=0) return NaN;
+    return (unit === "umol") ? (v/88.4) : v;
+  }
+
+  function crclCockcroftGault(age, wtKg, scrMgDl, sex){
+    const base = ((140 - age) * wtKg) / (72 * scrMgDl);
+    return base * ((sex === "female") ? 0.85 : 1.0);
+  }
+
+  function egfrCkdEpi2021(age, scrMgDl, sex){
+    const K = (sex === "female") ? 0.7 : 0.9;
+    const a = (sex === "female") ? -0.241 : -0.302;
+    const scrK = scrMgDl / K;
+    const minPart = Math.min(scrK, 1);
+    const maxPart = Math.max(scrK, 1);
+    const sexFactor = (sex === "female") ? 1.012 : 1.0;
+    return 142 * Math.pow(minPart, a) * Math.pow(maxPart, -1.200) * Math.pow(0.9938, age) * sexFactor;
+  }
+
+  function stageCkd(egfr){
+    if (!isFinite(egfr)) return "NA";
+    if (egfr >= 90) return "G1";
+    if (egfr >= 60) return "G2";
+    if (egfr >= 45) return "G3a";
+    if (egfr >= 30) return "G3b";
+    if (egfr >= 15) return "G4";
+    return "G5";
+  }
+
+  function clamp(x, lo, hi){
+    return Math.max(lo, Math.min(hi, x));
+  }
+
+  function bmi(weightKg, heightCm){
+    const h = Number(heightCm);
+    if (!isFinite(h) || h<=0) return null;
+    const m = h/100;
+    return weightKg / (m*m);
+  }
+
+  function getBasalFactorInsulinNaive(isCkd3aPlus, fbs, a1c){
+    if (isCkd3aPlus){
+      if (fbs > 200) return 0.20;
+      if (fbs >= 141) return 0.18;
+      return 0.15;
+    }
+    const hasA1c = isFinite(a1c) && a1c>0;
+    if (fbs > 200 || (hasA1c && a1c > 10)) return 0.25;
+    if (fbs >= 141 || (hasA1c && a1c >= 8)) return 0.20;
+    return 0.15;
+  }
+
+  function estimateTotalGlargineFromTDD(tdd, isCkd3aPlus){
+    const basalShare = 0.45;
+    const npoFactor = isCkd3aPlus ? 0.65 : 0.80;
+    return (tdd * basalShare * npoFactor);
+  }
+
+  function nextDayAdjustmentByFBS(fbs){
+    if (!isFinite(fbs)) return "";
+    if (fbs < 70)  return "If any CBG <70 or nocturnal hypo: reduce glargine by ~20% next day (and treat cause).";
+    if (fbs < 100) return "If recurrent lows / overnight hypo risk: reduce glargine by ~10% next day.";
+    if (fbs <= 140) return "If stable: continue same glargine dose next day.";
+    if (fbs <= 180) return "If no nocturnal hypoglycemia: increase glargine by ~10% next day.";
+    if (fbs <= 250) return "If no nocturnal hypoglycemia: increase glargine by ~20% next day.";
+    return "Increase glargine by ~20% next day + assess causes (steroids, infection, dextrose, missed dose).";
+  }
+
+  function badgeForCKD(isCkd3aPlus){
+    const b = $("ckdBadge");
+    if (isCkd3aPlus){
+      b.className = "badge warn";
+      b.textContent = "CKD ≥3a flagged";
+    } else {
+      b.className = "badge ok";
+      b.textContent = "CKD ≥3a not flagged";
+    }
+  }
+
+  function makePlainText(payload){
+    const L = [];
+    L.push("IBIDA v1.4 (26Jan2026) — IPD ADMISSION ORDER (Periop fasting >12h)");
+    L.push("---------------------------------------------------------------");
+    L.push("1) Stop all oral antidiabetic drugs, mixed acting insulin, other insulins, on IPD admission.");
+    L.push(`2) Injection Glargine PFS ${payload.doseU} units subcutaneous injection at 8 PM, once daily, continue through the day of surgery.`);
+    L.push("3) Check CBG (capillary blood sugar / HGT) at 6am, 2pm, 10 pm and SOS if patient has symptoms like altered response to verbal command, confusion, sudden sweating, tremor, palpitations, or CBG < 70mg/dL. In that case give 100 mL of D25 IV stat, check CBG immediately, and call doctor.");
+    L.push("");
+    L.push("Renal function estimates:");
+    L.push(`• eGFR (CKD-EPI 2021): ${payload.egfr.toFixed(1)} mL/min/1.73m² (Stage: ${payload.ckdStage})`);
+    L.push(`• CrCl (Cockcroft–Gault): ${payload.crcl.toFixed(1)} mL/min`);
+    if (payload.bmi !== null) L.push(`• BMI (display only): ${payload.bmi.toFixed(1)} kg/m²`);
+    L.push("");
+    L.push("Inputs used:");
+    L.push(`• Weight ${payload.wt.toFixed(1)} kg; 06:00 FBS ${payload.fbs} mg/dL; Age ${payload.age} y; Sex ${payload.sex}`);
+    L.push(`• Creatinine ${payload.scrMgDl.toFixed(2)} mg/dL`);
+    L.push(`• HbA1c: ${payload.a1cText}`);
+    L.push(`• Previous TDD: ${payload.tddText}`);
+    L.push("");
+    L.push("Dose note:");
+    L.push(`• ${payload.logicNote}`);
+    if (payload.isCkd3aPlus) L.push("• CKD ≥3a flagged: conservative dosing + tighter monitoring for hypoglycemia.");
+    L.push("");
+    L.push("Next-day adjustment guidance (based on 06:00 FBS):");
+    L.push(`• ${payload.nextAdj}`);
+    L.push("");
+    L.push("© Prof J Kirtania 2026 | GPL-3.0-or-later | Not SaMD");
+    return L.join("\n");
+  }
+
+  function calculate(){
+    const wt = Number($("wt").value);
+    const fbs = Number($("fbs").value);
+    const age = Number($("age").value);
+    const sex = $("sex").value;
+    const scrRaw = $("scr").value;
+    const scrUnit = $("scrUnit").value;
+    const scrMgDl = toMgDl(scrRaw, scrUnit);
+    const ht = Number($("ht").value);
+    const a1c = Number($("a1c").value);
+    const tdd = Number($("tdd").value);
+    const npo = $("npo").checked;
+    const noShock = $("noShock").checked;
+
+    const missing = [];
+    if (!(isFinite(wt) && wt>0)) missing.push("weight");
+    if (!(isFinite(fbs) && fbs>0)) missing.push("06:00 FBS");
+    if (!(isFinite(age) && age>=18)) missing.push("age");
+    if (!(isFinite(scrMgDl) && scrMgDl>0)) missing.push("serum creatinine");
+    if (!noShock) missing.push("No shock & no hypothermia (must be checked)");
+    if (!npo) missing.push("Perioperative fasting >12h (must be checked)");
+
+    if (missing.length){
+      $("statusLine").innerHTML = `<span class="badge bad">Incomplete</span> Please provide/confirm: ${missing.join(", ")}.`;
+      $("orderBox").style.display = "none";
+      $("plainOut").textContent = `Enter mandatory inputs.\nMissing/unchecked: ${missing.join(", ")}.`;
+      return;
+    }
+
+    const crcl = crclCockcroftGault(age, wt, scrMgDl, sex);
+    const egfr = egfrCkdEpi2021(age, scrMgDl, sex);
+    const ckdStage = stageCkd(egfr);
+    const isCkd3aPlus = (isFinite(egfr) && egfr < 60);
+
+    const bmiVal = bmi(wt, ht);
+    const hasA1c = isFinite(a1c) && a1c>0;
+    const hasTdd = isFinite(tdd) && tdd>0;
+
+    let glargineU = null;
+    let logicNote = "";
+
+    if (hasTdd){
+      glargineU = estimateTotalGlargineFromTDD(tdd, isCkd3aPlus);
+      logicNote = "Total glargine dose estimated from previous TDD (basal share estimate × periop fasting reduction). No subtraction/balance is performed.";
+    } else {
+      const factor = getBasalFactorInsulinNaive(isCkd3aPlus, fbs, hasA1c ? a1c : NaN);
+      glargineU = wt * factor;
+      logicNote = `Total glargine dose estimated from weight-based factor ${factor.toFixed(2)} U/kg/day (periop fasting >12h start).`;
+      glargineU = clamp(glargineU, 4, 0.30 * wt);
+    }
+
+    glargineU = Math.max(4, glargineU);
+    const doseU = roundUnits(glargineU);
+    const nextAdj = nextDayAdjustmentByFBS(fbs);
+
+    $("statusLine").innerHTML =
+      `${isCkd3aPlus ? '<span class="badge warn">CKD ≥3a flagged</span>' : '<span class="badge ok">CKD ≥3a not flagged</span>'}
+       <span class="badge">Target 100–180 mg/dL</span>`;
+    badgeForCKD(isCkd3aPlus);
+
+    // formatted steps: ONLY numeric dose in red
+    const steps = [];
+    steps.push(`<li><span>Stop all oral antidiabetic drugs, mixed acting insulin, other insulins, on IPD admission.</span></li>`);
+    steps.push(`<li><span>Injection Glargine PFS <span style="color: red !important;">${doseU}</span> units subcutaneous injection at 8 PM, once daily, continue through the day of surgery.</span></li>`);
+    steps.push(`<li><span>Check CBG (capillary blood sugar / HGT) at 6am, 2pm, 10 pm and SOS if patient has symptoms like altered response to verbal command, confusion, sudden sweating, tremor, palpitations, or CBG &lt; 70mg/dL. In that case give <span class="dangerNote">100 mL of D25 IV stat</span>, check CBG immediately, and call doctor.</span></li>`);
+    $("orderSteps").innerHTML = steps.join("");
+    $("orderBox").style.display = "block";
+
+    const payload = {
+      doseU,
+      wt, fbs: Math.round(fbs), age: Math.round(age), sex,
+      scrMgDl,
+      egfr, crcl,
+      ckdStage,
+      isCkd3aPlus,
+      bmi: (isFinite(bmiVal) ? bmiVal : null),
+      a1cText: (hasA1c ? a1c.toFixed(1)+" %" : "NA"),
+      tddText: (hasTdd ? Math.round(tdd)+" U/day" : "NA"),
+      logicNote,
+      nextAdj
+    };
+    $("plainOut").textContent = makePlainText(payload);
+  }
+
+  function downloadTxt(filename, text){
+    const blob = new Blob([text], {type:"text/plain;charset=utf-8"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 500);
+  }
+
+  $("calcBtn").addEventListener("click", calculate);
+
+  $("copyPlainBtn").addEventListener("click", ()=>{
+    const txt = $("plainOut").textContent || "";
+    if (!txt.trim()) return;
+    navigator.clipboard.writeText(txt).then(()=>{
+      const old = $("copyPlainBtn").textContent;
+      $("copyPlainBtn").textContent = "Copied ✓";
+      setTimeout(()=> $("copyPlainBtn").textContent = old, 900);
+    }).catch(()=>{
+      alert("Copy failed (clipboard blocked). You can select and copy manually.");
+    });
+  });
+
+  $("downloadTxtBtn").addEventListener("click", ()=>{
+    const txt = $("plainOut").textContent || "";
+    if (!txt.trim() || txt.includes("Enter inputs")) return;
+    const now = new Date();
+    const pad = (n)=>String(n).padStart(2,"0");
+    const fname = `IBIDA_v1.4_${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}.txt`;
+    downloadTxt(fname, txt);
+  });
+
+  $("resetBtn").addEventListener("click", ()=>{
+    if (!confirm("Reset all fields?")) return;
+    ["wt","fbs","age","scr","ht","a1c","tdd"].forEach(id=>$(id).value="");
+    $("scrUnit").value = "mgdl";
+    $("sex").value = "male";
+    $("npo").checked = true;
+    $("noShock").checked = true;
+    $("statusLine").textContent = "";
+    $("orderBox").style.display = "none";
+    $("plainOut").textContent = "Enter inputs → “Calculate”.";
+  });
+
+})();
+</script>
+</body>
+</html>
