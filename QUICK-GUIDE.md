@@ -18,6 +18,7 @@
 | **AIR** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/AIR-v2.0.html) | [📖 About & Help](./docs/AIR-Help.md) |
 |**TRACHY-score** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/TRACHY-score-v1.0.html) | [📖 About & Help](./docs/TRACHY-score-v1.0-Help.md) |
 |**IBIDA** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/IBIDA-v1.4.html) | [📖 About & Help](./docs/IBIDA-v1.4-About-Help.md) |
+|**ADR Reporter** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/ADR-Reporter-v1.4.html) | [📖 About & Help](./docs/ADR-Reporter-v1.4-About-Help.md) |
 |**STTS (Simple Text to Speech)** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/STTS-v1.5.html) | [📖 About & Help](./docs/STTS-v1.5-About-Help.md) |
 
 
