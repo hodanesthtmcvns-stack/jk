@@ -23,6 +23,7 @@ This repository hosts a suite of portable, offline-ready HTML applications desig
 |**AIR** | Anesthesia Intraoperative Record | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/AIR-v2.0.html) |
 |**TRACHY-score** | Assess need of postoperative tracheostomy after H&N surgeries | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/TRACHY-score-v1.0.html) |
 |**IBIDA** | Inpatient Basal Insulin Dosing Assistant | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/IBIDA-v1.4.html) | 
+|**ADR-Reporter** | Adverse Drug Reaction Reporting | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/ADR-Reporter-v1.4.html) | 
 |**STTS** | Simple Text To Speech in any language | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/STTS-v1.5.html) | 
 
 ## Core Principles
