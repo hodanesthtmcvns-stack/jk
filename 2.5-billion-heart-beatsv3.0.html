@@ -1,0 +1,818 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Metabolic Life-History Simulator v3</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+    onload="renderMathInElement(document.body,{delimiters:[{left:'$',right:'$',display:false}]})"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink:       #111111;
+      --muted:     #666;
+      --rule:      #e0e0e0;
+      --bg:        #f5f4f1;
+      --card:      #ffffff;
+      --mono:      'DM Mono', monospace;
+      --serif:     'DM Serif Display', Georgia, serif;
+      --sans:      'DM Sans', sans-serif;
+
+      /* tier accent colours */
+      --c-cardiac:  #2563eb;   /* blue  -- cardiac baseline */
+      --c-exercise: #16a34a;   /* green -- voluntary exercise */
+      --c-adl:      #d97706;   /* amber -- ADL bursts */
+      --c-survival: #dc2626;   /* red   -- survival stress */
+    }
+
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+      padding: 2.5rem 1.25rem 5rem;
+    }
+
+    .page { max-width: 780px; margin: 0 auto; }
+
+    /* ── Header ── */
+    header {
+      border-bottom: 2px solid var(--ink);
+      padding-bottom: 1.25rem;
+      margin-bottom: 2rem;
+    }
+    .eyebrow {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--c-survival);
+      margin-bottom: 0.5rem;
+    }
+    h1 {
+      font-family: var(--serif);
+      font-size: clamp(1.8rem, 5vw, 2.7rem);
+      font-weight: 400;
+      line-height: 1.1;
+    }
+    h1 em { font-style: italic; color: var(--c-survival); }
+    .subtitle {
+      margin-top: 0.75rem;
+      font-size: 0.9rem;
+      color: var(--muted);
+      max-width: 600px;
+      line-height: 1.7;
+    }
+
+    /* ── Tier section headings ── */
+    .tier-heading {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 0.6rem;
+      margin-bottom: 1.2rem;
+    }
+    .tier-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* ── Grid ── */
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+    @media (max-width: 620px) {
+      .grid-3, .grid-2 { grid-template-columns: 1fr; }
+    }
+
+    /* ── Panel ── */
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--rule);
+      border-radius: 5px;
+      padding: 1.4rem;
+    }
+    .panel.full { grid-column: 1 / -1; }
+
+    /* ── Tier accent left border ── */
+    .panel.t-cardiac  { border-left: 3px solid var(--c-cardiac); }
+    .panel.t-exercise { border-left: 3px solid var(--c-exercise); }
+    .panel.t-adl      { border-left: 3px solid var(--c-adl); }
+    .panel.t-survival { border-left: 3px solid var(--c-survival); }
+
+    /* ── Controls ── */
+    .control { margin-bottom: 1.1rem; }
+    .control:last-child { margin-bottom: 0; }
+    .ctrl-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 0.3rem;
+    }
+    .ctrl-label { font-size: 0.83rem; font-weight: 500; }
+    .ctrl-hint  { font-size: 0.72rem; color: var(--muted); margin-bottom: 0.4rem; line-height: 1.4; }
+    .ctrl-value {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      font-weight: 500;
+      min-width: 4rem;
+      text-align: right;
+    }
+
+    /* Slider colour theming via CSS variable */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 3px;
+      background: var(--rule);
+      border-radius: 2px;
+      outline: none;
+      cursor: pointer;
+      --thumb-color: var(--ink);
+    }
+    input[type="range"].cardiac  { --thumb-color: var(--c-cardiac); }
+    input[type="range"].exercise { --thumb-color: var(--c-exercise); }
+    input[type="range"].adl      { --thumb-color: var(--c-adl); }
+    input[type="range"].survival { --thumb-color: var(--c-survival); }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      background: var(--thumb-color);
+      border: 2px solid var(--card);
+      box-shadow: 0 0 0 1px var(--thumb-color);
+      transition: transform 0.15s;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.3); }
+    input[type="range"]::-moz-range-thumb {
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      background: var(--thumb-color);
+      border: 2px solid var(--card);
+      cursor: pointer;
+    }
+
+    /* ── Metric grid ── */
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--rule);
+      border: 1px solid var(--rule);
+      border-radius: 5px;
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+    }
+    @media (max-width: 500px) { .metric-grid { grid-template-columns: 1fr 1fr; } }
+
+    .metric {
+      background: var(--card);
+      padding: 1rem 1.1rem;
+    }
+    .metric-label {
+      font-family: var(--mono);
+      font-size: 0.63rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.3rem;
+    }
+    .metric-num {
+      font-family: var(--serif);
+      font-size: 1.6rem;
+      line-height: 1;
+    }
+    .metric-unit {
+      font-family: var(--sans);
+      font-size: 0.72rem;
+      font-weight: 300;
+      color: var(--muted);
+      margin-left: 0.2rem;
+    }
+    .metric.primary .metric-num { color: var(--c-survival); }
+    .metric.pos     .metric-num { color: var(--c-exercise); }
+    .metric.neg     .metric-num { color: var(--c-survival); }
+
+    /* ── Stress breakdown bar ── */
+    .stress-bar-wrap { margin-bottom: 1.5rem; }
+    .stress-bar-label {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+    }
+    .stress-bar {
+      display: flex;
+      height: 20px;
+      border-radius: 3px;
+      overflow: hidden;
+      gap: 1px;
+      background: var(--rule);
+    }
+    .sb-seg {
+      transition: width 0.3s ease;
+      height: 100%;
+    }
+    .sb-legend {
+      display: flex;
+      gap: 1.2rem;
+      margin-top: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .sb-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+    .sb-swatch {
+      width: 8px; height: 8px;
+      border-radius: 1px;
+      flex-shrink: 0;
+    }
+
+    /* ── Charts ── */
+    .chart-row {
+      display: grid;
+      grid-template-columns: 1.6fr 1fr;
+      gap: 1rem;
+      margin-bottom: 0;
+    }
+    @media (max-width: 520px) { .chart-row { grid-template-columns: 1fr; } }
+    .chart-wrap { position: relative; height: 190px; }
+    .chart-title {
+      font-family: var(--mono);
+      font-size: 0.63rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+    }
+
+    /* ── Warning ── */
+    .warning {
+      display: none;
+      background: #fff8e1;
+      border-left: 3px solid #f59e0b;
+      padding: 0.6rem 1rem;
+      font-size: 0.78rem;
+      color: #78350f;
+      border-radius: 0 4px 4px 0;
+      margin-bottom: 1rem;
+      line-height: 1.55;
+    }
+    .warning.visible { display: block; }
+
+    /* ── Footer ── */
+    footer {
+      margin-top: 2.5rem;
+      border-top: 1px solid var(--rule);
+      padding-top: 1.2rem;
+      font-size: 0.78rem;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+    footer strong { color: var(--ink); font-weight: 500; }
+
+    /* ── Tooltip popover ── */
+    .tip-icon {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      background: var(--rule);
+      color: var(--muted);
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-align: center;
+      line-height: 14px;
+      cursor: help;
+      margin-left: 4px;
+      vertical-align: middle;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <div class="eyebrow">Computational Physiology · v3.0 | License: GNU GPL v3. Copyright (C) [2026] [Prof. Jyotirmay Kirtania]| 2.5 Billion Heart Beats: Your finite biological capital. Will you spend it all on the friction of the daily grind, or invest in the uncomfortable sprints that buy back your future?
+    </div>
+    <h1>Metabolic <em>Life-History</em> Simulator</h1>
+    <p class="subtitle">
+      Your heart has a budget of roughly 2.5 billion beats. How you spend it -- and how you
+      <em>strengthen</em> it -- determines longevity. This model distinguishes three physiologically
+      distinct activity tiers: voluntary exercise, activities of daily living (ADL), and acute
+      survival stress. Each has a different biological cost and adaptive value.
+    </p>
+  </header>
+
+  <!-- ────────────────────────────────────────────
+       TIER 0 -- Cardiac Baseline
+  ──────────────────────────────────────────── -->
+  <div class="grid-2">
+
+    <div class="panel t-cardiac">
+      <div class="tier-heading">
+        <span class="tier-dot" style="background:var(--c-cardiac)"></span>
+        Tier 0 -- Cardiac Baseline
+      </div>
+
+      <div class="control">
+        <div class="ctrl-row">
+          <span class="ctrl-label">Resting Heart Rate</span>
+          <span class="ctrl-value" id="hr_val" style="color:var(--c-cardiac)">60 BPM</span>
+        </div>
+        <div class="ctrl-hint">Lower = fewer beats spent at rest. Athletes often 40–50 BPM.</div>
+        <input type="range" class="cardiac" id="hr" min="40" max="100" value="60" step="1">
+      </div>
+
+      <div class="control">
+        <div class="ctrl-row">
+          <span class="ctrl-label">Mean Arterial Pressure</span>
+          <span class="ctrl-value" id="map_val" style="color:var(--c-cardiac)">90 mmHg</span>
+        </div>
+        <div class="ctrl-hint">Afterload proxy. Hypertension above 90 mmHg accelerates wear.</div>
+        <input type="range" class="cardiac" id="map" min="60" max="140" value="90" step="1">
+      </div>
+
+      <div class="control">
+        <div class="ctrl-row">
+          <span class="ctrl-label">Vagal Tone Index (HRV)</span>
+          <span class="ctrl-value" id="vagal_val" style="color:var(--c-cardiac)">1.00×</span>
+        </div>
+        <div class="ctrl-hint">Heart Rate Variability -- higher = better recovery capacity. 1× = average.</div>
+        <input type="range" class="cardiac" id="vagal" min="0.7" max="1.5" value="1.0" step="0.05">
+      </div>
+    </div>
+
+    <!-- ────────────────────────────────────────────
+         TIER 1 -- Voluntary Exercise
+    ──────────────────────────────────────────── -->
+    <div class="panel t-exercise">
+      <div class="tier-heading">
+        <span class="tier-dot" style="background:var(--c-exercise)"></span>
+        Tier 1 -- Voluntary Exercise
+        <span class="tip-icon" title="Planned, chosen exercise. Produces adaptive benefits: stroke volume, mitochondrial density, vagal tone. Costs beats but pays dividends.">?</span>
+      </div>
+
+      <div class="control">
+        <div class="ctrl-row">
+          <span class="ctrl-label">Moderate Activity</span>
+          <span class="ctrl-value" id="mod_val" style="color:var(--c-exercise)">5 hrs/wk</span>
+        </div>
+        <div class="ctrl-hint">Walking, cycling, swimming -- avg. 100 BPM. Primarily aerobic adaptation.</div>
+        <input type="range" class="exercise" id="mod" min="0" max="25" value="5" step="0.5">
+      </div>
+
+      <div class="control">
+        <div class="ctrl-row">
+          <span class="ctrl-label">High-Intensity / Sprint</span>
+          <span class="ctrl-value" id="sprint_val" style="color:var(--c-exercise)">2.0 hrs/wk</span>
+        </div>
+        <div class="ctrl-hint">HIIT, intervals, hard running. Peak HR reached. Strongest adaptive signal.</div>
+        <input type="range" class="exercise" id="sprint" min="0" max="15" value="2" step="0.5">
+      </div>
+
+      <div class="control">
+        <div class="ctrl-row">
+          <span class="ctrl-label">Peak Exercise HR</span>
+          <span class="ctrl-value" id="hrmax_val" style="color:var(--c-exercise)">160 BPM</span>
+        </div>
+        <div class="ctrl-hint">Your HR ceiling during high-intensity bouts. Independent of resting HR.</div>
+        <input type="range" class="exercise" id="hrmax" min="100" max="200" value="160" step="5">
+      </div>
+    </div>
+  </div>
+
+  <!-- ────────────────────────────────────────────
+       TIER 2 -- Activities of Daily Living (ADL)
+  ──────────────────────────────────────────── -->
+  <div class="grid-2">
+
+    <div class="panel t-adl">
+      <div class="tier-heading">
+        <span class="tier-dot" style="background:var(--c-adl)"></span>
+        Tier 2 -- Activities of Daily Living (ADL)
+        <span class="tip-icon" title="Unplanned functional exertion: stairs, carrying loads, rushing for transport, manual labour. Produces partial adaptive benefit without full recovery planning.">?</span>
+      </div>
+
+      <div class="control">
+        <div class="ctrl-row">
+          <span class="ctrl-label">ADL Burst Frequency</span>
+          <span class="ctrl-value" id="adl_freq_val" style="color:var(--c-adl)">8 /day</span>
+        </div>
+        <div class="ctrl-hint">Brief exertions per day: stair climbs, carrying groceries, rushing.</div>
+        <input type="range" class="adl" id="adl_freq" min="0" max="40" value="8" step="1">
+      </div>
+
+      <div class="control">
+        <div class="ctrl-row">
+          <span class="ctrl-label">ADL Burst Duration</span>
+          <span class="ctrl-value" id="adl_dur_val" style="color:var(--c-adl)">2 min each</span>
+        </div>
+        <div class="ctrl-hint">Average length of each ADL burst. 1–3 min is typical.</div>
+        <input type="range" class="adl" id="adl_dur" min="0.5" max="10" value="2" step="0.5">
+      </div>
+
+      <div class="control">
+        <div class="ctrl-row">
+          <span class="ctrl-label">ADL Peak HR</span>
+          <span class="ctrl-value" id="adl_hr_val" style="color:var(--c-adl)">120 BPM</span>
+        </div>
+        <div class="ctrl-hint">Typical: stair dash ~120, heavy carry ~110, brisk rushing ~130 BPM.</div>
+        <input type="range" class="adl" id="adl_hr" min="90" max="160" value="120" step="5">
+      </div>
+    </div>
+
+    <!-- ────────────────────────────────────────────
+         TIER 3 -- Acute Survival Stress
+    ──────────────────────────────────────────── -->
+    <div class="panel t-survival">
+      <div class="tier-heading">
+        <span class="tier-dot" style="background:var(--c-survival)"></span>
+        Tier 3 -- Acute Survival / Threat Stress
+        <span class="tip-icon" title="Fight-or-flight events: accidents, confrontations, near-misses, extreme fear. Involuntary, cortisol + adrenaline-driven. Short-term beneficial; chronically damaging via allostatic overload.">?</span>
+      </div>
+
+      <div class="control">
+        <div class="ctrl-row">
+          <span class="ctrl-label">Survival Events / Year</span>
+          <span class="ctrl-value" id="surv_freq_val" style="color:var(--c-survival)">12 /yr</span>
+        </div>
+        <div class="ctrl-hint">Acute high-threat moments -- near-accidents, severe confrontations, emergencies.</div>
+        <input type="range" class="survival" id="surv_freq" min="0" max="100" value="12" step="1">
+      </div>
+
+      <div class="control">
+        <div class="ctrl-row">
+          <span class="ctrl-label">Cortisol Load Index</span>
+          <span class="ctrl-value" id="surv_cortisol_val" style="color:var(--c-survival)">1.0×</span>
+        </div>
+        <div class="ctrl-hint">Chronic background stress level. Higher = slower recovery from each event. 1× = moderate life stress.</div>
+        <input type="range" class="survival" id="surv_cortisol" min="0.5" max="3.0" value="1.0" step="0.1">
+      </div>
+
+      <div class="control">
+        <div class="ctrl-row">
+          <span class="ctrl-label">Acute HR Spike</span>
+          <span class="ctrl-value" id="surv_hr_val" style="color:var(--c-survival)">175 BPM</span>
+        </div>
+        <div class="ctrl-hint">HR reached during a peak threat response. Often near-maximal (170–190 BPM).</div>
+        <input type="range" class="survival" id="surv_hr" min="140" max="200" value="175" step="5">
+      </div>
+    </div>
+  </div>
+
+  <!-- ────────────────────────────────────────────
+       RESULTS
+  ──────────────────────────────────────────── -->
+  <div class="panel full" style="margin-top:0">
+    <div class="tier-heading" style="border-bottom-color:var(--rule)">
+      <span class="tier-dot" style="background:var(--ink)"></span>
+      Simulation Output
+    </div>
+
+    <div class="warning" id="warn_banner"></div>
+
+    <!-- Key metrics -->
+    <div class="metric-grid">
+      <div class="metric primary">
+        <div class="metric-label">Adjusted Lifespan</div>
+        <div class="metric-num" id="r_adj">--<span class="metric-unit">yrs</span></div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Raw Beat Budget</div>
+        <div class="metric-num" id="r_raw">--<span class="metric-unit">yrs</span></div>
+      </div>
+      <div class="metric pos">
+        <div class="metric-label">Adaptive Fitness Bonus</div>
+        <div class="metric-num" id="r_fit">--<span class="metric-unit">%</span></div>
+      </div>
+      <div class="metric neg">
+        <div class="metric-label">Survival Stress Penalty</div>
+        <div class="metric-num" id="r_surv">−--<span class="metric-unit">%</span></div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Afterload Penalty</div>
+        <div class="metric-num" id="r_map">−--<span class="metric-unit">%</span></div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Weekly Cardiac Work</div>
+        <div class="metric-num" id="r_work">--<span class="metric-unit">×10⁶ b·mmHg</span></div>
+      </div>
+    </div>
+
+    <!-- Stress composition bar -->
+    <div class="stress-bar-wrap">
+      <div class="stress-bar-label">Weekly beat composition -- where your heartbeats go</div>
+      <div class="stress-bar">
+        <div class="sb-seg" id="sb_rest"   style="background:#d1d5db"></div>
+        <div class="sb-seg" id="sb_mod"    style="background:var(--c-exercise)"></div>
+        <div class="sb-seg" id="sb_sprint" style="background:#15803d"></div>
+        <div class="sb-seg" id="sb_adl"    style="background:var(--c-adl)"></div>
+        <div class="sb-seg" id="sb_surv"   style="background:var(--c-survival)"></div>
+      </div>
+      <div class="sb-legend">
+        <div class="sb-legend-item"><div class="sb-swatch" style="background:#d1d5db"></div>Rest</div>
+        <div class="sb-legend-item"><div class="sb-swatch" style="background:var(--c-exercise)"></div>Moderate exercise</div>
+        <div class="sb-legend-item"><div class="sb-swatch" style="background:#15803d"></div>Sprint / HIIT</div>
+        <div class="sb-legend-item"><div class="sb-swatch" style="background:var(--c-adl)"></div>ADL bursts</div>
+        <div class="sb-legend-item"><div class="sb-swatch" style="background:var(--c-survival)"></div>Survival stress</div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="chart-row">
+      <div>
+        <div class="chart-title">Lifespan adjustment pipeline</div>
+        <div class="chart-wrap"><canvas id="waterfallChart"></canvas></div>
+      </div>
+      <div>
+        <div class="chart-title">Adaptive vs. stress balance</div>
+        <div class="chart-wrap"><canvas id="balanceChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <strong>Model notes --</strong>
+    The 2.5 × 10⁹ beat budget is an empirical cross-species allometric constant.
+    <strong>ADL bursts</strong> contribute a partial adaptive benefit (~40% of equivalent exercise dose)
+    because they lack warm-up, cool-down, and structured recovery.
+    <strong>Survival stress</strong> events cost cardiac beats directly (high HR spike) but also impose
+    a cortisol-mediated allostatic penalty: each event under chronic stress load shortens recovery and degrades vagal tone over time. This is modelled as a multiplicative penalty on
+    the beat budget. Afterload penalty applies above 80 mmHg MAP.
+    <em>Not a clinical tool. Educational tool for learning physiology.</em>
+  </footer>
+
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const fmt = (n, d=1) => isFinite(n) ? n.toFixed(d) : '--';
+
+/* ── Slider registry ── */
+const sliders = [
+  { id:'hr',           disp:'hr_val',           fmt: v => v+' BPM' },
+  { id:'map',          disp:'map_val',           fmt: v => v+' mmHg' },
+  { id:'vagal',        disp:'vagal_val',         fmt: v => parseFloat(v).toFixed(2)+'×' },
+  { id:'mod',          disp:'mod_val',           fmt: v => v+' hrs/wk' },
+  { id:'sprint',       disp:'sprint_val',        fmt: v => parseFloat(v).toFixed(1)+' hrs/wk' },
+  { id:'hrmax',        disp:'hrmax_val',         fmt: v => v+' BPM' },
+  { id:'adl_freq',     disp:'adl_freq_val',      fmt: v => v+' /day' },
+  { id:'adl_dur',      disp:'adl_dur_val',       fmt: v => parseFloat(v).toFixed(1)+' min each' },
+  { id:'adl_hr',       disp:'adl_hr_val',        fmt: v => v+' BPM' },
+  { id:'surv_freq',    disp:'surv_freq_val',     fmt: v => v+' /yr' },
+  { id:'surv_cortisol',disp:'surv_cortisol_val', fmt: v => parseFloat(v).toFixed(1)+'×' },
+  { id:'surv_hr',      disp:'surv_hr_val',       fmt: v => v+' BPM' },
+];
+
+sliders.forEach(s => {
+  const el = $(s.id), disp = $(s.disp);
+  const upd = () => { disp.textContent = s.fmt(el.value); };
+  el.addEventListener('input', () => { upd(); runSim(); });
+  upd();
+});
+
+/* ════════════════════════════════════════════
+   SIMULATION MODEL
+   ════════════════════════════════════════════
+   Three-tier stress model:
+   
+   T0 -- Cardiac baseline (rest)
+   T1 -- Voluntary exercise: adaptive, planned, recoverable
+   T2 -- ADL bursts: partially adaptive, unplanned
+   T3 -- Survival stress: cortisol-mediated, allostatic penalty
+   
+   Output lifespan:
+     raw_years   = BUDGET / (weekly_beats × WEEKS_YR)
+     adj_years   = raw_years
+                   ÷ map_penalty
+                   × (1 + fitness_bonus)   [T1 + partial T2]
+                   × (1 - survival_penalty) [T3 + cortisol]
+*/
+function simulate() {
+  const BUDGET    = 2.5e9;
+  const WEEKS_YR  = 52.1775;
+  const MINS_WEEK = 7 * 24 * 60;
+  const MAP_OPT   = 80;
+
+  const hr_rest    = +$('hr').value;
+  const map        = +$('map').value;
+  const vagal      = +$('vagal').value;
+  const mod_hw     = +$('mod').value;
+  const sprint_hw  = +$('sprint').value;
+  const hr_peak    = +$('hrmax').value;
+  const adl_freq   = +$('adl_freq').value;   // per day
+  const adl_dur    = +$('adl_dur').value;     // minutes each
+  const adl_hr     = +$('adl_hr').value;
+  const surv_freq  = +$('surv_freq').value;   // per year
+  const cortisol   = +$('surv_cortisol').value;
+  const surv_hr    = +$('surv_hr').value;
+
+  const warnings = [];
+  if (hr_peak <= hr_rest) warnings.push('Peak exercise HR should exceed resting HR.');
+  if (adl_hr  <= hr_rest) warnings.push('ADL HR should exceed resting HR.');
+
+  /* ── Time accounting (mins/week) ── */
+  const sprint_m  = sprint_hw * 60;
+  const mod_m     = mod_hw * 60;
+  const adl_m     = adl_freq * adl_dur * 7;   // per week
+  const surv_m    = (surv_freq / WEEKS_YR) * 5; // avg ~5 min per event, weekly avg
+  const used_m    = sprint_m + mod_m + adl_m + surv_m;
+  const rest_m    = Math.max(MINS_WEEK - used_m, 0);
+
+  if (used_m > MINS_WEEK) warnings.push('Total active time exceeds 168 hrs/week -- rest capped at zero.');
+
+  /* ── Weekly beats by tier ── */
+  const b_rest    = rest_m   * hr_rest;
+  const b_mod     = mod_m    * 100;           // avg 100 BPM for moderate
+  const b_sprint  = sprint_m * hr_peak;
+  const b_adl     = adl_m    * adl_hr;
+  const b_surv    = surv_m   * surv_hr;
+  const b_total   = b_rest + b_mod + b_sprint + b_adl + b_surv;
+
+  /* ── Raw lifespan from beat budget ── */
+  const raw_years = BUDGET / (b_total * WEEKS_YR);
+
+  /* ── T0: Afterload penalty (MAP > 80 mmHg) ── */
+  const map_excess  = Math.max(map - MAP_OPT, 0);
+  const map_penalty = 1 + (map_excess / MAP_OPT) * 0.35;
+  const map_pct     = (map_penalty - 1) * 100;
+
+  /* ── T1 + partial T2: Adaptive fitness bonus ── */
+  // Voluntary sprint/HIIT: strongest signal
+  // Moderate exercise: good signal
+  // ADL bursts: ~40% the adaptive value of equivalent planned exercise
+  //   (no structured warm-up/cool-down, no recovery optimisation)
+  const adl_hw_equiv = (adl_m / 60) * 0.40;  // hours/week equivalent
+  const ex_dose      = sprint_hw * 1.5 + mod_hw * 0.6 + adl_hw_equiv;
+  const fit_bonus    = Math.min(Math.log1p(ex_dose) * 0.09 * vagal, 0.32);
+  const fit_pct      = fit_bonus * 100;
+
+  /* ── T3: Survival stress penalty ── */
+  // Each event: direct beat cost (already counted above) PLUS
+  // cortisol-mediated allostatic damage:
+  //   - degrades vagal tone recovery
+  //   - chronic cortisol above baseline accelerates arterial stiffening
+  //   - modelled as fractional lifespan reduction per event × cortisol load
+  // Base damage per event: 0.0004 (calibrated ~5 yr hit at 100 events/yr, cortisol=1)
+  // Cortisol scales damage superlinearly above 1× baseline
+  const cortisol_amp   = Math.pow(cortisol, 1.6);   // superlinear above 1×
+  const surv_damage    = surv_freq * 0.0004 * cortisol_amp;
+  const surv_penalty   = Math.min(surv_damage, 0.45); // cap at 45% penalty
+  const surv_pct       = surv_penalty * 100;
+
+  /* ── However: moderate survival events harden stress resilience ──
+     The hormesis principle: occasional high-stress events (< ~20/yr) with low
+     cortisol load improve glucocorticoid receptor sensitivity.
+     This is an additive bonus on top of fitness, capped small.        */
+  const hormesis = (cortisol <= 1.5)
+    ? Math.min(surv_freq * 0.0015 * (1.5 - cortisol), 0.06)
+    : 0;
+
+  /* ── Final adjusted lifespan ── */
+  const adj_years = (raw_years / map_penalty)
+                  * (1 + fit_bonus + hormesis)
+                  * (1 - surv_penalty);
+
+  /* ── Beat composition fractions (for stacked bar) ── */
+  const frac = v => b_total > 0 ? v / b_total : 0;
+
+  return {
+    raw_years, adj_years,
+    map_pct, fit_pct, surv_pct,
+    hormesis_pct: hormesis * 100,
+    workload: (b_total * map) / 1e6,
+    warnings,
+    // beat fractions
+    f_rest:   frac(b_rest),
+    f_mod:    frac(b_mod),
+    f_sprint: frac(b_sprint),
+    f_adl:    frac(b_adl),
+    f_surv:   frac(b_surv),
+    // waterfall intermediates
+    after_map:      (raw_years / map_penalty),
+    after_fit:      (raw_years / map_penalty) * (1 + fit_bonus + hormesis),
+  };
+}
+
+/* ── Charts ── */
+let waterfallChart, balanceChart;
+
+function initCharts() {
+  // Waterfall / pipeline bar chart
+  waterfallChart = new Chart($('waterfallChart').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: ['Raw Budget', '÷ Afterload', '× Fitness', '× Survival'],
+      datasets: [{
+        data: [0,0,0,0],
+        backgroundColor: ['#9ca3af','#6b7280','#16a34a','#dc2626'],
+        borderWidth: 0, borderRadius: 3,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false },
+        tooltip: { callbacks: { label: c => ` ${c.raw.toFixed(1)} yrs` } } },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { family:"'DM Mono',monospace", size:9 }, color:'#666' } },
+        y: { grid: { color:'#f0f0f0' }, ticks: { font: { family:"'DM Mono',monospace", size:9 }, color:'#666', callback: v => v+'yr' } }
+      }
+    }
+  });
+
+  // Balance doughnut -- adaptive vs stress
+  balanceChart = new Chart($('balanceChart').getContext('2d'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Fitness gain', 'ADL hormesis', 'Afterload cost', 'Survival cost'],
+      datasets: [{
+        data: [0,0,0,0],
+        backgroundColor: ['#16a34a','#84cc16','#6b7280','#dc2626'],
+        borderWidth: 2, borderColor: '#fff',
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      cutout: '60%',
+      plugins: {
+        legend: { position:'bottom', labels:{ font:{ family:"'DM Mono',monospace", size:9 }, color:'#666', boxWidth:10, padding:8 } },
+        tooltip: { callbacks: { label: c => ` ${c.raw.toFixed(1)}%` } }
+      }
+    }
+  });
+}
+
+/* ── Update UI ── */
+function runSim() {
+  const r = simulate();
+
+  $('r_adj').innerHTML  = fmt(r.adj_years) + '<span class="metric-unit">yrs</span>';
+  $('r_raw').innerHTML  = fmt(r.raw_years) + '<span class="metric-unit">yrs</span>';
+  $('r_fit').innerHTML  = '+' + fmt(r.fit_pct, 1) + '<span class="metric-unit">%</span>';
+  $('r_surv').innerHTML = '−' + fmt(r.surv_pct, 1) + '<span class="metric-unit">%</span>';
+  $('r_map').innerHTML  = '−' + fmt(r.map_pct, 1)  + '<span class="metric-unit">%</span>';
+  $('r_work').innerHTML = fmt(r.workload, 1) + '<span class="metric-unit">×10⁶ b·mmHg</span>';
+
+  // Beat composition bar
+  const pct = f => (f * 100).toFixed(1) + '%';
+  $('sb_rest').style.width   = pct(r.f_rest);
+  $('sb_mod').style.width    = pct(r.f_mod);
+  $('sb_sprint').style.width = pct(r.f_sprint);
+  $('sb_adl').style.width    = pct(r.f_adl);
+  $('sb_surv').style.width   = pct(r.f_surv);
+
+  // Waterfall
+  waterfallChart.data.datasets[0].data = [r.raw_years, r.after_map, r.after_fit, r.adj_years];
+  waterfallChart.update('none');
+
+  // Balance doughnut (absolute % values for visual balance)
+  balanceChart.data.datasets[0].data = [
+    Math.max(r.fit_pct, 0.1),
+    Math.max(r.hormesis_pct, 0.1),
+    Math.max(r.map_pct, 0.1),
+    Math.max(r.surv_pct, 0.1),
+  ];
+  balanceChart.update('none');
+
+  // Warnings
+  const wb = $('warn_banner');
+  if (r.warnings.length) { wb.textContent = '⚠ ' + r.warnings.join(' '); wb.classList.add('visible'); }
+  else                   { wb.classList.remove('visible'); }
+}
+
+initCharts();
+runSim();
+</script>
+</body>
+</html>
