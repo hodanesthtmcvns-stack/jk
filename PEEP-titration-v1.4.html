@@ -342,6 +342,8 @@
               <th style="min-width:70px">PEEP</th>
               <th style="min-width:105px">Cstat</th>
               <th style="min-width:95px">ΔP</th>
+              <th style="min-width:95px">Pplat</th>
+              <th style="min-width:85px">Vt</th>
               <th style="min-width:105px">Cdyn</th>
               <th style="min-width:95px">SpO₂</th>
               <th style="min-width:95px">FiO₂</th>
@@ -622,15 +624,11 @@
     const sfDropPct = num($("sfDropPct").value) ?? 10;
     const sfDropAbs = num($("sfDropAbs").value) ?? 30;
 
-    const maxPplat = num($("maxPplat").value) ?? 30;
-    const hardPplat = num($("hardPplat").value) ?? 35;
-    const wf = $("workflow").value;
     // Decremental hysteresis override (only in decremental workflow):
     // Find first step-down where S/F drops beyond threshold vs the previous higher PEEP.
     // Recommend the previous higher PEEP (one step above derecruitment), unless it violates hard safety limits.
     if(wf === "decremental"){
       const byPEEP = [...rows].sort((a,b)=>a.peep-b.peep);
-      // iterate from high->low comparing lower step to immediately higher step
       for(let i = byPEEP.length-2; i >= 0; i--){
         const higher = byPEEP[i+1];
         const lower  = byPEEP[i];
@@ -640,17 +638,16 @@
 
         const absDrop = sfH - sfL;
         const pctDrop = (sfH>0) ? (absDrop/sfH)*100 : 0;
-
         const derecruit = (absDrop >= sfDropAbs) || (pctDrop >= sfDropPct);
+
         if(derecruit){
-          // Prefer higher step (one above) if not exceeding hard plateau limit
           const chosen = (higher.pplat !== null && higher.pplat > hardPplat) ? null : higher;
           if(chosen){
-            // Provide direct recommendation without composite scoring
             let badgeClass = "warn";
-            let status = `Select PEEP ${chosen.peep} cmH₂O`;
-            let main = `Decremental hysteresis trigger: S/F fell at/below PEEP ${lower.peep}. Recommend one step above (PEEP ${chosen.peep}) to avoid derecruitment, while respecting safety limits.`;
+            const status = `Select PEEP ${chosen.peep} cmH₂O`;
+            const main = `Decremental hysteresis trigger: S/F fell at/below PEEP ${lower.peep}. Recommend one step above (PEEP ${chosen.peep}) to avoid derecruitment, while respecting safety limits.`;
             const why = [];
+
             why.push(`Trigger: S/F at PEEP ${higher.peep} → ${Math.round(sfH)}; at PEEP ${lower.peep} → ${Math.round(sfL)} (drop ${Math.round(absDrop)}; ${Math.round(pctDrop)}%).`);
             why.push(`Chosen step PEEP ${chosen.peep}: Cstat ${chosen.cstat}, ΔP ${chosen.dp}, Pplat ${chosen.pplat}, SpO₂ ${chosen.spo2}%, FiO₂ ${normalizeFiO2(chosen.fio2)}, S/F ${Math.round(sfRatioRow(chosen) ?? 0)}, MAP ${chosen.map}${(chosen.cdyn!=null?`, Cdyn ${chosen.cdyn}`:"")}.`);
 
@@ -659,16 +656,6 @@
             if(chosen.pplat > maxPplat){ badgeClass = "warn"; why.push(`Caution: Pplat above alert threshold (${maxPplat}).`); }
             if(chosen.pplat > hardPplat){ badgeClass = "bad"; why.push(`Unsafe: Pplat above hard limit (${hardPplat}).`); }
 
-    const dpExpBest = dpFromRow(bestRow);
-    if(dpExpBest !== null && bestRow.dp !== null){
-      const diff = Math.abs(dpExpBest - bestRow.dp);
-      if(diff >= 2){
-        why.push(`Note: ΔP entered (${bestRow.dp}) differs from (Pplat−PEEP) (${Math.round(dpExpBest*10)/10}) by ≥2 cmH₂O. Verify measurements.`);
-      }
-    }
-
-
-            // ΔP consistency check if both Pplat and PEEP are provided
             const dpExp = dpFromRow(chosen);
             if(dpExp !== null && chosen.dp !== null){
               const diff = Math.abs(dpExp - chosen.dp);
@@ -677,26 +664,23 @@
               }
             }
 
-            // Tie-breaker explanation (if enabled)
             if($("preferLower").checked){
               why.push(`Tie-breaker rationale: when two PEEP levels provide near-identical benefit, lower PEEP is generally preferred to reduce barotrauma/hemodynamic risk.`);
             }
 
             return {status, badgeClass, main, why};
           }
-          break; // If chosen is null due to hard safety, fall back to scoring
+          break;
         }
       }
     }
-
-
 
     const scored = scoreRows(rows);
     const pick = chooseWithLowerPEEPTiebreak(scored) || scored[0];
     const bestRow = pick.r;
 
     const byPEEP = [...rows].sort((a,b)=>a.peep-b.peep);
-    const idx = byPEEP.findIndex(x=>x.peep===bestRow.peep && x.cstat===bestRow.cstat && x.dp===bestRow.dp && x.sf===bestRow.sf && x.map===bestRow.map);
+    const idx = byPEEP.findIndex(x => x === bestRow);
     const lower = idx>0 ? byPEEP[idx-1] : null;
     const higher = idx<byPEEP.length-1 ? byPEEP[idx+1] : null;
 
@@ -711,6 +695,16 @@
 
     if(bestRow.dp > maxDP) { badgeClass = "warn"; why.push(`Caution: ΔP above your threshold (${maxDP}).`); }
     if(bestRow.map < minMAP) { badgeClass = "bad"; why.push(`Unsafe: MAP below minimum (${minMAP}).`); }
+    if(bestRow.pplat > maxPplat) { badgeClass = "warn"; why.push(`Caution: Pplat above your alert threshold (${maxPplat}).`); }
+    if(bestRow.pplat > hardPplat) { badgeClass = "bad"; why.push(`Unsafe: Pplat above hard limit (${hardPplat}).`); }
+
+    const dpExpBest = dpFromRow(bestRow);
+    if(dpExpBest !== null && bestRow.dp !== null){
+      const diff = Math.abs(dpExpBest - bestRow.dp);
+      if(diff >= 2){
+        why.push(`Note: ΔP entered (${bestRow.dp}) differs from (Pplat−PEEP) (${Math.round(dpExpBest*10)/10}) by ≥2 cmH₂O. Verify measurements.`);
+      }
+    }
 
     if(wf==="incremental"){
       if(lower){
@@ -731,13 +725,11 @@
       }
     }
 
-    if(bestRow.map < minMAP || bestRow.dp > maxDP){
-      main = "Safety constraints dominate. Address hypotension and/or high ΔP; consider stepping PEEP down or changing strategy per context.";
-      badgeClass = (bestRow.map < minMAP) ? "bad" : "warn";
-    } else {
-      if($("preferLower").checked){
-        why.push("Tie-breaker active: lowest PEEP within 95% of best score selected to reduce PEEP exposure when similar.");
-      }
+    if(bestRow.map < minMAP || bestRow.dp > maxDP || bestRow.pplat > hardPplat){
+      main = "Safety constraints dominate. Address hypotension and/or high ΔP/Pplat; consider stepping PEEP down or changing strategy per context.";
+      badgeClass = (bestRow.map < minMAP || bestRow.pplat > hardPplat) ? "bad" : "warn";
+    } else if($("preferLower").checked){
+      why.push("Tie-breaker active: lowest PEEP within 95% of best score selected to reduce PEEP exposure when similar.");
     }
 
     return {status, badgeClass, main, why};
