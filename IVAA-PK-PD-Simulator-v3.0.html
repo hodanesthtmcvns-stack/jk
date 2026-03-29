@@ -1,0 +1,1415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IV Anesthetic Agents PK-PD Simulator v3.0</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:          #090e1a;
+  --surface:     #0f1724;
+  --surface2:    #162030;
+  --surface3:    #1c2a3e;
+  --border:      #1e2d45;
+  --border2:     #2a3f5c;
+  --text:        #dde6f0;
+  --text-dim:    #6e8099;
+  --text-dimmer: #3d5068;
+  --accent:      #f0a030;
+  --accent2:     #fbbf24;
+  --red:         #ef4444;
+  --green:       #34d399;
+  --blue:        #38bdf8;
+  --violet:      #a78bfa;
+  --mono:        'JetBrains Mono', monospace;
+  --sans:        'Outfit', sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body { height: 100%; overflow: hidden; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* ── Header ── */
+header {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.header-left h1 {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: -0.01em;
+}
+.header-left p {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--text-dimmer);
+  letter-spacing: 0.05em;
+  margin-top: 1px;
+}
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.badge {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--text-dim);
+  border: 1px solid var(--border2);
+  border-radius: 3px;
+  padding: 2px 7px;
+}
+.critique-btn {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--text-dimmer);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.critique-btn:hover { color: var(--accent); }
+
+/* ── Critique Panel ── */
+#critiquePanel {
+  display: none;
+  background: var(--surface);
+  border-bottom: 2px solid var(--border2);
+  padding: 12px 20px;
+  font-size: 11px;
+  flex-shrink: 0;
+  max-height: 220px;
+  overflow-y: auto;
+}
+#critiquePanel.open { display: block; }
+.critique-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.critique-col-head {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+.c-err { color: var(--red); }
+.c-fix { color: var(--green); }
+.c-note { color: var(--text-dimmer); }
+.critique-row { margin-bottom: 5px; line-height: 1.5; color: var(--text-dim); }
+.critique-row code {
+  font-family: var(--mono);
+  background: var(--surface2);
+  padding: 1px 4px;
+  border-radius: 2px;
+  font-size: 10px;
+  color: var(--red);
+}
+.critique-row .good {
+  font-family: var(--mono);
+  background: var(--surface2);
+  padding: 1px 4px;
+  border-radius: 2px;
+  font-size: 10px;
+  color: var(--green);
+}
+
+/* ── Layout ── */
+.app {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 48px);
+}
+.layout {
+  display: grid;
+  grid-template-columns: 270px 1fr;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ── Controls ── */
+.controls {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 14px;
+}
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+.section { margin-bottom: 16px; }
+.section-label {
+  font-family: var(--mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dimmer);
+  margin-bottom: 8px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--border);
+}
+.field { margin-bottom: 8px; }
+.field label {
+  display: block;
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-bottom: 3px;
+}
+select, input[type=number] {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 6px 9px;
+  outline: none;
+  transition: border-color 0.15s;
+  -moz-appearance: textfield;
+}
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button { -webkit-appearance: none; }
+select:focus, input:focus { border-color: var(--accent); }
+
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+.row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; }
+
+.model-ref {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--text-dimmer);
+  margin-top: 4px;
+  line-height: 1.5;
+}
+
+.source-box {
+  margin-top: 8px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 8px;
+}
+.source-line {
+  font-size: 10px;
+  color: var(--text-dim);
+  line-height: 1.45;
+  margin-bottom: 4px;
+}
+.source-line:last-child { margin-bottom: 0; }
+.source-tag {
+  font-family: var(--mono);
+  font-size: 8.5px;
+  color: var(--accent2);
+  margin-right: 6px;
+}
+.mini-note {
+  font-size: 10px;
+  color: var(--text-dimmer);
+  line-height: 1.45;
+  margin-top: 5px;
+}
+.warning-box {
+  margin-top: 8px;
+  background: rgba(239,68,68,0.07);
+  border: 1px solid rgba(239,68,68,0.22);
+  border-radius: 4px;
+  padding: 8px;
+  font-size: 10px;
+  color: #f2b0b0;
+  line-height: 1.45;
+}
+
+/* Sub-cards */
+.subcard {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 9px;
+  margin-bottom: 7px;
+}
+.subcard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--blue);
+  margin-bottom: 7px;
+}
+.subcard-header button {
+  background: none;
+  border: none;
+  color: var(--red);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0 2px;
+}
+.event-pill {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 8px;
+  margin-bottom: 5px;
+  font-family: var(--mono);
+  font-size: 10px;
+}
+.event-pill span.tag { color: var(--accent2); font-weight: 700; margin-right: 6px; }
+.event-pill button {
+  background: none;
+  border: none;
+  color: var(--red);
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.btn-add {
+  width: 100%;
+  background: transparent;
+  color: var(--blue);
+  border: 1px dashed rgba(56,189,248,0.4);
+  border-radius: 4px;
+  padding: 5px 8px;
+  font-family: var(--sans);
+  font-size: 11px;
+  cursor: pointer;
+  margin-top: 5px;
+  transition: all 0.15s;
+}
+.btn-add:hover { background: rgba(56,189,248,0.06); border-color: var(--blue); }
+
+.btn {
+  width: 100%;
+  padding: 9px;
+  border: none;
+  border-radius: 4px;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 6px;
+  transition: all 0.15s;
+}
+.btn-run {
+  background: var(--accent);
+  color: #000;
+}
+.btn-run:hover { background: #d4861c; }
+.btn-reset {
+  background: var(--surface2);
+  color: var(--text-dim);
+  border: 1px solid var(--border2);
+}
+.btn-reset:hover { background: var(--surface3); color: var(--text); }
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+input[type=checkbox] { accent-color: var(--accent); cursor: pointer; }
+
+/* ── Main Chart Area ── */
+.main {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.chart-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px 4px;
+  flex-shrink: 0;
+}
+.legend-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.leg-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-dim);
+}
+.leg-line {
+  width: 22px;
+  height: 2px;
+  border-radius: 1px;
+}
+.leg-dashed {
+  width: 22px;
+  height: 0;
+  border-top: 1.5px dashed rgba(255,255,255,0.4);
+}
+.drug-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-dimmer);
+  padding: 2px 8px;
+  border-radius: 3px;
+  border: 1px solid var(--border2);
+  letter-spacing: 0.04em;
+}
+
+.thresh-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 2px 16px 6px;
+  flex-shrink: 0;
+}
+.thresh-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--text-dimmer);
+}
+.thresh-swatch {
+  width: 10px;
+  height: 6px;
+  border-radius: 1px;
+  opacity: 0.85;
+}
+
+.chart-wrapper {
+  flex: 1;
+  min-height: 0;
+  padding: 0 12px 6px 12px;
+  position: relative;
+}
+
+/* ── Stats Panel ── */
+.stats-panel {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 10px 16px;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.stat {
+  text-align: center;
+  min-width: 0;
+}
+.stat-lbl {
+  font-family: var(--mono);
+  font-size: 8.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dimmer);
+  margin-bottom: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.stat-val {
+  font-family: var(--mono);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--accent2);
+  line-height: 1.1;
+}
+.stat-sub {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--text-dimmer);
+  margin-top: 2px;
+}
+
+/* scrollbar for controls */
+.controls::-webkit-scrollbar { width: 3px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>IV Anesthetic Agents PK-PD Simulator v3.0</h1>
+    <h4>Three compartment PK model with Clinical Evidence Based Thresholds for Ce/Cp | PK-PD Learning Assist Tool | Not a Software as Medical Device</h4>
+  </div>
+  <div class="header-right">
+    <span class="badge" style="font-size: 0.85rem; color: #ffffff; font-weight: 500;">License: GNU GPL v3. Copyright (C) [2026] [Prof. Jyotirmay Kirtania]</span>
+  </div>
+</header>
+<div id="runtimeStatus" style="display:none;background:#2b0f0f;color:#ffd7d7;border-bottom:1px solid #5a1d1d;padding:8px 20px;font:12px var(--mono, monospace);"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="app">
+<div class="layout">
+
+<!-- ── CONTROLS ── -->
+<aside class="controls">
+
+  <!-- Drug -->
+  <div class="section">
+    <div class="section-label">Anaesthetic Agent</div>
+    <div class="field">
+      <select id="drugSelect" onchange="onDrugChange()">
+        <option value="propofol">Propofol</option>
+        <option value="thiopentone">Thiopentone</option>
+        <option value="etomidate">Etomidate</option>
+        <option value="ketamine">Ketamine</option>
+        <option value="midazolam">Midazolam</option>
+      </select>
+      <div class="model-ref" id="modelRef"></div>
+      <div class="source-box" id="sourceBox"></div>
+      <div class="warning-box" id="drugWarningBox" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- Patient -->
+  <div class="section">
+    <div class="section-label">Patient Reference</div>
+    <div class="row2">
+      <div class="field">
+        <label>Weight (kg)</label>
+        <input type="number" id="wtInput" value="70" min="30" max="200" oninput="updateDosePerKg()">
+      </div>
+      <div class="field">
+        <label>Age (yr)</label>
+        <input type="number" id="ageInput" value="40" min="18" max="90">
+      </div>
+    </div>
+    <div style="font-size:10px; color:var(--text-dimmer); line-height:1.4;">
+      Population mean PK shown. No covariate adjustment.
+    </div>
+  </div>
+
+  <!-- Initial Bolus -->
+  <div class="section">
+    <div class="section-label">Initial Bolus (T = 0)</div>
+    <div class="row2">
+      <div class="field">
+        <label>Dose (mg)</label>
+        <input type="number" id="initDose" value="150" min="0" max="2000" oninput="updateDosePerKg()">
+      </div>
+      <div class="field" style="display:flex;align-items:flex-end;padding-bottom:2px;">
+        <div>
+          <div style="font-size:9px;color:var(--text-dimmer);margin-bottom:2px;">mg/kg</div>
+          <div style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--accent);" id="doseKg">2.14</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Repeat Boluses -->
+  <div class="section">
+    <div class="section-label">Repeat Boluses</div>
+    <div id="bolusList"></div>
+    <div class="row2" style="margin-bottom:4px;">
+      <div class="field">
+        <label>Dose (mg)</label>
+        <input type="number" id="addBolusDose" value="50" min="0">
+      </div>
+      <div class="field">
+        <label>At T (min)</label>
+        <input type="number" id="addBolusTime" value="15" min="0">
+      </div>
+    </div>
+    <button class="btn-add" onclick="addBolus()">+ Add Repeat Bolus</button>
+  </div>
+
+  <!-- Infusions -->
+  <div class="section">
+    <div class="section-label">Infusions</div>
+    <div id="infList"></div>
+    <div class="field">
+      <label>Rate input</label>
+      <input type="number" id="addInfRate" value="8" min="0" step="0.1">
+    </div>
+    <div class="field">
+      <label>Units</label>
+      <select id="addInfUnit">
+        <option value="mg_min">mg/min</option>
+        <option value="mg_kg_h" selected>mg/kg/h</option>
+        <option value="mcg_kg_min">mcg/kg/min</option>
+      </select>
+    </div>
+    <div class="mini-note">Weight-normalized infusion is converted internally to mg/min using current body weight.</div>
+    <div class="row2" style="margin-top:6px;">
+      <div class="field">
+        <label>Start</label>
+        <input type="number" id="addInfStart" value="0" min="0">
+      </div>
+      <div class="field">
+        <label>Stop</label>
+        <input type="number" id="addInfEnd" value="60" min="0">
+      </div>
+    </div>
+    <button class="btn-add" onclick="addInfusion()">+ Add Infusion</button>
+  </div>
+
+  <!-- Display -->
+  <div class="section">
+    <div class="section-label">Display Options</div>
+    <div class="field">
+      <label>Target Ct (mcg/mL) — 0 to hide</label>
+      <input type="number" id="ctInput" value="0" min="0" step="0.1">
+    </div>
+    <div class="field">
+      <label>Threshold overlay mode</label>
+      <select id="overlayMode" onchange="updateOverlayControls()">
+        <option value="lit" selected>Literature-linked approximate ranges</option>
+        <option value="bis">Endpoint-specific BIS-oriented propofol overlay</option>
+        <option value="none">None (show only Cp/Ce)</option>
+      </select>
+      <div class="mini-note" id="overlayModeNote">Approximate reference ranges only. Not patient-specific validated targets.</div>
+    </div>
+    <div class="field">
+      <label class="checkbox-row">
+        <input type="checkbox" id="showThresh" checked onchange="updateOverlayControls()">
+        Show threshold bands
+      </label>
+    </div>
+    <div class="field">
+      <label class="checkbox-row">
+        <input type="checkbox" id="ageScaleToggle">
+        Apply age scaling where literature exists (propofol only)
+      </label>
+      <div class="mini-note">Uses limited Schnider age terms on V2 and CL2 only; not full covariate adjustment.</div>
+    </div>
+    <div class="field">
+      <label class="checkbox-row">
+        <input type="checkbox" id="opioidToggle" onchange="updateOverlayControls()">
+        Opioid coadministration modifier (propofol only)
+      </label>
+      <div class="mini-note">Shifts BIS-oriented propofol reference bands downward by ~20% for visual teaching only.</div>
+    </div>
+    <div class="field">
+      <label>Simulation duration (min)</label>
+      <select id="durSelect">
+        <option value="60">60</option>
+        <option value="90">90</option>
+        <option value="120" selected>120</option>
+        <option value="180">180</option>
+        <option value="240">240</option>
+        <option value="360">360</option>
+        <option value="480">480</option>
+        <option value="720">720 (12 h)</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Buttons -->
+  <button class="btn btn-run" onclick="runSim()">▶ Run Simulation</button>
+  <button class="btn btn-reset" onclick="resetAll()">↺ Reset All</button>
+
+</aside>
+
+<!-- ── MAIN CHART ── -->
+<main class="main">
+
+  <div class="chart-top-bar">
+    <div class="legend-row">
+      <div class="leg-item">
+        <div class="leg-line" style="background:rgba(255,255,255,0.65);height:3px;"></div>
+        <span>Cp — Plasma</span>
+      </div>
+      <div class="leg-item">
+        <div class="leg-line" id="ceLegLine" style="background:#fbbf24;"></div>
+        <span>Ce — Effect Site</span>
+      </div>
+      <div class="leg-item">
+        <div class="leg-dashed"></div>
+        <span>Ct — Target</span>
+      </div>
+      <div class="leg-item" style="margin-left:4px;">
+        <div style="width:1px;height:12px;background:rgba(239,68,68,0.65);border-left:1px dashed rgba(239,68,68,0.6);"></div>
+        <span>Bolus</span>
+      </div>
+      <div class="leg-item">
+        <div style="width:1px;height:12px;border-left:1px dashed rgba(56,189,248,0.5);"></div>
+        <span>Infusion</span>
+      </div>
+    </div>
+    <div class="drug-label" id="drugLabel" style="font-size: 0.85rem; color: #ffffff; font-weight: 500;">>PROPOFOL</div>
+  </div>
+
+  <div class="thresh-bar" id="threshBar"></div>
+
+  <div class="chart-wrapper">
+    <canvas id="pkChart"></canvas>
+  </div>
+
+  <div class="stats-panel">
+    <div class="stat">
+      <div class="stat-lbl">Peak Cp</div>
+      <div class="stat-val" id="sPeakCp">—</div>
+      <div class="stat-sub" id="sPeakCpT"></div>
+    </div>
+    <div class="stat">
+      <div class="stat-lbl">Peak Ce</div>
+      <div class="stat-val" id="sPeakCe">—</div>
+      <div class="stat-sub" id="sPeakCeT"></div>
+    </div>
+    <div class="stat">
+      <div class="stat-lbl" id="sLocLbl">Duration ≥ LOC</div>
+      <div class="stat-val" id="sLocDur">—</div>
+      <div class="stat-sub" id="sLocSub">min above threshold</div>
+    </div>
+    <div class="stat">
+      <div class="stat-lbl">Recovery (Ce &lt; sedation)</div>
+      <div class="stat-val" id="sRecov">—</div>
+      <div class="stat-sub">min from T₀</div>
+    </div>
+  </div>
+</main>
+</div>
+</div>
+
+<script>
+function byId(id){ return document.getElementById(id); }
+function showRuntimeStatus(msg){ const el=byId("runtimeStatus"); if(!el) return; el.style.display="block"; el.textContent=msg; }
+window.addEventListener("error", function(e){ showRuntimeStatus("Runtime error: "+ e.message); });
+
+// ══════════════════════════════════════════════════════════════
+// DRUG DATABASE — Peer-reviewed parameters
+// Concentrations: mcg/mL (= mg/L); k in min⁻¹; V in litres
+// ══════════════════════════════════════════════════════════════
+const DRUGS = {
+  propofol: {
+    name: 'Propofol',
+    label: 'PROPOFOL',
+    model: 'Schnider et al. 3-compartment model (reference adult)',
+    modelCite: 'Model: Schnider TW et al., Anesthesiology 1998/1999.',
+    effectCite: 'ke₀: Schnider TW et al., Anesthesiology 1999. Overlays: approximate literature-linked ranges; BIS-oriented overlay adapted for teaching from propofol-BIS literature and opioid-propofol interaction literature.',
+    color: '#fbbf24',
+    defaultDose: 150,
+    v1: 4.27, v2: 18.9, v3: 238,
+    k10: 0.4426,  k12: 0.3021,  k21: 0.0683,
+    k13: 0.1958,  k31: 0.003513,
+    ke0: 0.456,
+    thresholdSets: {
+      lit: [
+        { name: 'Light sedation (approx)', min: 0.5, max: 1.5, fill: 'rgba(52,211,153,0.11)', swatch: '#34d399' },
+        { name: 'Likely LOC / hypnosis (approx)', min: 2.5, max: 4.0, fill: 'rgba(56,189,248,0.11)', swatch: '#38bdf8' },
+        { name: 'General anaesthesia (approx)', min: 4.0, max: 6.5, fill: 'rgba(251,191,36,0.11)', swatch: '#fbbf24' },
+        { name: 'Deep / burst suppression risk', min: 6.5, max: 12.0, fill: 'rgba(239,68,68,0.08)',  swatch: '#ef4444' },
+      ],
+      bis: [
+        { name: 'BIS ~70–80', min: 1.5, max: 2.5, fill: 'rgba(52,211,153,0.11)', swatch: '#34d399' },
+        { name: 'BIS ~60–70 / likely LOC', min: 2.5, max: 3.5, fill: 'rgba(56,189,248,0.11)', swatch: '#38bdf8' },
+        { name: 'BIS ~40–60 surgical hypnosis', min: 3.5, max: 6.0, fill: 'rgba(251,191,36,0.11)', swatch: '#fbbf24' },
+        { name: 'BIS <40 deep anaesthesia', min: 6.0, max: 10.0, fill: 'rgba(239,68,68,0.08)', swatch: '#ef4444' },
+      ]
+    }
+  },
+  thiopentone: {
+    name: 'Thiopentone',
+    label: 'THIOPENTONE',
+    model: 'Stanski & Maitre 3-compartment reference model',
+    modelCite: 'Model: Stanski DR & Maitre PO, Anesthesiology 1990 (reference adult dataset).',
+    effectCite: 'ke₀ and overlay bands are approximate literature-linked educational ranges, not validated universal targets.',
+    color: '#ef4444',
+    defaultDose: 350,
+    v1: 5.6, v2: 15.2, v3: 206,
+    k10: 0.04732, k12: 0.3518,  k21: 0.1296,
+    k13: 0.01464, k31: 0.000398,
+    ke0: 0.60,
+    thresholdSets: {
+      lit: [
+        { name: 'Sedation (approx)', min: 3, max: 8, fill: 'rgba(52,211,153,0.11)', swatch: '#34d399' },
+        { name: 'Hypnosis / LOC (approx)', min: 8, max: 20, fill: 'rgba(56,189,248,0.11)', swatch: '#38bdf8' },
+        { name: 'Deep anaesthesia (approx)', min: 20, max: 40, fill: 'rgba(251,191,36,0.11)', swatch: '#fbbf24' },
+      ]
+    }
+  },
+  etomidate: {
+    name: 'Etomidate',
+    label: 'ETOMIDATE',
+    model: 'Arden et al. reference 3-compartment model',
+    modelCite: 'Model: Arden JR et al., Anesthesiology 1986.',
+    effectCite: 'ke₀ and overlay bands are approximate literature-linked educational ranges, not validated universal targets.',
+    color: '#38bdf8',
+    defaultDose: 20,
+    v1: 4.5, v2: 23.4, v3: 259,
+    k10: 0.111, k12: 0.40, k21: 0.077,
+    k13: 0.10,  k31: 0.017,
+    ke0: 0.45,
+    thresholdSets: {
+      lit: [
+        { name: 'Sedation (approx)', min: 0.10, max: 0.30, fill: 'rgba(52,211,153,0.11)', swatch: '#34d399' },
+        { name: 'Hypnosis / LOC (approx)', min: 0.30, max: 0.60, fill: 'rgba(56,189,248,0.11)', swatch: '#38bdf8' },
+        { name: 'Deep anaesthesia (approx)', min: 0.60, max: 1.50, fill: 'rgba(251,191,36,0.11)', swatch: '#fbbf24' },
+      ]
+    }
+  },
+  ketamine: {
+    name: 'Ketamine',
+    label: 'KETAMINE',
+    model: 'Idvall et al. Br J Anaesth 1979 anchored IV ketamine educational model',
+    modelCite: 'Anchor reference: Idvall J, Ahlgren I, Aronsen KF, Stenberg P. Ketamine infusions: pharmacokinetics and clinical effects. Br J Anaesth. 1979;51:1167-1174. This simulator uses an educational 3-compartment approximation anchored to the reported IV infusion concentrations; it is not a published validated compartment fit from that paper.',
+    effectCite: 'Ketamine overlays are qualitative teaching ranges only. The anchor paper reported maintenance infusion about 41 ± 21 mcg/kg/min, steady-state plasma ketamine about 9.3 ± 0.8 micromol/L, recovery about 2.7 ± 0.9 micromol/L, and plasma half-life about 79 ± 8 min.',
+    warning: 'Ketamine warning: dissociation does not map cleanly to conventional LOC-style or BIS-style hypnosis thresholds. Apparent consciousness and preserved airway reflexes may coexist with unresponsiveness to pain. Use the ketamine overlays only as qualitative teaching bands.',
+    color: '#a78bfa',
+    defaultDose: 150,
+    v1: 4.0, v2: 20, v3: 200,
+    k10: 0.10, k12: 0.30, k21: 0.060,
+    k13: 0.050, k31: 0.010,
+    ke0: 0.30,
+    thresholdSets: {
+      lit: [
+        { name: 'Sub-dissociative analgesia (qualitative)', min: 0.10, max: 0.40, fill: 'rgba(52,211,153,0.11)', swatch: '#34d399' },
+        { name: 'Dissociation (qualitative)', min: 0.40, max: 1.50, fill: 'rgba(56,189,248,0.11)', swatch: '#38bdf8' },
+        { name: 'Deep dissociative anaesthesia (qualitative)', min: 1.50, max: 4.00, fill: 'rgba(251,191,36,0.11)', swatch: '#fbbf24' },
+      ]
+    }
+  },
+  midazolam: {
+    name: 'Midazolam',
+    label: 'MIDAZOLAM',
+    model: 'Reference 3-compartment educational model',
+    modelCite: 'Model: Greenblatt et al (1986). derived educational reference parameters.',
+    effectCite: 'ke₀ and overlay bands are approximate educational ranges only; clinical response varies markedly with opioids and stimulation.',
+    color: '#34d399',
+    defaultDose: 7,
+    v1: 10, v2: 25, v3: 150,
+    k10: 0.027, k12: 0.150, k21: 0.060,
+    k13: 0.050, k31: 0.0033,
+    ke0: 0.12,
+    thresholdSets: {
+      lit: [
+        { name: 'Anxiolysis (approx)', min: 0.04, max: 0.10, fill: 'rgba(52,211,153,0.11)', swatch: '#34d399' },
+        { name: 'Sedation (approx)', min: 0.10, max: 0.25, fill: 'rgba(56,189,248,0.11)', swatch: '#38bdf8' },
+        { name: 'Hypnosis (approx)', min: 0.25, max: 0.50, fill: 'rgba(251,191,36,0.11)', swatch: '#fbbf24' },
+      ]
+    }
+  }
+};
+
+function cloneThresholds(list) {
+  return list.map(th => ({ ...th }));
+}
+
+function getThresholdsForDrug(drug) {
+  const overlayMode = ((byId('overlayMode') && byId('overlayMode').value) || 'lit');
+  if (overlayMode === 'none') return [];
+  let mode = overlayMode;
+  if (mode === 'bis' && drug.name !== 'Propofol') mode = 'lit';
+  const set = cloneThresholds((drug.thresholdSets && drug.thresholdSets[mode]) || (drug.thresholdSets && drug.thresholdSets.lit) || []);
+  if (drug.name === 'Propofol' && mode === 'bis' && (byId('opioidToggle') && byId('opioidToggle').checked)) {
+    for (const th of set) {
+      th.min = +(th.min * 0.8).toFixed(2);
+      th.max = +(th.max * 0.8).toFixed(2);
+      th.name += ' + opioid';
+    }
+  }
+  return set;
+}
+
+function getScaledDrug(key) {
+  const base = DRUGS[key];
+  const scaled = JSON.parse(JSON.stringify(base));
+  scaled.scalingNote = 'Population reference parameters.';
+  if (key === 'propofol' && (byId('ageScaleToggle') && byId('ageScaleToggle').checked)) {
+    const age = parseFloat(document.getElementById('ageInput').value) || 40;
+    const v2 = Math.max(8, 18.9 - 0.391 * (age - 53));
+    const cl2 = Math.max(0.25, 1.29 - 0.024 * (age - 53));
+    scaled.v2 = +v2.toFixed(3);
+    scaled.k12 = +(cl2 / scaled.v1).toFixed(5);
+    scaled.k21 = +(cl2 / scaled.v2).toFixed(5);
+    scaled.scalingNote = `Age scaling applied for propofol only: Schnider age terms on V2 and CL2 at age ${age} y; other covariates not applied.`;
+  }
+  return scaled;
+}
+
+function formatInfusionInput(value, unit) {
+  if (unit === 'mg_kg_h') return `${value} mg/kg/h`;
+  if (unit === 'mcg_kg_min') return `${value} mcg/kg/min`;
+  return `${value} mg/min`;
+}
+
+function infusionToMgMin(value, unit, weightKg) {
+  if (unit === 'mg_kg_h') return (value * weightKg) / 60;
+  if (unit === 'mcg_kg_min') return (value * weightKg) / 1000;
+  return value;
+}
+
+// ══════════════════════════════════════════════════════════════
+// SIMULATION STATE
+// ══════════════════════════════════════════════════════════════
+let extraBoluses = [];  // [{time, dose}]
+let infusions    = [];  // [{rate, start, end}]
+let pkChart      = null;
+let currentThresholds = [];
+let currentEvents     = [];
+let currentCt         = 0;
+let currentDrug       = null;
+
+// ══════════════════════════════════════════════════════════════
+// RK4 INTEGRATOR — Corrected Ce ODE
+// State vector: [m1(mg), m2(mg), m3(mg), Ce(mcg/mL)]
+// Units: mass mg; volume L → Cp = m1/v1 in mg/L = mcg/mL ✓
+// ke0 in min⁻¹; dCe/dt = ke0·(Cp−Ce) in mcg/mL/min ✓
+// ══════════════════════════════════════════════════════════════
+function derivs(s, drug, infRate) {
+  const [m1, m2, m3, Ce] = s;
+  const Cp = m1 / drug.v1;  // mg/L = mcg/mL
+  return [
+    -(drug.k10 + drug.k12 + drug.k13) * m1
+      + drug.k21 * m2
+      + drug.k31 * m3
+      + infRate,              // infRate in mg/min
+    drug.k12 * m1 - drug.k21 * m2,
+    drug.k13 * m1 - drug.k31 * m3,
+    drug.ke0 * (Cp - Ce)    // CORRECTED Ce ODE — concentration units throughout
+  ];
+}
+
+function rk4(s, dt, drug, infRate) {
+  const add = (a, b, h) => a.map((v, i) => v + h * b[i]);
+  const k1 = derivs(s,            drug, infRate);
+  const k2 = derivs(add(s,k1,dt*0.5), drug, infRate);
+  const k3 = derivs(add(s,k2,dt*0.5), drug, infRate);
+  const k4 = derivs(add(s,k3,dt),     drug, infRate);
+  return s.map((v, i) => v + (dt/6)*(k1[i] + 2*k2[i] + 2*k3[i] + k4[i]));
+}
+
+function simulate(drug, initDose, extraBol, infs, durMin) {
+  const dt         = 0.05;                     // 3-second steps
+  const totalSteps = Math.round(durMin / dt);
+  const stride     = Math.round(0.25 / dt);    // sample every 15 s
+
+  // Sorted bolus list including T=0
+  const boluses = (initDose > 0 ? [{ time: 0, dose: initDose }] : [])
+    .concat(extraBol)
+    .sort((a, b) => a.time - b.time);
+
+  let state = [0, 0, 0, 0];  // [m1, m2, m3, Ce]
+  const times = [], cpArr = [], ceArr = [];
+
+  for (let step = 0; step <= totalSteps; step++) {
+    const t = step * dt;
+
+    // Apply boluses whose scheduled time falls in this dt window
+    for (const b of boluses) {
+      if (b.time >= t - dt * 0.5 && b.time < t + dt * 0.5) {
+        state[0] += b.dose;
+      }
+    }
+
+    // Sum active infusion rates (mg/min)
+    const infRate = infs
+      .filter(inf => t >= inf.start && t < inf.end)
+      .reduce((s, inf) => s + inf.rate, 0);
+
+    state = rk4(state, dt, drug, infRate);
+    state = state.map(v => Math.max(0, v));
+
+    if (step % stride === 0) {
+      times.push(t);
+      cpArr.push(state[0] / drug.v1);
+      ceArr.push(state[3]);
+    }
+  }
+  return { times, cp: cpArr, ce: ceArr };
+}
+
+// ══════════════════════════════════════════════════════════════
+// CHART
+// ══════════════════════════════════════════════════════════════
+// Custom plugin: threshold bands (drawn before datasets)
+const bandPlugin = {
+  id: 'bandPlugin',
+  beforeDatasetsDraw(chart) {
+    if (!document.getElementById('showThresh').checked) return;
+    const { ctx, scales: { x, y } } = chart;
+    ctx.save();
+    for (const th of currentThresholds) {
+      const y1 = y.getPixelForValue(th.min);
+      const y2 = y.getPixelForValue(th.max);
+      ctx.fillStyle = th.fill;
+      ctx.fillRect(x.left, Math.min(y1, y2), x.width, Math.abs(y1 - y2));
+    }
+    ctx.restore();
+  }
+};
+
+// Custom plugin: Ct line + event markers (drawn after datasets)
+const overlayPlugin = {
+  id: 'overlayPlugin',
+  afterDraw(chart) {
+    const { ctx, chartArea, scales: { x, y } } = chart;
+    if (!chartArea) return;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(chartArea.left, chartArea.top, chartArea.right - chartArea.left, chartArea.bottom - chartArea.top);
+    ctx.clip();
+
+    // Target Ct dashed line
+    if (currentCt > 0 && Number.isFinite(currentCt)) {
+      const yPx = y.getPixelForValue(currentCt);
+      if (Number.isFinite(yPx)) {
+        ctx.strokeStyle = 'rgba(255,255,255,0.50)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([10, 6]);
+        ctx.beginPath();
+        ctx.moveTo(x.left, yPx);
+        ctx.lineTo(x.right, yPx);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
+
+    // Event markers
+    for (const ev of currentEvents) {
+      const xPx = x.getPixelForValue(ev.time);
+      if (!Number.isFinite(xPx) || xPx < x.left || xPx > x.right) continue;
+
+      if (ev.type === 'bolus') {
+        ctx.strokeStyle = 'rgba(239,68,68,0.60)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(xPx, y.top);
+        ctx.lineTo(xPx, y.bottom);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      } else if (ev.type === 'inf_start') {
+        ctx.strokeStyle = 'rgba(56,189,248,0.55)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([3, 5]);
+        ctx.beginPath();
+        ctx.moveTo(xPx, y.top);
+        ctx.lineTo(xPx, y.bottom);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      } else if (ev.type === 'inf_end') {
+        ctx.strokeStyle = 'rgba(56,189,248,0.35)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([2, 6]);
+        ctx.beginPath();
+        ctx.moveTo(xPx, y.top);
+        ctx.lineTo(xPx, y.bottom);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
+    ctx.restore();
+
+    // Labels are drawn outside clip for readability
+    ctx.save();
+    ctx.font = '8.5px "JetBrains Mono", monospace';
+    ctx.textBaseline = 'alphabetic';
+
+    if (currentCt > 0 && Number.isFinite(currentCt)) {
+      const yPx = y.getPixelForValue(currentCt);
+      if (Number.isFinite(yPx) && yPx >= y.top && yPx <= y.bottom) {
+        ctx.fillStyle = 'rgba(255,255,255,0.70)';
+        ctx.fillText(`Ct = ${currentCt} mcg/mL`, x.left + 5, Math.max(y.top + 10, yPx - 4));
+      }
+    }
+
+    let labelRow = 0;
+    for (const ev of currentEvents) {
+      const xPx = x.getPixelForValue(ev.time);
+      if (!Number.isFinite(xPx) || xPx < x.left || xPx > x.right) continue;
+      const baseY = y.top + 12 + (labelRow % 3) * 11;
+      const textX = Math.min(Math.max(x.left + 2, xPx + 2), x.right - 60);
+
+      if (ev.type === 'bolus') {
+        ctx.fillStyle = 'rgba(239,100,100,0.95)';
+        ctx.fillText(`↓${ev.dose}mg`, textX, baseY);
+        labelRow++;
+      } else if (ev.type === 'inf_start') {
+        ctx.fillStyle = 'rgba(56,189,248,0.90)';
+        ctx.fillText(`→${ev.rate}mg/m`, textX, baseY);
+        labelRow++;
+      } else if (ev.type === 'inf_end') {
+        ctx.fillStyle = 'rgba(56,189,248,0.65)';
+        ctx.fillText('⊗', textX, baseY);
+        labelRow++;
+      }
+    }
+    ctx.restore();
+  }
+};
+
+if (typeof Chart === 'undefined') {
+  showRuntimeStatus('Chart.js failed to load. The simulator needs internet access to fetch the chart library from the CDN.');
+} else {
+  Chart.register(bandPlugin, overlayPlugin);
+}
+
+function buildChart(drug, results, durMin) {
+  if (typeof Chart === 'undefined') return;
+  const canvas = document.getElementById('pkChart');
+  if (pkChart) pkChart.destroy();
+
+  const peakCp = results.cp.length ? Math.max(...results.cp) : 0;
+  const peakCe = results.ce.length ? Math.max(...results.ce) : 0;
+  const threshMax = (currentThresholds && currentThresholds.length) ? Math.max(...currentThresholds.map(t => t.max)) : 0;
+  const yMaxRaw = Math.max(peakCp, peakCe, threshMax, currentCt || 0);
+  const yMax = yMaxRaw > 0 ? yMaxRaw * 1.12 : 1;
+
+  pkChart = new Chart(canvas, {
+    type: 'line',
+    data: {
+      datasets: [
+        {
+          label: 'Cp',
+          data: results.times.map((t, i) => ({ x: t, y: results.cp[i] })),
+          borderColor: 'rgba(220,220,220,0.65)',
+          borderWidth: 1.5,
+          pointRadius: 0,
+          fill: false,
+          tension: 0.25,
+          order: 2
+        },
+        {
+          label: 'Ce',
+          data: results.times.map((t, i) => ({ x: t, y: results.ce[i] })),
+          borderColor: drug.color,
+          borderWidth: 2.5,
+          pointRadius: 0,
+          fill: false,
+          tension: 0.25,
+          order: 1
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 350, easing: 'easeOutCubic' },
+      interaction: { mode: 'index', intersect: false },
+      scales: {
+        x: {
+          type: 'linear',
+          min: 0,
+          max: durMin,
+          title: {
+            display: true,
+            text: 'Time (minutes)',
+            color: '#ffffff',
+            font: { family: '"JetBrains Mono", monospace', size: 10 }
+          },
+          ticks: {
+            color: '#ffffff',
+            font: { family: '"JetBrains Mono", monospace', size: 9.5 },
+            stepSize: durMin <= 60 ? 5 : durMin <= 120 ? 10 : durMin <= 240 ? 20 : durMin <= 480 ? 40 : 60,
+            maxTicksLimit: 16
+          },
+          grid: { color: 'rgba(30,45,69,0.7)' },
+          border: { color: '#1e2d45' }
+        },
+        y: {
+          title: {
+            display: true,
+            text: 'Concentration (mcg/mL)',
+            color: '#ffffff',
+            font: { family: '"JetBrains Mono", monospace', size: 10 }
+          },
+          ticks: {
+            color: '#ffffff',
+            font: { family: '"JetBrains Mono", monospace', size: 9.5 },
+            maxTicksLimit: 8
+          },
+          grid: { color: 'rgba(30,45,69,0.7)' },
+          border: { color: '#1e2d45' },
+          min: 0,
+          max: yMax
+        }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#0f1724',
+          titleColor: '#c8d8e8',
+          bodyColor: '#6e8099',
+          borderColor: '#1e2d45',
+          borderWidth: 1,
+          titleFont: { family: '"JetBrains Mono", monospace', size: 10.5 },
+          bodyFont:  { family: '"JetBrains Mono", monospace', size: 10 },
+          callbacks: {
+            title: items => `T = ${parseFloat(items[0].label).toFixed(1)} min`,
+            label: item => {
+              const label = item.dataset.label === 'Cp' ? 'Cp (plasma)' : 'Ce (effect)';
+              return `  ${label}: ${item.parsed.y.toFixed(3)} mcg/mL`;
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// STATS
+// ══════════════════════════════════════════════════════════════
+function computeStats(results, drug) {
+  const { times, cp, ce } = results;
+  const n = times.length;
+  const dtSample = n > 1 ? times[1] - times[0] : 0.25;
+
+  let peakCp = 0, peakCpT = 0, peakCe = 0, peakCeT = 0;
+  for (let i = 0; i < n; i++) {
+    if (cp[i] > peakCp) { peakCp = cp[i]; peakCpT = times[i]; }
+    if (ce[i] > peakCe) { peakCe = ce[i]; peakCeT = times[i]; }
+  }
+
+  // LOC-like threshold = second visible band min when available
+  const locMin = currentThresholds.length >= 2 ? currentThresholds[1].min : null;
+  const sedMin = currentThresholds.length ? currentThresholds[0].min : 0;
+  let locDur = 0;
+  let recovT  = null;
+
+  for (let i = 0; i < n; i++) {
+    if (locMin !== null && ce[i] >= locMin) locDur += dtSample;
+  }
+  // Last sample where Ce >= sedation threshold
+  if (sedMin > 0) {
+    for (let i = n - 1; i >= 0; i--) {
+      if (ce[i] >= sedMin) { recovT = times[i]; break; }
+    }
+  }
+
+  document.getElementById('sPeakCp').textContent  = peakCp.toFixed(2);
+  document.getElementById('sPeakCpT').textContent  = `at T = ${peakCpT.toFixed(1)} min`;
+  document.getElementById('sPeakCe').textContent   = peakCe.toFixed(3);
+  document.getElementById('sPeakCeT').textContent  = `at T = ${peakCeT.toFixed(1)} min`;
+  document.getElementById('sLocDur').textContent   = locDur > 0 ? locDur.toFixed(1) : '0';
+  document.getElementById('sLocLbl').textContent   =
+    locMin !== null ? `Duration ≥ band-2 (${locMin} mcg/mL)` : 'Duration ≥ overlay';
+  document.getElementById('sLocSub').textContent   = currentThresholds.length ? 'min above 2nd overlay band' : 'overlay hidden';
+  document.getElementById('sRecov').textContent    = currentThresholds.length ? (recovT !== null ? recovT.toFixed(1) : '>sim') : '—';
+}
+
+// ══════════════════════════════════════════════════════════════
+// THRESHOLD LEGEND
+// ══════════════════════════════════════════════════════════════
+function renderThreshBar(drug) {
+  const el = document.getElementById('threshBar');
+  const thresholds = currentThresholds || [];
+  if (!document.getElementById('showThresh').checked || !thresholds.length) {
+    el.innerHTML = `<div class="thresh-item"><span>No threshold overlay shown.</span></div>`;
+    return;
+  }
+  el.innerHTML = thresholds.map(th =>
+    `<div class="thresh-item">
+       <div class="thresh-swatch" style="background:${th.swatch};"></div>
+       <span>${th.name} (${th.min}–${th.max} mcg/mL)</span>
+     </div>`
+  ).join('');
+}
+
+// ══════════════════════════════════════════════════════════════
+// RUN
+// ══════════════════════════════════════════════════════════════
+function runSim() {
+  if (byId('runtimeStatus')) byId('runtimeStatus').style.display='none';
+  try {
+  const key   = document.getElementById('drugSelect').value;
+  const drug  = getScaledDrug(key);
+  currentDrug = drug;
+
+  const initDose = parseFloat(document.getElementById('initDose').value) || 0;
+  const durMin   = parseInt(document.getElementById('durSelect').value);
+  currentCt      = parseFloat(document.getElementById('ctInput').value) || 0;
+  currentThresholds = getThresholdsForDrug(drug);
+
+  // Build event overlay list
+  currentEvents = [];
+  if (initDose > 0) currentEvents.push({ type: 'bolus', time: 0, dose: initDose });
+  for (const b of extraBoluses) {
+    if (b.time > 0) currentEvents.push({ type: 'bolus', time: b.time, dose: b.dose });
+  }
+  for (const inf of infusions) {
+    currentEvents.push({ type: 'inf_start', time: inf.start, rate: inf.rate });
+    if (inf.end < durMin) currentEvents.push({ type: 'inf_end', time: inf.end });
+  }
+
+  // Legend updates
+  document.getElementById('ceLegLine').style.background = drug.color;
+  document.getElementById('drugLabel').textContent = drug.label;
+  renderThreshBar(drug);
+
+  // Simulate
+  const results = simulate(drug, initDose, extraBoluses, infusions, durMin);
+
+  // Render
+  buildChart(drug, results, durMin);
+  computeStats(results, drug);
+  } catch (err) {
+    showRuntimeStatus('Simulation failed: ' + (err && err.message ? err.message : err));
+    throw err;
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// UI HANDLERS
+// ══════════════════════════════════════════════════════════════
+function updateOverlayControls() {
+  const key = document.getElementById('drugSelect').value;
+  const mode = document.getElementById('overlayMode').value;
+  const opioid = document.getElementById('opioidToggle');
+  const show = document.getElementById('showThresh');
+  const note = document.getElementById('overlayModeNote');
+  if (mode === 'none') show.checked = false;
+  else show.checked = true;
+  if (mode !== 'none' && !show.checked) {
+    note.textContent = 'Threshold bands hidden: Cp and Ce only.';
+  } else if (mode === 'bis' && key !== 'propofol') {
+    note.textContent = 'BIS-oriented overlay is available only for propofol; other drugs use approximate literature-linked overlays.';
+  } else if (mode === 'bis') {
+    note.textContent = opioid.checked
+      ? 'BIS-oriented propofol overlay shown with ~20% downward shift for opioid coadministration teaching mode.'
+      : 'BIS-oriented propofol overlay shown. Approximate teaching ranges only.';
+  } else {
+    note.textContent = 'Approximate literature-linked reference ranges only. Not patient-specific validated targets.';
+  }
+  opioid.disabled = key !== 'propofol' || mode !== 'bis';
+}
+
+function renderSourceBox(drug) {
+  const sourceBox = document.getElementById('sourceBox');
+  sourceBox.innerHTML = `
+    <div class="source-line"><span class="source-tag">MODEL</span>${drug.modelCite}</div>
+    <div class="source-line"><span class="source-tag">EFFECT</span>${drug.effectCite}</div>
+    <div class="source-line"><span class="source-tag">ke₀</span>${drug.ke0} min⁻¹</div>
+    <div class="source-line"><span class="source-tag">NOTE</span>${drug.scalingNote || 'Population reference parameters.'}</div>
+  `;
+  const warningBox = document.getElementById('drugWarningBox');
+  if (drug.warning) {
+    warningBox.style.display = 'block';
+    warningBox.textContent = drug.warning;
+  } else {
+    warningBox.style.display = 'none';
+    warningBox.textContent = '';
+  }
+}
+
+function onDrugChange() {
+  const key = document.getElementById('drugSelect').value;
+  const drug = getScaledDrug(key);
+  document.getElementById('modelRef').textContent = drug.model;
+  document.getElementById('initDose').value = drug.defaultDose;
+  renderSourceBox(drug);
+  updateOverlayControls();
+  updateDosePerKg();
+}
+
+function updateDosePerKg() {
+  const dose = parseFloat(document.getElementById('initDose').value) || 0;
+  const wt   = parseFloat(document.getElementById('wtInput').value)  || 70;
+  document.getElementById('doseKg').textContent = (dose / wt).toFixed(2);
+}
+
+// Boluses
+function addBolus() {
+  const dose = parseFloat(document.getElementById('addBolusDose').value);
+  const time = parseFloat(document.getElementById('addBolusTime').value);
+  if (!dose || isNaN(time)) return;
+  extraBoluses.push({ time, dose });
+  renderBolusList();
+}
+function removeBolus(i) {
+  extraBoluses.splice(i, 1);
+  renderBolusList();
+}
+function renderBolusList() {
+  document.getElementById('bolusList').innerHTML = extraBoluses.map((b, i) =>
+    `<div class="event-pill">
+       <span><span class="tag">BOLUS</span>${b.dose} mg @ T=${b.time} min</span>
+       <button onclick="removeBolus(${i})">×</button>
+     </div>`
+  ).join('');
+}
+
+// Infusions
+function addInfusion() {
+  const inputRate = parseFloat(document.getElementById('addInfRate').value);
+  const unit  = document.getElementById('addInfUnit').value;
+  const start = parseFloat(document.getElementById('addInfStart').value);
+  const end   = parseFloat(document.getElementById('addInfEnd').value);
+  const wt = parseFloat(document.getElementById('wtInput').value) || 70;
+  if (!inputRate || isNaN(start) || isNaN(end) || start >= end) return;
+  const rate = infusionToMgMin(inputRate, unit, wt);
+  infusions.push({ rate, start, end, inputRate, unit });
+  renderInfList();
+}
+function removeInf(i) {
+  infusions.splice(i, 1);
+  renderInfList();
+}
+function renderInfList() {
+  document.getElementById('infList').innerHTML = infusions.map((inf, i) =>
+    `<div class="subcard">
+       <div class="subcard-header">
+         <span>Infusion · ${formatInfusionInput(inf.inputRate ?? inf.rate, inf.unit || 'mg_min')} · T${inf.start}–${inf.end} min</span>
+         <button onclick="removeInf(${i})">×</button>
+       </div>
+       <div style="font-family:var(--mono);font-size:9px;color:var(--text-dimmer);">
+         Internal rate = ${inf.rate.toFixed(3)} mg/min · Total ≈ ${((inf.end - inf.start) * inf.rate).toFixed(1)} mg
+       </div>
+     </div>`
+  ).join('');
+}
+
+function resetAll() {
+  if (byId('runtimeStatus')) byId('runtimeStatus').style.display='none';
+  extraBoluses = [];
+  infusions    = [];
+  currentEvents = [];
+  renderBolusList();
+  renderInfList();
+  onDrugChange();
+  if (pkChart) { pkChart.destroy(); pkChart = null; }
+  ['sPeakCp','sPeakCe','sLocDur','sRecov'].forEach(id => document.getElementById(id).textContent = '—');
+  ['sPeakCpT','sPeakCeT'].forEach(id => document.getElementById(id).textContent = '');
+  document.getElementById('threshBar').innerHTML = '';
+  updateOverlayControls();
+  renderSourceBox(getScaledDrug(document.getElementById('drugSelect').value));
+}
+
+function toggleCritique() {
+  document.getElementById('critiquePanel').classList.toggle('open');
+}
+
+// ── Init ──
+onDrugChange();
+updateOverlayControls();
+runSim();
+</script>
+</body>
+</html>
