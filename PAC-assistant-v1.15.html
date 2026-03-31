@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PAC Fitness Cognitive Assist v1.15</title>
+<style>
+:root{--bg:#f4f7fb;--card:#fff;--line:#d7dee8;--ink:#17212b;--muted:#5a6a7a;--good:#166534;--risk:#1d4ed8;--opt:#b45309;--bad:#b91c1c;--soft:#eef4ff;--warn:#7c2d12}
+*{box-sizing:border-box} body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--ink)}
+.wrap{max-width:1380px;margin:0 auto;padding:16px}.grid{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}@media(max-width:1050px){.grid{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.04);margin-bottom:16px}
+h1,h2,h3{margin:0 0 8px} .sub{font-size:13px;color:var(--muted);line-height:1.4}
+.row,.toolbar,.chips{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.two,.three,.four{display:grid;gap:10px}.two{grid-template-columns:1fr 1fr}.three{grid-template-columns:1fr 1fr 1fr}.four{grid-template-columns:1fr 1fr 1fr 1fr}@media(max-width:900px){.two,.three,.four{grid-template-columns:1fr}}
+.field{margin-bottom:10px} label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+input,select,textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:#fff} textarea{min-height:82px;resize:vertical;font-family:inherit}
+button,.btn,a.btn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:8px 12px;cursor:pointer;font-weight:600;text-decoration:none;color:inherit;display:inline-block} button:hover,.btn:hover{background:#f8fbff}
+.primary{background:var(--soft);border-color:#c9dafc}.danger{background:#fff0f0;border-color:#f5c2c2}.warn{background:#fff7ed;border-color:#fed7aa}.tiny{font-size:12px;padding:5px 8px}
+.badge{display:inline-block;padding:5px 9px;border-radius:999px;font-size:12px;font-weight:700}.fit{background:#eaf7ee;color:var(--good)}.fitrisk{background:#e9f1ff;color:var(--risk)}.optimize{background:#fff4e8;color:var(--opt)}.unfit{background:#fdecec;color:var(--bad)}.neutral{background:#eef2f7;color:#334155}
+.box{border:1px solid var(--line);border-radius:10px;padding:12px;background:#fbfcfe}.mono{white-space:pre-wrap;line-height:1.45}.small{font-size:12px;color:var(--muted)} .muted{color:var(--muted)}
+.checkgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px}@media(max-width:900px){.checkgrid{grid-template-columns:1fr}}
+.module{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px;background:#fff}.moduleHead{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.moduleBody{margin-top:10px}
+.criteria{margin:8px 0 0 18px;padding:0}.criteria li{margin:4px 0} details{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:#fff;margin-bottom:8px} summary{cursor:pointer;font-weight:700}
+.pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);padding:6px 8px;border-radius:999px;background:#fff}.pill input{width:auto;margin:0}
+.hidden{display:none}.tablelike{display:grid;grid-template-columns:1.1fr .7fr .7fr .9fr;gap:6px 10px;font-size:13px}.tablelike>div{padding:6px 0;border-bottom:1px dashed #e6ebf2}.thead{font-weight:700;color:#334155}
+.codebox{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;line-height:1.45;white-space:pre-wrap;background:#0f172a;color:#e2e8f0;border-radius:10px;padding:12px;max-height:420px;overflow:auto}
+.note{font-size:12px;line-height:1.4;border-left:3px solid #f59e0b;background:#fff7ed;padding:8px 10px;border-radius:6px;color:#7c2d12}
+.ok{color:var(--good)} .bad{color:var(--bad)}
+.referralGrid{display:grid;grid-template-columns:1fr;gap:10px}
+.refCard{border:1px solid var(--line);border-radius:10px;padding:10px;background:#fff}
+.refHead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
+.refReasons{margin:6px 0 0 18px;padding:0}
+.refReasons li{margin:4px 0}
+.refNone{background:#eef7ee;color:var(--good)}
+.refEarly{background:#fff4e8;color:var(--opt)}
+.refMand{background:#fdecec;color:var(--bad)}
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <h1>PAC Assistant v1.15</h1>
+    <div class="sub">Cognitive Assist Tool for Residents at PAC (for Oncosurgery and NORA). Software License: GNU GPL v3. Copyright (C) [2026] [Prof. Jyotirmay Kirtania]</div>
+    <div class="toolbar" style="margin-top:10px">
+      <button class="primary" id="saveBtn">Save locally</button>
+      <button id="loadBtn">Reload saved</button>
+      <button id="resetBtn" class="danger">Reset</button>
+      <button id="printBtn">Print / Save PDF</button>
+      <button id="exportBtn">Export JSON</button>
+      <label class="btn" for="importFile">Import JSON</label>
+      <input id="importFile" type="file" accept="application/json" class="hidden">
+      <a class="btn" href="https://riskcalculator.facs.org/RiskCalculator/index.jsp" target="_blank" rel="noopener">ACS NSQIP website</a>
+	  <a id="labLink" class="btn"href="#"target="_blank" rel="noopener">EMR Lab Trends</a>
+</div>
+  </div>
+
+  <div class="grid">
+    <div>
+      <div class="card">
+        <div class="four">
+          <div class="field"><label>Case No. (e.g. 18F2026/000123)</label><input id="patientId"></div>
+          <div class="field"><label>Age (years) <span class="small">*</span></label><input id="age" type="number" min="0" max="120"></div>
+          <div class="field"><label>Sex <span class="small">*</span></label><select id="sex"><option value="">Not entered</option><option>Male</option><option>Female</option></select></div>
+          <div class="field"><label>Procedure</label><input id="procedure"></div>
+        </div>
+        <div class="four">
+          <div class="field"><label>Setting</label><select id="setting"><option>Oncosurgery</option><option>NORA</option><option>Major surgery</option><option>Minor procedure</option></select></div>
+          <div class="field"><label>Urgency</label><select id="urgency"><option>Time-sensitive but not emergency</option><option>Elective</option><option>Urgent</option></select></div>
+          <div class="field"><label>ASA physical status</label><select id="asa"><option>I</option><option>II</option><option>III</option><option>IV</option></select></div>
+          <div class="field"><label>Functional capacity</label><select id="mets"><option value="">Not entered</option><option>Unknown</option><option>≥4 METS</option><option>2–3 METS</option><option><2 METS / bedbound</option></select></div>
+        </div>
+        <div class="four">
+          <div class="field"><label>SpO₂ (%)</label><input id="spo2" type="number"></div>
+          <div class="field"><label>SpO₂ context</label><select id="spo2Context"><option value="">Not entered</option><option>Likely chronic stable baseline</option><option>Possibly acute / worsening</option></select></div>
+          <div class="field"><label>BP (SBP/DBP)</label><input id="bp" placeholder="e.g. 164/96"></div>
+          <div class="field"><label>Pulse / rhythm</label><input id="pulse" placeholder="e.g. 88 regular / AF 126"></div>
+        </div>
+        <div class="four">
+          <div class="field"><label>Resting ECG rhythm / conduction / ST-T</label><input id="ecg" placeholder="e.g. sinus rhythm, RBBB, no ST-T changes"></div>
+          <div class="field"><label>Frailty / functional reserve</label><select id="frailty"><option value="">Not entered</option><option>Independent / robust</option><option>Vulnerable / pre-frail</option><option>Frail / dependent</option></select></div>
+          <div class="field"><label>NT-proBNP (pg/mL)</label><input id="ntprobnp" type="number"></div>
+          <div class="field"><label>Cardiac EF (%) if known</label><input id="ef" type="number" step="1" placeholder="Optional"></div>
+          <div class="field"><label>Hb (g/dL)</label><input id="hb" type="number" step="0.1"></div>
+          <div class="field"><label>ANC (/µL)</label><input id="anc" type="number"></div>
+          <div class="field"><label>Platelets (/µL)</label><input id="platelets" type="number"></div>
+        </div>
+        <div class="four">
+          <div class="field"><label>INR</label><input id="inr" type="number" step="0.1"></div>
+          <div class="field"><label>Serum creatinine (mg/dL) <span class="small">*</span></label><input id="creatinine" type="number" step="0.01"></div>
+          <div class="field"><label>eGFR (MDRD, no race)</label><input id="egfr" type="number" step="1" readonly></div>
+          <div class="field"><label>CKD grade</label><input id="ckdGrade" readonly></div>
+        </div>
+        <div class="four">
+          <div class="field"><label>Baseline creatinine for AKI (mg/dL)</label><input id="baselineCreatinine" type="number" step="0.01" placeholder="Optional"></div>
+          <div class="field"><label>Urine output (mL/kg/h)</label><input id="uoRate" type="number" step="0.1" placeholder="Optional"></div>
+          <div class="field"><label>Low urine output duration (hours)</label><input id="uoHours" type="number" step="1" placeholder="Optional"></div>
+          <div class="field"><label>AKIN stage</label><input id="akinStage" readonly></div>
+        </div>
+        <div class="four">
+          <div class="field"><label>RBS (mg/dL)</label><input id="rbs" type="number"></div>
+          <div class="field"><label>HbA1c (%)</label><input id="hba1c" type="number" step="0.1"></div>
+          <div class="field"><label>Na (mmol/L)</label><input id="na" type="number"></div>
+          <div class="field"><label>Na context</label><select id="naContext"><option value="">Not entered</option><option>Likely chronic stable baseline</option><option>Possibly acute / worsening</option></select></div>
+        </div>
+        <div class="four">
+          <div class="field"><label>K (mmol/L)</label><input id="k" type="number" step="0.1"></div>
+          <div class="field"><label>Nephrology metabolic acidosis context</label><select id="metAcidosis"><option value="">Not entered</option><option>None known</option><option>Clinical metabolic acidosis suspected</option></select></div>
+          <div class="field"><label>Acute volume overload / pulmonary edema</label><select id="volumeOverload"><option value="">Not entered</option><option>No</option><option>Yes</option></select></div>
+          <div class="field"><label>Renal uremic symptoms</label><select id="uremicSymptoms"><option value="">Not entered</option><option>No</option><option>Yes</option></select></div>
+        </div>
+        <div class="four">
+          <div class="field"><label>Bilirubin (mg/dL)</label><input id="bilirubin" type="number" step="0.1"></div>
+          <div class="field"><label>Albumin (g/dL)</label><input id="albumin" type="number" step="0.1"></div>
+          <div class="field"><label>AST / ALT (U/L)</label><input id="astalt" placeholder="e.g. 48 / 52"></div>
+          <div class="field"><label>Renal note</label><input id="renalNote" placeholder="e.g. dialysis yesterday / obstructive uropathy"></div>
+        </div>
+              </div>
+
+      <div class="card">
+        <h2>Select disorders to screen</h2>
+        <div class="sub">Only checked disorders expand below. Use this for disease-specific prompts beyond the core labs and vital thresholds.</div>
+        <div id="selectorBox" class="checkgrid" style="margin-top:10px"></div>
+        <div class="toolbar" style="margin-top:10px">
+          <button id="selectCommonBtn">Select common PAC disorders</button>
+          <button id="clearSelectionBtn">Clear selection</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Active disorder modules</h2>
+        <div id="modulesContainer"></div>
+      </div>
+
+      <details class="card" id="customDisorderSection">
+  <summary><h4 style="display:inline;">Add custom disorder</h4></summary>
+
+  <div class="two">
+    <div class="field">
+      <label>Name</label>
+      <input id="customName" placeholder="e.g. OSA / adrenal insufficiency">
+    </div>
+
+    <div class="field">
+      <label>Default manual classification</label>
+      <select id="customDefault">
+        <option value="fitrisk">Fit with elevated risk</option>
+        <option value="optimize">Optimize and review</option>
+        <option value="unfit">Truly unfit / escalate</option>
+        <option value="fit">Fit</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="field">
+    <label>Screening checklist items (one per line)</label>
+    <textarea id="customChecklist"></textarea>
+  </div>
+
+  <div class="field">
+    <label>Cutoff criteria text</label>
+    <textarea id="customCutoffs" placeholder="Fit if ...&#10;Optimize and review if ...&#10;Truly unfit if ..."></textarea>
+  </div>
+
+  <div class="field">
+    <label>Advice / actions</label>
+    <textarea id="customAdvice"></textarea>
+  </div>
+
+  <button id="addCustomBtn" class="primary">Add custom disorder module</button>
+</details>
+    </div>
+
+    <div>
+      <div class="card">
+        <h2>Overall decision</h2>
+        <div id="overallBadge" class="badge neutral">Awaiting data</div>
+        <div id="overallText" class="mono" style="margin-top:10px"></div>
+        <div class="box" style="margin-top:10px">
+          <strong>Mandatory consultant escalation</strong>
+          <div id="escalationText" class="mono" style="margin-top:6px"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Referral panel</h2>
+        <div class="sub">Auto-updating specialty referral prompts based on current inputs and disease-module findings.</div>
+        <div id="referralPanel" class="referralGrid" style="margin-top:10px"></div>
+      </div>
+
+      <div class="card">
+        <h2>Input-linked findings</h2>
+        <div id="findingList" class="mono"></div>
+      </div>
+
+      <div class="card">
+        <h2>Optimization measures</h2>
+        <div class="sub">Specific preoperative optimization advice from the institutional manual for common disorders, shown whenever the disorder is present.</div>
+        <div id="optimizationPanel" style="margin-top:10px"></div>
+      </div>
+
+      <div class="card">
+        <h2>Drugs to continue / stop</h2>
+        <div id="drugPanel"></div>
+      </div>
+
+      <div class="card">
+        <details>
+          <summary>Under the hood: detailed logic, thresholds, edge cases</summary>
+          <div class="sub" style="margin:8px 0 12px">This section is for consultant review. Thresholds below are the actual live rules used by the app unless you edit them in the advanced section.</div>
+          <div id="logicMatrix"></div>
+          <h3 style="margin-top:14px">Edge cases</h3>
+          <div id="edgeCases" class="mono small"></div>
+        </details>
+
+        <details>
+          <summary>Advanced: edit live logic <span class="bad">(warning)</span></summary>
+          <div class="note" style="margin:8px 0 10px">Editing this JSON changes the app logic immediately after you click <strong>Apply edited logic</strong>. Invalid JSON is rejected. Keep a backup before changing.</div>
+          <textarea id="logicEditor" style="min-height:320px"></textarea>
+          <div class="toolbar" style="margin-top:10px">
+            <button id="applyLogicBtn" class="warn">Apply edited logic</button>
+            <button id="restoreLogicBtn">Restore default logic</button>
+          </div>
+          <div id="logicStatus" class="small" style="margin-top:8px"></div>
+        </details>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const DEFAULT_LOGIC = {
+  parameters: {
+    hb: {label:'Hemoglobin (g/dL)', weight:{fit:0, fitrisk:1, optimize:3, unfit:5}, thresholds:[
+      {max:7.9, level:'optimize', text:'<8: optimize/transfuse contextually; major oncologic surgery often needs correction.'},
+      {max:9.9, level:'fitrisk', text:'8–9.9: fit with elevated risk; major blood loss planning required.'},
+      {max:null, level:'fit', text:'≥10: acceptable for most major cancer procedures.'}
+    ], edge:['Severe symptoms (angina, heart failure, resting tachycardia) can upgrade to consultant escalation even if numeric Hb is slightly higher.','Critical-site or anticipated major blood loss may justify correction above the numeric minimum.']},
+    anc: {label:'ANC (/µL)', weight:{fit:0, fitrisk:1, optimize:3, unfit:5}, thresholds:[
+      {max:499, level:'optimize', text:'<500: severe neutropenia; optimize/review, infection control, consultant review.'},
+      {max:999, level:'optimize', text:'500–999: optimize and review.'},
+      {max:1499, level:'fitrisk', text:'1000–1499: fit with elevated infectious risk.'},
+      {max:null, level:'fit', text:'≥1500: acceptable.'}
+    ], edge:['Active sepsis overrides ANC category.']},
+    platelets: {label:'Platelets (/µL)', weight:{fit:0, fitrisk:1, optimize:3, unfit:5}, thresholds:[
+      {max:29999, level:'optimize', text:'<30,000: optimize/review; usually unsafe without correction.'},
+      {max:49999, level:'fitrisk', text:'30,000–49,999: fit with elevated risk for minor procedures; major procedures usually need correction.'},
+      {max:99999, level:'fitrisk', text:'50,000–99,999: fit with elevated bleeding risk for noncritical-site surgery.'},
+      {max:null, level:'fit', text:'≥100,000: acceptable for most surgery.'}
+    ], edge:['Critical-site surgery / neuraxial / neurosurgery often requires higher thresholds than general major surgery.','Active bleeding upgrades urgency and risk.']},
+    inr: {label:'INR', weight:{fit:0, fitrisk:1, optimize:3, unfit:5}, thresholds:[
+      {max:1.8, level:'fit', text:'≤1.8: generally acceptable for many non-hepatic procedures if context supports it.'},
+      {max:2.5, level:'optimize', text:'1.9–2.5: optimize and review.'},
+      {max:null, level:'optimize', text:'>2.5: optimize/reverse according to indication and urgency.'}
+    ], edge:['Critical-site and neuraxial procedures usually need tighter coagulation control.','A supratherapeutic INR from anticoagulants is usually modifiable, so not “truly unfit” by itself.']},
+    egfr: {label:'eGFR (mL/min/1.73 m²)', weight:{fit:0, fitrisk:1, optimize:2, unfit:0}, thresholds:[
+      {max:14, level:'optimize', text:'<15 (G5): optimize and review; kidney failure range, but not truly unfit by eGFR alone.'},
+      {max:29, level:'optimize', text:'15–29 (G4): optimize and review.'},
+      {max:44, level:'fitrisk', text:'30–44 (G3b): fit with elevated renal and cardiovascular risk.'},
+      {max:59, level:'fitrisk', text:'45–59 (G3a): fit with elevated risk.'},
+      {max:89, level:'fit', text:'60–89 (G2): acceptable if chronic and stable.'},
+      {max:null, level:'fit', text:'≥90 (G1): acceptable.'}
+    ], edge:['CKD grade requires chronicity; a single low eGFR without prior history may represent AKI or transient derangement.','Stable low eGFR alone rarely makes a patient prohibitive; focus on potassium, volume status, acidosis, dialysis timing, and active AKI.']},
+    akin: {label:'AKIN stage', weight:{fit:0, fitrisk:0, optimize:3, unfit:0}, thresholds:[
+      {max:0, level:'fit', text:'No AKIN-defined AKI from entered baseline creatinine / urine output data.'},
+      {max:1, level:'optimize', text:'AKIN Stage 1: acute kidney injury present; optimize and review.'},
+      {max:2, level:'optimize', text:'AKIN Stage 2: significant AKI; optimize and consultant review.'},
+      {max:null, level:'optimize', text:'AKIN Stage 3: severe AKI; urgent optimization and senior review.'}
+    ], edge:['AKIN needs a baseline creatinine or urine-output trend; if neither is entered, stage remains unavailable.','AKIN stage is treated as reversible physiology, so it escalates to optimize/review rather than truly unfit by itself.']},
+    na: {label:'Sodium (mmol/L)', weight:{fit:0, fitrisk:1, optimize:3, unfit:5}, thresholds:[
+      {max:124, level:'optimize', text:'<125: optimize/review urgently.'},
+      {max:129, level:'optimize', text:'125–129: optimize and review.'},
+      {max:134, level:'fitrisk', text:'130–134: fit with elevated risk.'},
+      {max:145, level:'fit', text:'135–145: acceptable.'},
+      {max:150, level:'fitrisk', text:'146–150: fit with elevated risk.'},
+      {max:155, level:'optimize', text:'151–155: optimize and review.'},
+      {max:null, level:'optimize', text:'>155: optimize/review urgently.'}
+    ], edge:['Chronic mild hyponatremia is prognostically important but not always a reason to delay a time-sensitive cancer procedure.','Seizures, encephalopathy, or rapidly changing sodium require urgent senior review.']},
+    k: {label:'Potassium (mmol/L)', weight:{fit:0, fitrisk:1, optimize:4, unfit:5}, thresholds:[
+      {max:2.7, level:'optimize', text:'<2.8: optimize/review urgently.'},
+      {max:2.9, level:'optimize', text:'2.8–2.9: optimize and review.'},
+      {max:3.4, level:'fitrisk', text:'3.0–3.4: fit with elevated risk; replace as indicated.'},
+      {max:5.0, level:'fit', text:'3.5–5.0: acceptable.'},
+      {max:5.5, level:'fitrisk', text:'5.1–5.5: fit with elevated risk if stable and explained.'},
+      {max:6.0, level:'optimize', text:'5.6–6.0: optimize and review.'},
+      {max:null, level:'optimize', text:'>6.0: optimize/review urgently.'}
+    ], edge:['No universally accepted absolute pre-induction potassium cutoff exists in dialysis patients; ECG changes, urgency, and reversibility matter.']},
+    bilirubin: {label:'Bilirubin (mg/dL)', weight:{fit:0, fitrisk:1, optimize:2, unfit:4}, thresholds:[
+      {max:1.2, level:'fit', text:'≤1.2: acceptable.'},
+      {max:3.0, level:'fitrisk', text:'1.3–3.0: fit with elevated risk.'},
+      {max:10.0, level:'optimize', text:'3.1–10.0: optimize and review.'},
+      {max:null, level:'optimize', text:'>10: optimize/review; correlate with etiology and synthetic function.'}
+    ], edge:['Acute liver failure, encephalopathy, active cholangitis, or uncontrolled sepsis matter more than bilirubin alone.']},
+    albumin: {label:'Albumin (g/dL)', weight:{fit:0, fitrisk:1, optimize:2, unfit:3}, thresholds:[
+      {max:1.9, level:'optimize', text:'<2.0: optimize/review; strong frailty/nutrition marker.'},
+      {max:2.4, level:'optimize', text:'2.0–2.4: optimize and review.'},
+      {max:3.4, level:'fitrisk', text:'2.5–3.4: fit with elevated risk.'},
+      {max:null, level:'fit', text:'≥3.5: acceptable.'}
+    ], edge:['Low albumin is a prognostic marker and usually not a sole reason to declare true unfitness in time-sensitive cancer surgery.']},
+    ntprobnp: {label:'NT-proBNP (pg/mL)', weight:{fit:0, fitrisk:2, optimize:3, unfit:4}, thresholds:[
+      {max:299, level:'fit', text:'<300: normal threshold.'},
+      {max:899, level:'fitrisk', text:'300–899: fit with elevated cardiac risk.'},
+      {max:2999, level:'optimize', text:'900–2999: optimize and review.'},
+      {max:null, level:'optimize', text:'≥3000: optimize/review and correlate clinically.'}
+    ], edge:['A high NT-proBNP is a risk signal, not automatic unfitness. Decompensated heart failure is the real red flag.','Interpret NT-proBNP more cautiously in older patients and in CKD / low eGFR, where baseline values may be higher; trend, symptoms, and echocardiographic context matter.']},
+    rbs: {label:'Random blood sugar (mg/dL)', weight:{fit:0, fitrisk:1, optimize:3, unfit:5}, thresholds:[
+      {max:180, level:'fit', text:'≤180: acceptable perioperative target zone.'},
+      {max:250, level:'fitrisk', text:'181–250: fit with elevated risk.'},
+      {max:300, level:'optimize', text:'251–300: optimize and review.'},
+      {max:null, level:'optimize', text:'>300: optimize/review; DKA/HHS features upgrade urgency.'}
+    ], edge:['A high HbA1c alone should not automatically delay time-sensitive oncologic surgery if day-of-surgery glucose is controlled and no ketoacidosis is present.']},
+    hba1c: {label:'HbA1c (%)', weight:{fit:0, fitrisk:1, optimize:2, unfit:0}, thresholds:[
+      {max:6.9, level:'fit', text:'<7.0: acceptable chronic control.'},
+      {max:8.9, level:'fitrisk', text:'7.0–8.9: fit with elevated risk.'},
+      {max:10.0, level:'optimize', text:'9.1–10.0: optimize and review if time allows.'},
+      {max:null, level:'optimize', text:'>10.0: optimize/review; not by itself “truly unfit” in urgent oncologic cases.'}
+    ], edge:['Use HbA1c as context, not as the sole day-of-surgery stop signal.']},
+    spo2: {label:'Room-air SpO₂ (%)', weight:{fit:0, fitrisk:1, optimize:3, unfit:5}, thresholds:[
+      {max:87, level:'optimize', text:'<88: optimize/review urgently.'},
+      {max:91, level:'optimize', text:'88–91: optimize and review.'},
+      {max:95, level:'fitrisk', text:'92–95: fit with elevated pulmonary risk.'},
+      {max:null, level:'fit', text:'≥96: acceptable.'}
+    ], edge:['Stable chronic hypoxemia may be acceptable in select patients with a clear oxygenation/ventilation plan; acute distress is different.']},
+    bp: {label:'Blood pressure', weight:{fit:0, fitrisk:1, optimize:3, unfit:5}, thresholds:[
+      {type:'bp', maxS:139, maxD:89, level:'fit', text:'<140/90: acceptable.'},
+      {type:'bp', maxS:179, maxD:109, level:'fitrisk', text:'140–179 systolic or 90–109 diastolic: fit with elevated risk.'},
+      {type:'bp', maxS:999, maxD:999, level:'optimize', text:'≥180 systolic or ≥110 diastolic: optimize and review.'}
+    ], edge:['Hypertensive emergency with end-organ injury is a true red flag, but simple severe hypertension is usually modifiable rather than non-modifiable unfitness.']},
+    mets: {label:'Functional capacity', weight:{fit:0, fitrisk:2, optimize:3, unfit:4}, thresholds:[
+      {match:'≥4 METS', level:'fit', text:'≥4 METS: acceptable.'},
+      {match:'2–3 METS', level:'fitrisk', text:'2–3 METS: fit with elevated risk.'},
+      {match:'<2 METS / bedbound', level:'optimize', text:'<2 METS / bedbound: optimize/review and consultant assessment.'},
+      {match:'Unknown', level:'fitrisk', text:'Unknown functional capacity: treat as elevated risk if other cardiac risk factors exist.'}
+    ], edge:['Poor functional capacity alone is not true unfitness. It raises monitoring and optimization needs.','Aggregate score ≥4 is a pragmatic threshold to flag multiple mild-to-moderate abnormalities that collectively justify at least fit-with-elevated-risk planning even when no single optimize trigger is present.']},
+    ecg: {label:'ECG interpretation', weight:{fit:0, fitrisk:2, optimize:3, unfit:5}, thresholds:[
+      {type:'ecg', keywords:['high-grade block','complete heart block','vt','ventricular tachy','stemi','ongoing ischemia','new st elevation'], level:'optimize', text:'Major rhythm/conduction/ischemic abnormality: optimize and consultant review.'},
+      {type:'ecg', keywords:['af','atrial fibrillation','st-t','st depression','t inversion','bbb','block','paced'], level:'fitrisk', text:'Abnormal rhythm / conduction / ST-T pattern: fit with elevated cardiac risk.'},
+      {type:'ecg', keywords:[], level:'fit', text:'No significant abnormality recorded.'}
+    ], edge:['ECG text entry is intentionally simple. If the resident types “new ischemic changes,” the case should be escalated.']},
+    astalt: {label:'AST / ALT', weight:{fit:0, fitrisk:1, optimize:2, unfit:3}, thresholds:[
+      {type:'astalt', maxBoth:80, level:'fit', text:'≤~2× ULN range: acceptable.'},
+      {type:'astalt', maxBoth:200, level:'fitrisk', text:'~2–5× ULN: fit with elevated risk.'},
+      {type:'astalt', maxBoth:400, level:'optimize', text:'~5–10× ULN: optimize and review.'},
+      {type:'astalt', maxBoth:999999, level:'optimize', text:'>~10× ULN: optimize/review; correlate with acute hepatitis or liver failure.'}
+    ], edge:['Numeric AST/ALT alone is less important than acute hepatitis, synthetic dysfunction, and encephalopathy.']}
+  },
+  redFlags: [
+    'Shock / active sepsis with organ dysfunction',
+    'Decompensated heart failure / pulmonary edema',
+    'Unstable angina / recent MI / suspected acute coronary syndrome',
+    'Severe uncontrolled arrhythmia / HR >130 with symptoms',
+    'Acute respiratory distress or rapidly worsening oxygenation',
+    'Raised ICP / acute neurological deterioration',
+    'Central airway obstruction / mediastinal mass with positional symptoms'
+  ],
+  consultantEscalation: [
+    'Pneumonectomy',
+    'Esophagectomy',
+    'Mediastinal mass',
+    'Retroperitoneal sarcoma',
+    'Central airway obstruction',
+    'ASA III',
+    'ASA IV',
+    'Any case classified as optimize and review with multiple domains',
+    'Any case that appears truly unfit or has red flags'
+  ]
+};
+
+let LOGIC = JSON.parse(JSON.stringify(DEFAULT_LOGIC));
+
+const disorders = [
+ {id:'htn',name:'Hypertension',common:true,checklist:['Hypertension history / treatment','Recent home/ward BP trend','End-organ injury symptoms?','Medication reconciliation'],cutoffs:`Fit: controlled / acceptable BP.\nFit with elevated risk: persistent 140–179 / 90–109.\nOptimize and review: ≥180 or ≥110.\nEscalate immediately if hypertensive emergency suspected.`,advice:'Continue chronic strategy; do not use first-ever single-dose amlodipine on morning of surgery.',fields:[{key:'flags',label:'Context',type:'multi',options:['On treatment and controlled','Persistent ward BP elevation','Suspected hypertensive emergency / end-organ symptoms']}],evaluate(d){ if(has(d,'Suspected hypertensive emergency / end-organ symptoms')) return res('optimize','Possible hypertensive emergency.'); if(has(d,'Persistent ward BP elevation')) return res('fitrisk','BP trend needs perioperative caution.'); if(has(d,'On treatment and controlled')) return res('fit','Controlled hypertension.'); return res('fit','No additional HTN concern recorded.'); }},
+ {id:'dm',name:'Diabetes mellitus',common:true,checklist:['Known DM / current therapy','RBS and HbA1c available','Ketosis / osmotic symptoms / infection','Drug stop-substitute plan documented'],cutoffs:`Fit: day-of-surgery glucose acceptable and no ketosis.\nFit with elevated risk: moderate hyperglycemia.\nOptimize and review: marked hyperglycemia or poor chronic control needing active plan.\nImmediate escalation if DKA/HHS suspected.`,advice:'SGLT2, GLP-1, basal insulin, and premeal insulin rules are in the drug section.',fields:[{key:'flags',label:'Context',type:'multi',options:['No ketosis / acceptable day-of-surgery control','Marked hyperglycemia needing active insulin plan','DKA / HHS suspicion','On SGLT2 inhibitor','On GLP-1 receptor agonist']}],evaluate(d){ if(has(d,'DKA / HHS suspicion')) return res('optimize','Possible metabolic emergency.'); if(has(d,'Marked hyperglycemia needing active insulin plan')) return res('optimize','Needs active glycemic optimization.'); if(has(d,'No ketosis / acceptable day-of-surgery control')) return res('fitrisk','Proceed with glycemic plan.'); return res('fit','No additional DM trigger recorded.'); }},
+ {id:'anemia',name:'Iron deficiency anemia / anemia of cancer',common:true,checklist:['Hb and symptoms','Anticipated blood loss','Need for transfusion / iron plan','Major oncologic resection?'],cutoffs:`Fit: Hb acceptable for planned procedure.\nFit with elevated risk: mild anemia.\nOptimize and review: significant anemia requiring correction.\nTrue unfitness is rarely from anemia alone; usually it is modifiable.`,advice:'Major cancer surgery with expected blood loss may need higher preoperative correction than minor surgery.',fields:[{key:'flags',label:'Context',type:'multi',options:['Major expected blood loss','Symptomatic anemia','Ongoing bleeding']}],evaluate(d){ if(has(d,'Ongoing bleeding')) return res('optimize','Ongoing bleeding needs active management.'); if(has(d,'Symptomatic anemia')||has(d,'Major expected blood loss')) return res('optimize','Anemia threshold should be interpreted more conservatively.'); return res('fit','No additional anemia modifier recorded.'); }},
+ {id:'ckd',name:'Chronic kidney disease (eGFR based)',common:true,checklist:['Known CKD / dialysis?','Recent eGFR','Hyperkalemia, overload, acidosis, uremic symptoms?','Dialysis timing and nephrotoxin review'],cutoffs:`Fit: eGFR acceptable or CKD mild.\nFit with elevated risk: CKD G3.\nOptimize and review: CKD G4–G5 or dialysis / renal instability.\nDo not call truly unfit by eGFR alone.`,advice:'eGFR is now the primary renal input. Focus on potassium, overload, and dialysis timing.',fields:[{key:'flags',label:'Context',type:'multi',options:['Stable CKD without overload','Stable dialysis patient','Volume overload / pulmonary edema','Uremic symptoms / severe acidosis','Recent missed dialysis']}],evaluate(d){ if(has(d,'Volume overload / pulmonary edema')||has(d,'Uremic symptoms / severe acidosis')||has(d,'Recent missed dialysis')) return res('optimize','Renal instability present.'); if(has(d,'Stable dialysis patient')||has(d,'Stable CKD without overload')) return res('fitrisk','Stable CKD/dialysis with planning needs.'); return res('fit','No additional renal modifier recorded.'); }},
+ {id:'hf',name:'Chronic heart failure',common:true,checklist:['NYHA / effort tolerance','Orthopnea / edema / recent decompensation','NT-proBNP / echo context','Diuretic / beta-blocker plan'],cutoffs:`Fit with elevated risk: stable compensated HF.\nOptimize and review: decompensation, rising NT-proBNP, edema, orthopnea.\nTrue unfitness comes from severe decompensated or inotrope-dependent state, not from the label alone.`,advice:'Stable compensated HF can still proceed with tighter fluid/hemodynamic planning.',fields:[{key:'flags',label:'Context',type:'multi',options:['Stable compensated HF','Recent decompensation / edema / orthopnea','Pulmonary edema / inotrope dependence']}],evaluate(d){ if(has(d,'Pulmonary edema / inotrope dependence')) return res('optimize','Severe heart failure red flag.'); if(has(d,'Recent decompensation / edema / orthopnea')) return res('optimize','Needs optimization and consultant review.'); if(has(d,'Stable compensated HF')) return res('fitrisk','Compensated HF with elevated risk.'); return res('fit','No additional HF modifier recorded.'); }},
+ {id:'ihd',name:'Ischemic heart disease / angina / MI / PTCA',common:true,checklist:['Current symptoms','MI / ACS timing','Stent history and antiplatelet plan','Functional capacity and ECG'],cutoffs:`Fit with elevated risk: stable IHD.\nOptimize and review: active angina, suspected unstable ischemia, incomplete stent/antiplatelet plan.\nTrue unfitness arises from active unstable ischemia, not stable past PCI alone.`,advice:'Stent timing and antiplatelet strategy must be explicit. Integrate exact antiplatelet / anticoagulant hold timing into the cardiac plan.',fields:[{key:'flags',label:'Context',type:'multi',options:['Stable IHD / past PCI without current symptoms','Current angina / worsening symptoms','Recent MI / ACS concern','Coronary stent / DAPT issue unresolved']}],evaluate(d){ if(has(d,'Current angina / worsening symptoms')||has(d,'Recent MI / ACS concern')) return res('optimize','Possible unstable coronary disease.'); if(has(d,'Coronary stent / DAPT issue unresolved')) return res('optimize','Senior plan needed for antiplatelets.'); if(has(d,'Stable IHD / past PCI without current symptoms')) return res('fitrisk','Stable IHD with elevated risk.'); return res('fit','No additional IHD modifier recorded.'); }},
+ {id:'stroke',name:'Cerebrovascular disease / prior stroke or TIA',common:false,checklist:['Timing of last event','Residual deficits','Antiplatelet / anticoagulant plan','Functional recovery and aspiration risk'],cutoffs:`Fit with elevated risk: remote stable stroke/TIA.\nOptimize and review: recent stroke or unclear antithrombotic plan.\nTrue unfitness only if ongoing neurologic instability.`,advice:'Document baseline deficit and aspiration risk.',fields:[{key:'flags',label:'Context',type:'multi',options:['Remote stable stroke / TIA','Recent stroke / TIA','Ongoing neurologic deterioration']}],evaluate(d){ if(has(d,'Ongoing neurologic deterioration')) return res('optimize','Neurologic red flag.'); if(has(d,'Recent stroke / TIA')) return res('optimize','Recent event requires senior review.'); if(has(d,'Remote stable stroke / TIA')) return res('fitrisk','Remote cerebrovascular disease with elevated risk.'); return res('fit','No additional cerebrovascular modifier recorded.'); }},
+ {id:'arr',name:'Cardiac arrhythmia',common:true,checklist:['Rate, symptoms, hemodynamics','Known rhythm diagnosis','Rate/rhythm control drugs','ECG documentation'],cutoffs:`Fit with elevated risk: controlled chronic arrhythmia.\nOptimize and review: fast AF / symptomatic arrhythmia.\nTrue unfitness only with hemodynamic instability / malignant arrhythmia.`,advice:'A simple text ECG abnormality also influences the global logic separately. If anticoagulated, record exact hold and bridge timing.',fields:[{key:'flags',label:'Context',type:'multi',options:['Controlled chronic arrhythmia','Fast AF / symptomatic arrhythmia','Hemodynamic instability / malignant arrhythmia']}],evaluate(d){ if(has(d,'Hemodynamic instability / malignant arrhythmia')) return res('optimize','Serious arrhythmia red flag.'); if(has(d,'Fast AF / symptomatic arrhythmia')) return res('optimize','Needs rate/rhythm optimization.'); if(has(d,'Controlled chronic arrhythmia')) return res('fitrisk','Controlled arrhythmia with elevated risk.'); return res('fit','No additional arrhythmia modifier recorded.'); }},
+ {id:'thy',name:'Thyroid disorder',common:false,checklist:['Hypothyroid or hyperthyroid?','Current treatment','Symptoms of severe disease / thyroid storm / myxedema','Latest TFT if available'],cutoffs:`Fit: treated stable disease.\nOptimize and review: symptomatic or biochemically uncontrolled disease.\nTrue unfitness if myxedema coma / thyroid storm concern.`,advice:'Symptoms matter more than small lab deviations.',fields:[{key:'flags',label:'Context',type:'multi',options:['Stable treated hypothyroidism','Stable treated hyperthyroidism','Uncontrolled symptomatic thyroid disease','Myxedema / thyroid storm concern']}],evaluate(d){ if(has(d,'Myxedema / thyroid storm concern')) return res('optimize','Endocrine emergency concern.'); if(has(d,'Uncontrolled symptomatic thyroid disease')) return res('optimize','Needs optimization.'); if(has(d,'Stable treated hypothyroidism')||has(d,'Stable treated hyperthyroidism')) return res('fitrisk','Stable thyroid disease with minor added risk.'); return res('fit','No additional thyroid modifier recorded.'); }},
+ {id:'seiz',name:'Seizure disorder',common:false,checklist:['Last seizure','Drug adherence','Missed doses / vomiting / inability to take oral meds','Active CNS issue?'],cutoffs:`Fit: controlled on treatment.\nOptimize and review: recent seizure or missed-drug concern.\nTrue unfitness only with status / active neurologic emergency.`,advice:'Ensure perioperative anticonvulsant continuation.',fields:[{key:'flags',label:'Context',type:'multi',options:['Controlled on treatment','Recent seizure / poor control','Status / active neurologic emergency']}],evaluate(d){ if(has(d,'Status / active neurologic emergency')) return res('optimize','Neurologic emergency.'); if(has(d,'Recent seizure / poor control')) return res('optimize','Needs seizure plan.'); if(has(d,'Controlled on treatment')) return res('fitrisk','Controlled seizure disorder.'); return res('fit','No additional seizure modifier recorded.'); }},
+ {id:'vte',name:'DVT / VTE history',common:false,checklist:['Active clot or history only?','Current anticoagulant and last dose','Mechanical valve / recent VTE high-risk bridge issue','Need for postoperative prophylaxis'],cutoffs:`Fit with elevated risk: past VTE with clear plan.\nOptimize and review: active clot or unclear anticoagulant plan.\nTrue unfitness is uncommon; usually the problem is planning.`,advice:'Use the drug section to document exact stop timing.',fields:[{key:'flags',label:'Context',type:'multi',options:['Past VTE with clear perioperative plan','Active DVT / PE','High-risk anticoagulant bridging issue']}],evaluate(d){ if(has(d,'Active DVT / PE')||has(d,'High-risk anticoagulant bridging issue')) return res('optimize','Needs consultant-level anticoagulation plan.'); if(has(d,'Past VTE with clear perioperative plan')) return res('fitrisk','Proceed with thrombosis precautions.'); return res('fit','No additional VTE modifier recorded.'); }},
+ {id:'lungs',name:'Asthma / COPD / restrictive lung disease',common:true,checklist:['Baseline symptoms','Current wheeze / infection / exacerbation','Inhaler / nebulizer use','Need for postop ventilation / ICU'],cutoffs:`Fit: stable and asymptomatic.\nFit with elevated risk: stable chronic lung disease.\nOptimize and review: active wheeze, infection, significant desaturation.\nTrue unfitness only if acute respiratory failure or inability to ventilate/oxygenate safely.`,advice:'Stable chronic hypoxemia may still proceed with a plan; acute exacerbation should not be ignored.',fields:[{key:'flags',label:'Context',type:'multi',options:['Stable chronic lung disease','Active wheeze / bronchospasm','Chest infection / purulent sputum','Acute respiratory failure / distress']}],evaluate(d){ if(has(d,'Acute respiratory failure / distress')) return res('optimize','Respiratory red flag.'); if(has(d,'Active wheeze / bronchospasm')||has(d,'Chest infection / purulent sputum')) return res('optimize','Needs pulmonary optimization.'); if(has(d,'Stable chronic lung disease')) return res('fitrisk','Stable lung disease with elevated risk.'); return res('fit','No additional pulmonary modifier recorded.'); }},
+ {id:'liver',name:'Chronic liver disease / jaundice / recent hepatitis',common:false,checklist:['Synthetic function','Encephalopathy / ascites / varices','Active hepatitis?','Coagulation / platelet context'],cutoffs:`Fit with elevated risk: compensated chronic liver disease.\nOptimize and review: jaundice / decompensation / active hepatitis.\nTrue unfitness from acute liver failure or uncontrolled encephalopathy, not bilirubin alone.`,advice:'Synthetic function and encephalopathy outweigh isolated enzyme rise.',fields:[{key:'flags',label:'Context',type:'multi',options:['Compensated chronic liver disease','Ascites / jaundice / coagulopathy','Recent active hepatitis','Acute liver failure / encephalopathy']}],evaluate(d){ if(has(d,'Acute liver failure / encephalopathy')) return res('optimize','Major liver red flag.'); if(has(d,'Ascites / jaundice / coagulopathy')||has(d,'Recent active hepatitis')) return res('optimize','Needs liver-focused review.'); if(has(d,'Compensated chronic liver disease')) return res('fitrisk','Compensated CLD with elevated risk.'); return res('fit','No additional liver modifier recorded.'); }},
+ {id:'neut',name:'Neutropenia / sepsis / immunosuppression',common:true,checklist:['ANC and trend','Fever / source / hemodynamics','Chemo timeline','Microbiology / antibiotics if relevant'],cutoffs:`Fit with elevated risk: mild neutropenia without infection.\nOptimize and review: ANC <1000 or infection concern.\nTrue unfitness comes from active sepsis / shock, not neutropenia alone.`,advice:'Sepsis is a red flag regardless of ANC.',fields:[{key:'flags',label:'Context',type:'multi',options:['Mild neutropenia without infection','Fever / source concern','Sepsis / organ dysfunction / shock']}],evaluate(d){ if(has(d,'Sepsis / organ dysfunction / shock')) return res('optimize','Sepsis red flag.'); if(has(d,'Fever / source concern')) return res('optimize','Needs infection work-up / treatment.'); if(has(d,'Mild neutropenia without infection')) return res('fitrisk','Elevated infection risk.'); return res('fit','No additional infection modifier recorded.'); }},
+ {id:'drugs',name:'Anticoagulant / antiplatelet / critical medication review',common:true,checklist:['Exact drug names and last dose','Stop and restart plan','High thrombotic indication?','High-bleed surgery?'],cutoffs:`Fit: explicit written drug plan.\nFit with elevated risk: high-risk indication but plan is clear.\nOptimize and review: hold interval incomplete or bridge issue unresolved.\nTrue unfitness is unusual; the usual problem is unsafe planning.`,advice:'Residents must write exact drugs, not just class names.',fields:[{key:'flags',label:'Context',type:'multi',options:['Explicit drug stop/restart plan documented','Recent stent / DAPT problem','Mechanical valve / recent VTE bridge issue','Unsafe unresolved drug dilemma']}],evaluate(d){ if(has(d,'Unsafe unresolved drug dilemma')) return res('optimize','Needs consultant-level decision.'); if(has(d,'Recent stent / DAPT problem')||has(d,'Mechanical valve / recent VTE bridge issue')) return res('optimize','Senior review needed.'); if(has(d,'Explicit drug stop/restart plan documented')) return res('fitrisk','Medication plan documented.'); return res('fit','No additional medication modifier recorded.'); }},
+ {id:'valvular',name:'Valvular heart disease',common:false,checklist:[
+'Identify known lesion and whether it is severe on echo/report',
+'Screen NYHA class, exertional dyspnea, angina, and history of syncope',
+'Screen rhythm: sinus, controlled AF, new/uncontrolled AF, ventricular/high-grade conduction problem',
+'Look for any recent decompensation or pulmonary edema'
+],cutoffs:`Fit: NYHA I–II, no cardiac syncope, and no unstable arrhythmia.
+Fit with elevated risk: severe but compensated lesion, NYHA II, or controlled AF.
+Optimize and review: NYHA III, new/uncontrolled AF, exertional angina/dyspnea, or history of likely cardiac syncope.
+Unfit: NYHA IV, ventricular arrhythmia/high-grade block, or decompensated physiology until senior reassessment.`,advice:'Use NYHA + arrhythmia + syncope rather than vague severity labels alone. Severe symptomatic valve disease requires consultant visibility. If anticoagulated (e.g. AF/mechanical valve), document exact perioperative hold and bridge timing.',fields:[
+{key:'nyha',label:'NYHA class',type:'select',options:['Not entered','I','II','III','IV']},
+{key:'arrhythmia',label:'Arrhythmia status',type:'select',options:['Not entered','None / sinus rhythm','Controlled AF / known stable supraventricular arrhythmia','New AF / uncontrolled AF / significant tachyarrhythmia','Ventricular arrhythmia / high-grade conduction problem']},
+{key:'severity',label:'Valve lesion severity context',type:'select',options:['Not entered','Mild-moderate lesion','Severe but compensated lesion','Decompensated / severe obstructive or restrictive physiology']},
+{key:'flags',label:'Key features',type:'multi',options:['History of syncope likely cardiac','Angina or exertional chest pain attributable to the valve lesion','Dyspnea clearly attributable to valvular disease','Severe aortic stenosis / severe mitral stenosis / severe pulmonary hypertension mentioned in report']}],evaluate(d){
+ const nyha=d.nyha||'Not entered', arr=d.arrhythmia||'Not entered', sev=d.severity||'Not entered';
+ const H=x=>Array.isArray(d.flags)&&d.flags.includes(x);
+ if(nyha==='IV' || arr==='Ventricular arrhythmia / high-grade conduction problem' || sev==='Decompensated / severe obstructive or restrictive physiology') return res('unfit','Valvular disease with NYHA IV, ventricular/high-grade rhythm problem, or decompensated physiology. Senior decision required before proceeding.');
+ if(nyha==='III' || arr==='New AF / uncontrolled AF / significant tachyarrhythmia' || H('History of syncope likely cardiac') || H('Angina or exertional chest pain attributable to the valve lesion') || H('Dyspnea clearly attributable to valvular disease')) return res('optimize','Valvular disease with NYHA III symptoms, unstable arrhythmia, or cardiac syncope/symptom burden. Optimize and obtain consultant review.');
+ if(H('Severe aortic stenosis / severe mitral stenosis / severe pulmonary hypertension mentioned in report') || sev==='Severe but compensated lesion' || arr==='Controlled AF / known stable supraventricular arrhythmia' || nyha==='II') return res('fitrisk','Severe but compensated valve disease or controlled arrhythmia: fit with elevated risk, invasive planning, consultant visibility.');
+ if(nyha==='I' || sev==='Mild-moderate lesion' || arr==='None / sinus rhythm') return res('fit','Valvular disease appears compensated with low symptom burden.');
+ return res('fit','No high-risk valvular trigger recorded.');
+}},
+{id:'cardiomyopathy',name:'Cardiomyopathy',common:false,checklist:[
+'Identify cardiomyopathy history and whether compensated or decompensated',
+'Screen NYHA class, exertional dyspnea, chest pain, and cardiac syncope',
+'Screen rhythm: sinus, controlled AF, new/uncontrolled AF, ventricular/high-grade conduction problem',
+'Look specifically for obstructive physiology / HOCM features if mentioned'
+],cutoffs:`Fit: NYHA I–II, no cardiac syncope, and no unstable arrhythmia.
+Fit with elevated risk: compensated cardiomyopathy, NYHA II, controlled AF, or obstructive physiology that is currently stable.
+Optimize and review: NYHA III, new/uncontrolled AF, symptom burden, or syncope.
+Unfit: NYHA IV, ventricular arrhythmia/high-grade block, or decompensated cardiomyopathy until stabilized.`,advice:'This block intentionally prioritizes functional class, arrhythmia, and syncope over echocardiographic jargon alone. If AF or thromboembolic indication exists, integrate exact anticoagulation timing into the plan.',fields:[
+{key:'nyha',label:'NYHA class',type:'select',options:['Not entered','I','II','III','IV']},
+{key:'arrhythmia',label:'Arrhythmia status',type:'select',options:['Not entered','None / sinus rhythm','Controlled AF / known stable supraventricular arrhythmia','New AF / uncontrolled AF / significant tachyarrhythmia','Ventricular arrhythmia / high-grade conduction problem']},
+{key:'severity',label:'Cardiomyopathy context',type:'select',options:['Not entered','Stable compensated cardiomyopathy','Severe but compensated cardiomyopathy','Decompensated / severe obstructive or restrictive physiology']},
+{key:'flags',label:'Key features',type:'multi',options:['History of syncope likely cardiac','Angina or exertional chest pain attributable to myocardial disease','Dyspnea clearly attributable to myocardial disease','HOCM / obstructive physiology / severe LVOT gradient']}],evaluate(d){
+ const nyha=d.nyha||'Not entered', arr=d.arrhythmia||'Not entered', sev=d.severity||'Not entered';
+ const H=x=>Array.isArray(d.flags)&&d.flags.includes(x);
+ if(nyha==='IV' || arr==='Ventricular arrhythmia / high-grade conduction problem' || sev==='Decompensated / severe obstructive or restrictive physiology') return res('unfit','Cardiomyopathy with NYHA IV, ventricular/high-grade rhythm problem, or decompensated physiology. Senior decision required before proceeding.');
+ if(nyha==='III' || arr==='New AF / uncontrolled AF / significant tachyarrhythmia' || H('History of syncope likely cardiac') || H('Angina or exertional chest pain attributable to myocardial disease') || H('Dyspnea clearly attributable to myocardial disease')) return res('optimize','Cardiomyopathy with NYHA III symptoms, unstable arrhythmia, or syncope/symptom burden. Optimize and obtain consultant review.');
+ if(H('HOCM / obstructive physiology / severe LVOT gradient') || sev==='Severe but compensated cardiomyopathy' || arr==='Controlled AF / known stable supraventricular arrhythmia' || nyha==='II') return res('fitrisk','Cardiomyopathy is compensated but carries elevated hemodynamic/arrhythmic risk.');
+ if(nyha==='I' || sev==='Stable compensated cardiomyopathy' || arr==='None / sinus rhythm') return res('fit','Stable compensated cardiomyopathy without unstable rhythm trigger.');
+ return res('fit','No high-risk cardiomyopathy trigger recorded.');
+}},
+{id:'chd',name:'Congenital heart disease',common:false,checklist:[
+'Identify repaired vs residual lesion',
+'Look for cyanosis, pulmonary hypertension, Eisenmenger physiology',
+'Check whether the patient is hemodynamically stable and previously operated/repaired'
+],cutoffs:`Fit: repaired CHD without significant residual lesion.
+Fit with elevated risk: stable residual lesion.
+Optimize and review: cyanosis or pulmonary hypertension.
+Unfit: Eisenmenger physiology / prohibitive shunt physiology without senior multidisciplinary planning.`,advice:'Adults with repaired CHD may still need consultant review if the anatomy or physiology is unclear.',fields:[
+{key:'flags',label:'Key features',type:'multi',options:['Repaired CHD without significant residual lesion','Residual lesion but hemodynamically stable','Cyanosis / pulmonary hypertension','Eisenmenger physiology']}],evaluate(d){
+ const H=x=>Array.isArray(d.flags)&&d.flags.includes(x);
+ if(H('Eisenmenger physiology')) return res('unfit','Eisenmenger physiology is prohibitive without senior multidisciplinary planning.');
+ if(H('Cyanosis / pulmonary hypertension')) return res('optimize','CHD with cyanosis or pulmonary hypertension needs optimize-and-review.');
+ if(H('Residual lesion but hemodynamically stable')) return res('fitrisk','Residual CHD lesion but stable.');
+ if(H('Repaired CHD without significant residual lesion')) return res('fit','Repaired CHD without significant residual lesion.');
+ return res('fit','No high-risk CHD trigger recorded.');
+}},
+{id:'parkinson',name:'Parkinsonism',common:false,checklist:[
+'Confirm ongoing dopaminergic treatment and last dose',
+'Screen for off-state rigidity/bradykinesia and missed levodopa',
+'Screen for dysphagia, aspiration risk, and autonomic instability'
+],cutoffs:`Fit: controlled with perioperative levodopa continuity plan.
+Fit with elevated risk: Parkinsonism present but stable.
+Optimize and review: missed dopaminergic therapy, off-state, dysphagia, aspiration risk, or autonomic instability.
+True unfitness is uncommon and usually situation-dependent rather than label-based.`,advice:'Medication continuity is often the main correctable issue. Do not bury levodopa timing.',fields:[
+{key:'flags',label:'Key features',type:'multi',options:['Regular levodopa continued / can be given perioperatively','Missed dopaminergic therapy or moderate off-state','Dysphagia / aspiration risk / autonomic instability']}],evaluate(d){
+ const H=x=>Array.isArray(d.flags)&&d.flags.includes(x);
+ if(H('Dysphagia / aspiration risk / autonomic instability')) return res('optimize','Parkinsonism with aspiration or autonomic risk needs optimization and planning.');
+ if(H('Missed dopaminergic therapy or moderate off-state')) return res('optimize','Medication continuity / off-state problem needs optimization before proceeding.');
+ if(H('Regular levodopa continued / can be given perioperatively')) return res('fit','Parkinsonism controlled with medication continuity plan.');
+ return res('fitrisk','Parkinsonism present; ensure perioperative levodopa continuity and aspiration screen.');
+}},
+{id:'icp',name:'Raised ICP',common:false,checklist:[
+'Screen for headache, vomiting, altered sensorium, bradycardia, focal worsening, falling GCS',
+'Identify whether raised ICP is only historical, confirmed but stable, or actively deteriorating'
+],cutoffs:`Fit with elevated risk: historical concern only, currently stable.
+Optimize and review: confirmed raised ICP but currently stable.
+Unfit: active ICP signs, neurologic deterioration, or falling GCS until senior reassessment.`,advice:'This is a consultant-visibility domain even when not classified as unfit.',fields:[
+{key:'flags',label:'Key features',type:'multi',options:['Historical ICP issue but currently stable','Confirmed raised ICP but currently stable','Active ICP signs: headache-vomiting-bradycardia-falling GCS / neuro deterioration']}],evaluate(d){
+ const H=x=>Array.isArray(d.flags)&&d.flags.includes(x);
+ if(H('Active ICP signs: headache-vomiting-bradycardia-falling GCS / neuro deterioration')) return res('unfit','Active raised ICP / neurologic deterioration.');
+ if(H('Confirmed raised ICP but currently stable')) return res('optimize','Confirmed raised ICP but currently stable: optimize and consultant review.');
+ if(H('Historical ICP issue but currently stable')) return res('fitrisk','Historical or stable ICP-related concern.');
+ return res('fit','No current ICP trigger recorded.');
+}},
+{id:'cognitive',name:'Cognitive dysfunction',common:false,checklist:[
+'Identify baseline cognition and orientation',
+'Screen for delirium / acute confusion',
+'Judge whether cooperation and consent process are materially affected'
+],cutoffs:`Fit: no major cognitive red flag.
+Fit with elevated risk: mild baseline impairment.
+Optimize and review: delirium, acute confusion, or severe non-cooperation affecting safe conduct.
+Unfitness is rarely from cognition alone and is usually contextual.`,advice:'Cognitive dysfunction is mainly a consent, delirium, and conduct-of-anesthesia risk amplifier.',fields:[
+{key:'flags',label:'Key features',type:'multi',options:['Mild baseline cognitive impairment','Delirium / acute confusion','Severe non-cooperation affecting safe perioperative conduct']}],evaluate(d){
+ const H=x=>Array.isArray(d.flags)&&d.flags.includes(x);
+ if(H('Severe non-cooperation affecting safe perioperative conduct')) return res('optimize','Severe non-cooperation may make conduct unsafe until addressed.');
+ if(H('Delirium / acute confusion')) return res('optimize','Delirium or acute cognitive change requires optimization and review.');
+ if(H('Mild baseline cognitive impairment')) return res('fitrisk','Baseline cognitive impairment increases delirium/consent risk.');
+ return res('fit','No major cognitive red flag recorded.');
+}},
+ {id:'osa',name:'Obstructive sleep apnea',common:false,checklist:['Known OSA / CPAP use','STOP-BANG / high-risk symptoms','Daytime somnolence / witnessed apneas','Airway difficulty / obesity hypoventilation concern'],cutoffs:`Fit with elevated risk: known OSA with stable plan.
+Optimize and review: untreated high-risk OSA, obesity hypoventilation concern, or severe symptoms.
+True unfitness is uncommon; usually the issue is airway and postoperative monitoring planning.`,advice:'Plan CPAP availability, opioid-sparing strategy, extubation vigilance, and postoperative monitoring.',fields:[{key:'flags',label:'Key features',type:'multi',options:['Known OSA / high-risk symptoms','On CPAP with established use','Obesity hypoventilation / severe daytime somnolence','Airway concern / difficult mask ventilation history']}],evaluate(d){ const H=x=>Array.isArray(d.flags)&&d.flags.includes(x); if(H('Obesity hypoventilation / severe daytime somnolence')||H('Airway concern / difficult mask ventilation history')) return res('optimize','OSA with airway/ventilatory concern needs senior planning.'); if(H('Known OSA / high-risk symptoms')||H('On CPAP with established use')) return res('fitrisk','OSA present; proceed with enhanced respiratory monitoring plan.'); return res('fit','No major OSA trigger recorded.'); }},
+ {id:'obesity',name:'Obesity',common:false,checklist:['BMI / body habitus','OSA/OHS overlap','Positioning / ventilation concern','Metabolic syndrome overlap'],cutoffs:`Fit with elevated risk: obesity without major ventilatory compromise.
+Optimize and review: morbid obesity, obesity hypoventilation, positioning or airway concern.
+True unfitness is rare from obesity alone.`,advice:'Assess ramping, airway strategy, VTE prevention, and postoperative respiratory monitoring.',fields:[{key:'flags',label:'Key features',type:'multi',options:['Obesity present without major functional limitation','Morbid obesity / BMI very high','Morbid obesity / obesity hypoventilation concern','Airway / positioning / transfer concern']}],evaluate(d){ const H=x=>Array.isArray(d.flags)&&d.flags.includes(x); if(H('Morbid obesity / obesity hypoventilation concern')||H('Airway / positioning / transfer concern')||H('Morbid obesity / BMI very high')) return res('optimize','Obesity with mechanical/ventilatory concern needs senior planning.'); if(H('Obesity present without major functional limitation')) return res('fitrisk','Obesity adds airway, respiratory, and thrombotic risk.'); return res('fit','No major obesity trigger recorded.'); }},
+ {id:'malignancy',name:'Active malignancy context',common:false,checklist:['Active cancer / disseminated disease','Cachexia / frailty / albumin impact','Current chemotherapy / immunotherapy','Tumor-related bleeding / obstruction / airway risk'],cutoffs:`Fit with elevated risk: active malignancy without major physiologic compromise.
+Optimize and review: cachexia, therapy-related organ dysfunction, or tumor-specific airway/bleeding concerns.
+Unfitness is rarely from the label alone; physiology and goals matter more.`,advice:'Use this to capture cancer-burden issues not fully reflected by routine PAC inputs.',fields:[{key:'flags',label:'Key features',type:'multi',options:['Active malignancy without major physiologic compromise','Disseminated / metastatic disease','Cachexia / poor nutritional reserve','Recent chemotherapy / immunotherapy toxicity concern','Tumor-related airway / bleeding / obstruction risk']}],evaluate(d){ const H=x=>Array.isArray(d.flags)&&d.flags.includes(x); if(H('Tumor-related airway / bleeding / obstruction risk')||H('Recent chemotherapy / immunotherapy toxicity concern')||H('Cachexia / poor nutritional reserve')) return res('optimize','Active malignancy with therapy-related or tumor-related physiologic risk needs optimization.'); if(H('Disseminated / metastatic disease')||H('Active malignancy without major physiologic compromise')) return res('fitrisk','Active malignancy present; consider reserve, thrombosis, infection, and goals-of-care issues.'); return res('fit','No major malignancy-context trigger recorded.'); }},
+ {id:'frailtymod',name:'Frailty / functional assessment beyond METs',common:false,checklist:['ADL / IADL independence','Slow gait / low reserve','Recent falls / deconditioning','Delirium / nutritional vulnerability'],cutoffs:`Fit: independent / robust.
+Fit with elevated risk: vulnerable / pre-frail.
+Optimize and review: frail / dependent or recent deconditioning/falls.`,advice:'Frailty captures vulnerability not reflected by METs alone and should influence delirium, rehab, and discharge planning.',fields:[{key:'flags',label:'Key features',type:'multi',options:['Independent / robust baseline','Vulnerable / pre-frail','Frail / dependent baseline','Recent falls / deconditioning']}],evaluate(d){ const H=x=>Array.isArray(d.flags)&&d.flags.includes(x); if(H('Frail / dependent baseline')||H('Recent falls / deconditioning')) return res('optimize','Frailty/deconditioning warrants senior planning beyond METs.'); if(H('Vulnerable / pre-frail')) return res('fitrisk','Pre-frailty increases perioperative vulnerability.'); if(H('Independent / robust baseline')) return res('fit','Robust baseline function.'); return res('fit','No major frailty trigger recorded.'); }}
+];
+
+const drugClasses = [
+ {title:'Continue through surgery unless specific reason to stop',summary:'Useful default classes residents should recognize.',details:[
+  'Antiarrhythmics / beta-blockers / amiodarone — continue',
+  'Antianginals — continue',
+  'Statins — continue',
+  'Basal insulin (glargine / degludec) — continue with dose adjustment',
+  'Thyroid / antithyroid drugs — continue',
+  'Nebulized bronchodilators and nebulized steroids — continue',
+  'Oral bronchodilators — continue',
+  'Corticosteroids — continue',
+  'Psychotropic drugs except lithium — continue',
+  'Anticonvulsants — continue',
+  'Antiparkinsonian drugs — continue'
+ ]},
+ {title:'Antiplatelets',summary:'Expand to exact drug and stop interval.',details:[
+  'Clopidogrel — stop 5 days before surgery',
+  'Aspirin — stop 5 days before surgery; continue only in selected patients such as coronary stents or prior embolic stroke; stop for intracranial, intraocular, and spine surgery',
+  'Prasugrel — stop 7 days before surgery',
+  'Ticagrelor — stop 3 days before surgery'
+ ]},
+ {title:'Oral anticoagulants / DOACs / LMWH',summary:'Need exact indication and last dose.',details:[
+  'Warfarin — stop 5 days before surgery; bridge only if high thromboembolic risk and once INR <2 as per plan',
+  'Acenocoumarol — stop 5 days before surgery',
+  'Rivaroxaban — stop 5 days before surgery in the institutional sheet',
+  'Apixaban — stop 5 days before surgery in the institutional sheet',
+  'LMWH prophylactic dose — withhold 12 hours before surgery',
+  'LMWH therapeutic dose — withhold 24 hours before surgery'
+ ]},
+ {title:'Antidiabetic drugs and injectables',summary:'Major surgery needs exact substitution plan.',details:[
+  'Metformin, glipizide, gliclazide, sitagliptin, vildagliptin, voglibose — stop on admission or 2 days before major surgery; substitute with basal ± premeal insulin',
+  'Mixed-acting insulins — stop on admission or 2 days before major surgery; convert to basal ± premeal insulin',
+  'Premeal soluble insulin — withhold on day of surgery when fasting',
+  'Dapagliflozin — stop at least 3 days before surgery',
+  'Semaglutide, dulaglutide — stop 1 week before surgery',
+  'Liraglutide — stop 1 day before surgery'
+ ]},
+ {title:'Antihypertensives and diuretics',summary:'Morning-of-surgery rules matter.',details:[
+  'ACEI / ARB (e.g. enalapril, telmisartan) — stop 12 hours before major surgery if following institutional policy',
+  'Loop diuretics (frusemide, torsemide) — withhold on day of surgery',
+  'Thiazide diuretics (indapamide, chlorthalidone, hydrochlorothiazide) — withhold on day of surgery',
+  'Do not use first-ever single-dose amlodipine on morning of surgery to bring down BP'
+ ]},
+ {title:'Other important drugs',summary:'High-yield single-drug rules.',details:[
+  'Lithium — stop 3 days before surgery',
+  'Aspirin without true guideline indication — stop well ahead of surgery',
+  'Write exact drug names in PAC note, not only class name'
+ ]}
+];
+
+const state={selected:[],data:{},custom:[]};
+function res(level,reason){return {level,reason};}
+function has(d,x){return Array.isArray(d.flags)&&d.flags.includes(x)}
+function $(id){return document.getElementById(id)}
+function safeNum(v){const n=parseFloat(v); return Number.isFinite(n)?n:null}
+function parseBP(v){const m=String(v||'').match(/(\d+)\s*\/\s*(\d+)/); return m?{s:+m[1],d:+m[2]}:null}
+function parseASTALT(v){const nums=String(v||'').match(/\d+(?:\.\d+)?/g); if(!nums||!nums.length) return null; return nums.map(Number)}
+function chronicAcuteNote(kind, value, context){
+  if(kind==='spo2' && value!==null && value>=92 && value<=95){
+    if(context==='Likely chronic stable baseline') return 'Context: likely chronic stable baseline hypoxemia; interpret with disease stability and prior baseline.';
+    if(context==='Possibly acute / worsening') return 'Context: possibly acute/worsening desaturation; consider escalation more strongly.';
+    return 'Context prompt: clarify whether SpO₂ 92–95% is chronic stable baseline or acute/worsening.';
+  }
+  if(kind==='na' && value!==null && value>=130 && value<=134){
+    if(context==='Likely chronic stable baseline') return 'Context: likely chronic mild hyponatremia; proceed with caution if stable and asymptomatic.';
+    if(context==='Possibly acute / worsening') return 'Context: possibly acute sodium drop; treat more cautiously and reassess.';
+    return 'Context prompt: clarify whether Na 130–134 is chronic stable baseline or acute/worsening.';
+  }
+  return '';
+}
+function levelLabel(level){return level==='fit'?'Fit (average risk)':level==='fitrisk'?'Fit with elevated risk':level==='optimize'?'Optimize and review':'Truly unfit / consultant decision'}
+function badgeClass(level){return level==='fit'?'fit':level==='fitrisk'?'fitrisk':level==='optimize'?'optimize':'unfit'}
+function sev(level){return ({fit:0,fitrisk:1,optimize:2,unfit:3})[level]}
+
+function evaluateParameter(key,val){
+  const cfg=LOGIC.parameters[key]; if(!cfg) return null;
+  const thresholds=cfg.thresholds||[];
+  if(key==='bp'){
+    const bp=parseBP(val); if(!bp) return null;
+    for(const t of thresholds){ if(bp.s<=t.maxS && bp.d<=t.maxD) return {...t, weight:(cfg.weight||{})[t.level]||0, value:`${bp.s}/${bp.d}`}; }
+    return null;
+  }
+  if(key==='mets'){
+    if(!val) return null;
+    for(const t of thresholds){ if(t.match===val) return {...t, weight:(cfg.weight||{})[t.level]||0, value:val}; }
+    return null;
+  }
+  if(key==='ecg'){
+    const text=String(val||'').toLowerCase().trim(); if(!text) return null;
+    for(const t of thresholds){
+      if((t.keywords||[]).some(k=>text.includes(k))) return {...t, weight:(cfg.weight||{})[t.level]||0, value:val};
+    }
+    const fallback = thresholds[thresholds.length-1];
+    return {...fallback, weight:(cfg.weight||{})[fallback.level]||0, value:val};
+  }
+  if(key==='astalt'){
+    const nums=parseASTALT(val); if(!nums) return null; const maxv=Math.max(...nums);
+    for(const t of thresholds){ if(maxv<=t.maxBoth) return {...t, weight:(cfg.weight||{})[t.level]||0, value:val}; }
+    return null;
+  }
+  const num=safeNum(val); if(num===null) return null;
+  for(const t of thresholds){ if(t.max===null || num<=t.max) return {...t, weight:(cfg.weight||{})[t.level]||0, value:num}; }
+  return null;
+}
+
+function computeGlobal(){
+  const d=collectMain();
+  const evalKeys=['hb','anc','platelets','inr','egfr','akin','na','k','bilirubin','albumin','ntprobnp','rbs','hba1c','spo2','bp','mets','ecg','astalt'];
+  const findings=[];
+  let score=0, worst='fit';
+  for(const key of evalKeys){
+    let out=evaluateParameter(key,d[key]);
+    if(key==='platelets' && out && out.level==='fitrisk'){
+      const plt=safeNum(d.platelets);
+      if(plt!==null && plt>=30000 && plt<=49999){
+        if((d.setting||'').toLowerCase().includes('minor') || (d.setting||'')==='NORA') out.text='30,000–49,999: fit with elevated risk for minor procedures; correct before most major procedures.';
+        else { out.level='optimize'; out.weight=(LOGIC.parameters.platelets.weight||{}).optimize||3; out.text='30,000–49,999: optimize for major procedures; minor procedures may proceed as fit with elevated risk depending on bleeding consequence.'; }
+      }
+    }
+    if(out){
+      const extra = key==='spo2' ? chronicAcuteNote('spo2', safeNum(d.spo2), d.spo2Context) : key==='na' ? chronicAcuteNote('na', safeNum(d.na), d.naContext) : '';
+      if(extra) out.text += ' ' + extra;
+      if(key==='ntprobnp' && safeNum(d.ntprobnp)!==null && (safeNum(d.age)>=75 || safeNum(d.egfr)<45)) out.text += ' Age/eGFR adjustment: interpret higher baseline NT-proBNP cautiously in older age or reduced eGFR; correlate with symptoms and echo context.';
+      findings.push({key,label:LOGIC.parameters[key].label,...out}); score += out.weight||0; if(sev(out.level)>sev(worst)) worst=out.level;
+    }
+  }
+  const frailty=d.frailty||'';
+  if(frailty){
+    let fout = null;
+    if(frailty==='Independent / robust') fout={key:'frailty',label:'Frailty / functional reserve',level:'fit',weight:0,value:frailty,text:'Robust / independent baseline.'};
+    else if(frailty==='Vulnerable / pre-frail') fout={key:'frailty',label:'Frailty / functional reserve',level:'fitrisk',weight:2,value:frailty,text:'Pre-frail/vulnerable reserve; consider delirium, rehab, and discharge-planning implications.'};
+    else if(frailty==='Frail / dependent') fout={key:'frailty',label:'Frailty / functional reserve',level:'optimize',weight:3,value:frailty,text:'Frailty/dependence adds perioperative vulnerability beyond METs and should prompt senior planning.'};
+    if(fout){ findings.push(fout); score += fout.weight; if(sev(fout.level)>sev(worst)) worst=fout.level; }
+  }
+
+  const specialEsc=[];
+  const proc=(d.procedure||'').toLowerCase();
+  [['pneumonectomy','Pneumonectomy'],['esophagect','Esophagectomy'],['mediastinal','Mediastinal mass / mediastinal procedure'],['retroperitoneal sarcoma','Retroperitoneal sarcoma'],['rp sarcoma','Retroperitoneal sarcoma'],['central airway obstruction','Central airway obstruction']].forEach(([k,label])=>{if(proc.includes(k)) specialEsc.push(label)});
+  if(d.asa==='III') specialEsc.push('ASA III');
+  if(d.asa==='IV') specialEsc.push('ASA IV');
+
+  const moduleFindings=[];
+  let modWorst='fit';
+  activeModules().forEach(m=>{
+    const md = state.data[m.id]||{};
+    const out = (m.evaluate?m.evaluate(md):res('fit','No issue'));
+    moduleFindings.push({name:m.name, ...out});
+    if(sev(out.level)>sev(modWorst)) modWorst=out.level;
+  });
+
+  let finalLevel='fit';
+  if(findings.length===0 && activeModules().length===0) finalLevel='fit';
+  else if(sev(worst)>=2 || sev(modWorst)>=2) finalLevel='optimize';
+  if(worst==='unfit' || modWorst==='unfit') finalLevel='unfit';
+  else if(finalLevel!=='optimize' && (worst==='fitrisk' || modWorst==='fitrisk' || score>=4)) finalLevel='fitrisk';
+  if(d.asa==='IV' && finalLevel==='fit') finalLevel='fitrisk';
+  if(d.asa==='III' && finalLevel==='fit') finalLevel='fitrisk';
+  if(specialEsc.length && finalLevel==='fit') finalLevel='fitrisk';
+  if(score>=4 && finalLevel==='fit') finalLevel='fitrisk';
+
+  const escalations=[...specialEsc];
+  if(finalLevel==='optimize') escalations.push('Case has optimize-and-review features. Consultant review advised.');
+  if(finalLevel==='unfit') escalations.push('Case appears prohibitive without senior reappraisal or change in goals/benefit-risk balance.');
+  if(moduleFindings.some(x=>x.level==='optimize' || x.level==='unfit')) escalations.push('At least one disease-specific module triggered senior review.');
+  if(parseBP(d.bp)?.s>=180 || parseBP(d.bp)?.d>=110) escalations.push('Severe hypertension threshold reached.');
+  if(safeNum(d.spo2)!==null && safeNum(d.spo2)<92) escalations.push('Low baseline oxygen saturation.');
+  if(safeNum(d.ntprobnp)!==null && safeNum(d.ntprobnp)>=900) escalations.push('NT-proBNP markedly elevated.');
+  if(safeNum(d.egfr)!==null && safeNum(d.egfr)<30) escalations.push('Advanced CKD / renal failure tier; review dialysis / potassium / volume status.');
+  if(score>=4) escalations.push('Aggregate score ≥4: multiple mild-to-moderate abnormalities collectively justify at least elevated-risk planning.');
+
+  return {d, findings, moduleFindings, score, worst, modWorst, finalLevel, escalations};
+}
+
+function calcEgfrMDRD(creatinine, age, sex){
+  const cr=safeNum(creatinine), a=safeNum(age); const sx=String(sex||'');
+  if(cr===null || a===null || !sx) return null;
+  if(cr<=0 || a<=0) return null;
+  let gfr = 175 * Math.pow(cr, -1.154) * Math.pow(a, -0.203);
+  if(sx==='Female') gfr *= 0.742;
+  return Math.round(gfr);
+}
+function ckdGradeFromEgfr(egfr){
+  const g=safeNum(egfr); if(g===null) return '';
+  if(g>=90) return 'G1';
+  if(g>=60) return 'G2';
+  if(g>=45) return 'G3a';
+  if(g>=30) return 'G3b';
+  if(g>=15) return 'G4';
+  return 'G5';
+}
+function calculateAKIN(currentCr, baselineCr, uoRate, uoHours){
+  const cur=safeNum(currentCr), base=safeNum(baselineCr), uo=safeNum(uoRate), hrs=safeNum(uoHours);
+  let stage = null;
+  if(cur!==null && base!==null && base>0){
+    const ratio = cur/base;
+    const delta = cur-base;
+    if(cur>=4 || ratio>=3) stage = Math.max(stage||0,3);
+    else if(ratio>=2) stage = Math.max(stage||0,2);
+    else if(delta>=0.3 || ratio>=1.5) stage = Math.max(stage||0,1);
+  }
+  if(uo!==null && hrs!==null){
+    if((uo<0.3 && hrs>=24) || (uo===0 && hrs>=12)) stage = Math.max(stage||0,3);
+    else if(uo<0.5 && hrs>=12) stage = Math.max(stage||0,2);
+    else if(uo<0.5 && hrs>=6) stage = Math.max(stage||0,1);
+  }
+  return stage;
+}
+function updateRenalDerived(){
+  const egfr=calcEgfrMDRD($('creatinine').value,$('age').value,$('sex').value);
+  $('egfr').value = egfr!==null ? egfr : '';
+  $('ckdGrade').value = egfr!==null ? ckdGradeFromEgfr(egfr) : '';
+  const akin = calculateAKIN($('creatinine').value,$('baselineCreatinine').value,$('uoRate').value,$('uoHours').value);
+  $('akinStage').value = akin===null ? 'Unavailable' : String(akin);
+}
+
+function collectMain(){
+  updateRenalDerived();
+  return {
+    patientId:$('patientId').value.trim(), age:$('age').value, sex:$('sex').value, procedure:$('procedure').value.trim(), setting:$('setting').value, urgency:$('urgency').value, asa:$('asa').value,
+    mets:$('mets').value, frailty:$('frailty').value, spo2:$('spo2').value, spo2Context:$('spo2Context').value, bp:$('bp').value.trim(), pulse:$('pulse').value.trim(), ecg:$('ecg').value.trim(), ntprobnp:$('ntprobnp').value, ef:$('ef').value,
+    hb:$('hb').value, anc:$('anc').value, platelets:$('platelets').value, inr:$('inr').value, creatinine:$('creatinine').value, egfr:$('egfr').value, ckdGrade:$('ckdGrade').value,
+    baselineCreatinine:$('baselineCreatinine').value, uoRate:$('uoRate').value, uoHours:$('uoHours').value, akin:$('akinStage').value==='Unavailable'?'':$('akinStage').value,
+    rbs:$('rbs').value, hba1c:$('hba1c').value, na:$('na').value, naContext:$('naContext').value, k:$('k').value, metAcidosis:$('metAcidosis').value, volumeOverload:$('volumeOverload').value, uremicSymptoms:$('uremicSymptoms').value, bilirubin:$('bilirubin').value, albumin:$('albumin').value,
+    astalt:$('astalt').value.trim(), renalNote:$('renalNote').value.trim()
+  };
+}
+
+function activeModules(){ return [...disorders, ...state.custom].filter(m=>state.selected.includes(m.id)); }
+
+function renderSelectors(){
+  const box=$('selectorBox'); box.innerHTML='';
+  [...disorders, ...state.custom].forEach(m=>{
+    const pill=document.createElement('label'); pill.className='pill';
+    pill.innerHTML=`<input type="checkbox" data-mod="${m.id}" ${state.selected.includes(m.id)?'checked':''}> <span>${m.name}</span>`;
+    box.appendChild(pill);
+  });
+  box.querySelectorAll('input[data-mod]').forEach(ch=>ch.addEventListener('change',e=>{
+    const id=e.target.getAttribute('data-mod');
+    if(e.target.checked){ if(!state.selected.includes(id)) state.selected.push(id); }
+    else state.selected=state.selected.filter(x=>x!==id);
+    renderModules(); updateAll();
+  }));
+}
+
+function fieldHTML(mod,f,val){
+  if(f.type==='multi') return `<div class="field"><label>${f.label}</label><div class="checkgrid">${f.options.map(op=>`<label class="pill"><input type="checkbox" data-mid="${mod.id}" data-key="${f.key}" value="${op}" ${(val||[]).includes(op)?'checked':''}> <span>${op}</span></label>`).join('')}</div></div>`;
+  if(f.type==='select') return `<div class="field"><label>${f.label}</label><select data-mid="${mod.id}" data-key="${f.key}">${(f.options||[]).map(op=>`<option ${String(val||'')===String(op)?'selected':''}>${op}</option>`).join('')}</select></div>`;
+  if(f.type==='textarea') return `<div class="field"><label>${f.label}</label><textarea data-mid="${mod.id}" data-key="${f.key}">${val||''}</textarea></div>`;
+  return `<div class="field"><label>${f.label}</label><input data-mid="${mod.id}" data-key="${f.key}" type="${f.type||'text'}" value="${val||''}"></div>`;
+}
+
+function renderModules(){
+  const c=$('modulesContainer'); c.innerHTML='';
+  activeModules().forEach(mod=>{
+    const md=state.data[mod.id]||{}; if(!state.data[mod.id]) state.data[mod.id]={};
+    const out=mod.evaluate?mod.evaluate(md):res(mod.defaultLevel||'fitrisk','Manual module.');
+    const div=document.createElement('div'); div.className='module';
+    div.innerHTML=`
+      <div class="moduleHead">
+        <div>
+          <h3>${mod.name}</h3>
+          <div class="small">${mod.common?'Common PAC disorder':'Additional disorder'}</div>
+        </div>
+        <div class="badge ${badgeClass(out.level)}">${levelLabel(out.level)}</div>
+      </div>
+      <div class="moduleBody">
+        <div class="small"><strong>Screening checklist</strong></div>
+        <ul class="criteria">${(mod.checklist||[]).map(x=>`<li>${x}</li>`).join('')}</ul>
+        <div class="small" style="margin-top:8px"><strong>Cutoff prompts</strong></div>
+        <div class="mono small">${mod.cutoffs||''}</div>
+        ${(mod.fields||[]).map(f=>fieldHTML(mod,f,md[f.key])).join('')}
+        <div class="small" style="margin-top:8px"><strong>Action prompt</strong></div>
+        <div class="mono small">${mod.advice||''}</div>
+        <div class="box" style="margin-top:8px"><strong>Module output</strong><div class="mono small" style="margin-top:6px">${out.reason}</div></div>
+      </div>`;
+    c.appendChild(div);
+  });
+  c.querySelectorAll('input[data-mid], textarea[data-mid], select[data-mid]').forEach(el=>{
+    el.addEventListener('input',handleModuleInput); el.addEventListener('change',handleModuleInput);
+  });
+}
+
+function handleModuleInput(e){
+  const mid=e.target.dataset.mid, key=e.target.dataset.key; if(!mid||!key) return;
+  state.data[mid]=state.data[mid]||{};
+  if(e.target.type==='checkbox'){
+    const current = Array.isArray(state.data[mid][key]) ? state.data[mid][key] : [];
+    if(e.target.checked && !current.includes(e.target.value)) current.push(e.target.value);
+    if(!e.target.checked) state.data[mid][key]=current.filter(x=>x!==e.target.value); else state.data[mid][key]=current;
+  } else state.data[mid][key]=e.target.value;
+  updateAll(); renderModules();
+}
+
+function renderDrugPanel(){
+  $('drugPanel').innerHTML = drugClasses.map(d=>`<details><summary>${d.title}</summary><div class="small" style="margin:6px 0 8px">${d.summary}</div><ul class="criteria">${d.details.map(x=>`<li>${x}</li>`).join('')}</ul></details>`).join('');
+}
+
+function renderLogicMatrix(){
+  const root=$('logicMatrix');
+  let html='<div class="note" style="margin-bottom:10px">Aggregate score threshold rationale: score ≥4 is used as a pragmatic flag for cumulative burden from several mild-to-moderate abnormalities even when no single optimize trigger is present.</div><div class="tablelike"><div class="thead">Parameter</div><div class="thead">Fit</div><div class="thead">Fit with elevated risk</div><div class="thead">Optimize and review</div><div class="thead">Truly unfit</div>';
+  Object.entries(LOGIC.parameters).forEach(([key,cfg])=>{
+    const ts=cfg.thresholds||[];
+    const fit=ts.filter(t=>t.level==='fit').map(t=>t.text).join(' | ')||'—';
+    const fitr=ts.filter(t=>t.level==='fitrisk').map(t=>t.text).join(' | ')||'—';
+    const opt=ts.filter(t=>t.level==='optimize').map(t=>t.text).join(' | ')||'—';
+    const unf=ts.filter(t=>t.level==='unfit').map(t=>t.text).join(' | ')||'—';
+    html += `<div><strong>${cfg.label}</strong></div><div>${fit}</div><div>${fitr}</div><div>${opt}</div><div>${unf}</div>`;
+  });
+  html+='</div>';
+  root.innerHTML=html;
+  const edge=[];
+  Object.values(LOGIC.parameters).forEach(cfg=>{ (cfg.edge||[]).forEach(x=>edge.push('• '+cfg.label+': '+x)); });
+  $('edgeCases').textContent=edge.join('\n');
+  $('logicEditor').value=JSON.stringify(LOGIC,null,2);
+}
+
+
+
+function pulseRateFromText(v){
+  const nums=String(v||'').match(/\d+/g);
+  if(!nums||!nums.length) return null;
+  return Number(nums[0]);
+}
+function renderReferralPanel(){
+  const root=$('referralPanel');
+  if(!root) return;
+  const out=computeGlobal();
+  const d=out.d || collectMain();
+  const getModule=id=>state.data[id]||{};
+  const pulseText=String(d.pulse||'').toLowerCase();
+  const ecgText=String(d.ecg||'').toLowerCase();
+  const procText=String(d.procedure||'').toLowerCase();
+  const ef=safeNum(d.ef);
+  const bp=parseBP(d.bp);
+  const spo2=safeNum(d.spo2);
+  const nt=safeNum(d.ntprobnp);
+  const egfr=safeNum(d.egfr);
+  const akin=safeNum(d.akin);
+  const kval=safeNum(d.k);
+  const mets=String(d.mets||'');
+  const pulseRate=pulseRateFromText(d.pulse);
+
+  const ihd=getModule('ihd');
+  const hf=getModule('hf');
+  const arr=getModule('arr');
+  const valv=getModule('valvular');
+  const cm=getModule('cardiomyopathy');
+  const ckd=getModule('ckd');
+  const lungs=getModule('lungs');
+  const neut=getModule('neut');
+  const obesity=getModule('obesity');
+  const osa=getModule('osa');
+
+  const hasFlag=(mod, txt)=>Array.isArray(mod.flags) && mod.flags.includes(txt);
+
+  const cardioMandatory=[], cardioEarly=[];
+  if(hasFlag(ihd,'Current angina / worsening symptoms') || hasFlag(ihd,'Recent MI / ACS concern') || /stemi|ongoing ischemia|new st elevation/.test(ecgText)) cardioMandatory.push('Suspected acute coronary syndrome / recent MI concern.');
+  if(hasFlag(hf,'Pulmonary edema / inotrope dependence') || (hasFlag(hf,'Recent decompensation / edema / orthopnea') && nt!==null && nt>=2000)) cardioMandatory.push('Decompensated heart failure / pulmonary edema / orthopnea with major biomarker rise.');
+  if(hasFlag(arr,'Hemodynamic instability / malignant arrhythmia') || (/af/.test(pulseText) && pulseRate!==null && pulseRate>120) || /ventricular tachy|vt|complete heart block|high-grade block/.test(ecgText)) cardioMandatory.push('Uncontrolled arrhythmia.');
+  if((hasFlag(valv,'Severe aortic stenosis / severe mitral stenosis / severe pulmonary hypertension mentioned in report') || valv.severity==='Decompensated / severe obstructive or restrictive physiology') &&
+      (hasFlag(valv,'History of syncope likely cardiac') || hasFlag(valv,'Angina or exertional chest pain attributable to the valve lesion') || hasFlag(valv,'Dyspnea clearly attributable to valvular disease'))) cardioMandatory.push('Severe valvular disease with symptoms.');
+  if(hasFlag(valv,'History of syncope likely cardiac') || hasFlag(cm,'History of syncope likely cardiac')) cardioMandatory.push('Unexplained likely cardiac syncope.');
+
+  const nyha3plus = ['III','IV'].includes(valv.nyha) || ['III','IV'].includes(cm.nyha);
+  if(nyha3plus) cardioEarly.push('NYHA III–IV symptoms.');
+  if(nt!==null && nt>=900) cardioEarly.push('NT-proBNP ≥900 pg/mL.');
+  if(ef!==null && ef<40) cardioEarly.push('EF <40%.');
+  if(hasFlag(arr,'Fast AF / symptomatic arrhythmia') || /af|atrial fibrillation|st-t|st depression|t inversion|bbb|block|paced/.test(ecgText)) cardioEarly.push('New AF / ECG abnormality.');
+  if(mets==='2–3 METS' || mets==='<2 METS / bedbound') cardioEarly.push('Reduced functional capacity (<4 METS).');
+  if(hasFlag(valv,'Severe aortic stenosis / severe mitral stenosis / severe pulmonary hypertension mentioned in report') || valv.severity==='Severe but compensated lesion') cardioEarly.push('Severe valvular disease.');
+  if(bp && (bp.s>=180 || bp.d>=110)) cardioEarly.push('Persistent severe hypertension ≥180/110.');
+  if(cardioMandatory.length===0 && cardioEarly.length===0){
+    if((hasFlag(ihd,'Stable IHD / past PCI without current symptoms') && mets==='≥4 METS') || hasFlag(arr,'Controlled chronic arrhythmia') || valv.severity==='Mild-moderate lesion'){
+      cardioEarly.push('Not required from current data: stable IHD/controlled arrhythmia/mild valvular disease.');
+    }
+  }
+
+  const nephMandatory=[], nephEarly=[];
+  const dialysisKnown = hasFlag(ckd,'Stable dialysis patient') || /dialysis/.test(String(d.renalNote||'').toLowerCase());
+  if(akin!==null && akin>=2) nephMandatory.push('AKI Stage 2–3.');
+  if(egfr!==null && egfr<15 && !dialysisKnown) nephMandatory.push('eGFR <15 without established dialysis plan.');
+  if(kval!==null && kval>=6) nephMandatory.push('Hyperkalemia ≥6 mmol/L.');
+  if(hasFlag(ckd,'Volume overload / pulmonary edema') || hasFlag(hf,'Pulmonary edema / inotrope dependence') || d.volumeOverload==='Yes') nephMandatory.push('Volume overload / pulmonary edema.');
+  if(hasFlag(ckd,'Uremic symptoms / severe acidosis') || d.uremicSymptoms==='Yes') nephMandatory.push('Uremic symptoms / severe acidosis.');
+  if(egfr!==null && egfr<30) nephEarly.push('eGFR <30 (G4–G5).');
+  if(d.metAcidosis==='Clinical metabolic acidosis suspected') nephEarly.push('Clinical metabolic acidosis.');
+  if(akin!==null && akin>=1) nephEarly.push('Possible AKI / rising creatinine.');
+  if(dialysisKnown || hasFlag(ckd,'Recent missed dialysis')) nephEarly.push('Dialysis scheduling / perioperative timing issue.');
+  if(kval!==null && kval>=5.5) nephEarly.push('Potassium ≥5.5 mmol/L.');
+  if(hasFlag(ckd,'Uremic symptoms / severe acidosis')) nephEarly.push('Metabolic acidosis / uremic instability.');
+  if(nephMandatory.length===0 && nephEarly.length===0){
+    if((egfr!==null && egfr>=30 && egfr<60 && (kval===null || kval<5.5) && !hasFlag(ckd,'Volume overload / pulmonary edema') && !hasFlag(ckd,'Uremic symptoms / severe acidosis')) || dialysisKnown){
+      nephEarly.push('Not required from current data: stable CKD G3 or chronic dialysis with established plan.');
+    }
+  }
+
+  const pulmoMandatory=[], pulmoEarly=[];
+  if(hasFlag(lungs,'Acute respiratory failure / distress')) pulmoMandatory.push('Acute respiratory failure / severe active distress.');
+  if(spo2!==null && spo2<90) pulmoMandatory.push('SpO₂ <90% on room air.');
+  if(procText.includes('central airway obstruction')) pulmoMandatory.push('Central airway obstruction.');
+  if(procText.includes('mediastinal') && /positional|orthopnea|cannot lie flat/.test(pulseText+ecgText+String(d.renalNote||''))) pulmoMandatory.push('Mediastinal mass with positional symptoms.');
+  if(hasFlag(lungs,'Acute respiratory failure / distress')) pulmoMandatory.push('Severe COPD/asthma with active distress.');
+  if(hasFlag(lungs,'Active wheeze / bronchospasm')) pulmoEarly.push('Persistent wheeze / bronchospasm.');
+  if(hasFlag(lungs,'Chest infection / purulent sputum')) pulmoEarly.push('Active chest infection.');
+  if(spo2!==null && spo2>=90 && spo2<=94) pulmoEarly.push('SpO₂ 90–94% baseline.');
+  if(hasFlag(osa,'Known OSA / high-risk symptoms') || hasFlag(obesity,'Morbid obesity / obesity hypoventilation concern')) pulmoEarly.push('OSA / obesity-related respiratory vulnerability.');
+  if(hasFlag(lungs,'Stable chronic lung disease') && (mets==='2–3 METS' || mets==='<2 METS / bedbound')) pulmoEarly.push('Chronic lung disease with poor reserve.');
+  if(/pneumonectomy|esophagect|thoracic|lung surgery/.test(procText)) pulmoEarly.push('Planned major thoracic surgery.');
+  if(pulmoMandatory.length===0 && pulmoEarly.length===0){
+    if((hasFlag(lungs,'Stable chronic lung disease') || state.selected.includes('lungs')) && spo2!==null && spo2>=96) pulmoEarly.push('Not required from current data: stable COPD/asthma without symptoms and normal SpO₂.');
+  }
+
+  const cross=[];
+  if(hasFlag(neut,'Sepsis / organ dysfunction / shock')) cross.push('Sepsis with organ dysfunction.');
+  if(out.finalLevel==='unfit') cross.push('Overall fitness output is prohibitive / unfit.');
+  if((out.moduleFindings||[]).filter(x=>x.level==='optimize').length>2 || (out.findings||[]).filter(x=>x.level==='optimize').length>2) cross.push('Multiple optimize domains (>2).');
+  if(hasFlag(lungs,'Acute respiratory failure / distress') || hasFlag(hf,'Pulmonary edema / inotrope dependence')) cross.push('Rapid clinical deterioration / major organ instability.');
+  if(out.escalations.some(x=>/shock|rapid|unclear/i.test(x))) cross.push('Cross-specialty high-risk escalation present.');
+
+  function tier(mand, early){
+    return mand.length ? 'mandatory' : early.length ? 'early' : 'none';
+  }
+  function badge(level){
+    if(level==='mandatory') return '<span class="badge refMand">Mandatory</span>';
+    if(level==='early') return '<span class="badge refEarly">Early referral</span>';
+    return '<span class="badge refNone">Not required now</span>';
+  }
+  const panels = [
+    {title:'Cardiology', level:tier(cardioMandatory, cardioEarly), reasons:cardioMandatory.length?cardioMandatory:cardioEarly.length?cardioEarly:['No current cardiology referral trigger from entered data.']},
+    {title:'Nephrology', level:tier(nephMandatory, nephEarly), reasons:nephMandatory.length?nephMandatory:nephEarly.length?nephEarly:['No current nephrology referral trigger from entered data.']},
+    {title:'Pulmonology', level:tier(pulmoMandatory, pulmoEarly), reasons:pulmoMandatory.length?pulmoMandatory:pulmoEarly.length?pulmoEarly:['No current pulmonology referral trigger from entered data.']},
+    {title:'Cross-specialty red flags', level:cross.length?'mandatory':'none', reasons:cross.length?cross:['No cross-specialty red flag trigger from entered data.']}
+  ];
+  root.innerHTML = panels.map(p=>`
+    <div class="refCard">
+      <div class="refHead"><strong>${p.title}</strong>${badge(p.level)}</div>
+      <ul class="refReasons">${p.reasons.map(r=>`<li>${r}</li>`).join('')}</ul>
+    </div>
+  `).join('');
+}
+function renderOptimizationPanel(){
+  const root=$('optimizationPanel');
+  if(!root) return;
+  const d=collectMain();
+  const sections=[];
+  const hasSelected=id=>state.selected.includes(id);
+  const bp=parseBP(d.bp);
+  const hb=safeNum(d.hb);
+  const rbs=safeNum(d.rbs);
+  const hba1c=safeNum(d.hba1c);
+  const sex=String(d.sex||'');
+
+  const anemiaPresent = hasSelected('anemia') || (hb!==null && ((sex==='Female' && hb<12) || (sex==='Male' && hb<13)));
+  const htnPresent = hasSelected('htn') || (bp && (bp.s>140 || bp.d>90));
+  const dmPresent = hasSelected('dm') || (rbs!==null && rbs>200) || (hba1c!==null);
+  const thyroidPresent = hasSelected('thy');
+  const lungPresent = hasSelected('lungs');
+
+  if(htnPresent){
+    sections.push({title:'Hypertension', cls:'fitrisk', items:[
+      'Identify hypertension if SBP >140 mmHg, DBP >90 mmHg, or patient is already on antihypertensive treatment.',
+      'Avoid NSAIDs and COX-2 inhibitors preoperatively; use paracetamol 500–650 mg four times daily plus tramadol 50 mg three times daily for pain if required.',
+      'If not already prescribed by physician, start amlodipine 5 mg once daily at 8 PM, to continue through the day of surgery.',
+      'Alternative: losartan + hydrochlorothiazide 50/12.5 mg once daily at 6 PM; avoid if creatinine >2 mg/dL or serum Na <120 mmol/L.',
+      'If creatinine >2 mg/dL or serum Na <120 mmol/L: use amlodipine 5–10 mg once daily at 6 AM plus prazosin extended release 2.5–5 mg once daily at 6 PM.',
+      'Add atorvastatin 10 mg once daily at 10 PM after dinner unless ongoing hepatitis or AST/ALT >5× normal.',
+      'Target before elective surgery: ward supine BP <140/90 mmHg.',
+      'Avoid first-ever single-dose amlodipine or other antihypertensive on the morning of surgery.'
+    ]});
+  }
+
+  if(dmPresent){
+    sections.push({title:'Diabetes mellitus', cls:'optimize', items:[
+      'Identify diabetes if FBS >126 mg/dL, 2 h PPBS >180 mg/dL, RBS >200 mg/dL, past insulin/oral therapy, or current antidiabetic treatment.',
+      'Stop all oral antidiabetic drugs on admission for major surgery.',
+      'Start basal insulin: glargine or degludec 0.15–0.2 U/kg subcutaneously once daily at 6–8 PM; increase by 2 U if previous 6 AM CBG >140 mg/dL and reduce by 2 U if <100 mg/dL.',
+      'Start soluble insulin 0.1 U/kg subcutaneously before breakfast, lunch, and dinner; increase each dose by 2 U if previous CBG >180 mg/dL and reduce by 2 U if <140 mg/dL.',
+      'Withhold premeal soluble insulin on the day of surgery and whenever the patient is not taking meals, but continue basal insulin through the day of surgery.',
+      'Check CBG at 6 AM fasting, 2 PM (2 h post lunch), and 10 PM (2 h post dinner).',
+      'Target before elective surgery: fasting CBG <140 mg/dL and 2 h PP CBG <180 mg/dL.',
+      'For emergency surgery with hyperglycemia: do not delay surgery; start variable-rate IV soluble insulin infusion (40 units in 40 mL NS, 1 unit/mL) with hourly CBG checks, infusion rate = CBG/100 mL per hour, stop once CBG <150 mg/dL, then switch to basal insulin.'
+    ]});
+  }
+
+  if(lungPresent){
+    sections.push({title:'COPD', cls:'optimize', items:[
+      'Treat any acute exacerbation before elective surgery.',
+      'Start doxofylline 400 mg orally twice daily at 6 AM and 6 PM.',
+      'Nebulize budesonide respule 1 mg/2 mL twice daily at 6 AM and 6 PM.',
+      'Nebulize salbutamol 5 mg/mL + ipratropium 250 mcg/1 mL three times daily at 6 AM, 4 PM, and 10 PM.',
+      'If fever with cough and mucopurulent sputum suggests chest infection, use amoxycillin-clavulanic acid 1.2 g twice daily for 7 days or azithromycin 500 mg once daily for 3 days.',
+      'Goal before elective surgery: room-air SpO₂ >96% in supine ward measurement and no active chest infection.'
+    ]});
+    sections.push({title:'Bronchial asthma', cls:'optimize', items:[
+      'Avoid NSAIDs such as diclofenac or ibuprofen; use paracetamol 500–650 mg four times daily plus tramadol 50 mg three times daily if preoperative analgesia is needed.',
+      'Nebulize budesonide respule 1 mg/2 mL twice daily at 6 AM and 6 PM.',
+      'Nebulize salbutamol 5 mg/mL three times daily at 6 AM, 4 PM, and 10 PM.',
+      'If fever with cough and mucopurulent sputum suggests chest infection, use amoxycillin-clavulanic acid 1.2 g twice daily for 7 days or azithromycin 500 mg once daily for 3 days.',
+      'If wheeze persists despite inhaled therapy, add prednisolone 0.5 mg/kg orally once daily after breakfast for 5 days; no taper is needed if steroid duration is under 7 days.',
+      'Goal before elective surgery: room-air SpO₂ >96%, no wheeze, and no active chest infection.'
+    ]});
+  }
+
+  if(anemiaPresent){
+    sections.push({title:'Anemia', cls:'optimize', items:[
+      'For screening purposes in this tool, anemia-specific optimization is shown when Hb is <12 g/dL in females or <13 g/dL in males, or when the anemia module is selected.',
+      'Manual treatment pathway identifies anemia if Hb <10 g/dL and requires symptom review for resting tachycardia, dependent edema, or angina.',
+      'Give ferric carboxymaltose 0.5–1 g in 100 mL normal saline IV over 30 minutes in day care plus folic acid 5 mg once daily for 10 days; repeat after 7 days and recheck Hb.',
+      'Do not give iron in chronic hemolytic anemia.',
+      'If urgent surgery with Hb <10 g/dL and anticipated blood loss >500 mL, transfuse PRBC preoperatively to raise Hb just above 10 g/dL.',
+      'Rule of thumb: one unit PRBC raises Hb by about 1.2 g/dL in a 50 kg patient without active blood loss or hemolysis.',
+      'Examples: Hb 8.1–9.1 g/dL → 1 unit PRBC over 3–4 h, 1 day before surgery; Hb 7–8 g/dL → 2 units PRBC over 1–2 days before surgery.',
+      'Goal before elective major surgery with anticipated blood loss >500 mL: Hb >10 g/dL.'
+    ]});
+  }
+
+  if(thyroidPresent){
+    sections.push({title:'Thyroid disorders', cls:'fitrisk', items:[
+      'For suspected hypothyroidism or hyperthyroidism, check serum FT4 and TSH in the fasted state.',
+      'Hypothyroidism: start L-thyroxine 50–75 mcg once daily at 6 AM and recheck FT4/TSH after 7 days.',
+      'If age >60 years, coronary artery disease, or severe hypothyroidism: start lower L-thyroxine dose 12.5–25 mcg once daily.',
+      'Watch for iatrogenic hyperthyroidism from excessive thyroxine dose.',
+      'Hyperthyroidism: start propylthiouracil 300–600 mg daily or carbimazole 10–30 mg twice daily until euthyroid.',
+      'Add propranolol 0.25–0.5 mg/kg (about 20–30 mg) three times daily and titrate after 3 days until resting heart rate is <90 bpm.'
+    ]});
+  }
+
+  if(!sections.length){
+    root.innerHTML='<div class="small muted">No manual-linked optimization section triggered yet.</div>';
+    return;
+  }
+
+  root.innerHTML = sections.map(sec => `
+    <details open>
+      <summary><span class="badge ${sec.cls}">${sec.title}</span></summary>
+      <ul class="criteria" style="margin-top:8px">${sec.items.map(item=>`<li>${item}</li>`).join('')}</ul>
+    </details>
+  `).join('');
+}
+
+function updateAll(){
+  updateRenalDerived();
+  const out=computeGlobal();
+  $('overallBadge').className='badge '+badgeClass(out.finalLevel);
+  $('overallBadge').textContent=levelLabel(out.finalLevel);
+  const lines=[];
+  lines.push(`Total weighted burden: ${out.score}`);
+  lines.push(`Worst core-input tier: ${levelLabel(out.worst)}`);
+  lines.push(`Worst disease-module tier: ${levelLabel(out.modWorst)}`);
+  lines.push(`Final recommendation: ${levelLabel(out.finalLevel)}`);
+  if(out.derived && (out.derived.egfr || out.derived.ckdGrade || out.derived.akinText)) lines.push(`Renal derived data: eGFR ${out.derived.egfr||'—'} | CKD ${out.derived.ckdGrade||'—'} | AKIN ${out.derived.akinText||'—'}`);
+  if(out.finalLevel==='fit') lines.push('Proceed with routine precautions.');
+  if(out.finalLevel==='fitrisk') lines.push('Proceed with elevated-risk planning, consultant visibility where appropriate, and explicit documentation.');
+  if(out.finalLevel==='optimize') lines.push('Optimize reversible issues, then review before final clearance.');
+  if(out.finalLevel==='unfit') lines.push('Risk appears to outweigh benefit without senior reappraisal, change in goals, or major optimization.');
+  $('overallText').textContent=lines.join('\n');
+
+  $('findingList').textContent = out.findings.map(f=>`${f.label}: ${String(f.value)} → ${levelLabel(f.level)} | weight ${f.weight}\n${f.text}`).join('\n\n') || 'No key inputs entered yet.';
+  const esc = out.escalations.length ? out.escalations.map(x=>'• '+x).join('\n') : 'No automatic consultant escalation trigger yet.';
+  $('escalationText').textContent = esc;
+  renderReferralPanel();
+  renderOptimizationPanel();
+}
+
+function addCustomModule(){
+  const name=$('customName').value.trim(); if(!name) return alert('Enter disorder name.');
+  const id='custom_'+Date.now();
+  const module={id,name,common:false,defaultLevel:$('customDefault').value,checklist:$('customChecklist').value.split(/\n+/).map(s=>s.trim()).filter(Boolean),cutoffs:$('customCutoffs').value.trim(),advice:$('customAdvice').value.trim(),fields:[{key:'manualNotes',label:'Resident notes',type:'textarea'},{key:'manualLevel',label:'Manual classification',type:'text'}],evaluate(d){ const lvl=['fit','fitrisk','optimize','unfit'].includes((d.manualLevel||'').trim())?(d.manualLevel||'').trim():this.defaultLevel; return res(lvl,d.manualNotes||'Custom disorder; apply consultant judgment.'); }};
+  state.custom.push(module); state.selected.push(id);
+  $('customName').value=''; $('customChecklist').value=''; $('customCutoffs').value=''; $('customAdvice').value='';
+  renderSelectors(); renderModules(); updateAll();
+}
+
+function saveLocal(){
+  const payload={main:collectMain(),state}; localStorage.setItem('pacFitnessV9',JSON.stringify(payload)); alert('Saved locally.');
+}
+function loadLocal(){
+  const raw=localStorage.getItem('pacFitnessV9'); if(!raw) return alert('No saved data found.');
+  const payload=JSON.parse(raw); Object.entries(payload.main||{}).forEach(([k,v])=>{ if($(k)) $(k).value=v; });
+  state.selected=(payload.state&&payload.state.selected)||[]; state.data=(payload.state&&payload.state.data)||{}; state.custom=(payload.state&&payload.state.custom)||[];
+  renderSelectors(); renderModules(); updateAll();
+}
+function resetAll(){ if(!confirm('Reset all current data?')) return; document.querySelectorAll('input, textarea, select').forEach(el=>{ if(el.type==='file') return; if(el.id==='logicEditor') return; if(el.tagName==='SELECT') el.selectedIndex=0; else el.value=''; }); state.selected=[]; state.data={}; state.custom=[]; renderSelectors(); renderModules(); renderLogicMatrix(); updateAll(); }
+function exportJSON(){ const blob=new Blob([JSON.stringify({main:collectMain(),state,logic:LOGIC},null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='pac_assistant_v115_export.json'; a.click(); URL.revokeObjectURL(a.href); }
+function importJSON(file){ const r=new FileReader(); r.onload=()=>{ try{ const p=JSON.parse(r.result); Object.entries(p.main||{}).forEach(([k,v])=>{ if($(k)) $(k).value=v; }); state.selected=(p.state&&p.state.selected)||[]; state.data=(p.state&&p.state.data)||{}; state.custom=(p.state&&p.state.custom)||[]; if(p.logic){ LOGIC=p.logic; } renderSelectors(); renderModules(); renderLogicMatrix(); updateAll(); }catch(e){ alert('Invalid JSON import.'); } }; r.readAsText(file); }
+
+function init(){
+  renderSelectors(); renderModules(); renderDrugPanel(); renderLogicMatrix(); updateAll();
+  ['patientId','age','sex','procedure','setting','urgency','asa','mets','frailty','spo2','spo2Context','bp','pulse','ecg','ntprobnp','ef','hb','anc','platelets','inr','creatinine','baselineCreatinine','uoRate','uoHours','rbs','hba1c','na','naContext','k','metAcidosis','volumeOverload','uremicSymptoms','bilirubin','albumin','astalt','renalNote'].forEach(id=>$(id).addEventListener('input',updateAll));
+  ['sex','setting','urgency','asa','mets','frailty','spo2Context','naContext','metAcidosis','volumeOverload','uremicSymptoms'].forEach(id=>$(id).addEventListener('change',updateAll));
+  $('selectCommonBtn').onclick=()=>{ state.selected=disorders.filter(d=>d.common).map(d=>d.id); renderSelectors(); renderModules(); updateAll(); };
+  $('clearSelectionBtn').onclick=()=>{ state.selected=[]; renderSelectors(); renderModules(); updateAll(); };
+  $('addCustomBtn').onclick=addCustomModule;
+  $('saveBtn').onclick=saveLocal; $('loadBtn').onclick=loadLocal; $('resetBtn').onclick=resetAll; $('printBtn').onclick=()=>window.print(); $('exportBtn').onclick=exportJSON;
+  $('importFile').addEventListener('change',e=>{ const f=e.target.files[0]; if(f) importJSON(f); e.target.value=''; });
+  $('applyLogicBtn').onclick=()=>{ try{ const parsed=JSON.parse($('logicEditor').value); if(!parsed.parameters) throw new Error('Missing parameters object.'); LOGIC=parsed; $('logicStatus').innerHTML='<span class="ok">Edited logic applied successfully.</span>'; renderLogicMatrix(); updateAll(); }catch(err){ $('logicStatus').innerHTML='<span class="bad">JSON rejected:</span> '+err.message; } };
+  $('restoreLogicBtn').onclick=()=>{ LOGIC=JSON.parse(JSON.stringify(DEFAULT_LOGIC)); renderLogicMatrix(); updateAll(); $('logicStatus').innerHTML='<span class="ok">Default logic restored.</span>'; };
+}
+init();
+</script>
+<script>
+(function(){
+  const input = document.getElementById('patientId');
+  const link = document.getElementById('labLink');
+
+  if (!input || !link) return;
+
+  function updateLabLink() {
+    const caseNo = input.value.trim();
+
+    if (caseNo) {
+      link.href = "http://intranet.mpmmcc.tmc.gov.in/emrtest_rb/ALLPARAMVW.aspx?caseno=" + caseNo;
+      link.style.opacity = "1";
+      link.style.pointerEvents = "auto";
+    } else {
+      link.href = "#";
+      link.style.opacity = "0.5";
+      link.style.pointerEvents = "none";
+    }
+  }
+
+  // live update
+  input.addEventListener('input', updateLabLink);
+
+  // run once on load (for saved data reload cases)
+  updateLabLink();
+})();
+</script>
+<details>
+<summary class="hint">License and Medical Disclaimer</summary>
+<section class="card">
+<body><small>Software License: GNU GPL v3. Copyright (C) [2026] [Prof. Jyotirmay Kirtania]. This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. Medical Disclaimer (Cognitive Assist & Record Keeping). IMPORTANT: PLEASE READ CAREFULLY BEFORE USE. NOT A MEDICAL DEVICE: This tool is a Clinical Decision Support System (CDSS) intended for educational and cognitive assistance purposes only. It has not been cleared or approved by the FDA, EMA, or any other regulatory body for use as a primary medical device. NO SUBSTITUTE FOR CLINICAL JUDGMENT: This tool is designed to assist, not replace, the clinical judgment of qualified healthcare professionals. All calculations and logic must be independently verified against institutional standards before clinical application. DATA PRIVACY: This tool is designed to run locally on the user's device. No data is transmitted to external servers by the software. The user is solely responsible for ensuring that the use of this tool complies with local patient data privacy laws (e.g., HIPAA, GDPR) and institutional IT policies. LIMITATION OF LIABILITY: In no event shall the authors or copyright holders be liable for any claim, damages, or other liability, whether in an action of contract, tort, or otherwise, arising from, out of, or in connection with the software or the use or other dealings in the software.</small>  
+</details>
+</body>
+</html>
