@@ -20,7 +20,7 @@ This repository hosts a suite of portable, offline-ready HTML applications desig
 | **Agitation Manager** | ICU Delirium | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/acute-agitation-v1.0.html) |
 | **Label Generator** | Workflow Efficiency | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/Patient-label-generator-v1.5.html) |
 |**ePAC** | Pre Anesthesia Checkup | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/ePAC-v3.0.html) |
-|**PAC-assistant** | PAC Assistant for Anesthesia Residents | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/PAc-assistant-v1.15.html) |
+|**PAC-assistant** | PAC Assistant for Anesthesia Residents | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/PAC-assistant-v1.15.html) |
 |**AIR** | Anesthesia Intraoperative Record | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/AIR-v2.0.html) |
 |**TRACHY-score** | Assess need of postoperative tracheostomy after H&N surgeries | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/TRACHY-score-v1.0.html) |
 |**IBIDA** | Inpatient Basal Insulin Dosing Assistant | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/IBIDA-v1.4.html) | 
