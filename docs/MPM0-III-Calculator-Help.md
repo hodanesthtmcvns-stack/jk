@@ -6,7 +6,7 @@
 # 🔷 ABOUT
 
 ## Overview
-**MPM₀-III Calculator** is a browser-based clinical tool for estimating **predicted hospital mortality at ICU admission** using the validated **Mortality Probability Model (MPM₀-III)** :contentReference[oaicite:0]{index=0}.
+**MPM₀-III Calculator** is a browser-based clinical tool for estimating **predicted hospital mortality at ICU admission** using the validated **Mortality Probability Model (MPM₀-III)** :
 
 The model applies a **logistic regression equation** using:
 - Age (continuous variable)  
