@@ -14,6 +14,7 @@ This repository hosts a suite of portable, offline-ready HTML applications desig
 | **MPM0-III Calculator** | Predicted hospital mortality (adult patients) at ICU admission using the validated Mortality Probability Model (MPM₀-III) | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/MPM0-III-Calculator.html) |
 | **PIM3 Calculator** | Predicted hospital mortality at ICU admission using the validated Pediatric Index of Mortality 3 (PIM3) model | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/PIM3-Calculator.html) |
 | **ABG Interpreter** | Comprehensive acid-base analysis from ABG report | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/ABG-Interpreter-v2.0.html) |
+| **Shock** | Learning and decision-support application for the recognition, classification, and mechanistic understanding of shock states | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/Shock-v1.0.html) |
 | **SPA (Septic Shock Perfusion Assessment)** | Clinical Decision Support | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/SPA-v2.1.html) |
 | **BEAT-C** | Empiric Antibiotics in Sepsis | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/BEAT-C-v1.0.html) |
 | **PEEP Titrator** | Optimal PEEP Selection | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/PEEP-titration-v1.4.html) |
@@ -26,7 +27,8 @@ This repository hosts a suite of portable, offline-ready HTML applications desig
 |**AIR** | Anesthesia Intraoperative Record | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/AIR-v2.0.html) |
 |**TRACHY-score** | Assess need of postoperative tracheostomy after H&N surgeries | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/TRACHY-score-v1.0.html) |
 |**IBIDA** | Inpatient Basal Insulin Dosing Assistant | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/IBIDA-v1.4.html) | 
-|**IVAA-PK-PD-Sim** | IV Anesthetic Agents Pharmacokinetics Pharmacodynamics Simulator | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/IVAA-PK-PD-Simulator-v3.0.html) | 
+|**IVAA-PK-PD-Sim** | IV Anesthetic Agents Pharmacokinetics Pharmacodynamics Simulator | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/IVAA-PK-PD-Simulator-v3.0.html) |
+|**AA-PKPD** | Inhaled Anaesthetic Agent Pharmacokinetics–Pharmacodynamics Simulator | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/AA-PKPD-v1.2.html) |
 |**ADR-Reporter** | Adverse Drug Reaction Reporting | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/ADR-Reporter-v1.4.html) | 
 |**STTS** | Simple Text To Speech in any language | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/STTS-v1.5.html) | 
 
