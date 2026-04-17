@@ -11,6 +11,8 @@ This repository hosts a suite of portable, offline-ready HTML applications desig
 | :--- | :--- | :--- |
 | **ICU Help & Support** | Documentation & Orders | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/ICU-Help-Support-v2.4.html) |
 | **NEWS2 Triage** | Clinical Severity Assessment and Triage | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/NEWS2.html) |
+| **MPM0-III Calculator** | Predicted hospital mortality (adult patients) at ICU admission using the validated Mortality Probability Model (MPM₀-III) | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/MPM0-III-Calculator.html) |
+| **PIM3 Calculator** | Predicted hospital mortality at ICU admission using the validated Pediatric Index of Mortality 3 (PIM3) model | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/PIM3-Calculator.html) |
 | **ABG Interpreter** | Comprehensive acid-base analysis from ABG report | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/ABG-Interpreter-v2.0.html) |
 | **SPA (Septic Shock Perfusion Assessment)** | Clinical Decision Support | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/SPA-v2.1.html) |
 | **BEAT-C** | Empiric Antibiotics in Sepsis | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/BEAT-C-v1.0.html) |
