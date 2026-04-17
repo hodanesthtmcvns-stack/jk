@@ -1,90 +1,96 @@
-# 📘 MPM₀-III Calculator  
-## Mortality Probability Admission Model (ICU)
+# 📘 PIM3 Calculator  
+## Paediatric Index of Mortality (PIM3)
 
 ---
 
 # 🔷 ABOUT
 
 ## Overview
-**MPM₀-III Calculator** is a browser-based clinical tool for estimating **predicted hospital mortality at ICU admission** using the validated **Mortality Probability Model (MPM₀-III)** :
+**PIM3 Calculator** is a browser-based clinical tool designed to estimate **predicted hospital mortality in paediatric ICU (PICU) patients** using the validated **Pediatric Index of Mortality 3 (PIM3)** model
 
-The model applies a **logistic regression equation** using:
-- Age (continuous variable)  
-- Physiological variables  
-- Acute and chronic diagnoses  
-- Admission characteristics  
-
-to generate a **probability of in-hospital mortality**.
+The model uses **data from the first ICU contact up to 1 hour after PICU admission** to generate a mortality probability.
 
 ---
 
 ## Scientific Basis
 
-Developed and validated from large ICU datasets:
+Derived from large multicenter PICU datasets (ANZPICR):
 
-- Higgins TL et al., *Critical Care Medicine*, 2007  
-- Prospective validation: Higgins TL et al., 2009  
+- Updated from PIM2 → PIM3  
+- Widely used for:
+  - ICU benchmarking  
+  - Audit and quality assessment  
 
-Model performance:
-- AUROC ≈ 0.82  
-- Good calibration (Hosmer–Lemeshow p > 0.05)  
-- Standardized Mortality Ratio ~1.0  
+Validation:
+- Good calibration across populations  
+- AUROC typically ~0.7–0.9 depending on cohort  
 
 ---
 
 ## Model Structure
 
-### 1. Logistic Model
-The calculator computes:
+### Logistic Model
 
 \[
-P = \frac{1}{1 + e^{-logit}}
+P = \frac{e^{\text{PIM3 score}}}{1 + e^{\text{PIM3 score}}}
 \]
 
-Where **logit** is derived from:
-- Constant  
-- Age coefficient  
-- Binary variables  
-- Interaction terms (Age × selected variables)  
+Where PIM3 score (logit) is derived from:
+- Physiological variables  
+- Binary risk factors  
+- Diagnostic risk categories  
+- Procedure-related modifiers  
 
 ---
 
-### 2. Variables Included
+## Variables Used
 
-#### Physiological
-- Coma / deep stupor  
-- Heart rate ≥150 bpm  
-- Systolic BP ≤90 mmHg  
+### 1. Physiological Variables
+- Systolic BP (SBP)  
+- Base excess (absolute value)  
+- Oxygenation ratio (100 × FiO₂ / PaO₂)  
 
-#### Chronic Conditions
-- Chronic kidney disease  
-- Cirrhosis  
-- Metastatic malignancy  
-
-#### Acute Diagnoses
-- Acute kidney injury (KDIGO-based)  
-- Cardiac dysrhythmia  
-- Cerebrovascular event  
-- GI bleeding (protective)  
-- Intracranial mass effect  
-
-#### ICU Admission Factors
-- CPR before admission  
-- Mechanical ventilation  
-- Medical / unscheduled surgery  
-- Full code status (protective)  
+Includes:
+- Linear and quadratic SBP terms  
+- Oxygenation severity adjustment  
 
 ---
 
-### 3. Special Terms
+### 2. Binary Admission Variables
+- Fixed pupils  
+- Mechanical ventilation (including NIV, excluding HFNC)  
+- Elective admission (protective)  
 
-- **Zero Factor**
-  - Automatically applied when no risk variables are present  
-  - Improves calibration in low-risk patients  
+---
 
-- **Interaction Terms**
-  - Age modifies effect of selected variables  
-  - Prevents overestimation in older patients  
+### 3. Recovery Categories
+(Only one applicable)
+
+- Bypass cardiac surgery (protective)  
+- Non-bypass cardiac procedure (protective)  
+- Non-cardiac procedure (protective)  
+- None  
+
+---
+
+### 4. Diagnosis Risk Categories
+(Only highest tier applies)
+
+- Low risk (e.g., asthma, bronchiolitis, DKA)  
+- High risk (e.g., myocarditis, NEC)  
+- Very high risk (e.g., cardiac arrest, leukemia post-induction, liver failure)  
+
+---
+
+## Default Handling (Strict PIM3 Logic)
+
+If data is missing:
+
+| Variable | Default |
+|----------|--------|
+| SBP      | 120 mmHg |
+| Base excess | 0 |
+| FiO₂/PaO₂ ratio | 0.23 |
 
 ---
 
@@ -94,32 +100,27 @@ The calculator provides:
 
 - **Predicted mortality (%)**
 - **Risk category**
-  - Low  
-  - Moderate  
-  - High  
-- **Logit value**
-- **Breakdown of contributing factors**
+- **Logit score**
+- **Breakdown of contributing terms**
+- **Graphical probability bar**
 
 ---
 
 ## Intended Use
 
-- ICU admission risk stratification  
-- Clinical audit and benchmarking  
+- PICU audit and benchmarking  
+- Clinical research  
 - Teaching and training  
-- Research data standardization  
 
 ---
 
 ## Limitations
 
-- Not a dynamic score (single time-point model)  
-- Does not replace clinical judgment  
-- Limited applicability in:
-  - Cardiac surgery  
-  - Burns  
-  - Acute myocardial infarction cohorts  
-  - Pediatric patients  
+- Designed for **population-level analysis**, not individual patient treatment decisions  
+- Accuracy varies by:
+  - Case-mix  
+  - Subspecialty cohorts  
+- May **underestimate mortality in oncology populations**  
 
 ---
 
@@ -139,112 +140,138 @@ MPMMCC & HBCH, Tata Memorial Centre, Varanasi
 
 ## Getting Started
 
-1. Open the `.html` file in a modern browser (Chrome/Edge recommended)  
-2. Enter patient **age (mandatory)**  
-3. Select applicable clinical variables  
-4. View predicted mortality in real time  
+1. Open the `.html` file in a browser  
+2. Enter physiological values  
+3. Select applicable categories  
+4. Review predicted mortality  
 
 ---
 
 ## 🧮 How to Use
 
-### Step 1: Enter Age
-- Mandatory input  
-- Range: ≥18 years  
+### Step 1: Enter Physiological Data
+
+#### Systolic BP
+- Enter first measured value  
+- If unknown → leave blank (defaults to 120)
+
+#### Base Excess
+- Enter with **sign (+ / −)**  
+- Calculator uses absolute value  
+
+#### FiO₂ and PaO₂
+- Must correspond to same time point  
+- Enter FiO₂ as fraction (e.g., 0.21, 0.5)  
 
 ---
 
-### Step 2: Select Variables
+### Step 2: Select Binary Variables
 
-Tick only if criteria are **clearly met within 1 hour of ICU admission**
-
-#### Key Principles
-- If uncertain → leave unchecked  
-- Default assumption = normal  
+Tick only if clearly present:
+- Fixed pupils  
+- Mechanical ventilation  
+- Elective admission  
 
 ---
 
-### Step 3: Review Output
+### Step 3: Choose Recovery Category
 
-Displayed results include:
+- Select only if **primary reason for PICU admission**  
+- Otherwise choose “None”  
 
-- **Mortality probability (%)**
-- **Risk classification**
-- **Graphical probability bar**
-- **Logit breakdown**
+---
+
+### Step 4: Select Diagnosis Risk
+
+- Choose only **one category**
+- Highest severity overrides others  
+
+---
+
+### Step 5: Review Output
+
+Displayed:
+- Mortality probability (%)  
+- Risk category  
+- Logit value  
+- Term-wise breakdown  
 
 ---
 
 ## 📊 Interpretation
 
-| Probability | Risk Category |
-|------------|--------------|
-| <10%       | Low risk     |
-| 10–25%     | Moderate risk|
-| >25%       | High risk    |
+| Probability | Interpretation |
+|------------|---------------|
+| <10%       | Lower predicted risk |
+| 10–25%     | Intermediate risk |
+| >25%       | Higher predicted risk |
 
 ---
 
-## 🔍 Clinical Meaning
+## 🧠 Clinical Meaning
 
-- Higher probability → increased risk of in-hospital mortality  
-- Useful for:
-  - Prognostication  
-  - ICU audit comparisons  
-  - Case-mix adjustment  
+- Represents **expected mortality risk for similar patient groups**  
+- Not a prediction of individual patient outcome  
+
+---
+
+## ⚠️ Oncology ICU Advisory
+
+If enabled:
+- Displays caution panel  
+- Does NOT change calculation  
+
+Reason:
+- PIM3 may **underestimate mortality** in:
+  - Hemato-oncology patients  
+  - Bone marrow transplant recipients  
 
 ---
 
 ## 📋 Special Features
 
-### 1. Zero Factor
-- Automatically activated if no risk variables selected  
-- Represents baseline low-risk population  
+### 1. Strict Data Logic
+- Uses **first available value**, not worst  
+- Ensures consistency with original model  
 
 ---
 
-### 2. Interaction Effects
-- Age modifies impact of:
-  - Coma  
-  - Hypotension  
-  - Cirrhosis  
-  - Metastatic cancer  
-  - Dysrhythmia  
-  - Intracranial pathology  
-  - CPR  
+### 2. Automatic Defaults
+- Missing data handled per PIM3 standards  
+- Prevents calculation errors  
 
 ---
 
 ### 3. Copy Results
-- Click **“Copy results text”**
-- Generates structured output:
-  - Mortality %
-  - Age
-  - Selected variables  
+- Generates structured summary for:
+  - Documentation  
+  - Audit logs  
 
 ---
 
 ### 4. Worked Example Validation
-- Built-in reference example from original publication  
-- Ensures computational accuracy  
-
----
-
-## ⚠️ Important Notes
-
-- Model applies **only at ICU admission**
-- Do NOT use for:
-  - Daily reassessment  
-  - Treatment decisions for individual patients  
+- Built-in test case ensures:
+  - Accuracy of implementation  
+  - Reproducibility  
 
 ---
 
 ## ❌ Common Errors
 
-- Over-selecting variables without strict criteria  
-- Using outdated clinical data  
-- Applying to ineligible populations  
-- Interpreting probability as certainty  
+- Using worst values instead of first values  
+- Incorrect FiO₂ entry (percent vs fraction)  
+- Selecting multiple diagnosis categories  
+- Misclassification of elective admission  
+- Applying to individual decision-making  
+
+---
+
+## 🧠 Best Practice
+
+Use PIM3 alongside:
+- Clinical assessment  
+- Organ dysfunction scores (e.g., PELOD, SOFA)  
+- Serial monitoring  
 
 ---
 
@@ -252,21 +279,22 @@ Displayed results include:
 
 This tool is intended for:
 
-- Clinical audit  
+- Clinical Audit  
+- Research  
 - Educational use  
-- Research purposes  
 
 It does **not replace**:
 - Clinical judgment  
-- Institutional protocols  
-- Specialist consultation  
+- Treatment decision-making  
 
 ---
 
 ## 📚 References
 
-- Higgins TL et al. Crit Care Med. 2007  
-- Higgins TL et al. Crit Care Med. 2009  
-- KDIGO Clinical Practice Guideline for AKI, 2012  
+- ANZPICR PIM2 & PIM3 Information Booklet, 2019  
+- Jung et al., *Acute Crit Care*, 2018  
+- Straney et al., *Pediatr Crit Care Med*, 2013  
+- Wolfler et al., *Pediatr Crit Care Med*, 2016  
+- Arias López et al., *Pediatr Crit Care Med*, 2018  
 
 ---
