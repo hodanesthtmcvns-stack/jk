@@ -114,7 +114,7 @@ Structured tool for **ICU delirium and agitation management**, integrating sedat
 
 ### Label Generator
 
-Utility tool for **rapid generation of standardized clinical labels**, improving workflow efficiency and reducing documentation errors.
+Utility tool for *quick and easy creation of customizable clinical labels for batch printing on regular laser printers,* improving workflow efficiency and reducing documentation errors without the need for specialized label printers or proprietary software.
 
 ---
 
