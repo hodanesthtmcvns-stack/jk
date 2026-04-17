@@ -42,37 +42,37 @@ This repository hosts a suite of portable, offline-ready HTML applications desig
 
 ### ICU Help & Support
 
-Comprehensive ICU bedside application integrating **orders, documentation, clinical notes, and structured decision support**, enabling real-time patient management, audit-ready records, and standardized ICU workflows.
+Comprehensive ICU bedside application integrating **orders, documentation, clinical notes, and structured decision support**, enabling real-time patient management, audit-ready records, and standardized ICU workflows. This functions as a **clinical operating system,** reducing the cognitive load and streamlining high-acuity ICU documentation and decision-making.
 
 ---
 
 ### NEWS2 Triage
 
-Standardized **clinical severity scoring and triage tool** based on NEWS2, enabling early detection of deterioration, escalation triggers, and structured patient prioritization.
+Standardized **clinical severity scoring and triage tool** based on the validated NEWS2 score, enabling early detection of deterioration, escalation triggers, and structured patient prioritization. The NEWS2 is also recommended by the Surviving Sepsis Campaign 2026 guidelines for adult patients wiith sepsis.
 
 ---
 
 ### MPM0-III Calculator
 
-Predicts **hospital mortality at ICU admission (adult patients)** using the validated **Mortality Probability Model (MPM₀-III)**, supporting audit, benchmarking, and risk stratification.
+Predicts **hospital mortality at ICU admission (adult patients)** using the validated **Mortality Probability Model (MPM₀-III)**, supporting clinical audit, benchmarking, and clinical research.
 
 ---
 
 ### PIM3 Calculator
 
-Predicts **hospital mortality at ICU admission (paediatric patients)** using the validated **PIM3 model**, with strict first-hour data logic for accurate PICU benchmarking.
+Predicts **hospital mortality at ICU admission (paediatric patients)** using the validated **PIM3 model**, with strict first-hour data logic for accurate clinical audit, benchmarking, and clinical research of PICU outcomes.
 
 ---
 
 ### ABG Interpreter
 
-Advanced **acid–base analysis tool** using physiological and Stewart approaches to interpret ABG data, identify primary disorders, mixed states, and clinical implications.
+Advanced **acid–base analysis tool** using physiological and Stewart approaches to interpret ABG data, identify primary disorders, mixed states, and clinical implications with evidence based explanations.
 
 ---
 
 ### Shock
 
-Mechanism-based application for **recognition, classification, and physiological understanding of shock**, integrating clinical signs, hemodynamics, and metabolic markers.
+Mechanism-based application for **recognition, phenotype classification, and physiological understanding of shock**, integrating clinical signs, hemodynamics, and metabolic markers.
 
 ---
 
@@ -84,7 +84,7 @@ Decision-support tool for **assessment of tissue perfusion in septic shock**, in
 
 ### BEAT-C
 
-Empiric antibiotic decision-support tool for **sepsis management**, guiding rational initial therapy based on infection source, risk factors, and clinical severity.
+Empiric antibiotic decision-support tool for **sepsis management**, guiding rational initial therapy based on probable infection source, local antibiogram, clinical risk factors, and clinical severity.
 
 ---
 
@@ -114,7 +114,7 @@ Structured tool for **ICU delirium and agitation management**, integrating sedat
 
 ### Label Generator
 
-Utility tool for *quick and easy creation of customizable clinical labels for batch printing on regular laser printers,* improving workflow efficiency and reducing documentation errors without the need for specialized label printers or proprietary software.
+Utility tool for **quick and easy creation of customizable clinical labels for batch printing on regular laser printers,** improving workflow efficiency and reducing documentation errors without the need for specialized label printers or proprietary software.
 
 ---
 
@@ -126,28 +126,28 @@ Digital **Pre-Anesthesia Checkup system** for structured evaluation, documentati
 
 ### PAC-assistant
 
-Decision-support and learning tool for **anesthesia residents**, guiding PAC evaluation, optimization, and perioperative planning.
+Decision-support and learning tool for **anesthesia residents**, guiding **PAC evaluation**, optimization, and perioperative planning with cognitive cues of ERAS components.
 
 ---
 
 ### AIR
 
-Structured **Anesthesia Intraoperative Record system** for real-time documentation of intraoperative events, drugs, monitoring, and outcomes.
+Structured **Anesthesia Intraoperative Record system** for real-time documentation of intraoperative events, drugs, monitoring, and outcomes with cognitive cues of ERAS components.
 
 ---
 
 ### TRACHY
-The TRACHY score is a simple, clinically oriented tool to guide post-operative airway management in patients with head and neck cancer undergoing resection with primary flap reconstruction. It helps identify patients who can be managed safely with endotracheal intubation alone and those in whom an elective tracheostomy is indicated.
+The TRACHY score is a simple, clinically oriented tool to **guide post-operative airway management** in patients with head and neck cancer undergoing resection with primary flap reconstruction. It helps identify patients who can be managed safely with **endotracheal intubation alone** and those in whom an **elective tracheostomy** is indicated.
 
 ---
 
 ### IBIDA
-The IBIDA (Inpatient Basal Insulin Dosing Assistant) app is an offline clinical calculator designed to help physicians determine the initial dose and next-day adjustments for once-daily insulin glargine in hospitalized patients. It utilizes patient-specific data—including weight, morning blood sugar, and renal function (eGFR/CrCl)—to standardize basal insulin management during perioperative fasting periods.
+The IBIDA (Inpatient Basal Insulin Dosing Assistant) app is an offline clinical calculator designed to help physicians determine the **initial dose and next-day adjustments** for **once-daily insulin glargine in hospitalized patients.** It utilizes patient-specific data—including weight, morning blood sugar, and renal function (eGFR/CrCl)—to standardize basal insulin management during perioperative fasting periods.
 
 ---
 
 ### STTS
-The Simple Text To Speech (STTS) utility provides high-fidelity audio playback for clinical, scientific, academic, and official documents across all browser-supported languages. It features a LLM artefact cleaner that strips away "AI noise" like markdown artifacts and emojis while utilizing an editable symbol dictionary to ensure technical terms and units are pronounced accurately. Designed as a study and training aid, it allows students to navigate sections of books, articles, or notes through smart heading detection and customizable looping of specific text selections for repeated hearing and user customizable playback speeds. As a single-file, offline-first application, it ensures that sensitive clinical, official, professional or academic data remains entirely private by processing everything locally within the browser.
+The Simple Text To Speech (STTS) utility provides **high-fidelity audio playback** for clinical, scientific, academic, and official documents across all browser-supported languages. It features a LLM artefact cleaner that strips away "AI noise" like markdown artifacts and emojis while utilizing an editable symbol dictionary to ensure technical terms and units are pronounced accurately. Designed as a study and training aid, it allows students to **navigate sections of books, articles, or notes through smart heading detection and customizable looping of specific text selections for repeated hearing and user customizable playback speeds.** As a single-file, offline-first application, it ensures that sensitive clinical, official, professional or academic data remains entirely private by processing everything locally within the browser.
 
 ---
 
