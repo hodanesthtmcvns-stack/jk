@@ -139,7 +139,7 @@ Includes:
 - Does not account for:
   - Shunt/VQ mismatch  
   - Dynamic surgical stimulation  
-  - Drug interactions (opioids, IV agents)  
+  - Drug interactions (opioids, IV agents) and regional anesthesia  
 
 > **Not intended for clinical decision-making**
 
