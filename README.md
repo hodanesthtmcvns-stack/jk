@@ -38,45 +38,118 @@ This repository hosts a suite of portable, offline-ready HTML applications desig
 * **Physiology-Based:** Algorithms prioritize lung mechanics (Compliance, Driving Pressure) and hemodynamic stability (MAP).
 
 ## Key Tool Summaries
+---
 
-### ICU Help & Support (v2.4)
-The central hub for ICU workflow. It features an **Order Composer** with tick-box bundles, a **Progress Note generator** (Daily/Short Rounds/Macros), and integrated **ICU Calculators** (SOFA, MPM-III, GCS). It includes "Keeper Mode" for custom JSON template management and integration with the CRIL AI assistant.
+### ICU Help & Support
 
-### SPA (v2.1)
-A cognitive decision support tool for ICU residents to assess peripheral perfusion in septic shock patients.
+Comprehensive ICU bedside application integrating **orders, documentation, clinical notes, and structured decision support**, enabling real-time patient management, audit-ready records, and standardized ICU workflows.
 
-### ABG Interpreter (v2.0)
-A cognitive decision support tool for ICU residents for step-wise in-depth analysis of acid base disturbances from ABG report.
+---
 
-### BEAT-C (v1.0)
-A probabilistic engine for initial empiric antibiotic selection. It balances suspected infection sources against local antibiogram data while applying safety guardrails for renal function, allergies, and pregnancy.
+### NEWS2 Triage
 
-### ICU Lab Trends and Alerts (v2.0)
-Parses LIS data to create longitudinal trends. It includes automated alerts for **AKI** (KDIGO criteria), **DIC** (ISTH score), and **Tumor Lysis Syndrome**, catching critical shifts that single-point data might miss.
+Standardized **clinical severity scoring and triage tool** based on NEWS2, enabling early detection of deterioration, escalation triggers, and structured patient prioritization.
 
-### ICU Ventilator Simulator (v1.2)
-An interactive educational tool for VCV and PCV modes. Users can adjust lung resistance and compliance to see real-time effects on pressure and flow waveforms.
+---
 
-### PEEP Titration (v1.4)
-Assists clinicians in finding the "optimal PEEP" for passive patients on Volume Controlled Ventilation. It identifies the PEEP level that maximizes compliance while maintaining hemodynamic stability and minimizing driving pressure.
+### MPM0-III Calculator
 
-### NEWS2
-National Early Warning Score 2 (NEWS2) physiological scoring and response. It helps healthcare providers to screen and triage patients in the emergency room, clinic and wards for critical illness and sepsis.
+Predicts **hospital mortality at ICU admission (adult patients)** using the validated **Mortality Probability Model (MPM₀-III)**, supporting audit, benchmarking, and risk stratification.
 
-### ePAC (v3.0)
-Healthcare providers may perform and record Pre Anesthesia Checkup (PAC) using this tool, with validated preoperative risk assessment parameters, and checklist of preoperative advice as per ERAS pathways. It helps healthcare providers a cognitive aid to do a structured PAC, and provide time stamped pdf output with unique filename with patient ID, date, and time for indexing and retrieval. 
+---
 
-### AIR (v2.0)
-Healthcare providers may navigate and document Anesthesia Intraoperative Record  (AIR) using this tool, with validated parameters, safety checklists, and checklist of intraoperative ERAS pathways. It helps healthcare providers a cognitive aid to do document a structured AIR, and provide time stamped pdf output with unique filename with patient ID, date, and time for indexing and retrieval. 
+### PIM3 Calculator
+
+Predicts **hospital mortality at ICU admission (paediatric patients)** using the validated **PIM3 model**, with strict first-hour data logic for accurate PICU benchmarking.
+
+---
+
+### ABG Interpreter
+
+Advanced **acid–base analysis tool** using physiological and Stewart approaches to interpret ABG data, identify primary disorders, mixed states, and clinical implications.
+
+---
+
+### Shock
+
+Mechanism-based application for **recognition, classification, and physiological understanding of shock**, integrating clinical signs, hemodynamics, and metabolic markers.
+
+---
+
+### SPA (Septic Shock Perfusion Assessment)
+
+Decision-support tool for **assessment of tissue perfusion in septic shock**, integrating lactate, hemodynamics, and clinical markers to guide resuscitation adequacy.
+
+---
+
+### BEAT-C
+
+Empiric antibiotic decision-support tool for **sepsis management**, guiding rational initial therapy based on infection source, risk factors, and clinical severity.
+
+---
+
+### PEEP Titrator
+
+Tool for **optimal PEEP selection** using physiological principles (oxygenation, compliance, recruitment), supporting individualized ventilator strategies.
+
+---
+
+### Ventilator Simulator
+
+Interactive **respiratory mechanics and ventilator training tool** for understanding modes, compliance, resistance, and patient–ventilator interaction.
+
+---
+
+### Lab Trends & Alerts
+
+Automated **laboratory trend analysis tool** with clinical alerts, enabling early detection of deterioration and pattern recognition across serial investigations.
+
+---
+
+### Agitation Manager
+
+Structured tool for **ICU delirium and agitation management**, integrating sedation scales, causes, and stepwise pharmacological/non-pharmacological strategies.
+
+---
+
+### Label Generator
+
+Utility tool for **rapid generation of standardized clinical labels**, improving workflow efficiency and reducing documentation errors.
+
+---
+
+### ePAC
+
+Digital **Pre-Anesthesia Checkup system** for structured evaluation, documentation, and risk stratification before surgery.
+
+---
+
+### PAC-assistant
+
+Decision-support and learning tool for **anesthesia residents**, guiding PAC evaluation, optimization, and perioperative planning.
+
+---
+
+### AIR
+
+Structured **Anesthesia Intraoperative Record system** for real-time documentation of intraoperative events, drugs, monitoring, and outcomes.
+
+---
 
 ### TRACHY
 The TRACHY score is a simple, clinically oriented tool to guide post-operative airway management in patients with head and neck cancer undergoing resection with primary flap reconstruction. It helps identify patients who can be managed safely with endotracheal intubation alone and those in whom an elective tracheostomy is indicated.
 
+---
+
 ### IBIDA
 The IBIDA (Inpatient Basal Insulin Dosing Assistant) app is an offline clinical calculator designed to help physicians determine the initial dose and next-day adjustments for once-daily insulin glargine in hospitalized patients. It utilizes patient-specific data—including weight, morning blood sugar, and renal function (eGFR/CrCl)—to standardize basal insulin management during perioperative fasting periods.
 
+---
+
 ### STTS
 The Simple Text To Speech (STTS) utility provides high-fidelity audio playback for clinical, scientific, academic, and official documents across all browser-supported languages. It features a LLM artefact cleaner that strips away "AI noise" like markdown artifacts and emojis while utilizing an editable symbol dictionary to ensure technical terms and units are pronounced accurately. Designed as a study and training aid, it allows students to navigate sections of books, articles, or notes through smart heading detection and customizable looping of specific text selections for repeated hearing and user customizable playback speeds. As a single-file, offline-first application, it ensures that sensitive clinical, official, professional or academic data remains entirely private by processing everything locally within the browser.
+
+---
 
 ## License
 This project is licensed under **GNU GPL v3**. 
@@ -86,4 +159,4 @@ This project is licensed under **GNU GPL v3**.
 These tools are intended for **clinical decision support and educational purposes only**. They do not replace professional medical judgment, bedside physical examination, or institutional clinical protocols.
 
 ***
-*Developed by Prof. (Dr.) Jyotirmay Kirtania, Department of Anesthesiology, Critical Care & Pain, MPMMCC & HBCH (Tata Memorial Centre), Varanasi.*
+*Written and maintained by Prof. (Dr.) Jyotirmay Kirtania, Department of Anesthesiology, Critical Care & Pain, MPMMCC & HBCH (Tata Memorial Centre), HBNI, Varanasi.*
