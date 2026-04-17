@@ -1,6 +1,6 @@
 # PRANA - Platform for Resuscitation & Acute-care Networked Applications
-These are a set of Software Tools created and maintained by Prof. Jyotirmay Kirtania for Critical Care & Anesthesia Applications, Point of Care Decision Support and Training of Residents
-**Quick Launch Guide**
+These are a set of Software Tools created and maintained by Prof. Jyotirmay Kirtania for Critical Care & Anesthesia Applications, Point of Care Decision Support and Training of Residents.
+# **Quick Launch Guide**
 **Direct URLs for clinical use. Bookmark this page on your mobile browser for instant access.**
 
 ### Clinical Applications Stack
