@@ -28,14 +28,6 @@
 |**ADR Reporter** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/ADR-Reporter-v1.4.html) | [📖 About & Help](./docs/ADR-Reporter-v1.4-About-Help.md) |
 |**STTS (Simple Text to Speech)** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/STTS-v1.5.html) | [📖 About & Help](./docs/STTS-v1.5-About-Help.md) |
 
-
----
-
-### Scan to Open on Mobile
-Scan this QR code with your smartphone camera to access this dashboard instantly at the bedside:
-
-![Bedside Stack QR Code](https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://hodanesthtmcvns-stack.github.io/jk/QUICK-START.md)
-
 ---
 
 ## Installation & Offline Use
