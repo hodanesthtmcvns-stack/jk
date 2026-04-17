@@ -40,7 +40,7 @@ These are a set of Software Tools created and maintained by Prof. Jyotirmay Kirt
 
 ### Attribution & Terms
 **Author:** Prof. (Dr.) Jyotirmay Kirtania  
-**Department:** Anesthesiology, Critical Care & Pain, MPMMCC & HBCH (Tata Memorial Centre), Varanasi.  
+**Department:** Anesthesiology, Critical Care & Pain, MPMMCC & HBCH (Tata Memorial Centre), Varanasi, HBNI, India.  
 **License:** GNU GPL v3
 
 **Disclaimer:** These tools are for clinical decision support and education only. They do not replace professional medical judgment or institutional protocols.
