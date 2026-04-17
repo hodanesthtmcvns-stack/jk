@@ -1,0 +1,1832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SHOCK-v1.0 | Mechanistic Mapping and Phenotype Prediction</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;600&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,600;1,300&display=swap');
+
+:root {
+  --bg: #f2f5f9;
+  --surface: #ffffff;
+  --surface2: #e8edf4;
+  --border: #c8d2e0;
+  --border2: #a0b0c4;
+  --text: #1a2535;
+  --text-dim: #4a5a70;
+  --text-bright: #0d1520;
+  --mono: 'IBM Plex Mono', monospace;
+  --sans: 'IBM Plex Sans', sans-serif;
+
+  --ph-H: #0070b0;
+  --ph-C: #c01838;
+  --ph-D: #6820b8;
+  --ph-O: #007848;
+  --ph-N: #8a5800;
+
+  --ok: #006840;
+  --warn: #7a4800;
+  --crit: #b81030;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 12.5px;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* ─── HEADER ─── */
+header {
+  padding: 28px 32px 0;
+  background: linear-gradient(160deg, #e4eaf4 0%, #f2f5f9 100%);
+  border-bottom: 2px solid var(--border);
+}
+.hdr-top { display: flex; align-items: baseline; gap: 14px; margin-bottom: 2px; }
+.hdr-logo { font-family: var(--mono); font-size: 22px; font-weight: 600; color: var(--text-bright); letter-spacing: -0.03em; }
+.hdr-version { font-family: var(--mono); font-size: 9px; color: var(--text-dim); letter-spacing: 0.15em; padding: 2px 6px; border: 1px solid var(--border2); border-radius: 2px; background: var(--surface); }
+.hdr-sub { font-size: 11px; color: var(--text-dim); font-style: italic; margin-bottom: 4px; }
+.hdr-inst { font-family: var(--mono); font-size: 8.5px; color: var(--text-dim); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 20px; }
+
+/* ─── TABS ─── */
+.tab-bar { display: flex; gap: 0; border-top: 1px solid var(--border); margin: 0 -32px; padding: 0 32px; overflow-x: auto; background: var(--surface); }
+.tab-btn {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 10px 18px; border: none; background: transparent; color: var(--text-dim);
+  cursor: pointer; white-space: nowrap; position: relative; top: 1px;
+  border-bottom: 2px solid transparent; transition: color 0.15s, border-color 0.15s;
+}
+.tab-btn:hover { color: var(--text-bright); }
+.tab-btn.active { color: var(--text-bright); border-bottom-color: var(--text-bright); }
+.tab-btn[data-tab="recognition"].active { border-color: var(--crit); color: var(--crit); }
+.tab-btn[data-tab="phenotype"].active { border-color: var(--ph-D); color: var(--ph-D); }
+.tab-btn[data-tab="fluids"].active { border-color: var(--ph-H); color: var(--ph-H); }
+.tab-btn[data-tab="pocus"].active { border-color: var(--ph-O); color: var(--ph-O); }
+.tab-btn[data-tab="evidence"].active { border-color: var(--warn); color: var(--warn); }
+.tab-btn[data-tab="mechanisms"].active { border-color: #9b1030; color: #9b1030; }
+
+/* ─── MAIN ─── */
+main { padding: 28px 32px; max-width: 1400px; }
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+
+/* ─── SECTION CARDS ─── */
+.card {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 18px;
+  overflow: hidden;
+}
+.card-head {
+  padding: 10px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+}
+.card-accent { width: 3px; height: 20px; border-radius: 2px; flex-shrink: 0; }
+.card-title { font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--text-bright); letter-spacing: 0.06em; flex: 1; }
+.card-body { padding: 14px 16px; background: var(--surface2); }
+
+/* ─── PHYSIO NOTE ─── */
+.pnote {
+  padding: 8px 12px; background: #dce5f0;
+  border-left: 2px solid var(--border2); border-radius: 0 3px 3px 0;
+  font-size: 11px; color: #2a3a50; font-style: italic; margin-bottom: 12px; line-height: 1.5;
+}
+.pnote b { color: var(--text-bright); font-style: normal; }
+.pnote .eq { font-family: var(--mono); font-size: 10px; color: var(--text-bright); background: var(--surface); padding: 1px 6px; border-radius: 2px; white-space: nowrap; border: 1px solid var(--border); }
+
+/* ─── CALLOUT ─── */
+.callout { padding: 10px 14px; border-radius: 4px; margin-bottom: 14px; font-size: 11.5px; line-height: 1.55; }
+.callout.red { background: #fdedf0; border: 1px solid #f0b0bc; border-left: 3px solid var(--crit); }
+.callout.blue { background: #e6f2fb; border: 1px solid #a0c8e8; border-left: 3px solid var(--ph-H); }
+.callout.green { background: #e4f4ec; border: 1px solid #90c8a8; border-left: 3px solid var(--ok); }
+.callout.yellow { background: #fdf4e4; border: 1px solid #d8b870; border-left: 3px solid var(--warn); }
+.callout.purple { background: #f0eaf8; border: 1px solid #c0a0e0; border-left: 3px solid var(--ph-D); }
+.callout strong { color: var(--text-bright); }
+.callout .mono { font-family: var(--mono); font-size: 10px; }
+
+/* ─── CRITERIA GRID ─── */
+.criteria-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+.criteria-box { border: 1px solid var(--border); border-radius: 5px; padding: 12px; background: var(--surface); }
+.criteria-box h4 { font-family: var(--mono); font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; }
+.criteria-box h4.red { color: #b01030; }
+.criteria-box h4.amber { color: #8a5000; }
+.criteria-box h4.cyan { color: #005890; }
+.criteria-box ul { list-style: none; font-size: 11px; }
+.criteria-box li { padding: 2px 0; color: var(--text-dim); display: flex; gap: 6px; }
+.criteria-box li::before { content: "›"; color: var(--border2); }
+.criteria-box li b { color: var(--text-bright); }
+
+/* ─── SHOCK SPECTRUM ─── */
+.spectrum { display: flex; gap: 0; border-radius: 4px; overflow: hidden; margin: 12px 0; height: 44px; }
+.spectrum-seg { flex: 1; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 8.5px; letter-spacing: 0.08em; font-weight: 600; text-transform: uppercase; }
+.seg-1 { background: #d0f0e4; color: #005c38; border: 1px solid #90d0b0; }
+.seg-2 { background: #fdf0d0; color: #7a4800; border: 1px solid #d8b870; border-left: none; }
+.seg-3 { background: #fde8d4; color: #8a4010; border: 1px solid #e0a878; border-left: none; }
+.seg-4 { background: #fddce0; color: #b01030; border: 1px solid #e8a0ac; border-left: none; }
+.seg-5 { background: #ede0f8; color: #5c18a8; border: 1px solid #c090e0; border-left: none; }
+
+/* ─── MISSED PARAMS ─── */
+.missed-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; }
+.missed-item {
+  border: 1px solid var(--border); border-radius: 4px; padding: 8px 10px; background: var(--surface);
+  border-left: 3px solid #c09030;
+}
+.missed-item.added { border-left-color: var(--ph-H); }
+.missed-item .label { font-family: var(--mono); font-size: 10px; font-weight: 600; color: var(--text-bright); margin-bottom: 2px; }
+.missed-item .desc { font-size: 10.5px; color: var(--text-dim); }
+
+/* ─── PHENOTYPE CALCULATOR ─── */
+.calc-layout { display: grid; grid-template-columns: 1fr 320px; gap: 16px; }
+@media (max-width: 900px) { .calc-layout { grid-template-columns: 1fr; } }
+
+.param-list { display: flex; flex-direction: column; gap: 6px; }
+.param-row {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 10px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface);
+  transition: border-color 0.15s;
+}
+.param-row.selected { border-color: var(--border2); background: #edf2f8; }
+.param-label { font-size: 11px; color: var(--text-dim); min-width: 0; flex: 1; font-weight: 400; }
+.param-label strong { color: var(--text-bright); font-weight: 600; display: block; margin-bottom: 2px; font-size: 11px; }
+.param-select {
+  background: var(--surface); border: 1px solid var(--border2); border-radius: 3px;
+  color: var(--text); font-family: var(--sans); font-size: 11px; padding: 4px 8px;
+  min-width: 240px; max-width: 300px; outline: none; cursor: pointer;
+}
+.param-select:focus { border-color: var(--ph-H); }
+@media (max-width: 700px) { .param-row { flex-direction: column; } .param-select { min-width: 100%; } }
+
+/* ─── RESULTS PANEL ─── */
+.results-panel { position: sticky; top: 20px; }
+.results-card { border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: var(--surface); }
+.results-title { font-family: var(--mono); font-size: 10px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); padding: 10px 14px; border-bottom: 1px solid var(--border); background: var(--surface2); }
+.results-body { padding: 14px; }
+
+.phenotype-bar-row { margin-bottom: 12px; }
+.phenotype-bar-label { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; }
+.ph-name { font-family: var(--mono); font-size: 10px; font-weight: 600; letter-spacing: 0.06em; }
+.ph-score { font-family: var(--mono); font-size: 10px; color: var(--text-dim); }
+.ph-badge { font-family: var(--mono); font-size: 8px; padding: 1px 5px; border-radius: 2px; letter-spacing: 0.08em; }
+.ph-badge.top { background: var(--text-bright); color: var(--surface); }
+.ph-badge.possible { background: #fdf0d0; color: var(--warn); border: 1px solid #d8b870; }
+
+.bar-track { height: 7px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 3px; transition: width 0.4s ease; min-width: 0; }
+
+.interp-box { margin-top: 14px; padding: 10px; border-radius: 4px; border: 1px solid var(--border); background: #edf2f8; font-size: 11px; }
+.interp-box .label { font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 4px; }
+.interp-box .text { color: var(--text); line-height: 1.5; }
+
+.reset-btn {
+  width: 100%; margin-top: 10px; padding: 7px;
+  background: transparent; border: 1px solid var(--border); border-radius: 3px;
+  color: var(--text-dim); font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em;
+  cursor: pointer; transition: all 0.15s;
+}
+.reset-btn:hover { background: var(--surface2); color: var(--text-bright); border-color: var(--border2); }
+
+/* ─── PHENOTYPE TABLE ─── */
+.ptable { width: 100%; border-collapse: collapse; font-size: 11px; }
+.ptable th { font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; color: var(--text-dim); text-transform: uppercase; padding: 7px 8px; text-align: left; border-bottom: 2px solid var(--border); white-space: nowrap; background: var(--surface2); }
+.ptable td { padding: 6px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.ptable tr:last-child td { border-bottom: none; }
+.ptable tr:hover td { background: #edf2f8; }
+.ptable .param-name { font-weight: 600; color: var(--text-bright); font-size: 10.5px; white-space: nowrap; }
+.ph-cell { font-size: 10px; font-family: var(--mono); }
+.up { color: #b03010; font-weight: 600; }
+.dn { color: #006838; font-weight: 600; }
+.nm { color: var(--text-dim); }
+.vr { color: #8a5800; font-weight: 600; }
+
+/* ─── PPV CHECKLIST ─── */
+.ppv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 700px) { .ppv-grid { grid-template-columns: 1fr; } }
+.ppv-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); }
+.ppv-check { width: 18px; height: 18px; border: 1.5px solid var(--border2); border-radius: 3px; flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-top: 1px; transition: all 0.15s; }
+.ppv-check.checked { background: var(--ok); border-color: var(--ok); }
+.ppv-check.checked::after { content: "✓"; color: #fff; font-size: 10px; font-weight: 700; }
+.ppv-text strong { display: block; font-size: 11px; color: var(--text-bright); margin-bottom: 1px; }
+.ppv-text span { font-size: 10.5px; color: var(--text-dim); }
+.ppv-result { padding: 12px 14px; border-radius: 5px; font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-align: center; margin-top: 12px; transition: all 0.3s; }
+.ppv-result.valid { background: #d8f0e4; border: 1px solid #80c8a0; color: var(--ok); }
+.ppv-result.invalid { background: #fde0e4; border: 1px solid #e89090; color: var(--crit); }
+
+/* ─── PLR STEPS ─── */
+.plr-steps { display: flex; flex-direction: column; gap: 6px; }
+.plr-step { display: flex; gap: 12px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); align-items: flex-start; }
+.step-num { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--ph-H); min-width: 24px; line-height: 1.2; }
+.step-text strong { display: block; font-size: 11.5px; color: var(--text-bright); }
+.step-text span { font-size: 11px; color: var(--text-dim); }
+.timer-badge { display: inline-block; font-family: var(--mono); font-size: 9px; padding: 1px 6px; border-radius: 2px; background: #dceef8; border: 1px solid #a0c8e0; color: #005888; margin-left: 6px; }
+
+/* ─── POCUS ─── */
+.rush-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+@media (max-width: 800px) { .rush-grid { grid-template-columns: 1fr; } }
+.rush-card { border: 1px solid var(--border); border-radius: 5px; overflow: hidden; }
+.rush-head { padding: 8px 12px; font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; }
+.rush-head.pump { background: #fde8ec; color: #a01030; border-bottom: 1px solid #f0b0bc; }
+.rush-head.tank { background: #dceef8; color: #004e80; border-bottom: 1px solid #a0c8e0; }
+.rush-head.pipes { background: #d8f0e8; color: #005c38; border-bottom: 1px solid #90c8a8; }
+.rush-body { padding: 10px 12px; background: var(--surface); }
+.rush-finding { padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 11px; }
+.rush-finding:last-child { border-bottom: none; }
+.rf-sign { color: var(--text-bright); font-weight: 600; }
+.rf-interp { color: var(--text-dim); font-size: 10.5px; }
+.ph-tag { display: inline-block; font-family: var(--mono); font-size: 8.5px; padding: 1px 5px; border-radius: 2px; margin-left: 4px; font-weight: 600; }
+.tag-H { background: #dceef8; color: #004e80; border: 1px solid #a0c8e0; }
+.tag-C { background: #fde8ec; color: #a01030; border: 1px solid #f0b0bc; }
+.tag-D { background: #ede0f8; color: #5818a0; border: 1px solid #c090d8; }
+.tag-O { background: #d8f0e8; color: #005c38; border: 1px solid #90c8a8; }
+.tag-N { background: #fdf4d8; color: #7a4800; border: 1px solid #d8b870; }
+
+/* ─── EVIDENCE TABLE ─── */
+.evtable { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+.evtable th { font-family: var(--mono); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); padding: 7px 10px; border-bottom: 2px solid var(--border); text-align: left; background: var(--surface2); }
+.evtable td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.evtable tr:last-child td { border-bottom: none; }
+.evtable tr:hover td { background: #edf2f8; }
+.trial-name { font-weight: 600; color: var(--text-bright); font-size: 11px; }
+.trial-ref { font-family: var(--mono); font-size: 9px; color: var(--text-dim); display: block; }
+.trial-finding { color: var(--text-dim); font-size: 11px; line-height: 1.5; }
+.trial-finding b { color: var(--text-bright); }
+
+/* ─── CONTEXT TAGS (shared across tabs) ─── */
+.context-tag { display: inline-block; font-family: var(--mono); font-size: 8px; padding: 1px 5px; border-radius: 2px; margin: 0 2px; letter-spacing: 0.06em; vertical-align: middle; }
+.context-tag.intra { background: #dceef8; color: #004e80; border: 1px solid #a0c8e0; }
+.context-tag.post  { background: #ede0f8; color: #5818a0; border: 1px solid #c090d8; }
+.context-tag.both  { background: #fdf4d8; color: #7a4800; border: 1px solid #d8b870; }
+.context-tag.onco  { background: #fdecd8; color: #7a3800; border: 1px solid #e0b888; }
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 600px) { header, main { padding-left: 16px; padding-right: 16px; } .tab-bar { margin: 0 -16px; padding: 0 16px; } }
+
+footer { margin: 16px 32px; padding-top: 10px; border-top: 1px solid var(--border); font-family: var(--mono); font-size: 8.5px; color: var(--text-dim); letter-spacing: 0.08em; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; background: var(--surface2); padding: 10px 32px; }
+
+/* ── MECHANISTIC TAB SCOPED STYLES ── */
+.mech-tab { font-size: 12.5px; }
+.mech-tab .msection { border: 1px solid var(--border); border-radius: 6px; overflow: hidden; margin-bottom: 14px; }
+.mech-tab .msection.collapsed .msec-body { display: none; }
+.mech-tab .msection.collapsed .mtoggle { transform: rotate(-90deg); }
+.mech-tab .msec-hdr { padding: 10px 16px; display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; background: var(--surface); border-bottom: 1px solid var(--border); transition: background 0.15s; }
+.mech-tab .msec-hdr:hover { background: #edf2f8; }
+.mech-tab .msec-accent { width: 4px; height: 26px; border-radius: 2px; flex-shrink: 0; }
+.mech-tab .msec-title { font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--text-bright); letter-spacing: 0.05em; flex: 1; }
+.mech-tab .msec-formula { font-family: var(--mono); font-size: 9px; color: var(--text-dim); letter-spacing: 0.06em; }
+.mech-tab .mtoggle { font-size: 10px; color: var(--text-dim); transition: transform 0.2s; flex-shrink: 0; }
+.mech-tab .msec-body { padding: 0 16px 16px; background: var(--surface2); }
+.mech-tab .mphysnote { margin: 10px 0 12px; padding: 8px 12px; background: #dce5f0; border-left: 2px solid var(--border2); border-radius: 0 3px 3px 0; font-size: 11px; color: #2a3a50; font-style: italic; line-height: 1.55; }
+.mech-tab .mphysnote b { color: var(--text-bright); font-style: normal; }
+.mech-tab table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+.mech-tab thead tr { border-bottom: 2px solid var(--border); background: var(--surface2); }
+.mech-tab th { font-family: var(--mono); font-size: 9px; letter-spacing: 0.12em; color: var(--text-dim); text-transform: uppercase; padding: 7px 8px; text-align: left; font-weight: 400; }
+.mech-tab td { padding: 7px 8px; border-bottom: 1px solid var(--border); vertical-align: top; line-height: 1.5; }
+.mech-tab tr:last-child td { border-bottom: none; }
+.mech-tab tr:hover td { background: #edf2f8; }
+.mech-tab .fbadge { display: inline-flex; align-items: center; gap: 4px; font-family: var(--mono); font-size: 9px; letter-spacing: 0.06em; white-space: nowrap; }
+.mech-tab .fdot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.mech-tab .fdot.fcommon { background: #006838; }
+.mech-tab .fdot.funcommon { background: #8a5000; }
+.mech-tab .fdot.frare { background: #b01028; }
+.mech-tab .cause-name { color: var(--text-bright); font-weight: 600; }
+.mech-tab .mtext { color: var(--text-dim); font-size: 11px; font-style: italic; }
+.mech-tab .eq-bar { display: flex; flex-wrap: wrap; gap: 6px; padding: 12px 0 4px; border-top: 1px solid var(--border); margin-bottom: 16px; }
+.mech-tab .eq-chip { font-family: var(--mono); font-size: 10px; padding: 3px 9px; border-radius: 3px; background: var(--surface); border: 1px solid var(--border); color: var(--text-bright); letter-spacing: 0.04em; }
+.mech-tab .eq-chip.ehr { border-left: 3px solid #c86820; }
+.mech-tab .eq-chip.epreload { border-left: 3px solid #0070b0; }
+.mech-tab .eq-chip.econtract { border-left: 3px solid #c01838; }
+.mech-tab .eq-chip.eaftld { border-left: 3px solid #6820b8; }
+.mech-tab .eq-chip.epvr { border-left: 3px solid #007848; }
+.mech-tab .eq-chip.ehumoral { border-left: 3px solid #8a5800; }
+.mech-tab .mint-box { margin-top: 24px; padding: 18px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); }
+.mech-tab .mint-box h2 { font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--text-bright); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 14px; border-bottom: 2px solid var(--border); padding-bottom: 8px; }
+.mech-tab .int-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+.mech-tab .int-card { border: 1px solid var(--border); border-radius: 4px; padding: 12px; background: var(--bg); }
+.mech-tab .int-card h3 { font-family: var(--mono); font-size: 10px; font-weight: 600; letter-spacing: 0.08em; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+.mech-tab .int-card ul { list-style: none; font-size: 11px; }
+.mech-tab .int-card li { padding: 2px 0; color: var(--text-dim); display: flex; gap: 6px; }
+.mech-tab .int-card li::before { content: "›"; color: var(--border2); }
+.mech-tab .iprow { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 6px; }
+.mech-tab .iparam { font-family: var(--mono); font-size: 9px; padding: 2px 6px; border-radius: 2px; background: var(--surface2); border: 1px solid var(--border); color: var(--text); }
+.mech-tab .mu { color: #b03010; font-weight: 600; }
+.mech-tab .md { color: #006838; font-weight: 600; }
+.mech-tab .mv { color: #8a5800; font-weight: 600; }
+.mech-tab .mn { color: var(--text-dim); }
+.mech-tab .mleg { display: flex; gap: 18px; flex-wrap: wrap; padding: 10px 0 14px; font-size: 10px; }
+.mech-tab .mleg-item { display: flex; align-items: center; gap: 5px; font-family: var(--mono); color: var(--text-dim); letter-spacing: 0.08em; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hdr-top">
+    <div class="hdr-logo">SHOCK</div>
+    <span class="hdr-version">v1.0 | April 2026</span>
+  </div>
+  <div class="hdr-sub">SHOCK | Mechanistic Mapping and Phenotype Prediction</div>
+  <div class="hdr-sub">Is the text too small? Press <strong>Ctrl</strong> and <strong>+</strong> to zoom to 150% for a better view.</div>
+  <div class="hdr-inst">Copyright © 2026 Prof. Jyotirmay Kirtania, MPMMCC and HBCH, Tata Memorial Centre, Varanasi, HBNI, India. Licensed under the GNU GPL v3.0</div>
+  <nav class="tab-bar">
+    <button class="tab-btn active" data-tab="recognition">Recognition</button>
+    <button class="tab-btn" data-tab="phenotype">Phenotype Calculator</button>
+    <button class="tab-btn" data-tab="fluids">Fluid Responsiveness</button>
+    <button class="tab-btn" data-tab="pocus">POCUS | RUSH</button>
+    <button class="tab-btn" data-tab="evidence">Evidence</button>
+    <button class="tab-btn" data-tab="mechanisms">Mechanisms</button>
+  </nav>
+</header>
+
+<main>
+
+<!-- ════════════════════════════════════════════════════
+  TAB 1: RECOGNITION
+════════════════════════════════════════════════════ -->
+<div class="tab-pane active" id="tab-recognition">
+
+  <div class="callout red">
+    <strong>Shock is DO2/VO2 mismatch | Shock ≠ Hypotension, although hypotension is often present during shock</strong><br>
+    Shock = inadequate oxygen delivery (DO₂) or utilisation (VO₂) relative to cellular metabolic demand, leading to cellular energy failure. MAP may be low, normal, or <em>high</em> at presentation. A normal or elevated BP does not exclude shock. Tissue hypoperfusion must be sought independently of haemodynamics.
+  </div>
+
+  <div class="card" style="border-left: 3px solid var(--crit)">
+    <div class="card-head">
+      <div class="card-accent" style="background:var(--crit)"></div>
+      <span class="card-title">IS SHOCK PRESENT?</span>
+    </div>
+    <div class="card-body">
+      <div class="pnote">Shock is confirmed when <b>any 2 of the following 3 categories</b> are positive. Category A (clinical hypoperfusion) + Category B (metabolic evidence) = <b>cryptic / compensated shock</b> — requires intervention even when Category C (haemodynamics) is normal. The classic teaching that shock = hypotension is a harmful oversimplification.</div>
+      <div class="criteria-grid">
+        <div class="criteria-box">
+          <h4 class="red">CATEGORY A — Clinical Hypoperfusion (any 1)</h4>
+          <ul>
+            <li><b>CRT &gt; 2 s</b> (central sternum preferred)</li>
+            <li><b>Core–periphery gradient &gt; 4°C</b></li>
+            <li><b>Mottling score ≥ 2</b> (Ait-Oufella)</li>
+            <li><b>Altered consciousness</b> (agitation, confusion, obtundation)</li>
+            <li><b>Oliguria</b> &lt; 0.5 mL/kg/hr</li>
+            <li><b>Cold, pale, clammy skin</b> (vasoconstricted phenotype)</li>
+            <li><b>Small SpO₂ waveform / ↓PPI</b></li>
+          </ul>
+        </div>
+        <div class="criteria-box">
+          <h4 class="amber">CATEGORY B — Metabolic Evidence (any 1)</h4>
+          <ul>
+            <li><b>Lactate &gt; 2 mmol/L</b> (regardless of BP)</li>
+            <li><b>Lactate &gt; 4 mmol/L</b> = overt shock; same mortality as hypotensive shock</li>
+            <li><b>Base excess &lt; −4 mEq/L</b></li>
+            <li><b>ScvO₂ &lt; 65%</b> (CVC, not PA catheter)</li>
+            <li><b>Rising lactate trend</b> despite resuscitation (clearance &lt;10%/2h)</li>
+            <li><b>pH &lt; 7.35</b> + metabolic component</li>
+          </ul>
+        </div>
+        <div class="criteria-box">
+          <h4 class="cyan">CATEGORY C — Haemodynamic Instability (any 1)</h4>
+          <ul>
+            <li><b>MAP &lt; 65 mmHg</b> (absolute)</li>
+            <li><b>MAP fall &gt; 15–20%</b> from patient baseline (relative hypotension)</li>
+            <li><b>HR &gt; 100 bpm</b> (sustained, unexplained)</li>
+            <li><b>Pulse pressure &lt; 25 mmHg</b></li>
+            <li><b>ETCO₂ &lt; 30 mmHg</b> (intubated, no resp alkalosis)</li>
+            <li><b>Vasopressor dependence</b> to maintain MAP ≥ 65</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="card-accent" style="background:var(--warn)"></div>
+      <span class="card-title">THE SHOCK SPECTRUM — Normal or High BP does NOT exclude shock</span>
+    </div>
+    <div class="card-body">
+      <div class="spectrum">
+        <div class="spectrum-seg seg-1">Pre-shock<br><span style="font-size:7px;font-weight:300">Normal vitals<br>Mild ↑lactate</span></div>
+        <div class="spectrum-seg seg-2">Compensated<br><span style="font-size:7px;font-weight:300">Normal MAP<br>↑SVR, ↑HR</span></div>
+        <div class="spectrum-seg seg-3">Cryptic<br><span style="font-size:7px;font-weight:300">Normal MAP<br>Lactate &gt;4</span></div>
+        <div class="spectrum-seg seg-4">Decompensated<br><span style="font-size:7px;font-weight:300">↓MAP, organ failure<br>↑↑lactate</span></div>
+        <div class="spectrum-seg seg-5">Irreversible<br><span style="font-size:7px;font-weight:300">Refractory<br>Cardiac arrest</span></div>
+      </div>
+      <div class="callout yellow" style="margin-top:10px">
+        <strong>Why MAP can be normal or high in shock:</strong><br>
+        <span class="mono">① Compensated:</span> Young patient with ↑SVR + ↑HR maintaining BP while CO falls; Class II haemorrhage (750–1500 mL) — normal BP, tachycardia only.<br>
+        <span class="mono">② Relative hypotension:</span> Hypertensive patient (baseline MAP 100 mmHg) with MAP 72 — clinically hypotensive despite "normal" value.<br>
+        <span class="mono">③ Cryptic septic shock:</span> Seymour et al. (2012): ~28% of septic shock patients had initial MAP ≥ 65. Lactate &gt; 4 with normal BP = identical 28-day mortality to hypotensive sepsis (Jones et al., 2010).<br>
+        <span class="mono">④ Early distributive:</span> High CO with ↓SVR + ↓viscosity can maintain MAP until compensation exhausted; lactate rises before MAP falls.<br>
+        <span class="mono">⑤ Pressor-dependent normotension:</span> Normal MAP exists only because of vasopressors — vasopressor requirement = shock by definition.
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="card-accent" style="background:var(--warn)"></div>
+      <span class="card-title">PARAMETERS REVIEW</span>
+    </div>
+    <div class="card-body">
+      <div class="pnote">Parameters</div>
+      <div class="missed-grid">
+        <div class="missed-item" style="border-left-color:var(--ok)">
+          <div class="label">✓ History &amp; Context</div>
+          <div class="desc">Surgical, cardiac, septic, anaphylactic, neuraxial, PE risk, spine injury triggers</div>
+        </div>
+        <div class="missed-item" style="border-left-color:var(--ok)">
+          <div class="label">✓ CRT (Capillary Refill Time)</div>
+          <div class="desc">Central (sternal) preferred. &gt;2 s = abnormal. ANDROMEDA-SHOCK endpoint.</div>
+        </div>
+        <div class="missed-item" style="border-left-color:var(--ok)">
+          <div class="label">✓ SpO₂ Waveform / PPI</div>
+          <div class="desc">Plethysmograph amplitude and variability; reflects perfusion index and SV</div>
+        </div>
+        <div class="missed-item" style="border-left-color:var(--ok)">
+          <div class="label">✓ MAP Trend</div>
+          <div class="desc">Absolute value AND trend from patient baseline; relative hypotension matters</div>
+        </div>
+        <div class="missed-item" style="border-left-color:var(--ok)">
+          <div class="label">✓ Core–Periphery Temperature Gradient</div>
+          <div class="desc">&gt;4°C = vasoconstricted; &lt;2°C = vasodilated. Forehead vs fingertip.</div>
+        </div>
+        <div class="missed-item" style="border-left-color:var(--ok)">
+          <div class="label">✓ POCUS</div>
+          <div class="desc">RUSH exam (Pump / Tank / Pipes) — see Tab 04 for full protocol</div>
+        </div>
+        <div class="missed-item" style="border-left-color:var(--ok)">
+          <div class="label">✓ ABG (incl. lactate, pH, BE, Hb, PaO₂, PaCO₂)</div>
+          <div class="desc">Metabolic evidence of shock; lactate is primary. Hb for rheological ↓SVR.</div>
+        </div>
+        <div class="missed-item" style="border-left-color:var(--ok)">
+          <div class="label">✓ PPV (when criteria met)</div>
+          <div class="desc">Valid only under strict conditions — see Fluids tab checklist</div>
+        </div>
+        <div class="missed-item added">
+          <div class="label">✓ Passive Leg Raise (PLR) ★ MOST IMPORTANT ADDITION</div>
+          <div class="desc">Superior to PPV: valid in spontaneous breathing, arrhythmias, ARDS. AUC 0.95. Reversible. Assess at 60–90 s.</div>
+        </div>
+        <div class="missed-item added">
+          <div class="label">✓ Lactate / Lactate Clearance (explicit)</div>
+          <div class="desc">Cornerstone of shock identification. &gt;2 = occult shock. Clearance &lt;10%/2h = failure to resuscitate.</div>
+        </div>
+        <div class="missed-item added">
+          <div class="label">✓ Mottling Score (distinct from CRT)</div>
+          <div class="desc">Grade 0–5. Score ≥3 = independent predictor of 14-day mortality (Ait-Oufella, CCM 2011).</div>
+        </div>
+        <div class="missed-item added">
+          <div class="label">✓ ECG</div>
+          <div class="desc">Essential for cardiogenic differentiation: STEMI, RV strain (S1Q3T3/new RBBB in PE), bradyarrhythmia (neurogenic).</div>
+        </div>
+        <div class="missed-item added">
+          <div class="label">✓ Urine Output</div>
+          <div class="desc">Renal end-organ perfusion. &lt;0.5 mL/kg/hr = oliguria. &lt;0.2 = severe. Part of SOFA organ failure scoring.</div>
+        </div>
+        <div class="missed-item added">
+          <div class="label">✓ ETCO₂ (if ventilated)</div>
+          <div class="desc">Low ETCO₂ (esp. sudden fall) reflects ↓pulmonary blood flow (↓CO or massive PE). Inversely correlates with dead space.</div>
+        </div>
+        <div class="missed-item added">
+          <div class="label">✓ ScvO₂ (if CVC — no SwanGanz needed)</div>
+          <div class="desc">&lt;65% = ↑O₂ extraction (↓DO₂ or ↑VO₂). &gt;75% = ↓O₂ utilisation (distributive/septic). ~5% higher than mixed SvO₂.</div>
+        </div>
+        <div class="missed-item added">
+          <div class="label">✓ Auscultation (S3/S4, bilateral crepitations, absent BS)</div>
+          <div class="desc">S3 = cardiogenic. Bilateral crepitations = pulmonary oedema. Absent unilateral breath sounds = tension PTX.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════════════════════════════════════════════
+  TAB 2: PHENOTYPE CALCULATOR
+════════════════════════════════════════════════════ -->
+<div class="tab-pane" id="tab-phenotype">
+
+  <div class="callout purple">
+    <strong>Phenotype Prediction:</strong> Select the clinical finding most closely matching your patient for each parameter. The calculator applies a weighted evidence-based scoring matrix to estimate phenotype likelihood. Mixed shock is common — scores within 4 points of the leader are flagged. Clinical gestalt always supersedes.
+  </div>
+
+  <div class="calc-layout">
+    <div class="param-list" id="param-list">
+      <!-- Populated by JS -->
+    </div>
+    <div class="results-panel">
+      <div class="results-card">
+        <div class="results-title">Phenotype Probability</div>
+        <div class="results-body" id="results-body">
+          <div id="bars-container"></div>
+          <div class="interp-box" id="interp-box">
+            <div class="label">Interpretation</div>
+            <div class="text" id="interp-text">Select findings to generate phenotype prediction.</div>
+          </div>
+          <button class="reset-btn" onclick="resetCalc()">↺ Reset All Parameters</button>
+        </div>
+      </div>
+
+      <div style="margin-top:14px; border:1px solid var(--border); border-radius:5px; overflow:hidden; background:var(--bg)">
+        <div style="padding:8px 12px; background:var(--surface); border-bottom:1px solid var(--border); font-family:var(--mono); font-size:9.5px; font-weight:600; color:var(--text-dim); letter-spacing:0.1em; text-transform:uppercase">Phenotype Legend</div>
+        <div style="padding:10px 12px; display:flex; flex-direction:column; gap:5px">
+          <div style="display:flex;align-items:center;gap:8px"><div style="width:10px;height:10px;border-radius:50%;background:var(--ph-H);flex-shrink:0"></div><span style="font-family:var(--mono);font-size:10px;color:var(--text)">H — Hypovolaemic</span></div>
+          <div style="display:flex;align-items:center;gap:8px"><div style="width:10px;height:10px;border-radius:50%;background:var(--ph-C);flex-shrink:0"></div><span style="font-family:var(--mono);font-size:10px;color:var(--text)">C — Cardiogenic</span></div>
+          <div style="display:flex;align-items:center;gap:8px"><div style="width:10px;height:10px;border-radius:50%;background:var(--ph-D);flex-shrink:0"></div><span style="font-family:var(--mono);font-size:10px;color:var(--text)">D — Distributive / Vasodilatory</span></div>
+          <div style="display:flex;align-items:center;gap:8px"><div style="width:10px;height:10px;border-radius:50%;background:var(--ph-O);flex-shrink:0"></div><span style="font-family:var(--mono);font-size:10px;color:var(--text)">O — Obstructive</span></div>
+          <div style="display:flex;align-items:center;gap:8px"><div style="width:10px;height:10px;border-radius:50%;background:var(--ph-N);flex-shrink:0"></div><span style="font-family:var(--mono);font-size:10px;color:var(--text)">N — Neurogenic / Vasodilatory-bradycardic</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:18px">
+    <div class="card-head">
+      <div class="card-accent" style="background:var(--ph-D)"></div>
+      <span class="card-title">PHENOTYPE RAPID REFERENCE TABLE — All parameters by phenotype</span>
+    </div>
+    <div class="card-body" style="overflow-x:auto">
+      <table class="ptable">
+        <thead>
+          <tr>
+            <th>Parameter</th>
+            <th style="color:var(--ph-H)">Hypovolaemic</th>
+            <th style="color:var(--ph-C)">Cardiogenic</th>
+            <th style="color:var(--ph-D)">Distributive</th>
+            <th style="color:var(--ph-O)">Obstructive</th>
+            <th style="color:var(--ph-N)">Neurogenic</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="param-name">Heart Rate</td><td class="ph-cell up">↑↑</td><td class="ph-cell vr">↑/N/↓*</td><td class="ph-cell up">↑↑</td><td class="ph-cell up">↑↑</td><td class="ph-cell dn">↓↓ (bradycardia)</td></tr>
+          <tr><td class="param-name">MAP</td><td class="ph-cell dn">↓↓</td><td class="ph-cell dn">↓↓</td><td class="ph-cell vr">N → ↓</td><td class="ph-cell dn">↓↓</td><td class="ph-cell dn">↓</td></tr>
+          <tr><td class="param-name">Pulse Pressure</td><td class="ph-cell dn">↓↓ (narrow)</td><td class="ph-cell dn">↓↓</td><td class="ph-cell up">↑↑ (wide)</td><td class="ph-cell dn">↓</td><td class="ph-cell up">Wide (NE absent)</td></tr>
+          <tr><td class="param-name">CRT</td><td class="ph-cell up">&gt;3 s</td><td class="ph-cell up">&gt;3 s</td><td class="ph-cell dn">&lt;2 s (warm)</td><td class="ph-cell up">&gt;3 s</td><td class="ph-cell dn">&lt;2 s (warm)</td></tr>
+          <tr><td class="param-name">Skin temp</td><td class="ph-cell up">Cold, pale, clammy</td><td class="ph-cell up">Cold, clammy</td><td class="ph-cell dn">Warm, flushed</td><td class="ph-cell up">Cold (PE) / varies</td><td class="ph-cell dn">Warm, dry</td></tr>
+          <tr><td class="param-name">Core–periph gradient</td><td class="ph-cell up">&gt;6°C</td><td class="ph-cell up">&gt;6°C</td><td class="ph-cell dn">&lt;2°C</td><td class="ph-cell up">&gt;4°C (PE)</td><td class="ph-cell dn">&lt;2°C</td></tr>
+          <tr><td class="param-name">Mottling score</td><td class="ph-cell up">2–5</td><td class="ph-cell up">2–5</td><td class="ph-cell dn">0–1</td><td class="ph-cell vr">1–3</td><td class="ph-cell dn">0–1</td></tr>
+          <tr><td class="param-name">SpO₂ waveform / PPI</td><td class="ph-cell dn">Small, low amp</td><td class="ph-cell dn">Small, low amp</td><td class="ph-cell up">Large, bounding</td><td class="ph-cell vr">Variable</td><td class="ph-cell up">Normal/large</td></tr>
+          <tr><td class="param-name">PPV (if valid)</td><td class="ph-cell up">&gt;13% (responsive)</td><td class="ph-cell dn">&lt;9%</td><td class="ph-cell vr">Often &gt;13% early</td><td class="ph-cell dn">&lt;9% (PE/tampo)</td><td class="ph-cell vr">Variable</td></tr>
+          <tr><td class="param-name">PLR response</td><td class="ph-cell up">Positive (&gt;10%)</td><td class="ph-cell dn">Negative</td><td class="ph-cell vr">Often positive</td><td class="ph-cell dn">Negative</td><td class="ph-cell vr">Variable</td></tr>
+          <tr><td class="param-name">POCUS LV</td><td class="ph-cell dn">Small, hyperdynamic</td><td class="ph-cell up">Dilated, ↓↓ EF</td><td class="ph-cell up">Normal/hyperdynamic</td><td class="ph-cell nm">Normal / compressed (tampo)</td><td class="ph-cell nm">Normal</td></tr>
+          <tr><td class="param-name">POCUS RV</td><td class="ph-cell nm">Normal/small</td><td class="ph-cell vr">N / dilated (RV MI)</td><td class="ph-cell nm">Normal</td><td class="ph-cell up">Dilated (&gt;1.0 RV:LV) McConnell</td><td class="ph-cell nm">Normal</td></tr>
+          <tr><td class="param-name">POCUS IVC</td><td class="ph-cell dn">Collapsed, &gt;50% var</td><td class="ph-cell up">Distended, flat</td><td class="ph-cell vr">Collapsible (early)</td><td class="ph-cell up">Distended flat (PE/tampo)</td><td class="ph-cell vr">Variable</td></tr>
+          <tr><td class="param-name">POCUS Lung</td><td class="ph-cell nm">A-lines</td><td class="ph-cell up">B-lines bilateral</td><td class="ph-cell nm">A-lines (sepsis)</td><td class="ph-cell vr">Absent sliding (PTX) / A-lines (PE)</td><td class="ph-cell nm">A-lines</td></tr>
+          <tr><td class="param-name">POCUS FAST</td><td class="ph-cell up">+ve (haemorrhage)</td><td class="ph-cell nm">Negative</td><td class="ph-cell nm">Negative</td><td class="ph-cell vr">Pericardial effusion (tampo)</td><td class="ph-cell nm">Negative</td></tr>
+          <tr><td class="param-name">Lactate</td><td class="ph-cell up">↑↑ (Type A)</td><td class="ph-cell up">↑↑ (Type A)</td><td class="ph-cell up">↑ (A+B)</td><td class="ph-cell up">↑ (Type A)</td><td class="ph-cell nm">N initially</td></tr>
+          <tr><td class="param-name">Base excess</td><td class="ph-cell dn">&lt;–6</td><td class="ph-cell dn">&lt;–6</td><td class="ph-cell vr">–4 to –8</td><td class="ph-cell dn">&lt;–6</td><td class="ph-cell nm">Normal</td></tr>
+          <tr><td class="param-name">ScvO₂</td><td class="ph-cell dn">&lt;65%</td><td class="ph-cell dn">&lt;65%</td><td class="ph-cell up">&gt;75%</td><td class="ph-cell dn">&lt;65%</td><td class="ph-cell nm">Normal</td></tr>
+          <tr><td class="param-name">ETCO₂ (ventilated)</td><td class="ph-cell dn">↓ (↓CO)</td><td class="ph-cell dn">↓ (↓CO)</td><td class="ph-cell nm">N / ↑ (↑CO)</td><td class="ph-cell dn">↓↓ sudden fall (PE)</td><td class="ph-cell nm">Normal</td></tr>
+          <tr><td class="param-name">ECG</td><td class="ph-cell nm">Sinus tachy</td><td class="ph-cell up">STEMI/new LBBB/STdep</td><td class="ph-cell nm">Sinus tachy</td><td class="ph-cell up">S1Q3T3/RBBB (PE)</td><td class="ph-cell dn">Brady/AV block</td></tr>
+          <tr><td class="param-name">Urine output</td><td class="ph-cell up">Oliguria/anuria</td><td class="ph-cell up">Oliguria/anuria</td><td class="ph-cell vr">Oliguria (late)</td><td class="ph-cell up">Oliguria</td><td class="ph-cell nm">Often preserved</td></tr>
+          <tr><td class="param-name">JVP / CVP</td><td class="ph-cell dn">↓↓ Flat</td><td class="ph-cell up">↑↑ Elevated</td><td class="ph-cell dn">N / ↓</td><td class="ph-cell up">↑↑ Elevated</td><td class="ph-cell nm">Normal/↓</td></tr>
+          <tr><td class="param-name">Auscultation</td><td class="ph-cell nm">Clear / quiet</td><td class="ph-cell up">S3, bilateral creps</td><td class="ph-cell nm">Clear or focally infected</td><td class="ph-cell vr">Absent BS (PTX) / normal (PE/tampo)</td><td class="ph-cell nm">Clear</td></tr>
+        </tbody>
+      </table>
+      <div style="font-size:10px;color:var(--text-dim);margin-top:8px;font-style:italic">* ↓HR in cardiogenic = RV infarction + high neuraxial block / associated bradyarrhythmia. BS = breath sounds. Tampo = tamponade. PTX = pneumothorax.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════════════════════════════════════════════
+  TAB 3: FLUID RESPONSIVENESS
+════════════════════════════════════════════════════ -->
+<div class="tab-pane" id="tab-fluids">
+
+  <div class="callout blue">
+    <strong>Core principle:</strong> Fluid responsiveness = ↑CO &gt;10–15% in response to ↑preload. ~50% of haemodynamically unstable ICU patients are NOT fluid-responsive. Indiscriminate fluid loading in non-responsive patients causes harm (lung oedema, abdominal hypertension, dilutional coagulopathy). Always assess responsiveness before giving fluid.
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="card-accent" style="background:var(--ph-H)"></div>
+      <span class="card-title">PPV — VALIDITY CRITERIA CHECKLIST (ALL must be met)</span>
+    </div>
+    <div class="card-body">
+      <div class="pnote">PPV measures respiratory variation in arterial pulse pressure. It is only valid as a fluid responsiveness predictor when all 8 criteria are satisfied. Even one unmet criterion invalidates the measurement. When criteria are not met, use PLR instead.</div>
+      <div class="ppv-grid" id="ppv-grid">
+        <!-- Populated by JS -->
+      </div>
+      <div class="ppv-result invalid" id="ppv-result">⚠ PPV INVALID — Not all criteria met. Use Passive Leg Raise.</div>
+      <div class="pnote" style="margin-top:12px">
+        <b>PPV Thresholds (when valid):</b> &lt;9% = non-responsive &nbsp;|&nbsp; 9–13% = grey zone &nbsp;|&nbsp; &gt;13% = fluid-responsive (Sens 88%, Spec 90%; Marik et al. meta-analysis, CCM 2009)
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="card-accent" style="background:var(--ok)"></div>
+      <span class="card-title">PASSIVE LEG RAISE (PLR) — Preferred universally applicable test</span>
+    </div>
+    <div class="card-body">
+      <div class="pnote">
+        PLR recruits ~300 mL of venous blood from the lower limbs — a reversible autotransfusion. Unlike PPV, it is valid in spontaneous breathing, arrhythmias, low Vt ventilation (ARDS), and right heart failure. Superiority: AUC 0.95 (Monnet et al. meta-analysis, CCM 2016). Measure CO response (LVOT VTI by POCUS or pulse pressure) at 60–90 seconds — the effect is maximal and transient.
+      </div>
+      <div class="plr-steps">
+        <div class="plr-step">
+          <div class="step-num">01</div>
+          <div class="step-text">
+            <strong>Starting position: Patient semi-recumbent at 45°</strong>
+            <span>Note baseline: measure LVOT VTI (POCUS), or pulse pressure on arterial line, or MAP. Record all three if available.</span>
+          </div>
+        </div>
+        <div class="plr-step">
+          <div class="step-num">02</div>
+          <div class="step-text">
+            <strong>Manoeuvre: Lower head to flat + raise legs to 45°</strong>
+            <span>Do this in one smooth movement (tilt the bed or manually). Both components are necessary. Head-down alone is insufficient. <span class="timer-badge">Start timer</span></span>
+          </div>
+        </div>
+        <div class="plr-step">
+          <div class="step-num">03</div>
+          <div class="step-text">
+            <strong>Measure at 60–90 seconds<span class="timer-badge">Peak effect</span></strong>
+            <span>Reassess LVOT VTI by POCUS (preferred), or pulse pressure (arterial line), or MAP. Real-time continuous CO monitoring ideal but not required.</span>
+          </div>
+        </div>
+        <div class="plr-step">
+          <div class="step-num">04</div>
+          <div class="step-text">
+            <strong>Interpret: Positive = ↑CO or ↑PP &gt; 10%</strong>
+            <span>Positive PLR → fluid-responsive → consider fluid challenge 250 mL crystalloid with reassessment. Negative → fluid loading unlikely to improve CO; consider vasopressors / inotropes.</span>
+          </div>
+        </div>
+        <div class="plr-step">
+          <div class="step-num">05</div>
+          <div class="step-text">
+            <strong>Return to semi-recumbent position</strong>
+            <span>Haemodynamic effect is fully reversible — no fluid commitment. This is the critical advantage over a fixed fluid challenge.</span>
+          </div>
+        </div>
+      </div>
+      <div class="callout yellow" style="margin-top:12px; font-size:11px">
+        <strong>PLR Limitations:</strong> Intra-abdominal hypertension (IAP &gt;12) impairs venous return augmentation from legs. Lower limb compartment syndrome / vascular obstruction. Active haemorrhage (legs may be exsanguinated). Head trauma (avoid head-flat position).
+      </div>
+
+      <div style="margin-top:14px; overflow-x:auto">
+        <table class="ptable">
+          <thead><tr><th></th><th>PPV</th><th>PLR</th></tr></thead>
+          <tbody>
+            <tr><td class="param-name">Spontaneous breathing</td><td style="color:var(--crit)">❌ Invalidates</td><td style="color:var(--ok)">✓ Valid</td></tr>
+            <tr><td class="param-name">Cardiac arrhythmia (AF/ectopics)</td><td style="color:var(--crit)">❌ Invalidates</td><td style="color:var(--ok)">✓ Valid</td></tr>
+            <tr><td class="param-name">Low Vt ventilation (ARDS, ≤6 mL/kg)</td><td style="color:var(--crit)">❌ Invalidates</td><td style="color:var(--ok)">✓ Valid</td></tr>
+            <tr><td class="param-name">Right heart failure</td><td style="color:var(--crit)">❌ Invalidates</td><td style="color:var(--ok)">✓ Valid</td></tr>
+            <tr><td class="param-name">Open chest / sternotomy</td><td style="color:var(--crit)">❌ Invalidates</td><td style="color:var(--ok)">✓ Valid</td></tr>
+            <tr><td class="param-name">No arterial line</td><td style="color:var(--crit)">❌ Not measurable</td><td style="color:var(--ok)">✓ POCUS VTI or PP</td></tr>
+            <tr><td class="param-name">Fluid commitment required</td><td style="color:var(--ok)">None</td><td style="color:var(--ok)">None (reversible)</td></tr>
+            <tr><td class="param-name">Equipment</td><td style="color:var(--text-dim)">Arterial line required</td><td style="color:var(--ok)">POCUS (preferred) or CW Doppler</td></tr>
+            <tr><td class="param-name">Evidence AUC</td><td style="color:var(--text-dim)">0.94 (when valid)</td><td style="color:var(--ok)">0.95 (universal)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════════════════════════════════════════════
+  TAB 4: POCUS / RUSH
+════════════════════════════════════════════════════ -->
+<div class="tab-pane" id="tab-pocus">
+
+  <div class="callout green">
+    <strong>RUSH Exam:</strong> Rapid Ultrasound in Shock and Hypotension (Perera et al., J Emerg Med 2010). Systematic 3-domain assessment — Pump, Tank, Pipes — integrates cardiac, volume, and vascular findings to narrow phenotype. Target completion &lt;3 minutes at bedside.
+  </div>
+
+  <div class="rush-grid">
+
+    <div class="rush-card">
+      <div class="rush-head pump">PUMP — Cardiac</div>
+      <div class="rush-body">
+        <div class="pnote" style="margin-bottom:8px">Views: Subcostal 4-chamber (quickest in ICU/OT), Parasternal long/short, Apical 4-chamber. Assess pericardium, LV size/function, RV size/function.</div>
+        <div class="rush-finding">
+          <div class="rf-sign">Pericardial effusion + RA/RV diastolic collapse <span class="ph-tag tag-O">O</span></div>
+          <div class="rf-interp">Tamponade. Confirm IVC distension (flat IVC). RA collapse first (sensitive), RV collapse specific. Pulsus paradoxus &gt;10 mmHg.</div>
+        </div>
+        <div class="rush-finding">
+          <div class="rf-sign">LV small, hypercontractile — "kissing walls" <span class="ph-tag tag-H">H</span></div>
+          <div class="rf-interp">Hypovolaemia. Severely underfilled LV. EF appears very high. IVC collapsed. Correlates with ↓LVEDV.</div>
+        </div>
+        <div class="rush-finding">
+          <div class="rf-sign">LV dilated, globally reduced function (EF &lt;30%) <span class="ph-tag tag-C">C</span></div>
+          <div class="rf-interp">Cardiogenic shock. Regional wall motion abnormality → ischaemic aetiology. Global = dilated CMP or myocarditis. IVC distended.</div>
+        </div>
+        <div class="rush-finding">
+          <div class="rf-sign">LV hyperdynamic (EF &gt;65-70%), normal size <span class="ph-tag tag-D">D</span></div>
+          <div class="rf-interp">Distributive / high-output (sepsis, anaphylaxis, early distributive). High CO, low SVR. LV ejecting vigorously with ↓afterload.</div>
+        </div>
+        <div class="rush-finding">
+          <div class="rf-sign">RV dilation (RV:LV ratio &gt;1.0 in apical 4C) <span class="ph-tag tag-O">O</span></div>
+          <div class="rf-interp">Acute cor pulmonale. PE (most common cause), tension PTX, ARDS. Septal D-sign in PLAX: LV compressed. ↑RV:LV = severe.</div>
+        </div>
+        <div class="rush-finding">
+          <div class="rf-sign">McConnell sign (RV free wall hypokinesis, apex contracts) <span class="ph-tag tag-O">O</span></div>
+          <div class="rf-interp">Highly specific for acute PE (Sp ~94%). RCA perfusion cut off by obstructed RV outflow → free wall ischaemia. Apex spared (LV dragging effect).</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rush-card">
+      <div class="rush-head tank">TANK — Volume Status</div>
+      <div class="rush-body">
+        <div class="pnote" style="margin-bottom:8px">IVC view (subcostal long axis), Lung zones (2–4 per side: anterior, lateral), FAST (Morrison's, splenorenal, suprapubic, subxiphoid).</div>
+        <div class="rush-finding">
+          <div class="rf-sign">IVC collapsed &lt;1.5 cm + &gt;50% inspiratory variation <span class="ph-tag tag-H">H</span><span class="ph-tag tag-D">D</span></div>
+          <div class="rf-interp">Low RAP / hypovolaemia. Fluid-responsive state likely. Note: spontaneous breathing increases IVC variation (sniff test) — less reliable than PPV on controlled MV.</div>
+        </div>
+        <div class="rush-finding">
+          <div class="rf-sign">IVC distended &gt;2.1 cm + &lt;50% variation (flat IVC) <span class="ph-tag tag-C">C</span><span class="ph-tag tag-O">O</span></div>
+          <div class="rf-interp">Elevated RAP (cardiogenic, tamponade, PE, tension PTX). Fluid loading will not improve CO; likely harmful. Tamponade: also see pericardial effusion + RA collapse.</div>
+        </div>
+        <div class="rush-finding">
+          <div class="rf-sign">Bilateral B-lines ≥3 per zone in ≥2 bilateral zones <span class="ph-tag tag-C">C</span></div>
+          <div class="rf-interp">Interstitial-alveolar pulmonary oedema (cardiogenic most common). B-lines arise from thickened subpleural septa (Kerley B equivalent). Bilateral = high LV filling pressure.</div>
+        </div>
+        <div class="rush-finding">
+          <div class="rf-sign">Absent lung sliding (with A-lines) <span class="ph-tag tag-O">O</span></div>
+          <div class="rf-interp">Pneumothorax until proven otherwise. Confirm with absent "seashore sign" on M-mode ("barcode sign"). Check contralateral for comparison. Tension PTX = haemodynamic collapse + absent sliding.</div>
+        </div>
+        <div class="rush-finding">
+          <div class="rf-sign">Free fluid in FAST windows <span class="ph-tag tag-H">H</span></div>
+          <div class="rf-interp">Haemoperitoneum (abdominal trauma, ruptured viscus, surgical bleeding) or haemothorax. Positive FAST in haemodynamic instability = immediate surgical consult. Hepatorenal space most sensitive (Morrison's pouch).</div>
+        </div>
+        <div class="rush-finding">
+          <div class="rf-sign">Bilateral pleural effusions <span class="ph-tag tag-C">C</span></div>
+          <div class="rf-interp">Cardiogenic oedema (often bilateral, dependent). Distinguish from haemothorax by homogeneous vs complex appearance and clinical context.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rush-card">
+      <div class="rush-head pipes">PIPES — Vascular</div>
+      <div class="rush-body">
+        <div class="pnote" style="margin-bottom:8px">Aorta (parasternal long, mid/lower abdominal), DVT (femoral + popliteal compression), carotid/jugular if needed.</div>
+        <div class="rush-finding">
+          <div class="rf-sign">Abdominal aortic aneurysm (AAA) &gt;3 cm <span class="ph-tag tag-H">H</span></div>
+          <div class="rf-interp">Ruptured AAA: haemodynamic collapse + pulsatile mass + AAA on POCUS. Do not delay surgical transfer for formal CT in haemodynamically unstable patient.</div>
+        </div>
+        <div class="rush-finding">
+          <div class="rf-sign">Non-compressible femoral / popliteal vein <span class="ph-tag tag-O">O</span></div>
+          <div class="rf-interp">DVT — raises PE probability in context of acute haemodynamic collapse. Leg vein compression (2-point) adds significantly to POCUS PE diagnosis. Absence of DVT does not exclude PE.</div>
+        </div>
+        <div class="rush-finding">
+          <div class="rf-sign">LVOT VTI assessment for PLR / fluid challenge response</div>
+          <div class="rf-interp">Apical 5-chamber view + PW Doppler at LVOT. VTI = velocity-time integral = stroke volume surrogate. ↑VTI &gt;10-15% with PLR = fluid-responsive. Requires practice but no SwanGanz.</div>
+        </div>
+        <div class="rush-finding">
+          <div class="rf-sign">Distended, non-pulsatile jugular veins <span class="ph-tag tag-C">C</span><span class="ph-tag tag-O">O</span></div>
+          <div class="rf-interp">Elevated venous pressure → cardiogenic or obstructive (PE, tamponade, tension PTX). Combined with low MAP, elevated JVP = obstructive phenotype until proven otherwise.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <div class="card-head">
+      <div class="card-accent" style="background:var(--ph-O)"></div>
+      <span class="card-title">POCUS PHENOTYPE DECISION PATHWAY</span>
+    </div>
+    <div class="card-body">
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:10px">
+        <div class="callout blue"><strong>Hypovolaemic pattern:</strong><br>LV small + hyperdynamic · IVC collapsed · A-lines · FAST+ or negative · No effusion · Cold skin</div>
+        <div class="callout red"><strong>Cardiogenic pattern:</strong><br>LV dilated + ↓EF · IVC flat · Bilateral B-lines · ± Bilateral pleural effusion · Elevated JVP · Cold skin</div>
+        <div class="callout purple"><strong>Distributive pattern:</strong><br>LV hyperdynamic · IVC variable/collapsible · A-lines · Warm skin · Wide PP · ↑ScvO₂</div>
+        <div class="callout green"><strong>Obstructive pattern:</strong><br>RV dilated (McConnell for PE) · IVC flat · Pericardial effusion + RA collapse (tamponade) · Absent sliding (PTX) · Elevated JVP</div>
+        <div class="callout yellow"><strong>Neurogenic pattern:</strong><br>Normal POCUS · Bradycardia + warm skin · Low MAP · Normal IVC variability · History of spinal / high neuraxial block</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════════════════════════════════════════════
+  TAB 5: EVIDENCE
+════════════════════════════════════════════════════ -->
+<div class="tab-pane" id="tab-evidence">
+
+  <div class="callout yellow">
+    <strong>Evidence basis:</strong> All diagnostic parameters, thresholds, and management recommendations in this tool are referenced to landmark trials and systematic reviews. Key trials are listed below. Where evidence is inferential or extrapolated, this is noted.
+  </div>
+
+  <div class="card">
+    <div class="card-head"><div class="card-accent" style="background:var(--warn)"></div><span class="card-title">LANDMARK TRIALS & EVIDENCE</span></div>
+    <div class="card-body" style="overflow-x:auto">
+      <table class="evtable">
+        <thead><tr><th>Trial / Study</th><th>Finding</th><th>Clinical Implication</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><span class="trial-name">ANDROMEDA-SHOCK</span><span class="trial-ref">Hernandez et al. JAMA 2019;321:654</span></td>
+            <td class="trial-finding">CRT-guided resuscitation non-inferior to lactate-guided for 28-day mortality in septic shock. CRT arm: fewer organ dysfunction events.</td>
+            <td class="trial-finding"><b>CRT is a validated resuscitation endpoint.</b> CRT normalisation ≤2 s is a clinically meaningful target, not merely a triage sign.</td>
+          </tr>
+          <tr>
+            <td><span class="trial-name">Cryptic Septic Shock</span><span class="trial-ref">Seymour et al. Crit Care Med 2012;40:2012</span></td>
+            <td class="trial-finding">~28% of septic shock patients had initial MAP ≥65 mmHg. Lactate &gt;4 with normal BP had similar 28-day mortality to hypotensive septic shock.</td>
+            <td class="trial-finding"><b>Normal BP does not exclude septic shock.</b> Lactate must be checked in all suspected shock patients regardless of MAP.</td>
+          </tr>
+          <tr>
+            <td><span class="trial-name">Jones et al. (Lactate)</span><span class="trial-ref">Jones AE et al. JAMA 2010;303:739</span></td>
+            <td class="trial-finding">Lactate clearance ≥10% over 2 hours non-inferior to ScvO₂-guided resuscitation as a resuscitation target.</td>
+            <td class="trial-finding"><b>Serial lactate measurement is the primary metabolic resuscitation endpoint.</b> Single value less important than trend.</td>
+          </tr>
+          <tr>
+            <td><span class="trial-name">PLR Meta-analysis</span><span class="trial-ref">Monnet X et al. CCM 2016;44:981</span></td>
+            <td class="trial-finding">PLR AUC 0.95 for predicting fluid responsiveness across all ventilation modes and arrhythmias. Sensitivity 85%, specificity 91%.</td>
+            <td class="trial-finding"><b>PLR is the most universally applicable fluid responsiveness test.</b> Preferred over PPV in most perioperative settings.</td>
+          </tr>
+          <tr>
+            <td><span class="trial-name">PPV Meta-analysis</span><span class="trial-ref">Marik PE et al. CCM 2009;37:2642</span></td>
+            <td class="trial-finding">PPV &gt;13%: Sensitivity 88%, Specificity 90% for fluid responsiveness when strict criteria met. AUC 0.94.</td>
+            <td class="trial-finding"><b>PPV is highly accurate only when all validity criteria are satisfied.</b> Below-threshold Vt, spontaneous breathing, or arrhythmia invalidates it.</td>
+          </tr>
+          <tr>
+            <td><span class="trial-name">Mottling Score</span><span class="trial-ref">Ait-Oufella H et al. CCM 2011;39:1563</span></td>
+            <td class="trial-finding">Mottling score ≥3 at 6 h was an independent predictor of 14-day ICU mortality in septic shock (OR 4.1, p&lt;0.001).</td>
+            <td class="trial-finding"><b>Mottling score is a validated prognostic marker distinct from CRT.</b> Serial assessment reflects peripheral perfusion trajectory.</td>
+          </tr>
+          <tr>
+            <td><span class="trial-name">RUSH Exam Validation</span><span class="trial-ref">Perera P et al. J Emerg Med 2010;38:100</span></td>
+            <td class="trial-finding">Systematic RUSH exam (Pump/Tank/Pipes) narrows shock aetiology in &lt;3 minutes at bedside with high inter-rater reliability after brief training.</td>
+            <td class="trial-finding"><b>POCUS is the most information-dense single investigation at the bedside for shock phenotyping</b> without invasive monitoring.</td>
+          </tr>
+          <tr>
+            <td><span class="trial-name">McConnell Sign</span><span class="trial-ref">McConnell MV et al. Am J Cardiol 1996;78:469</span></td>
+            <td class="trial-finding">RV free wall hypokinesis with apical sparing (McConnell sign): Specificity 94%, PPV 71% for acute PE.</td>
+            <td class="trial-finding"><b>McConnell sign is the most specific POCUS finding for acute PE-mediated RV failure.</b> Absent in chronic cor pulmonale.</td>
+          </tr>
+          <tr>
+            <td><span class="trial-name">IVC Collapsibility</span><span class="trial-ref">Feissel M et al. Chest 2004;125:1562</span></td>
+            <td class="trial-finding">IVC collapsibility index &gt;18% in MV patients predicted fluid responsiveness (AUC 0.93) when Vt ≥8 mL/kg. Less reliable in spontaneous breathing.</td>
+            <td class="trial-finding"><b>IVC collapsibility supplements but does not replace PPV/PLR.</b> Limitations identical to PPV regarding ventilation mode.</td>
+          </tr>
+          <tr>
+            <td><span class="trial-name">BCIS Classification</span><span class="trial-ref">Donaldson AJ et al. BJA 2009;102:12</span></td>
+            <td class="trial-finding">Bone Cement Implantation Syndrome Grade 3 (cardiac arrest) mortality 15-fold higher than Grade 1. Mechanism: fat/monomer embolism → acute ↑PVR + ↓SVR.</td>
+            <td class="trial-finding"><b>BCIS is a recognisable obstructive-distributive mixed shock phenotype</b> with specific intraoperative triggers and risk mitigation strategies.</td>
+          </tr>
+          <tr>
+            <td><span class="trial-name">Viscosity & SVR (HP)</span><span class="trial-ref">Messmer K et al. Eur Surg Res 1972;4:56 &amp; Hagen-Poiseuille law</span></td>
+            <td class="trial-finding">SVR ∝ η (blood viscosity) per Hagen-Poiseuille. Isovolaemic haemodilution to Hct 20-25% measurably reduces SVR and PVR; compensatory CO rise may be insufficient → high-output hypotension.</td>
+            <td class="trial-finding"><b>Severe anaemia (Hb &lt;7 g/dL) causes rheological ↓SVR → hypotension despite normal/high CO.</b> Red cell transfusion, not vasopressors, corrects the mechanism.</td>
+          </tr>
+          <tr>
+            <td><span class="trial-name">Surviving Sepsis Campaign 2026</span><span class="trial-ref">Prescott HC et al. CCM 2026;54(4):725-812.</span></td>
+            <td class="trial-finding">Defined septic shock as sepsis + vasopressor requirement to maintain MAP ≥65 + lactate &gt;2 despite adequate fluid resuscitation. MAP-alone criterion explicitly insufficient.</td>
+            <td class="trial-finding"><b>Lactate + vasopressor requirement = formal definition of septic shock.</b> Supports BP-independent shock recognition framework.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════════════════════════════════════════════
+  TAB 6: MECHANISTIC MODEL
+════════════════════════════════════════════════════ -->
+<div class="tab-pane" id="tab-mechanisms">
+<div class="mech-tab">
+
+  <div class="callout yellow">
+    <strong>Mechanistic Model — MAP = CO × SVR &nbsp;|&nbsp; CO = HR × SV &nbsp;|&nbsp; SV = f(Preload, Contractility, Afterload)</strong><br>
+    Every cause of hypotension and shock reduces MAP through one or more of 11 physiological determinants listed below — common to rare, intraoperative and postoperative. Each section is collapsible.
+  </div>
+
+  <div class="mech-tab mleg">
+    <div class="mleg-item"><div class="fdot fcommon" style="width:8px;height:8px;border-radius:50%;background:#4ae880"></div>COMMON</div>
+    <div class="mleg-item"><div class="fdot" style="width:8px;height:8px;border-radius:50%;background:#e8c84a"></div>UNCOMMON</div>
+    <div class="mleg-item"><div class="fdot" style="width:8px;height:8px;border-radius:50%;background:#e8604a"></div>RARE</div>
+    <div class="mleg-item" style="margin-left:10px"><span class="context-tag intra">INTRA</span>&nbsp;Intraoperative</div>
+    <div class="mleg-item"><span class="context-tag post">POST</span>&nbsp;Postoperative</div>
+    <div class="mleg-item"><span class="context-tag both">BOTH</span>&nbsp;Both</div>
+    <div class="mleg-item"><span class="context-tag onco">ONCO</span>&nbsp;Oncosurgery-specific</div>
+  </div>
+
+  <div class="eq-bar">
+    <span class="eq-chip ehr">MAP = CO × SVR</span>
+    <span class="eq-chip ehr">CO = HR × SV</span>
+    <span class="eq-chip epreload">SV ← Preload · Contractility · Afterload (LV)</span>
+    <span class="eq-chip epvr">RV SV ← Preload · Contractility · Afterload (RV = PVR)</span>
+    <span class="eq-chip ehumoral">Modulators: pH · PaCO₂ · PaO₂ · Temperature · Viscosity (η)</span>
+  </div>
+
+  <!-- 01 HR -->
+  <div class="msection collapsed" id="m-hr">
+    <div class="msec-hdr" onclick="mtoggle('m-hr')">
+      <div class="msec-accent" style="background:#e8854a"></div>
+      <span class="msec-title">01 · HEART RATE</span>
+      <span class="msec-formula">CO = HR × SV &nbsp;|&nbsp; Bradycardia (↓CO) and extreme tachycardia (↓diastolic filling → ↓SV) both cause hypotension</span>
+      <span class="mtoggle">▾</span>
+    </div>
+    <div class="msec-body">
+      <div class="mphysnote">Optimal HR for MAP is ~60–90 bpm. Bradycardia reduces CO directly. Tachycardia &gt;130–150 bpm compresses diastole, reduces LVEDV, and in IHD reduces coronary perfusion time — precipitating ischaemia and further contractile failure.</div>
+      <table><thead><tr><th>Freq</th><th>Cause</th><th>Context</th><th>Mechanism</th></tr></thead><tbody>
+        <tr><td><span class="fbadge"><div class="fdot fcommon"></div>Common</span></td><td class="cause-name">High neuraxial block (≥T4) — vagal predominance</td><td><span class="context-tag intra">INTRA</span></td><td class="mtext">Sympathetic cardioaccelerator fibres (T1–T4) blocked → unopposed vagal tone → sinus bradycardia ± AV block</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot fcommon"></div>Common</span></td><td class="cause-name">Vasovagal / Bezold-Jarisch reflex (peritoneal traction)</td><td><span class="context-tag intra">INTRA</span></td><td class="mtext">Mechanoreceptor / C-fibre activation → afferent vagal burst → cardioinhibitory centre → sinus bradycardia; BJR paradoxically triggered in hypovolaemia when compensatory tachycardia → sudden vagal surge</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot fcommon"></div>Common</span></td><td class="cause-name">Beta-blocker / CCB effect (pre-operative continuation)</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">β₁ blockade or L-type Ca²⁺ channel inhibition → ↓chronotropy and ↓dromotropy</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot fcommon"></div>Common</span></td><td class="cause-name">Opioid-induced bradycardia (fentanyl, remifentanil)</td><td><span class="context-tag intra">INTRA</span></td><td class="mtext">μ-opioid receptor activation → central vagomimetic → sinus rate suppression; most marked with rapid remifentanil bolus or high-dose fentanyl induction</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot fcommon"></div>Common</span></td><td class="cause-name">Dexmedetomidine bolus / high infusion rate</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">α₂ agonism at locus coeruleus → ↓sympathetic outflow; presynaptic α₂ at SA node → bradycardia; direct coronary and peripheral vasoconstriction compounds hypotension</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot fcommon"></div>Common</span></td><td class="cause-name">Neostigmine (reversal agent)</td><td><span class="context-tag intra">INTRA</span></td><td class="mtext">Acetylcholinesterase inhibition → ↑ACh at cardiac muscarinic (M₂) receptors → bradycardia; attenuated by glycopyrrolate/atropine co-administration</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot funcommon"></div>Uncommon</span></td><td class="cause-name">Oculocardiac reflex</td><td><span class="context-tag intra">INTRA</span></td><td class="mtext">Stretch of extraocular muscles → trigeminal afferent → vagal efferent → sinus bradycardia; strabismus surgery and orbital procedures at highest risk</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot funcommon"></div>Uncommon</span></td><td class="cause-name">Reflex bradycardia from phenylephrine (baroreceptor)</td><td><span class="context-tag intra">INTRA</span></td><td class="mtext">Pure α₁ agonist → ↑SVR/MAP → baroreceptor → ↑vagal tone → bradycardia; may overshoot to hypotension if HR fall is excessive</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot funcommon"></div>Uncommon</span></td><td class="cause-name">Hyperkalaemia (≥6.5 mEq/L)</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">↓Resting membrane potential gradient → slows SA/AV conduction → bradyarrhythmias; sine wave at severe levels; massive transfusion, renal failure, rhabdomyolysis</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot funcommon"></div>Uncommon</span></td><td class="cause-name">SVT / AF with rapid rate → ↓diastolic filling → ↓SV</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">Paradoxical tachycardia-mediated hypotension; diastolic filling time inadequate → LVEDV falls disproportionately to HR rise → net ↓CO; worse in diastolic dysfunction</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot funcommon"></div>Uncommon</span></td><td class="cause-name">High-degree AV block (Mobitz II / CHB)</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">Blocked conduction → ventricular escape 30–45 bpm insufficient for adequate CO; may emerge intraoperatively in subclinical conduction disease</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot funcommon"></div>Uncommon</span></td><td class="cause-name">Ventricular tachycardia / VF</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">Disorganised or haemodynamically ineffective ventricular contraction → CO → 0 (VF) or severely depressed (haemodynamically unstable VT)</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot frare"></div>Rare</span></td><td class="cause-name">Cushing reflex bradycardia (raised ICP)</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">Extreme sympathetic surge (ICP&gt;CPP) → severe hypertension → baroreceptor-mediated bradycardia; bradycardia = late ominous sign; hypotension follows brainstem herniation</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot frare"></div>Rare</span></td><td class="cause-name">Severe hypothyroidism / myxoedema coma</td><td><span class="context-tag post">POST</span></td><td class="mtext">↓Thyroid hormone → ↓β-adrenoceptor expression → sinus bradycardia, ↓contractility, pericardial effusion</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot frare"></div>Rare</span></td><td class="cause-name">Refractory bradycardia — severe hypoxia / agonal rhythm</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">Progressive cellular energy failure → loss of automaticity → junctional/idioventricular escape or asystole; end-stage common pathway of any unresolved cause</td></tr>
+      </tbody></table>
+    </div>
+  </div>
+
+  <!-- 02 LV PRELOAD -->
+  <div class="msection collapsed" id="m-lvpreload">
+    <div class="msec-hdr" onclick="mtoggle('m-lvpreload')">
+      <div class="msec-accent" style="background:#4ab8e8"></div>
+      <span class="msec-title">02 · LV PRELOAD (LVEDV)</span>
+      <span class="msec-formula">Frank-Starling: ↓LVEDV → ↓SV &nbsp;|&nbsp; Governed by venous return, intrathoracic pressure, and obstruction</span>
+      <span class="mtoggle">▾</span>
+    </div>
+    <div class="msec-body">
+      <div class="mphysnote">LV preload = LVEDV. Determinants: venous return (systemic venous tone, circulating volume, posture), intrathoracic pressure (PPV reduces venous return), obstruction to filling (tamponade, pericardial constriction, tension PTX, high PVR obstructing RV output). Operates on the steep portion of the Starling curve in hypovolaemic states.</div>
+      <table><thead><tr><th>Freq</th><th>Cause</th><th>Context</th><th>Mechanism</th></tr></thead><tbody>
+        <tr><td><span class="fbadge"><div class="fdot fcommon"></div>Common</span></td><td class="cause-name">Haemorrhage — surgical / traumatic</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">Absolute intravascular volume depletion → ↓MSFP → ↓venous return → ↓RVEDV → ↓LVEDV; head/neck, hepatic, pelvic tumour resections at highest risk in oncosurgery</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot fcommon"></div>Common</span></td><td class="cause-name">Perioperative interstitial sequestration — lymphatic saturation, surgical lymphatic disruption, venous tourniquet effect of compartment oedema</td><td><span class="context-tag intra">INTRA</span><span class="context-tag onco">ONCO</span></td><td class="mtext"><b>(1) Lymphatic kinetics saturation:</b> Surgical inflammation ↑ capillary hydraulic conductance + ↓oncotic reflection coefficient (σ) via glycocalyx disruption → net filtration rate exceeds maximum lymphatic transport capacity (~10–20× resting); protein-rich interstitial fluid accumulates as functional plasma loss. <b>(2) Surgical lymphatic disruption:</b> Direct transection (neck dissection, axillary clearance, RPLND, hepatoportal dissection) abolishes local drainage; most pronounced in oncosurgical lymphadenectomy. <b>(3) Venous tourniquet effect of compartment oedema:</b> ↑Interstitial pressure → compresses low-pressure venules → ↑local venous hydrostatic pressure → further Starling-driven extravasation → self-amplifying cycle; most significant in confined fascial compartments.</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot fcommon"></div>Common</span></td><td class="cause-name">Open body cavity evaporative losses (peritoneal, pleural, bowel serosa)</td><td><span class="context-tag intra">INTRA</span></td><td class="mtext">Convective + evaporative loss of pure water vapour from warm visceral surfaces; losses are <em>hypotonic</em> (not plasma-equivalent) → free-water deficit + ↑plasma osmolality. Modern evidence: ~0.5–1 mL/kg/hr (far below classical 10–15 mL/kg/hr teaching); cumulative in prolonged laparotomy/thoracotomy; contributes to hypernatraemia and ↑plasma viscosity. Mechanistically distinct from interstitial sequestration above.</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot fcommon"></div>Common</span></td><td class="cause-name">Inadequate fluid resuscitation / fasting losses</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">Obligate overnight fast + bowel prep dehydration → ↓MSFP; compounded by vasodilatory effect of induction agents</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot fcommon"></div>Common</span></td><td class="cause-name">Positive pressure ventilation — high PEEP / high tidal volume</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">↑Mean intrathoracic pressure → compresses RA and intrathoracic IVC → ↓venous return gradient; PEEP ≥12 cmH₂O markedly reduces CO in hypovolaemic patients</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot fcommon"></div>Common</span></td><td class="cause-name">Vasodilatory (distributive) pooling — neuraxial / GA induction</td><td><span class="context-tag intra">INTRA</span></td><td class="mtext">Sympathetic blockade or direct venodilation (propofol, volatile agents) → venous capacitance ↑ → MSFP falls → venous return ↓ → functional hypovolaemia despite unchanged total volume</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot funcommon"></div>Uncommon</span></td><td class="cause-name">Sepsis-induced venous capacitance ↑ (venous component)</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">iNOS-derived NO → venous and arteriolar smooth muscle relaxation → ↑venous capacitance → relative hypovolaemia; LPS-mediated vascular leak compounds true hypovolaemia</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot funcommon"></div>Uncommon</span></td><td class="cause-name">Tension pneumothorax</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">Air accumulation under pressure → mediastinal shift → compression of IVC and RA → ↓venous return → ↓LVEDV; also ↑RV afterload from lung compression; PPV accelerates; needle decompression is definitive</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot funcommon"></div>Uncommon</span></td><td class="cause-name">Cardiac tamponade</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">Pericardial fluid → ↑intrapericardial pressure → progressive diastolic compression of RA and RV → ↓RVEDV → ↓LVEDV; pulsus paradoxus, Beck's triad; exacerbated by hypovolaemia and PPV</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot funcommon"></div>Uncommon</span></td><td class="cause-name">Massive PE — RV failure reducing LV filling</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">Acute ↑PVR → RV dilation → interventricular septal shift leftward (D-shaped LV on echo) → ↓LVEDV → ↓SV → ↓CO; obstructive shock phenotype</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot funcommon"></div>Uncommon</span></td><td class="cause-name">Aortocaval compression (gravid uterus)</td><td><span class="context-tag intra">INTRA</span></td><td class="mtext">IVC compression at ≥20 weeks gestation → ↓venous return; compounded by aortic compression → ↓uteroplacental flow; lateral tilt obligatory</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot frare"></div>Rare</span></td><td class="cause-name">RA/IVC obstruction — intracardiac tumour (RA myxoma, RCC with IVC thrombus)</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">Mechanical obstruction of RA inflow → ↓RVEDV → ↓LVEDV; position-dependent (myxoma can intermittently prolapse through tricuspid)</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot frare"></div>Rare</span></td><td class="cause-name">Surgical retraction compressing IVC / hepatic veins</td><td><span class="context-tag intra">INTRA</span></td><td class="mtext">Manual/mechanical retraction during hepatic/retroperitoneal surgery compresses IVC → acute ↓venous return; rapid correction upon release</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot frare"></div>Rare</span></td><td class="cause-name">Pericardial constriction (unrecognised pre-operative)</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">Fibrous/calcified pericardium limits biventricular diastolic filling → fixed low preload state; exposed by fluid challenge failure; prevalent in prior RT/TB/viral pericarditis patients</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot frare"></div>Rare</span></td><td class="cause-name">Pneumoperitoneum (high IAP) — laparoscopic surgery</td><td><span class="context-tag intra">INTRA</span></td><td class="mtext">IAP &gt;15 mmHg → IVC compression → ↓venous return; typically modest but important with steep Trendelenburg reversal and hypovolaemia</td></tr>
+      </tbody></table>
+    </div>
+  </div>
+
+  <!-- 03 LV CONTRACTILITY -->
+  <div class="msection collapsed" id="m-lvcontract">
+    <div class="msec-hdr" onclick="mtoggle('m-lvcontract')">
+      <div class="msec-accent" style="background:#e84a6e"></div>
+      <span class="msec-title">03 · LV CONTRACTILITY</span>
+      <span class="msec-formula">EF, dP/dt, SV at constant preload/afterload &nbsp;|&nbsp; Primary cardiogenic or drug/metabolic depression</span>
+      <span class="mtoggle">▾</span>
+    </div>
+    <div class="msec-body">
+      <div class="mphysnote">Inotropy depends on intracellular Ca²⁺ cycling (SERCA, NCX, RyR2), sarcomere cross-bridge kinetics, energy substrate supply (ATP, phosphocreatine), and adrenergic receptor density. Anaesthetic agents, ischaemia, and metabolic derangements intersect at multiple points. Cardiogenic shock = cardiac index &lt;2.2 L/min/m² with PCWP &gt;18 mmHg.</div>
+      <table><thead><tr><th>Freq</th><th>Cause</th><th>Context</th><th>Mechanism</th></tr></thead><tbody>
+        <tr><td><span class="fbadge"><div class="fdot fcommon"></div>Common</span></td><td class="cause-name">Volatile agent depression (isoflurane, sevoflurane, desflurane)</td><td><span class="context-tag intra">INTRA</span></td><td class="mtext">Dose-dependent ↓L-type Ca²⁺ influx, impaired SR Ca²⁺ release, ↓myofilament Ca²⁺ sensitivity; sevoflurane at 2 MAC reduces contractility ~30%; compounded by concurrent vasodilation and bradycardia</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot fcommon"></div>Common</span></td><td class="cause-name">Propofol — negative inotropy and vasodilation</td><td><span class="context-tag intra">INTRA</span></td><td class="mtext">↓Ca²⁺ transient + ↓myofilament sensitivity + SERCA activation → ↓contractility; simultaneous ↓SVR compounds hypotension; TIVA at high rates or bolus induction most hazardous in pre-existing LV dysfunction</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot fcommon"></div>Common</span></td><td class="cause-name">Acute myocardial ischaemia / NSTEMI / STEMI intraoperative</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">Supply-demand imbalance → regional wall motion abnormalities → ↓global EF; tachycardia, hypotension, and ↑LVEDP create a self-propagating ischaemia-dysfunction spiral; troponin rise 3–48 h post-op</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot fcommon"></div>Common</span></td><td class="cause-name">Pre-existing LV dysfunction decompensated by perioperative stress</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">Reduced preoperative EF → narrow haemodynamic reserve; anaesthetic vasodilation, fluid shifts, tachycardia, or ischaemia tip compensated failure into decompensated low-output state</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot funcommon"></div>Uncommon</span></td><td class="cause-name">Septic cardiomyopathy</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">TNF-α, IL-1β, NO → ↓contractility, Ca²⁺ desensitisation; typically biventricular; transient — EF recovery over 7–10 days with source control</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot funcommon"></div>Uncommon</span></td><td class="cause-name">Acidaemia (pH &lt;7.2)</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">H⁺ competes with Ca²⁺ at troponin C binding site → ↓myofilament Ca²⁺ sensitivity; ↓SR Ca²⁺ release; ↓β-adrenoceptor density; pH &lt;7.1 = severe refractory contractile failure</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot funcommon"></div>Uncommon</span></td><td class="cause-name">Hypocalcaemia (ionised Ca²⁺ &lt;1.0 mmol/L)</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">↓Trigger Ca²⁺ for CICR from SR → ↓contraction amplitude; massive transfusion (citrate chelation), post-thyroid/parathyroid surgery, pancreatitis</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot funcommon"></div>Uncommon</span></td><td class="cause-name">Myocardial stunning (post-CPB, post-ischaemia)</td><td><span class="context-tag intra">INTRA</span></td><td class="mtext">Reperfusion-related Ca²⁺ overload and oxidative stress → transient contractile dysfunction despite restored flow; duration hours to days; inotropes as bridge</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot funcommon"></div>Uncommon</span></td><td class="cause-name">Hypothermia (core &lt;34°C)</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">↓Enzymatic reaction rates → ↓Ca²⁺-ATPase activity → impaired SERCA → ↓contractility; progressive below 32°C; coagulopathy compounds haemorrhagic contribution; J waves on ECG</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot funcommon"></div>Uncommon</span></td><td class="cause-name">Local anaesthetic systemic toxicity (LAST)</td><td><span class="context-tag intra">INTRA</span></td><td class="mtext">Na⁺ channel blockade → conduction abnormalities; Ca²⁺ channel inhibition → ↓contractility; mitochondrial uncoupling → ATP depletion; bupivacaine most cardiotoxic; Intralipid® is antidote</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot funcommon"></div>Uncommon</span></td><td class="cause-name">Takotsubo (stress) cardiomyopathy</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">Catecholamine surge → apical ballooning with basal hyperkinesis; predominantly postmenopausal women; mimics anterior STEMI; reversible in weeks</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot frare"></div>Rare</span></td><td class="cause-name">Air / fat / bone cement embolism → coronary occlusion</td><td><span class="context-tag intra">INTRA</span></td><td class="mtext">Air entering coronary ostia (RCA most susceptible) → acute RV+LV ischaemia; PMMA monomer causes ↑PVR and direct myocardial depression; fat emboli from long bone/spinal surgery → lipid microemboli in coronary bed</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot frare"></div>Rare</span></td><td class="cause-name">Acute myocarditis (viral, drug-induced)</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">Direct viral cytopathic effect or immune-mediated myocyte necrosis → global LV dysfunction; giant cell myocarditis = fulminant cardiogenic shock</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot frare"></div>Rare</span></td><td class="cause-name">Negative inotropy — high-dose dexmedetomidine (α₂-mediated)</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">Presynaptic α₂ reduces NE release; post-junctional α₂ in myocardium inhibits adenylyl cyclase → ↓cAMP → ↓PKA → ↓L-type Ca²⁺ current; clinically significant in cardiac dysfunction</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot frare"></div>Rare</span></td><td class="cause-name">Phosphodiesterase inhibitor overdose (milrinone infusion error)</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">High milrinone concentrations → severe vasoplegia-dominant hypotension overwhelming inotropy; vasopressin or noradrenaline required</td></tr>
+      </tbody></table>
+    </div>
+  </div>
+
+  <!-- 04 LV AFTERLOAD / SVR -->
+  <div class="msection collapsed" id="m-svr">
+    <div class="msec-hdr" onclick="mtoggle('m-svr')">
+      <div class="msec-accent" style="background:#a04ae8"></div>
+      <span class="msec-title">04 · LV AFTERLOAD / SVR</span>
+      <span class="msec-formula">MAP = CO × SVR &nbsp;|&nbsp; SVR = (MAP−CVP)/CO × 80 &nbsp;|&nbsp; SVR ∝ η (viscosity) per Hagen-Poiseuille · ↓SVR vasomotor or rheological → ↓MAP</span>
+      <span class="mtoggle">▾</span>
+    </div>
+    <div class="msec-body">
+      <div class="mphysnote">Per the <b>Hagen-Poiseuille relationship</b> (R = 8ηL / πr⁴), SVR is determined by vessel radius (dominant, r⁴ dependence), vessel length, and <b>blood viscosity (η)</b>. Most clinical ↓SVR is vasomotor (↓r), but rheological ↓SVR from ↓η is a distinct, under-recognised mechanism. In distributive shock, profound vasodilation with preserved or elevated CO characterises early sepsis, anaphylaxis, and neuraxial block.</div>
+      <table><thead><tr><th>Freq</th><th>Cause</th><th>Context</th><th>Mechanism</th></tr></thead><tbody>
+        <tr><td><span class="fbadge"><div class="fdot fcommon"></div>Common</span></td><td class="cause-name">Neuraxial anaesthesia — sympathetic blockade</td><td><span class="context-tag intra">INTRA</span></td><td class="mtext">Pre-ganglionic sympathetic fibres blocked → arteriolar vasodilation (↓SVR) + venodilation (↓preload) + bradycardia if T1–T4 affected; exacerbated by hypovolaemia</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot fcommon"></div>Common</span></td><td class="cause-name">General anaesthetic induction (propofol, thiopentone)</td><td><span class="context-tag intra">INTRA</span></td><td class="mtext">Propofol → Ca²⁺ channel blockade in VSM + ↑NO + ↓sympathetic tone → ↓SVR ± ↓contractility; most marked in hypovolaemic/elderly patients</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot fcommon"></div>Common</span></td><td class="cause-name">Volatile agents (isoflurane &gt; sevoflurane) — vasodilation</td><td><span class="context-tag intra">INTRA</span></td><td class="mtext">K(ATP) channel activation in VSM → hyperpolarisation → vasodilation; isoflurane most vasodilatory; concentration-dependent ↓SVR with mild ↑HR (reflex)</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot fcommon"></div>Common</span></td><td class="cause-name">Sepsis / SIRS — distributive shock</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">LPS/PAMPs → TLR4 → iNOS induction → ↑NO → cGMP → VSM relaxation → ↓SVR; vasopressin deficiency in prolonged septic shock (V1 receptor desensitisation)</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot fcommon"></div>Common</span></td><td class="cause-name">Anaphylaxis / anaphylactoid reaction</td><td><span class="context-tag intra">INTRA</span></td><td class="mtext">IgE-mediated mast cell degranulation → histamine (H1/H2) + tryptase + LTC4/D4 → profound vasodilation (↓SVR), ↑vascular permeability (↓preload), bronchospasm; NMBAs, antibiotics, latex commonest OT triggers</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot funcommon"></div>Uncommon</span></td><td class="cause-name">Adrenal insufficiency / crisis</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">Cortisol deficiency → ↓catecholamine receptor sensitivity + ↓aldosterone → refractory vasodilation + hypovolaemia; steroid withdrawal, bilateral adrenal metastases, post-adrenalectomy; hydrocortisone 100 mg IV stat</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot funcommon"></div>Uncommon</span></td><td class="cause-name">Iatrogenic vasodilators (GTN, SNP, hydralazine, ACE-I, CCB)</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">Direct or NO-mediated arteriolar/venous smooth muscle relaxation; intraoperative continuation of oral antihypertensives compounds anaesthetic vasodilation</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot funcommon"></div>Uncommon</span></td><td class="cause-name">Hypercapnia — systemic vasodilatory effect</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">CO₂ → carbonic acid → tissue acidosis → VSM relaxation; net effect at PaCO₂ &gt;60 mmHg is ↓SVR and hypotension; initial catecholamine surge may temporarily mask</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot funcommon"></div>Uncommon</span></td><td class="cause-name">Hepatic failure (acute or chronic decompensation)</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">↑Glucagon, ↑NO, ↑prostacyclin → splanchnic + systemic vasodilation; bacterial translocation triggers distributive shock superimposed on hepatic shock</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot funcommon"></div>Uncommon</span></td><td class="cause-name">↓Blood viscosity (η) — rheological ↓SVR (severe anaemia, haemodilution)</td><td><span class="context-tag both">BOTH</span><span class="context-tag onco">ONCO</span></td><td class="mtext"><b>Hagen-Poiseuille:</b> SVR ∝ η; ↓η → ↓SVR → ↓MAP independently of vasomotor tone. Viscosity values: ~4 cP at Hb 12, ~2.5 cP at Hb 7, ~2.0 cP at Hb 5 g/dL. ↓Haematocrit accounts for ~85–90% of viscosity reduction in severe haemodilution; plasma proteins (particularly fibrinogen, not albumin) contribute the remaining ~10–15%. Albumin is a minor viscosity contributor (~0.01–0.02 cP per g/dL — compact globular protein). <b>High CO + low MAP paradox:</b> ↓afterload → ↑SV + compensatory ↑HR → ↑CO, but when η falls steeply the ↓SVR outpaces ↑CO compensation → high-output hypotension despite normal/elevated CO. Blood is shear-thinning (Fåhræus-Lindqvist effect in microvessels &lt;300 μm partially attenuates macrovascular rheological changes).</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot funcommon"></div>Uncommon</span></td><td class="cause-name">Thyroid storm</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">Excess TH → ↑β-adrenoceptor number and sensitivity → tachycardia + ↓SVR + ↑CO; decompensation when myocardial reserve exhausted; triggered by surgical stress / iodinated contrast</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot frare"></div>Rare</span></td><td class="cause-name">Protamine reaction — Type I (histamine-mediated)</td><td><span class="context-tag intra">INTRA</span></td><td class="mtext">Non-immunological mast cell degranulation → histamine → ↓SVR; usually mild/transient; distinct from Type II (anaphylactic IgE) and Type III (complement-mediated pulmonary vasoconstriction)</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot frare"></div>Rare</span></td><td class="cause-name">Neurogenic shock (high cervical SCI ≥T6)</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">Loss of supraspinal sympathetic control → ↓SVR + bradycardia (unopposed vagal) + ↓cardiac inotropy; warm peripheries with bradycardia distinguishes from hypovolaemic shock</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot frare"></div>Rare</span></td><td class="cause-name">Systemic mastocytosis / carcinoid crisis</td><td><span class="context-tag intra">INTRA</span></td><td class="mtext">Tumour manipulation → histamine (mastocytosis) or serotonin/kallikrein (carcinoid) → profound vasodilation ± bronchoconstriction; octreotide is specific antidote for carcinoid</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot frare"></div>Rare</span></td><td class="cause-name">Vasoplegia syndrome (post-CPB, post-LVAD, post-liver transplant)</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">Refractory ↓SVR despite preserved CO; AVP depletion + iNOS upregulation + K(ATP) channel activation; vasopressin and methylene blue (guanylate cyclase inhibition) are rescue therapies</td></tr>
+      </tbody></table>
+    </div>
+  </div>
+
+  <!-- 05 RV PRELOAD -->
+  <div class="msection collapsed" id="m-rvpreload">
+    <div class="msec-hdr" onclick="mtoggle('m-rvpreload')">
+      <div class="msec-accent" style="background:#7ab8e8"></div>
+      <span class="msec-title">05 · RV PRELOAD</span>
+      <span class="msec-formula">RV fills from systemic venous return &nbsp;|&nbsp; Ventricular interdependence — RV failure → septal shift → ↓LV preload</span>
+      <span class="mtoggle">▾</span>
+    </div>
+    <div class="msec-body">
+      <div class="mphysnote">RV preload determinants largely identical to LV. Because ventricles are in series, ↓RV preload → ↓LV preload. Ventricular interdependence: RV dilation shifts septum leftward, directly reducing LVEDV independent of pulmonary flow.</div>
+      <table><thead><tr><th>Freq</th><th>Cause</th><th>Context</th><th>Mechanism</th></tr></thead><tbody>
+        <tr><td><span class="fbadge"><div class="fdot fcommon"></div>Common</span></td><td class="cause-name">Hypovolaemia (all causes — same as LV section)</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">↓Venous return → ↓RVEDV; RV more sensitive to preload as it operates on a steeper Starling slope at normal filling pressures</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot funcommon"></div>Uncommon</span></td><td class="cause-name">SVC syndrome (tumour, thrombosis, mediastinal compression)</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">SVC obstruction → ↓upper body venous drainage to RA → ↓RV preload; chronic may be compensated by venous collaterals; relevant in mediastinal tumour / central catheter thrombosis</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot funcommon"></div>Uncommon</span></td><td class="cause-name">High PEEP / auto-PEEP</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">↑Intrathoracic pressure compresses intrathoracic IVC and RA → ↓venous gradient → ↓RV filling; auto-PEEP in obstructive lung disease on IPPV creates same physiology</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot frare"></div>Rare</span></td><td class="cause-name">Tricuspid stenosis / RA mass obstructing tricuspid inflow</td><td><span class="context-tag intra">INTRA</span></td><td class="mtext">Fixed obstruction to RV filling; carcinoid heart disease produces TS/TR; may be unmasked under anaesthesia</td></tr>
+      </tbody></table>
+    </div>
+  </div>
+
+  <!-- 06 RV CONTRACTILITY -->
+  <div class="msection collapsed" id="m-rvcontract">
+    <div class="msec-hdr" onclick="mtoggle('m-rvcontract')">
+      <div class="msec-accent" style="background:#e8a04a"></div>
+      <span class="msec-title">06 · RV CONTRACTILITY</span>
+      <span class="msec-formula">RV is a thin-walled flow generator — poorly tolerates acute ↑afterload &nbsp;|&nbsp; RV failure → septal shift → ↓LV preload → ↓CO spiral</span>
+      <span class="mtoggle">▾</span>
+    </div>
+    <div class="msec-body">
+      <div class="mphysnote">The RV is 4–6× more sensitive to acute ↑afterload than the LV. Acute cor pulmonale from PE or severe hypoxia can collapse CO within minutes. RV dilation → D-sign on TTE → ↓LVEDV → ↓CO — broken only by treating the primary RV insult.</div>
+      <table><thead><tr><th>Freq</th><th>Cause</th><th>Context</th><th>Mechanism</th></tr></thead><tbody>
+        <tr><td><span class="fbadge"><div class="fdot fcommon"></div>Common</span></td><td class="cause-name">Acute cor pulmonale from massive PE</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">Thrombus obstruction → acute ↑PVR → RV dilation → RV ischaemia (wall stress ↑, RCA perfusion ↓) → contractile failure → septal shift → ↓LV preload → ↓CO</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot fcommon"></div>Common</span></td><td class="cause-name">RV dysfunction from pre-existing PHTN decompensated by anaesthesia</td><td><span class="context-tag intra">INTRA</span></td><td class="mtext">Fixed elevated PVR → RV hypertrophy limits adaptation; anaesthetic vasodilation ↓CPP to hypertrophied RV → ischaemia → acute-on-chronic RV failure; hypoxia/hypercapnia worsen PVR intraoperatively</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot funcommon"></div>Uncommon</span></td><td class="cause-name">RV ischaemia / infarction (acute — RCA territory)</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">RCA occlusion → inferior wall MI with RV involvement in ~40%; triad: hypotension, elevated JVP, clear lung fields; avoid nitrates; volume load; maintain sinus rhythm</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot funcommon"></div>Uncommon</span></td><td class="cause-name">Acute ARDS / ALI → ↑PVR → RV failure</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">HPV + vascular destruction + hypercapnia + high PEEP → ↑PVR → acute cor pulmonale; MV strategy must balance lung protection with RV protection (permissive hypercapnia limited by RV)</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot funcommon"></div>Uncommon</span></td><td class="cause-name">Venous air embolism (neurosurgical / sitting position)</td><td><span class="context-tag intra">INTRA</span></td><td class="mtext">Air bolus → RV outflow obstruction (air-lock) + pulmonary gas microembolism → ↑PVR + ↓RV output → ↓CO; mill-wheel murmur; ETCO₂ fall is early sign</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot funcommon"></div>Uncommon</span></td><td class="cause-name">Septic cardiomyopathy — biventricular</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">Same cytokine/NO mechanism as LV; RV failure often underappreciated; TAPSE &lt;17 mm, S' &lt;10 cm/s on TTE; responds to source control + noradrenaline ± dobutamine</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot frare"></div>Rare</span></td><td class="cause-name">Protamine reaction — Type III (complement-mediated TXA₂)</td><td><span class="context-tag intra">INTRA</span></td><td class="mtext">Heparin-protamine complexes → complement → C5a → pulmonary macrophage TXA₂ → ↑PVR → acute RV failure; inhaled NO, epoprostenol, vasopressin</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot frare"></div>Rare</span></td><td class="cause-name">Bone cement implantation syndrome (BCIS)</td><td><span class="context-tag intra">INTRA</span></td><td class="mtext">PMMA monomer + fat/marrow microemboli → acute ↑PVR + ↓SVR + ↓myocardial contractility; femoral cementing in THA; Grade 3 = cardiac arrest; high-FiO₂ and pre-emptive volume loading are preventive</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot frare"></div>Rare</span></td><td class="cause-name">Amniotic fluid embolism (AFE)</td><td><span class="context-tag intra">INTRA</span></td><td class="mtext">Fetal debris + AF contents → acute pulmonary vasoconstriction → RV failure → cardiovascular collapse → DIC; bimodal: obstructive shock then coagulopathic haemorrhage; supportive care only</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot frare"></div>Rare</span></td><td class="cause-name">Acute pulmonary hypertensive crisis (post-cardiac surgery, OLT)</td><td><span class="context-tag intra">INTRA</span></td><td class="mtext">Triggers in pre-sensitised pulmonary vasculature → abrupt ↑PAP → RV failure; management: inhaled NO 10–40 ppm, milrinone, iloprost nebulisation, ECMO</td></tr>
+      </tbody></table>
+    </div>
+  </div>
+
+  <!-- 07 PVR -->
+  <div class="msection collapsed" id="m-pvr">
+    <div class="msec-hdr" onclick="mtoggle('m-pvr')">
+      <div class="msec-accent" style="background:#4ae8a0"></div>
+      <span class="msec-title">07 · PULMONARY VASCULAR RESISTANCE (PVR / RV Afterload)</span>
+      <span class="msec-formula">PVR = (mPAP − PCWP) / CO × 80 &nbsp;|&nbsp; Normal 80–240 dyne·s/cm⁵ &nbsp;|&nbsp; PVR ∝ η (viscosity) · ↑PVR → ↑RV afterload → RV failure</span>
+      <span class="mtoggle">▾</span>
+    </div>
+    <div class="msec-body">
+      <div class="mphysnote">Pulmonary vascular tone governed by alveolar PO₂ (HPV — von Euler-Liljestrand reflex), PaCO₂, pH, autonomic input, and vasoactive mediators. Additionally, <b>PVR ∝ blood viscosity (η)</b> per Hagen-Poiseuille — extreme haemodilution lowers PVR and is deliberately exploited during CPB. Pulmonary vessels constrict to hypoxia — adaptive in V/Q matching, maladaptive in global hypoxaemia.</div>
+      <table><thead><tr><th>Freq</th><th>Cause</th><th>Context</th><th>Mechanism</th></tr></thead><tbody>
+        <tr><td><span class="fbadge"><div class="fdot fcommon"></div>Common</span></td><td class="cause-name">Hypoxia (global / OLV) — HPV</td><td><span class="context-tag intra">INTRA</span></td><td class="mtext">Alveolar PO₂ &lt;60–70 mmHg → inhibits KATP channels in pulmonary VSM → membrane depolarisation → Ca²⁺ influx → vasoconstriction; volatile agents blunt HPV (↑shunt but ↓PVR in OLV)</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot fcommon"></div>Common</span></td><td class="cause-name">Hypercapnia / respiratory acidosis</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">CO₂ and H⁺ cause pulmonary vasoconstriction (opposite to systemic effect); PaCO₂ &gt;50 mmHg significantly ↑PVR; compounded by concurrent hypoxia</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot fcommon"></div>Common</span></td><td class="cause-name">Metabolic acidosis (pH &lt;7.35)</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">H⁺ → pulmonary vasoconstriction via Ca²⁺-dependent pathway; synergistic with hypoxia; bicarbonate correction lowers PVR</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot fcommon"></div>Common</span></td><td class="cause-name">High tidal volume / high PEEP / auto-PEEP</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">Over-distension → compression of intra-alveolar capillaries; under-distension (atelectasis) → HPV; PEEP &gt;10 cmH₂O progressively increases RV afterload, especially in ARDS</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot funcommon"></div>Uncommon</span></td><td class="cause-name">Massive PE</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">Direct mechanical obstruction + reflex vasoconstriction (serotonin, TXA₂) → acute ↑PVR; RV can only generate mPAP ~40 mmHg acutely; chronic CTEPH in ~4% survivors</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot funcommon"></div>Uncommon</span></td><td class="cause-name">Pre-existing PAH (WHO Group I–V)</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">Fixed elevated PVR limits RV adaptive capacity; anaesthetic triggers → acute-on-chronic ↑PVR → RV failure; perioperative mortality high in WHO FC III–IV</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot funcommon"></div>Uncommon</span></td><td class="cause-name">Protamine — thromboxane-mediated vasoconstriction (Type III)</td><td><span class="context-tag intra">INTRA</span></td><td class="mtext">Complement cascade → C5a → pulmonary macrophage TXA₂ → acute severe pulmonary vasoconstriction; distinguishable from systemic anaphylaxis by ↑PAP with ↓CO</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot funcommon"></div>Uncommon</span></td><td class="cause-name">↓Blood viscosity (η) — rheological ↓PVR (extreme haemodilution, CPB prime)</td><td><span class="context-tag intra">INTRA</span></td><td class="mtext">PVR ∝ η; ↓η → ↓PVR → ↓RV afterload; physiological basis of deliberate CPB haemodilution. More commonly protective (↓RV afterload in borderline PHTN) than harmful; problematic only in extreme haemodilution + vasoplegia combination. Does not respond to inhaled NO; corrects with red cell transfusion.</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot frare"></div>Rare</span></td><td class="cause-name">Fat embolism syndrome (post-long bone fracture / medullary nailing)</td><td><span class="context-tag intra">INTRA</span></td><td class="mtext">Marrow fat globules → mechanical obstruction + free fatty acid-mediated endothelial injury → ↑PVR + ARDS; classic triad 24–72 h post-injury</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot frare"></div>Rare</span></td><td class="cause-name">Nitrous oxide — ↑PVR in pre-existing PHTN</td><td><span class="context-tag intra">INTRA</span></td><td class="mtext">N₂O is a sympathomimetic pulmonary vasoconstrictor; modest in normal PVR but clinically significant in pre-existing PHTN; avoided in Fontan physiology, severe PAH</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot frare"></div>Rare</span></td><td class="cause-name">Intracardiac air → pulmonary gas embolism (cardiac surgery)</td><td><span class="context-tag intra">INTRA</span></td><td class="mtext">Air into pulmonary arteries → gas-blood interface → surfactant disruption + vasoconstriction + endothelial activation → ↑PVR + hypoxaemia; TOE de-airing protocol is preventive</td></tr>
+      </tbody></table>
+    </div>
+  </div>
+
+  <!-- 08 pH -->
+  <div class="msection collapsed" id="m-ph">
+    <div class="msec-hdr" onclick="mtoggle('m-ph')">
+      <div class="msec-accent" style="background:#e8d44a"></div>
+      <span class="msec-title">08 · pH (ACID-BASE)</span>
+      <span class="msec-formula">Acidaemia → ↓contractility · ↓SVR (systemic) · ↑PVR (pulmonary) · ↓catecholamine responsiveness</span>
+      <span class="mtoggle">▾</span>
+    </div>
+    <div class="msec-body">
+      <div class="mphysnote">pH exerts direct cardiovascular effects independent of aetiology. Acidaemia below pH 7.2 causes progressive myocardial depression, vasodilation, and pulmonary vasoconstriction. Alkalemia induces coronary vasospasm, hypokalaemia, hypocalcaemia, and leftward ODC shift. Bicarbonate is temporising only — identify and treat the cause.</div>
+      <table><thead><tr><th>Freq</th><th>Cause of Acidaemia</th><th>Context</th><th>Cardiovascular Effect</th></tr></thead><tbody>
+        <tr><td><span class="fbadge"><div class="fdot fcommon"></div>Common</span></td><td class="cause-name">Lactic acidosis — Type A (↓tissue O₂ delivery)</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">Hypoperfusion → anaerobic glycolysis → H⁺ + lactate; pH fall → ↓inotropy via troponin C competition + ↓cAMP pathway + ↓β-receptor function; positive feedback: ↓CO → ↑lactate → ↓pH → ↓CO</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot fcommon"></div>Common</span></td><td class="cause-name">Respiratory acidosis (hypoventilation, airway obstruction, ARDS)</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">↑PaCO₂ → ↑H₂CO₃ → ↓pH; acute ↑PVR + ↓SVR; catecholamine release buffers initially but exhausted in prolonged hypercapnia</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot fcommon"></div>Common</span></td><td class="cause-name">Dilutional acidosis (large-volume 0.9% NaCl)</td><td><span class="context-tag intra">INTRA</span></td><td class="mtext">Hyperchloraemia → ↓strong ion difference → ↑H⁺; pH typically 7.25–7.35; mild cardiovascular impact but compounds pre-existing metabolic derangement</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot funcommon"></div>Uncommon</span></td><td class="cause-name">Diabetic ketoacidosis decompensated perioperatively</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">Insulin deficiency → ketone accumulation → severe high anion gap acidosis; pH &lt;7.1 causes vasodilation, ↓inotropy, arrhythmias; osmotic diuresis → hypovolaemia compounds</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot frare"></div>Rare</span></td><td class="cause-name">Severe metabolic alkalosis (pH &gt;7.55)</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">↓Ionised Ca²⁺ (alkalosis ↑ albumin binding) → ↓contractility + ↑neuromuscular excitability; hypokalaemia-mediated arrhythmias; coronary vasospasm; ↑Hb-O₂ affinity → ↓O₂ offloading; clinically under-recognised</td></tr>
+      </tbody></table>
+    </div>
+  </div>
+
+  <!-- 09 PaCO2 -->
+  <div class="msection collapsed" id="m-paco2">
+    <div class="msec-hdr" onclick="mtoggle('m-paco2')">
+      <div class="msec-accent" style="background:#e8d44a"></div>
+      <span class="msec-title">09 · PaCO₂</span>
+      <span class="msec-formula">Hypercapnia → ↑sympathetic + ↓SVR (systemic) + ↑PVR (pulmonary) &nbsp;|&nbsp; Hypocapnia → alkalosis + vasoconstriction</span>
+      <span class="mtoggle">▾</span>
+    </div>
+    <div class="msec-body">
+      <div class="mphysnote">CO₂ has tissue-specific vascular effects: systemic vasodilation but pulmonary vasoconstriction. This divergence is adaptive (V/Q matching) but haemodynamically hazardous when PaCO₂ is elevated globally. Hypocapnia-induced alkalosis can paradoxically reduce DO₂ despite normal PaO₂.</div>
+      <table><thead><tr><th>Freq</th><th>Cause</th><th>Context</th><th>Mechanism</th></tr></thead><tbody>
+        <tr><td><span class="fbadge"><div class="fdot fcommon"></div>Common</span></td><td class="cause-name">Inadvertent hypoventilation during IPPV (obstructed ETT, bronchospasm, disconnect)</td><td><span class="context-tag intra">INTRA</span></td><td class="mtext">↑PaCO₂ → sympathomimetic buffering initially; sustained hypercapnia (PaCO₂ &gt;70 mmHg) → ↓inotropy, ↑PVR, arrhythmias, ↓SVR-mediated hypotension predominates</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot fcommon"></div>Common</span></td><td class="cause-name">Pneumoperitoneum CO₂ absorption (laparoscopic surgery)</td><td><span class="context-tag intra">INTRA</span></td><td class="mtext">Peritoneal CO₂ absorption → ↑PaCO₂ → initial ↑HR/MAP (catecholamine surge); haemodynamically significant if ventilation not increased; PHTN makes PVR rise clinically important</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot fcommon"></div>Common</span></td><td class="cause-name">Malignant hyperthermia — hypermetabolic state</td><td><span class="context-tag intra">INTRA</span></td><td class="mtext">RYR1 mutation → uncontrolled SR Ca²⁺ release → skeletal muscle hypermetabolism → ↑VO₂ + ↑VCO₂ → exponential ↑PaCO₂ and ↓pH → cardiovascular collapse; ETCO₂ &gt;55 mmHg during GA is sentinel sign</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot funcommon"></div>Uncommon</span></td><td class="cause-name">Permissive hypercapnia in ARDS → haemodynamic compromise</td><td><span class="context-tag post">POST</span></td><td class="mtext">Deliberate ↑PaCO₂ (60–80 mmHg) → acceptable if RV preserved; RV afterload ↑ from pulmonary vasoconstriction limits PaCO₂ permissiveness to ~60 mmHg in overt RV dysfunction</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot funcommon"></div>Uncommon</span></td><td class="cause-name">Severe hypocapnia (PaCO₂ &lt;25 mmHg) — haemodynamic effects</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">Alkalosis → ↑albumin-Ca²⁺ binding → ↓ionised Ca²⁺ → ↓contractility; cerebral vasoconstriction → ↓CBF; coronary vasospasm; leftward ODC shift → ↑Hb-O₂ affinity → ↓O₂ offloading</td></tr>
+      </tbody></table>
+    </div>
+  </div>
+
+  <!-- 10 PaO2 -->
+  <div class="msection collapsed" id="m-pao2">
+    <div class="msec-hdr" onclick="mtoggle('m-pao2')">
+      <div class="msec-accent" style="background:#e8d44a"></div>
+      <span class="msec-title">10 · PaO₂</span>
+      <span class="msec-formula">Hypoxaemia → ↑sympathetic → compensated &nbsp;|&nbsp; PaO₂ &lt;40 mmHg → ↓myocardial function + ↑PVR → decompensated</span>
+      <span class="mtoggle">▾</span>
+    </div>
+    <div class="msec-body">
+      <div class="mphysnote">Myocardial O₂ extraction is ~70–75% at rest (nearly maximal), leaving minimal reserve. Hypoxaemia-driven hypotension cannot be buffered by ↑extraction alone — ↑CO must compensate. When CO cannot rise (pre-existing dysfunction), critical DO₂ is reached rapidly.</div>
+      <table><thead><tr><th>Freq</th><th>Cause</th><th>Context</th><th>Mechanism</th></tr></thead><tbody>
+        <tr><td><span class="fbadge"><div class="fdot fcommon"></div>Common</span></td><td class="cause-name">Airway loss / failed intubation / oesophageal intubation</td><td><span class="context-tag intra">INTRA</span></td><td class="mtext">Acute hypoxaemia within 3–5 min → compensatory tachycardia + ↑SVR initially; sustained hypoxia (SaO₂ &lt;85%) → myocardial depression → bradycardia → cardiac arrest; SpO₂ decline to 70% precedes decompensation by 2–3 min</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot fcommon"></div>Common</span></td><td class="cause-name">Bronchospasm / laryngospasm — severe V/Q mismatch</td><td><span class="context-tag intra">INTRA</span></td><td class="mtext">Airway obstruction → ↓alveolar ventilation → hypoxaemia; reflex ↑PVR from HPV; haemodynamic compromise when SpO₂ &lt;90%; concurrent ↑PEEP from gas trapping → ↓venous return</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot fcommon"></div>Common</span></td><td class="cause-name">Postoperative atelectasis + hypoxaemia in ICU</td><td><span class="context-tag post">POST</span></td><td class="mtext">Lobar/segmental collapse → intrapulmonary shunting → refractory hypoxaemia; modest haemodynamic impact if isolated but synergistic with sepsis or post-surgical myocardial depression</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot funcommon"></div>Uncommon</span></td><td class="cause-name">Severe ARDS → refractory hypoxaemia → myocardial O₂ debt</td><td><span class="context-tag post">POST</span></td><td class="mtext">PaO₂ &lt;55 mmHg despite FiO₂ 1.0 → ↓DO₂ to myocardium → anaerobic metabolism → ↑lactate → ↓contractility in context of concurrent ↑PVR from ARDS physiology</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot funcommon"></div>Uncommon</span></td><td class="cause-name">One-lung ventilation hypoxaemia (OLV)</td><td><span class="context-tag intra">INTRA</span></td><td class="mtext">Shunt from non-ventilated lung (~30–40% of CO) → SpO₂ 85–90%; volatile agents blunt HPV, TIVA preserves it; limit Vt ≤6 mL/kg IBW for ventilated lung</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot frare"></div>Rare</span></td><td class="cause-name">Paradoxical embolism via PFO (R→L shunt from ↑RA pressure)</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">PFO (~25% of adults) + ↑RA pressure (PE, PHTN, PPV) → reversal of transatrial gradient → R→L shunting → systemic hypoxaemia disproportionate to lung pathology + risk of arterial embolism</td></tr>
+      </tbody></table>
+    </div>
+  </div>
+
+  <!-- 11 TEMPERATURE -->
+  <div class="msection collapsed" id="m-temp">
+    <div class="msec-hdr" onclick="mtoggle('m-temp')">
+      <div class="msec-accent" style="background:#e84a4a"></div>
+      <span class="msec-title">11 · TEMPERATURE</span>
+      <span class="msec-formula">Hypothermia → ↓HR · ↓contractility · arrhythmias · coagulopathy &nbsp;|&nbsp; Hyperthermia → ↑HR · ↓SVR · vasodilation</span>
+      <span class="mtoggle">▾</span>
+    </div>
+    <div class="msec-body">
+      <div class="mphysnote">Core temperature directly governs enzymatic kinetics, ion channel function, and coagulation cascade efficiency (each 1°C ↓ reduces clot strength ~10%). Hypothermia is the most common temperature-related cause of haemodynamic compromise. Hyperthermia signals MH, sepsis, thyroid storm, or NMS — all life-threatening.</div>
+      <table><thead><tr><th>Freq</th><th>Cause</th><th>Context</th><th>Mechanism</th></tr></thead><tbody>
+        <tr><td><span class="fbadge"><div class="fdot fcommon"></div>Common</span></td><td class="cause-name">Perioperative hypothermia (core 34–36°C)</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">↓Enzymatic activity → ↓SERCA → ↓SR Ca²⁺ cycling → ↓inotropy; ↑blood viscosity; prolonged drug metabolism; coagulopathy → ↑bleeding → ↓preload; shivering raises O₂ demand by 400%</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot fcommon"></div>Common</span></td><td class="cause-name">Moderate hypothermia (32–34°C) in cardiac / vascular surgery</td><td><span class="context-tag intra">INTRA</span></td><td class="mtext">Progressive ↓HR, ↓CO; ↑VF risk below 30°C; J (Osborn) waves on ECG; cold-induced diuresis compounds hypovolaemia; rewarming vasodilation-induced ↓SVR = post-bypass hypotension risk</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot funcommon"></div>Uncommon</span></td><td class="cause-name">Severe hypothermia (&lt;30°C) — accidental or therapeutic</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">Spontaneous VF threshold; cold myocardium unresponsive to conventional vasopressors; ECMO (VA) is definitive rewarming and haemodynamic support in cardiac arrest from hypothermia</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot funcommon"></div>Uncommon</span></td><td class="cause-name">Sepsis-induced hyperthermia → ↓SVR + vasodilation</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">Pyrexia → ↑metabolic rate → ↑CO demand; cytokine-mediated vasodilation amplifies tachycardia and ↑DO₂ requirement; haemodynamic compromise is primarily distributive, not temperature-dependent</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot frare"></div>Rare</span></td><td class="cause-name">Malignant hyperthermia (MH) — fulminant</td><td><span class="context-tag intra">INTRA</span></td><td class="mtext">RYR1 mutation + triggering agents (volatile, succinylcholine) → uncontrolled SR Ca²⁺ release → skeletal muscle hypermetabolism → hyperthermia, hypercapnia, acidosis, rhabdomyolysis, hyperkalaemia → cardiovascular collapse; dantrolene 2.5 mg/kg IV is antidote</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot frare"></div>Rare</span></td><td class="cause-name">Neuroleptic malignant syndrome (NMS)</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">D2 receptor blockade (antipsychotics, antiemetics) → hypothalamic dysregulation → muscle rigidity + hyperthermia + autonomic instability; ↓SVR from vasodilation; bromocriptine + dantrolene</td></tr>
+        <tr><td><span class="fbadge"><div class="fdot frare"></div>Rare</span></td><td class="cause-name">Thyroid storm</td><td><span class="context-tag both">BOTH</span></td><td class="mtext">Massive TH release → ↑thermogenesis + profound ↓SVR + tachyarrhythmia → high-output state; decompensation when cardiac reserve exhausted; fever &gt;41°C + AF + haemodynamic collapse = crisis; PTU + beta-blockade + iodine + hydrocortisone</td></tr>
+      </tbody></table>
+    </div>
+  </div>
+
+  <!-- INTEGRATIVE MAP of SHOCK PHENOTYPES -->
+  <div class="mint-box">
+    <h2>▸ Integrative Map of Shock Phenotypes — Haemodynamic Fingerprints</h2>
+    <div class="int-grid">
+      <div class="int-card">
+        <h3 style="color:#0070b0">HYPOVOLAEMIC</h3>
+        <ul>
+          <li>Haemorrhage · third spacing · burns</li>
+          <li>Adrenal crisis (salt-wasting)</li>
+          <li>Diabetes insipidus · GI losses</li>
+          <li>Aortocaval compression</li>
+        </ul>
+        <div class="iprow">
+          <span class="iparam">HR <span class="mu">↑↑</span></span>
+          <span class="iparam">CO <span class="md">↓↓</span></span>
+          <span class="iparam">SVR <span class="mu">↑↑</span></span>
+          <span class="iparam">CVP <span class="md">↓</span></span>
+          <span class="iparam">PCWP <span class="md">↓</span></span>
+          <span class="iparam">SvO₂ <span class="md">↓</span></span>
+        </div>
+      </div>
+      <div class="int-card">
+        <h3 style="color:#c01838">CARDIOGENIC</h3>
+        <ul>
+          <li>Acute MI · cardiomyopathy</li>
+          <li>Volatile agent excess · Local Anaesthetic Toxicity (LAST)</li>
+          <li>Severe acidaemia · hypothermia</li>
+          <li>Tamponade · constrictive physiology</li>
+        </ul>
+        <div class="iprow">
+          <span class="iparam">HR <span class="mv">↑/N</span></span>
+          <span class="iparam">CO <span class="md">↓↓</span></span>
+          <span class="iparam">SVR <span class="mu">↑↑</span></span>
+          <span class="iparam">CVP <span class="mu">↑</span></span>
+          <span class="iparam">PCWP <span class="mu">↑↑</span></span>
+          <span class="iparam">SvO₂ <span class="md">↓↓</span></span>
+        </div>
+      </div>
+      <div class="int-card">
+        <h3 style="color:#6820b8">DISTRIBUTIVE / VASODILATORY</h3>
+        <ul>
+          <li>Sepsis · SIRS · anaphylaxis</li>
+          <li>Neuraxial / GA induction</li>
+          <li>Adrenal crisis · hepatic failure</li>
+          <li>↓Viscosity (high-output hypotension)</li>
+        </ul>
+        <div class="iprow">
+          <span class="iparam">HR <span class="mu">↑↑</span></span>
+          <span class="iparam">CO <span class="mu">↑/N</span></span>
+          <span class="iparam">SVR <span class="md">↓↓</span></span>
+          <span class="iparam">CVP <span class="md">↓/N</span></span>
+          <span class="iparam">PCWP <span class="md">↓/N</span></span>
+          <span class="iparam">SvO₂ <span class="mu">↑</span></span>
+        </div>
+      </div>
+      <div class="int-card">
+        <h3 style="color:#007848">OBSTRUCTIVE</h3>
+        <ul>
+          <li>Massive PE · tension pneumothorax</li>
+          <li>Cardiac tamponade</li>
+          <li>Auto-PEEP · air embolism · Bone Cement Implantation Syndrome (BCIS)</li>
+          <li>Protamine Type III</li>
+        </ul>
+        <div class="iprow">
+          <span class="iparam">HR <span class="mu">↑↑</span></span>
+          <span class="iparam">CO <span class="md">↓↓</span></span>
+          <span class="iparam">SVR <span class="mu">↑↑</span></span>
+          <span class="iparam">CVP <span class="mu">↑↑</span></span>
+          <span class="iparam">PCWP <span class="md">↓ (PE/PTX)</span></span>
+          <span class="iparam">PAP <span class="mu">↑↑ (PE)</span></span>
+        </div>
+      </div>
+      <div class="int-card">
+        <h3 style="color:#8a5800">MIXED / COMPLEX</h3>
+        <ul>
+          <li>Sepsis + relative hypovolaemia</li>
+          <li>PE + RV failure → ↓LV preload</li>
+          <li>MH: distributive + metabolic</li>
+          <li>Post-CPB: vasoplegia + stunning</li>
+        </ul>
+        <div class="iprow">
+          <span class="iparam">HR <span class="mv">Variable</span></span>
+          <span class="iparam">CO <span class="mv">Variable</span></span>
+          <span class="iparam">SVR <span class="mv">Variable</span></span>
+          <span class="iparam" style="color:var(--ph-H)">TTE required</span>
+        </div>
+      </div>
+      <div class="int-card">
+        <h3 style="color:#b03010">NEUROGENIC</h3>
+        <ul>
+          <li>High cervical SCI (≥T6)</li>
+          <li>Brainstem herniation (late)</li>
+          <li>High spinal / epidural block</li>
+        </ul>
+        <div class="iprow">
+          <span class="iparam">HR <span class="md">↓ (brady)</span></span>
+          <span class="iparam">CO <span class="md">↓</span></span>
+          <span class="iparam">SVR <span class="md">↓↓</span></span>
+          <span class="iparam">Skin <span class="mu">Warm/dry</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end mech-tab -->
+</div><!-- end tab-pane mechanisms -->
+
+</main>
+
+<footer>
+  <span>SHOCK | version 1.0, (April 2026) | Copyright © 2026 Prof. Jyotirmay Kirtania, MPMMCC & HBCH, Tata Memorial Centre, Varanasi, HBNI, India. Licensed under the GNU GPL v3.0</span>
+  <span>Evidence-based educational tool | Not a substitute for clinical judgement</span>
+</footer>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// PARAMETER DEFINITIONS & SCORING MATRIX
+// ═══════════════════════════════════════════════════════
+const PHENOTYPES = ['H','C','D','O','N'];
+const PHENOTYPE_NAMES = { H:'Hypovolaemic', C:'Cardiogenic', D:'Distributive', O:'Obstructive', N:'Neurogenic' };
+const PHENOTYPE_COLORS = { H:'#38b2e8', C:'#e84060', D:'#a050e0', O:'#30d090', N:'#e8c030' };
+
+const PARAMS = [
+  {
+    id:'context', label:'Clinical Context / History',
+    note:'Select the most dominant clinical trigger',
+    options:[
+      {label:'Major haemorrhage / surgical blood loss / trauma', s:{H:6,C:0,D:0,O:0,N:0}},
+      {label:'Acute cardiac event / STEMI features / cardiac history', s:{H:0,C:6,D:0,O:0,N:0}},
+      {label:'Sepsis / infection source / fever + haemodynamic instability', s:{H:0,C:0,D:6,O:0,N:0}},
+      {label:'Anaphylaxis trigger (drug / blood / contrast / latex)', s:{H:0,C:0,D:6,O:0,N:0}},
+      {label:'Recent neuraxial anaesthesia (spinal / epidural)', s:{H:0,C:0,D:5,O:0,N:0}},
+      {label:'Acute PE risk (DVT / immobility / malignancy / post-op)', s:{H:0,C:0,D:0,O:6,N:0}},
+      {label:'Tension pneumothorax features (PPV + asymmetric or absent BS)', s:{H:0,C:0,D:0,O:6,N:0}},
+      {label:'Cardiac tamponade features (pericardial disease / trauma)', s:{H:0,C:0,D:0,O:6,N:0}},
+      {label:'High spinal cord injury ≥ T6', s:{H:0,C:0,D:0,O:0,N:6}},
+      {label:'Nonspecific / mixed / unclear', s:{H:0,C:0,D:0,O:0,N:0}},
+    ]
+  },
+  {
+    id:'hr', label:'Heart Rate',
+    options:[
+      {label:'< 50 bpm — Severe bradycardia', s:{H:0,C:0,D:0,O:0,N:5}},
+      {label:'50–60 bpm — Bradycardia', s:{H:0,C:0,D:0,O:0,N:3}},
+      {label:'60–100 bpm — Normal', s:{H:0,C:0,D:0,O:0,N:0}},
+      {label:'100–120 bpm — Tachycardia', s:{H:3,C:2,D:3,O:3,N:0}},
+      {label:'> 120 bpm — Severe tachycardia', s:{H:4,C:2,D:4,O:4,N:0}},
+    ]
+  },
+  {
+    id:'skin', label:'Skin Perfusion',
+    options:[
+      {label:'Cold, pale, clammy — peripheral vasoconstriction', s:{H:4,C:4,D:0,O:3,N:0}},
+      {label:'Warm, flushed, vasodilated', s:{H:0,C:0,D:4,O:0,N:4}},
+      {label:'Normal perfusion', s:{H:0,C:0,D:0,O:0,N:0}},
+    ]
+  },
+  {
+    id:'crt', label:'Capillary Refill Time (CRT) — Central/sternal preferred',
+    options:[
+      {label:'< 2 s — Normal', s:{H:0,C:0,D:0,O:0,N:0}},
+      {label:'2–3 s — Mildly prolonged', s:{H:2,C:2,D:0,O:2,N:0}},
+      {label:'> 3 s — Markedly prolonged', s:{H:4,C:4,D:0,O:3,N:0}},
+      {label:'< 2 s but warm vasodilated (warm shock)', s:{H:0,C:0,D:3,O:0,N:3}},
+    ]
+  },
+  {
+    id:'mottling', label:'Mottling Score (Ait-Oufella 0–5)',
+    options:[
+      {label:'Grade 0 — None', s:{H:0,C:0,D:0,O:0,N:0}},
+      {label:'Grade 1–2 — Around or at knee', s:{H:2,C:2,D:0,O:1,N:0}},
+      {label:'Grade 3–4 — Thigh to groin', s:{H:3,C:3,D:0,O:2,N:0}},
+      {label:'Grade 5 — Beyond groin / trunk', s:{H:4,C:4,D:0,O:3,N:0}},
+    ]
+  },
+  {
+    id:'cp', label:'Core–Periphery Temperature Gradient (forehead vs fingertip)',
+    options:[
+      {label:'< 2°C — Warm periphery (vasodilated)', s:{H:0,C:0,D:4,O:0,N:4}},
+      {label:'2–4°C — Mildly cool periphery', s:{H:2,C:2,D:0,O:1,N:0}},
+      {label:'4–6°C — Cool periphery (vasoconstricted)', s:{H:3,C:3,D:0,O:2,N:0}},
+      {label:'> 6°C — Cold periphery — severe shutdown', s:{H:4,C:4,D:0,O:3,N:0}},
+    ]
+  },
+  {
+    id:'spo2', label:'SpO₂ Plethysmograph / PPI (Perfusion Index)',
+    options:[
+      {label:'Small, poorly perfused trace — low PPI', s:{H:3,C:3,D:0,O:2,N:0}},
+      {label:'Normal amplitude and waveform', s:{H:0,C:0,D:0,O:0,N:0}},
+      {label:'Large, bounding, hyperdynamic trace — high PPI', s:{H:0,C:0,D:4,O:0,N:2}},
+      {label:'Marked respiratory variation (PVI ↑)', s:{H:3,C:0,D:2,O:0,N:0}},
+    ]
+  },
+  {
+    id:'ppv', label:'PPV (only if ALL validity criteria met)',
+    options:[
+      {label:'Not valid (spontaneous breathing / arrhythmia / low Vt)', s:{H:0,C:0,D:0,O:0,N:0}},
+      {label:'PPV < 9% — Non-responsive to fluid', s:{H:0,C:3,D:0,O:3,N:0}},
+      {label:'PPV 9–13% — Grey zone', s:{H:1,C:1,D:1,O:1,N:0}},
+      {label:'PPV > 13% — Fluid-responsive', s:{H:4,C:0,D:2,O:0,N:0}},
+    ]
+  },
+  {
+    id:'plr', label:'Passive Leg Raise (PLR) — see Fluids tab for protocol',
+    options:[
+      {label:'Not performed', s:{H:0,C:0,D:0,O:0,N:0}},
+      {label:'Positive — ↑CO or ↑PP > 10% at 60–90 s', s:{H:4,C:0,D:2,O:0,N:0}},
+      {label:'Negative — < 10% change at 60–90 s', s:{H:0,C:3,D:0,O:3,N:0}},
+    ]
+  },
+  {
+    id:'lv', label:'POCUS — LV Size & Function (subcostal / parasternal)',
+    options:[
+      {label:'Not performed', s:{H:0,C:0,D:0,O:0,N:0}},
+      {label:'Small, hyperdynamic — "kissing walls", EF > 70%', s:{H:5,C:0,D:1,O:0,N:0}},
+      {label:'Normal size and function', s:{H:0,C:0,D:0,O:0,N:0}},
+      {label:'Dilated, severely reduced function — EF < 30%', s:{H:0,C:5,D:0,O:0,N:0}},
+      {label:'Normal size, hyperdynamic (EF > 65%) — high-output', s:{H:0,C:0,D:4,O:0,N:0}},
+    ]
+  },
+  {
+    id:'rv', label:'POCUS — RV Size (apical 4-chamber)',
+    options:[
+      {label:'Not performed', s:{H:0,C:0,D:0,O:0,N:0}},
+      {label:'Normal (RV:LV < 0.6)', s:{H:0,C:0,D:0,O:0,N:0}},
+      {label:'Mildly dilated (RV:LV 0.6–1.0)', s:{H:0,C:1,D:0,O:2,N:0}},
+      {label:'Severely dilated (RV:LV > 1.0) — acute cor pulmonale', s:{H:0,C:1,D:0,O:5,N:0}},
+      {label:'McConnell sign — free wall hypokinesis, apex spared', s:{H:0,C:0,D:0,O:6,N:0}},
+    ]
+  },
+  {
+    id:'ivc', label:'POCUS — IVC (subcostal long axis)',
+    options:[
+      {label:'Not performed', s:{H:0,C:0,D:0,O:0,N:0}},
+      {label:'Collapsed (< 1.5 cm) + > 50% respiratory variation', s:{H:4,C:0,D:2,O:0,N:0}},
+      {label:'Intermediate (1.5–2.1 cm, variable collapse)', s:{H:1,C:0,D:1,O:0,N:0}},
+      {label:'Distended (> 2.1 cm) + < 50% variation — flat IVC', s:{H:0,C:4,D:0,O:4,N:0}},
+    ]
+  },
+  {
+    id:'lung', label:'POCUS — Lung Pattern',
+    options:[
+      {label:'Not performed', s:{H:0,C:0,D:0,O:0,N:0}},
+      {label:'Bilateral A-lines + lung sliding present', s:{H:2,C:0,D:2,O:0,N:0}},
+      {label:'Bilateral B-lines (≥ 3 per zone, ≥ 2 zones bilateral)', s:{H:0,C:4,D:0,O:0,N:0}},
+      {label:'Absent lung sliding + A-lines (one side)', s:{H:0,C:0,D:0,O:5,N:0}},
+      {label:'Bilateral pleural effusions', s:{H:0,C:2,D:0,O:0,N:0}},
+    ]
+  },
+  {
+    id:'peri', label:'POCUS — Pericardial',
+    options:[
+      {label:'Not performed', s:{H:0,C:0,D:0,O:0,N:0}},
+      {label:'No effusion', s:{H:0,C:0,D:0,O:0,N:0}},
+      {label:'Effusion present, no tamponade physiology', s:{H:0,C:0,D:0,O:1,N:0}},
+      {label:'Effusion + RA/RV diastolic collapse + flat IVC (tamponade)', s:{H:0,C:0,D:0,O:6,N:0}},
+    ]
+  },
+  {
+    id:'fast', label:'POCUS — FAST (Free Fluid)',
+    options:[
+      {label:'Not performed', s:{H:0,C:0,D:0,O:0,N:0}},
+      {label:'Negative — no free fluid', s:{H:0,C:0,D:0,O:0,N:0}},
+      {label:'Positive — haemoperitoneum / haemothorax', s:{H:5,C:0,D:0,O:0,N:0}},
+    ]
+  },
+  {
+    id:'lactate', label:'Lactate (ABG or point-of-care)',
+    options:[
+      {label:'< 2 mmol/L — Normal', s:{H:0,C:0,D:0,O:0,N:0}},
+      {label:'2–4 mmol/L — Occult shock / hyperlactataemia', s:{H:2,C:2,D:2,O:2,N:0}},
+      {label:'> 4 mmol/L — Overt shock', s:{H:3,C:3,D:3,O:3,N:0}},
+      {label:'Rising trend despite resuscitation', s:{H:2,C:2,D:2,O:2,N:0}},
+    ]
+  },
+  {
+    id:'be', label:'Base Excess (ABG)',
+    options:[
+      {label:'−2 to +2 — Normal', s:{H:0,C:0,D:0,O:0,N:0}},
+      {label:'−4 to −8 — Moderate metabolic acidosis', s:{H:2,C:2,D:1,O:2,N:0}},
+      {label:'< −8 — Severe metabolic acidosis', s:{H:3,C:3,D:2,O:3,N:0}},
+    ]
+  },
+  {
+    id:'hb', label:'Haemoglobin / Haematocrit (ABG)',
+    options:[
+      {label:'> 10 g/dL — Normal range', s:{H:0,C:0,D:0,O:0,N:0}},
+      {label:'7–10 g/dL — Mild-moderate anaemia', s:{H:1,C:0,D:0,O:0,N:0}},
+      {label:'< 7 g/dL — Severe anaemia (rheological ↓SVR component)', s:{H:2,C:0,D:1,O:0,N:0}},
+    ]
+  },
+  {
+    id:'uo', label:'Urine Output',
+    options:[
+      {label:'> 0.5 mL/kg/hr — Adequate', s:{H:0,C:0,D:0,O:0,N:0}},
+      {label:'0.2–0.5 mL/kg/hr — Oliguria', s:{H:2,C:2,D:1,O:2,N:0}},
+      {label:'< 0.2 mL/kg/hr or anuria', s:{H:3,C:3,D:2,O:3,N:0}},
+    ]
+  },
+  {
+    id:'ecg', label:'ECG',
+    options:[
+      {label:'Not performed', s:{H:0,C:0,D:0,O:0,N:0}},
+      {label:'Normal sinus tachycardia', s:{H:1,C:0,D:1,O:1,N:0}},
+      {label:'ST elevation / new LBBB (STEMI equivalent)', s:{H:0,C:5,D:0,O:0,N:0}},
+      {label:'ST depression / T-wave inversion', s:{H:0,C:3,D:0,O:1,N:0}},
+      {label:'S1Q3T3 / new RBBB / RV strain pattern', s:{H:0,C:0,D:0,O:4,N:0}},
+      {label:'Bradyarrhythmia / high-degree AV block', s:{H:0,C:1,D:0,O:0,N:4}},
+      {label:'AF / SVT / atrial arrhythmia', s:{H:0,C:2,D:0,O:0,N:0}},
+    ]
+  },
+  {
+    id:'etco2', label:'ETCO₂ (if mechanically ventilated)',
+    options:[
+      {label:'Not applicable', s:{H:0,C:0,D:0,O:0,N:0}},
+      {label:'35–45 mmHg — Normal', s:{H:0,C:0,D:0,O:0,N:0}},
+      {label:'25–34 mmHg — Low (↑dead space / ↓CO)', s:{H:2,C:2,D:0,O:2,N:0}},
+      {label:'< 25 mmHg — Very low (severe ↓CO)', s:{H:3,C:3,D:0,O:3,N:0}},
+      {label:'Sudden ETCO₂ collapse — embolism / cardiac arrest', s:{H:1,C:1,D:0,O:5,N:0}},
+    ]
+  },
+  {
+    id:'scvo2', label:'ScvO₂ (if CVC in situ — no SwanGanz required)',
+    options:[
+      {label:'Not available', s:{H:0,C:0,D:0,O:0,N:0}},
+      {label:'> 75% — ↓O₂ extraction (distributive/septic or overcorrection)', s:{H:0,C:0,D:3,O:0,N:0}},
+      {label:'65–75% — Normal', s:{H:0,C:0,D:0,O:0,N:0}},
+      {label:'< 65% — ↑O₂ extraction (↓DO₂ or ↑VO₂)', s:{H:3,C:3,D:0,O:3,N:0}},
+    ]
+  },
+];
+
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+let selections = {};
+PARAMS.forEach(p => { selections[p.id] = 0; });
+
+// ═══════════════════════════════════════════════════════
+// BUILD PARAM LIST
+// ═══════════════════════════════════════════════════════
+function buildParamList() {
+  const container = document.getElementById('param-list');
+  PARAMS.forEach(p => {
+    const row = document.createElement('div');
+    row.className = 'param-row';
+    row.id = 'prow-' + p.id;
+
+    const lbl = document.createElement('div');
+    lbl.className = 'param-label';
+    lbl.innerHTML = '<strong>' + p.label + '</strong>' + (p.note ? '<span style="color:var(--text-dim);font-size:10px">' + p.note + '</span>' : '');
+
+    const sel = document.createElement('select');
+    sel.className = 'param-select';
+    sel.id = 'sel-' + p.id;
+
+    const def = document.createElement('option');
+    def.value = '0';
+    def.textContent = '— Select finding —';
+    sel.appendChild(def);
+
+    p.options.forEach((opt, idx) => {
+      const o = document.createElement('option');
+      o.value = idx + 1;
+      o.textContent = opt.label;
+      sel.appendChild(o);
+    });
+
+    sel.addEventListener('change', () => {
+      selections[p.id] = parseInt(sel.value) || 0;
+      row.classList.toggle('selected', selections[p.id] > 0);
+      updateResults();
+    });
+
+    row.appendChild(lbl);
+    row.appendChild(sel);
+    container.appendChild(row);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// SCORE CALCULATION
+// ═══════════════════════════════════════════════════════
+function calcScores() {
+  const scores = {H:0, C:0, D:0, O:0, N:0};
+  PARAMS.forEach(p => {
+    const idx = selections[p.id];
+    if (idx > 0) {
+      const opt = p.options[idx - 1];
+      PHENOTYPES.forEach(ph => {
+        scores[ph] += (opt.s[ph] || 0);
+      });
+    }
+  });
+  return scores;
+}
+
+// ═══════════════════════════════════════════════════════
+// MAX POSSIBLE SCORES (for independent % normalisation)
+// ═══════════════════════════════════════════════════════
+function calcMaxScores() {
+  const maxScores = {H:0, C:0, D:0, O:0, N:0};
+  PARAMS.forEach(p => {
+    PHENOTYPES.forEach(ph => {
+      const best = Math.max(...p.options.map(o => o.s[ph] || 0));
+      maxScores[ph] += best;
+    });
+  });
+  return maxScores;
+}
+const MAX_SCORES = calcMaxScores(); // computed once
+
+// ═══════════════════════════════════════════════════════
+// UPDATE RESULTS — Non-mutually exclusive phenotype display
+// Each phenotype scored independently as % of its own max
+// ═══════════════════════════════════════════════════════
+function updateResults() {
+  const scores = calcScores();
+  const totalParamsSelected = PHENOTYPES.reduce((a, ph) => a + scores[ph], 0);
+
+  // Independent % for each phenotype (vs its own max possible)
+  const pcts = {};
+  PHENOTYPES.forEach(ph => { pcts[ph] = MAX_SCORES[ph] > 0 ? Math.round((scores[ph] / MAX_SCORES[ph]) * 100) : 0; });
+
+  // Classify: PRIMARY ≥35%, CONTRIBUTING 15-34%, POSSIBLE 5-14%, UNLIKELY <5%
+  const classify = pct => pct >= 35 ? 'PRIMARY' : pct >= 15 ? 'CONTRIBUTING' : pct >= 5 ? 'POSSIBLE' : 'UNLIKELY';
+  const classColour = c => c === 'PRIMARY' ? '#0d1520' : c === 'CONTRIBUTING' ? '#7a4800' : c === 'POSSIBLE' ? '#4a5a70' : '#a0b0c4';
+  const classOpacity = c => c === 'PRIMARY' ? 1 : c === 'CONTRIBUTING' ? 0.75 : c === 'POSSIBLE' ? 0.45 : 0.18;
+
+  const sortedPH = PHENOTYPES.slice().sort((a, b) => pcts[b] - pcts[a]);
+  const container = document.getElementById('bars-container');
+  container.innerHTML = '';
+
+  // Header label
+  const hdr = document.createElement('div');
+  hdr.style.cssText = 'font-family:var(--mono);font-size:8.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)';
+  hdr.textContent = 'Independent Phenotype Probability (% of max possible per phenotype)';
+  container.appendChild(hdr);
+
+  sortedPH.forEach(ph => {
+    const pct = pcts[ph];
+    const cls = classify(pct);
+    if (totalParamsSelected === 0 && pct === 0) return; // hide all when nothing selected
+
+    const row = document.createElement('div');
+    row.className = 'phenotype-bar-row';
+    row.style.marginBottom = '10px';
+
+    const labelRow = document.createElement('div');
+    labelRow.className = 'phenotype-bar-label';
+    labelRow.style.marginBottom = '4px';
+
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'ph-name';
+    nameSpan.style.color = PHENOTYPE_COLORS[ph];
+    nameSpan.style.opacity = String(classOpacity(cls));
+    nameSpan.textContent = ph + ' — ' + PHENOTYPE_NAMES[ph];
+
+    const right = document.createElement('div');
+    right.style.cssText = 'display:flex;align-items:center;gap:6px';
+
+    if (cls !== 'UNLIKELY') {
+      const badge = document.createElement('span');
+      badge.style.cssText = `font-family:var(--mono);font-size:8px;padding:1px 5px;border-radius:2px;letter-spacing:0.08em;background:rgba(0,0,0,0.06);color:${classColour(cls)};border:1px solid rgba(0,0,0,0.12)`;
+      badge.textContent = cls;
+      right.appendChild(badge);
+    }
+
+    const pctSpan = document.createElement('span');
+    pctSpan.style.cssText = `font-family:var(--mono);font-size:10px;color:${PHENOTYPE_COLORS[ph]};opacity:${classOpacity(cls)}`;
+    pctSpan.textContent = pct + '%';
+    right.appendChild(pctSpan);
+
+    labelRow.appendChild(nameSpan);
+    labelRow.appendChild(right);
+
+    const track = document.createElement('div');
+    track.className = 'bar-track';
+    const fill = document.createElement('div');
+    fill.className = 'bar-fill';
+    fill.style.background = PHENOTYPE_COLORS[ph];
+    fill.style.width = pct + '%';
+    fill.style.opacity = String(classOpacity(cls));
+    track.appendChild(fill);
+
+    row.appendChild(labelRow);
+    row.appendChild(track);
+    container.appendChild(row);
+  });
+
+  // Mixed phenotype note
+  const primaries = PHENOTYPES.filter(ph => classify(pcts[ph]) === 'PRIMARY');
+  const contributing = PHENOTYPES.filter(ph => classify(pcts[ph]) === 'CONTRIBUTING');
+  if (primaries.length > 1) {
+    const mixNote = document.createElement('div');
+    mixNote.style.cssText = 'margin-top:8px;padding:6px 8px;background:#fdf4d8;border:1px solid #d8b870;border-left:3px solid #8a5800;border-radius:3px;font-size:10px;color:#7a4800;font-family:var(--mono);letter-spacing:0.04em;font-weight:600';
+    mixNote.textContent = '⚠ MIXED: ' + primaries.map(ph => PHENOTYPE_NAMES[ph]).join(' + ');
+    container.appendChild(mixNote);
+  }
+
+  // Interpretation text
+  const interp = document.getElementById('interp-text');
+
+  if (totalParamsSelected === 0) {
+    interp.innerHTML = 'Select findings to generate phenotype prediction.<br><br><span style="font-size:10px;color:var(--text-dim)">Each bar shows that phenotype\'s independent probability — bars are not mutually exclusive. Multiple phenotypes may be clinically significant simultaneously.</span>';
+    return;
+  }
+
+  const topPh = sortedPH[0];
+  const topClass = classify(pcts[topPh]);
+
+  let txt = '';
+  if (topClass === 'UNLIKELY') {
+    txt = 'Insufficient discriminating findings. Add POCUS (LV size/function, IVC, lung), lactate, CRT, skin temperature, and PLR to improve prediction accuracy.';
+  } else if (primaries.length > 1) {
+    txt = 'MIXED SHOCK (' + primaries.map(ph => ph).join('+') + '): '
+      + primaries.map(ph => PHENOTYPE_NAMES[ph]).join(' + ') + ' phenotypes are simultaneously active. '
+      + 'Treat the haemodynamically dominant aetiology first while addressing co-existing mechanism. '
+      + (primaries.includes('H') && primaries.includes('C') ? 'In H+C mix: cautious fluid (250 mL aliquots) with continuous reassessment — excess fluid worsens cardiogenic component. ' : '')
+      + (primaries.includes('D') && primaries.includes('H') ? 'In D+H mix (sepsis + haemorrhage): vasopressors + volume simultaneously. ' : '')
+      + (primaries.includes('O') && primaries.includes('C') ? 'In O+C mix (PE + RV failure): treat obstruction first — thrombolysis/thrombectomy addresses both. ' : '')
+      + 'Reassess with POCUS after each intervention.';
+  } else if (primaries.length === 1 && contributing.length === 0) {
+    const descs = {
+      H: 'HYPOVOLAEMIC: Restore intravascular volume — blood products (haemorrhagic), balanced crystalloid (non-haemorrhagic). Identify and control source. Haemostatic resuscitation (1:1:1) in surgical haemorrhage. PLR positive confirms.',
+      C: 'CARDIOGENIC: Avoid excessive fluid. Inotropic support — dobutamine first-line; noradrenaline for refractory hypotension. Identify reversible cause: STEMI → PCI; arrhythmia → cardioversion; LAST → Intralipid. ECMO if refractory.',
+      D: 'DISTRIBUTIVE: Vasopressors first-line (noradrenaline). Identify and treat cause: sepsis → antibiotics + source control; anaphylaxis → adrenaline IM; neuraxial → phenylephrine/vasopressin; adrenal crisis → hydrocortisone 100 mg IV. Cautious fluid.',
+      O: 'OBSTRUCTIVE: Identify and immediately treat obstruction. PE → anticoagulation ± systemic thrombolysis (massive PE with arrest); Tamponade → pericardiocentesis; Tension PTX → needle decompression → chest drain. Avoid fluid overload with RV failure.',
+      N: 'NEUROGENIC: Noradrenaline (restores SVR and HR). Atropine for refractory bradycardia. Cautious fluid. Maintain MAP ≥85 mmHg in spinal cord injury. Avoid hyperthermia.',
+    };
+    txt = descs[topPh];
+  } else {
+    const descs = {
+      H: 'Hypovolaemic (primary) — restore volume. Control source.',
+      C: 'Cardiogenic (primary) — inotropes. Identify reversible cause.',
+      D: 'Distributive (primary) — vasopressors. Treat underlying cause.',
+      O: 'Obstructive (primary) — relieve obstruction immediately.',
+      N: 'Neurogenic (primary) — noradrenaline + atropine.',
+    };
+    txt = descs[topPh] + (contributing.length > 0 ? ' Contributing component(s): ' + contributing.map(ph => PHENOTYPE_NAMES[ph]).join(', ') + '. Address after stabilising primary aetiology.' : '');
+  }
+  interp.textContent = txt;
+}
+
+
+// ═══════════════════════════════════════════════════════
+// RESET
+// ═══════════════════════════════════════════════════════
+function resetCalc() {
+  PARAMS.forEach(p => {
+    selections[p.id] = 0;
+    const sel = document.getElementById('sel-' + p.id);
+    if (sel) sel.value = '0';
+    const row = document.getElementById('prow-' + p.id);
+    if (row) row.classList.remove('selected');
+  });
+  updateResults();
+}
+
+// ═══════════════════════════════════════════════════════
+// PPV CHECKLIST
+// ═══════════════════════════════════════════════════════
+const PPV_CRITERIA = [
+  {id:'ppv1', text:'Controlled mechanical ventilation', detail:'No spontaneous breathing effort — even 1 breath invalidates PPV measurement'},
+  {id:'ppv2', text:'Tidal volume ≥ 8 mL/kg IBW', detail:'Low Vt (ARDS protocol, 6 mL/kg) makes PPV unreliable — small pressure swing'},
+  {id:'ppv3', text:'Regular sinus rhythm', detail:'AF, frequent ectopics, or any arrhythmia invalidates beat-to-beat PP comparison'},
+  {id:'ppv4', text:'HR:RR ratio ≥ 3.6', detail:'Sufficient cardiac cycles per breath required for statistical validity'},
+  {id:'ppv5', text:'No significant right heart failure', detail:'RV failure alters pulmonary transit time — PPV loses predictive value'},
+  {id:'ppv6', text:'Closed chest / sternum intact', detail:'Open chest (post-cardiac surgery) eliminates respiratory pressure variation in pericardium'},
+  {id:'ppv7', text:'No intra-abdominal hypertension (IAP < 12 mmHg)', detail:'Elevated IAP alters chest wall compliance and venous return pulsatility'},
+  {id:'ppv8', text:'Arterial line in situ', detail:'PPV requires beat-to-beat arterial waveform analysis; peripheral SpO₂ PVI is a surrogate'},
+];
+
+let ppvChecked = {};
+PPV_CRITERIA.forEach(c => { ppvChecked[c.id] = false; });
+
+function buildPPVChecklist() {
+  const grid = document.getElementById('ppv-grid');
+  PPV_CRITERIA.forEach(c => {
+    const item = document.createElement('div');
+    item.className = 'ppv-item';
+
+    const chk = document.createElement('div');
+    chk.className = 'ppv-check';
+    chk.id = c.id + '-chk';
+    chk.addEventListener('click', () => {
+      ppvChecked[c.id] = !ppvChecked[c.id];
+      chk.classList.toggle('checked', ppvChecked[c.id]);
+      updatePPVResult();
+    });
+
+    const txt = document.createElement('div');
+    txt.className = 'ppv-text';
+    txt.innerHTML = '<strong>' + c.text + '</strong><span>' + c.detail + '</span>';
+
+    item.appendChild(chk);
+    item.appendChild(txt);
+    grid.appendChild(item);
+  });
+}
+
+function updatePPVResult() {
+  const allMet = PPV_CRITERIA.every(c => ppvChecked[c.id]);
+  const result = document.getElementById('ppv-result');
+  if (allMet) {
+    result.className = 'ppv-result valid';
+    result.textContent = '✓ PPV VALID — All 8 criteria met. PPV > 13% = fluid-responsive. PPV < 9% = non-responsive.';
+  } else {
+    const count = PPV_CRITERIA.filter(c => ppvChecked[c.id]).length;
+    result.className = 'ppv-result invalid';
+    result.textContent = '⚠ PPV INVALID — ' + (8 - count) + ' criteria unmet. Use Passive Leg Raise (PLR) instead.';
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// TAB SWITCHING
+// ═══════════════════════════════════════════════════════
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+// ═══════════════════════════════════════════════════════
+// MECHANISTIC SECTION TOGGLE
+// ═══════════════════════════════════════════════════════
+function mtoggle(id) {
+  const sec = document.getElementById(id);
+  if (sec) sec.classList.toggle('collapsed');
+}
+
+buildParamList();
+buildPPVChecklist();
+updateResults();
+updatePPVResult();
+</script>
+
+</body>
+</html>

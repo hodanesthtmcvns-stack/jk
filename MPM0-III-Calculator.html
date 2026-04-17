@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<!--
+  MPM0-III Mortality Probability Admission Model Calculator  (v2 — corrected coefficients)
+  Copyright (C) 2026  Prof. Jyotirmay Kirtania
+  Department of Anaesthesiology and Critical Care
+  Mahamana Pandit Madan Mohan Malaviya Cancer Centre & Homi Bhabha Cancer Hospital
+  Tata Memorial Centre, Varanasi, India
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+  Model source:
+    Higgins TL, Teres D, Copes WS, Nathanson BH, Stark M, Kramer AA.
+    Assessing contemporary intensive care unit outcome: an updated
+    Mortality Probability Admission Model (MPM0-III).
+    Crit Care Med. 2007;35(3):827-835.
+    doi:10.1097/01.CCM.0000257337.63529.9F   PMID:17255863
+    Coefficients from Table 3; verified against Appendix C worked example.
+
+  Prospective validation:
+    Higgins TL, Kramer AA, Nathanson BH, Copes W, Stark M, Teres D.
+    Crit Care Med. 2009;37(5):1619-1623.  PMID:19295463
+
+  AKI criteria (operational definition update):
+    Kidney Disease: Improving Global Outcomes (KDIGO).
+    KDIGO Clinical Practice Guideline for Acute Kidney Injury.
+    Kidney Int Suppl. 2012;2(1):1-138.
+    doi:10.1038/kisup.2012.1
+
+  ─── LOGISTIC MODEL (Higgins 2007, Table 3) ───────────────────────────────
+  Constant                          −5.36283
+
+  Binary variables (coefficient):
+    Coma / deep stupor (GCS 3–4)    +2.050514
+    Heart rate ≥150 bpm             +0.433188
+    Systolic BP ≤90 mmHg            +1.451005
+    Chronic renal insufficiency     +0.5395209
+    Cirrhosis                       +2.070695
+    Metastatic neoplasm             +3.204902
+    Acute renal failure             +0.8412274
+    Cardiac dysrhythmia             +0.8219612
+    Cerebrovascular incident        +0.4107686
+    GI bleed                        −0.165253
+    Intracranial mass effect        +1.855276
+    CPR before admission            +1.497258
+    Mechanical ventilation          +0.821648
+    Medical / unscheduled surgical  +0.9097936
+    Zero factor                     −0.4243604
+    Full code                       −0.7969783   (protective)
+
+  Continuous variable:
+    Age (per year)                  +0.0385582
+
+  Interaction terms (age × binary):
+    Age × coma                      −0.0075284
+    Age × SBP ≤90                   −0.0085197
+    Age × cirrhosis                 −0.0224333
+    Age × metastatic neoplasm       −0.0330237
+    Age × cardiac dysrhythmia       −0.0101286
+    Age × intracranial mass         −0.0169215
+    Age × CPR before admission      −0.011214
+
+  Validation: n=50,307; AUROC=0.823; HL p=0.31; SMR=1.018 (0.996–1.040)
+  ──────────────────────────────────────────────────────────────────────────
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MPM₀-III Calculator</title>
+<style>
+  :root {
+    --bg:         #ffffff;
+    --bg-2:       #f5f5f3;
+    --bg-3:       #edecea;
+    --text-1:     #1a1a18;
+    --text-2:     #4a4a46;
+    --text-3:     #88887f;
+    --border-1:   rgba(0,0,0,0.09);
+    --border-2:   rgba(0,0,0,0.17);
+    --accent:     #185fa5;
+    --accent-bg:  #e6f1fb;
+    --accent-text:#0c447c;
+    --ok-bg:      #eaf3de;
+    --ok-fg:      #3b6d11;
+    --warn-bg:    #faeeda;
+    --warn-fg:    #854f0b;
+    --err-bg:     #fcebeb;
+    --err-fg:     #a32d2d;
+    --mono: 'Courier New', Courier, monospace;
+    --radius-sm: 5px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:         #1c1c1a;
+      --bg-2:       #252523;
+      --bg-3:       #2e2e2b;
+      --text-1:     #f0ede8;
+      --text-2:     #aeab a6;
+      --text-3:     #706e68;
+      --border-1:   rgba(255,255,255,0.07);
+      --border-2:   rgba(255,255,255,0.14);
+      --accent:     #85b7eb;
+      --accent-bg:  #0c2a45;
+      --accent-text:#b5d4f4;
+      --ok-bg:      #173404;
+      --ok-fg:      #97c459;
+      --warn-bg:    #412402;
+      --warn-fg:    #ef9f27;
+      --err-bg:     #501313;
+      --err-fg:     #f09595;
+    }
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text-1);
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+  .page { max-width: 760px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+
+  /* header */
+  .hdr { border-bottom: 0.5px solid var(--border-1); padding-bottom: 1.1rem; margin-bottom: 1.6rem; }
+  .hdr h1 { font-size: 1.1rem; font-weight: 600; letter-spacing: -0.01em; }
+  .hdr p  { font-size: 0.8rem; color: var(--text-3); margin-top: 3px; }
+  .pill {
+    display: inline-block; font-size: 0.68rem; padding: 1px 7px;
+    border-radius: 20px; background: var(--accent-bg); color: var(--accent-text);
+    margin-left: 7px; vertical-align: middle; font-weight: 500;
+  }
+
+  /* section */
+  .sec { margin-bottom: 1.4rem; }
+  .sec-ttl {
+    font-size: 0.67rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--text-3); margin-bottom: 0.45rem;
+  }
+
+  /* age */
+  .age-row {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--bg-2); border: 0.5px solid var(--border-1);
+    border-radius: var(--radius-md); padding: 9px 13px;
+  }
+  .age-row span { font-size: 0.875rem; flex: 1; }
+  .age-row small { display: block; font-size: 0.75rem; color: var(--text-3); }
+  input.n {
+    width: 74px; text-align: center; font-size: 0.9rem; font-weight: 600;
+    padding: 4px 7px; border: 0.5px solid var(--border-2);
+    border-radius: var(--radius-sm); background: var(--bg); color: var(--text-1);
+    outline: none; transition: border-color 0.15s;
+  }
+  input.n:focus { border-color: var(--accent); }
+
+  /* checkbox rows */
+  .grid { display: grid; gap: 3px; }
+  .row {
+    display: flex; align-items: flex-start; gap: 9px;
+    padding: 8px 11px; border-radius: var(--radius-md);
+    cursor: pointer; border: 0.5px solid transparent;
+    transition: background 0.1s;
+  }
+  .row:hover { background: var(--bg-2); border-color: var(--border-1); }
+  .row input[type=checkbox] {
+    width: 15px; height: 15px; flex-shrink: 0; margin-top: 2px;
+    accent-color: var(--accent); cursor: pointer;
+  }
+  .vname { font-size: 0.865rem; color: var(--text-1); line-height: 1.4; flex: 1; }
+  .vname small { display: block; font-size: 0.74rem; color: var(--text-2); margin-top: 2px; line-height: 1.5; }
+  .vname .crit {
+    display: block; margin-top: 4px; padding-left: 9px;
+    border-left: 2px solid var(--border-2);
+  }
+  .vname .crit span { display: block; font-size: 0.72rem; color: var(--text-3); line-height: 1.6; }
+  .coef {
+    font-size: 0.73rem; font-family: var(--mono); color: var(--text-3);
+    flex-shrink: 0; padding-top: 2px; min-width: 90px; text-align: right;
+  }
+  .new { font-size: 0.64rem; background: var(--accent-bg); color: var(--accent-text);
+         padding: 1px 5px; border-radius: 3px; vertical-align: middle; margin-left: 4px; font-weight:500; }
+  .prot { font-size: 0.64rem; background: var(--ok-bg); color: var(--ok-fg);
+          padding: 1px 5px; border-radius: 3px; vertical-align: middle; margin-left: 4px; font-weight:500; }
+
+  /* zero row */
+  .zrow {
+    display: flex; align-items: center; gap: 9px;
+    background: var(--bg-2); border: 0.5px solid var(--border-1);
+    border-radius: var(--radius-md); padding: 8px 11px;
+  }
+  .zbadge {
+    font-size: 0.78rem; font-family: var(--mono); padding: 2px 10px;
+    border-radius: 20px; background: var(--bg-3);
+    border: 0.5px solid var(--border-2); color: var(--text-2);
+    flex-shrink: 0; min-width: 34px; text-align: center;
+  }
+
+  /* result card */
+  .card {
+    border: 0.5px solid var(--border-2); border-radius: var(--radius-lg);
+    background: var(--bg); overflow: hidden; margin-bottom: 1.6rem;
+  }
+  .card-top { padding: 1.2rem 1.4rem 0.9rem; border-bottom: 0.5px solid var(--border-1); }
+  .card-hint { font-size: 0.7rem; color: var(--text-3); text-transform: uppercase;
+               letter-spacing: 0.06em; margin-bottom: 5px; }
+  .prob-val { font-size: 2.75rem; font-weight: 600; letter-spacing: -0.03em;
+              color: var(--text-1); line-height: 1; }
+  .card-meta { display: flex; align-items: center; gap: 9px; margin-top: 7px; flex-wrap: wrap; }
+  .card-desc { font-size: 0.84rem; color: var(--text-2); }
+  .badge { font-size: 0.7rem; font-weight: 600; padding: 3px 9px; border-radius: 20px; }
+  .b-ok   { background: var(--ok-bg);   color: var(--ok-fg); }
+  .b-warn { background: var(--warn-bg); color: var(--warn-fg); }
+  .b-err  { background: var(--err-bg);  color: var(--err-fg); }
+  .copy-btn {
+    font-size: 0.76rem; padding: 4px 10px; border-radius: var(--radius-sm);
+    border: 0.5px solid var(--border-2); background: var(--bg); color: var(--text-1);
+    cursor: pointer; line-height: 1.2;
+  }
+  .copy-btn:hover { background: var(--bg-2); }
+  .copy-status { font-size: 0.72rem; color: var(--text-3); }
+
+  /* bar */
+  .bar-wrap { padding: 0 1.4rem 0.9rem; }
+  .bar-track { height: 5px; background: var(--bg-3); border-radius: 3px;
+               margin: 11px 0 5px; overflow: hidden; }
+  .bar-fill  { height: 100%; border-radius: 3px; transition: width 0.3s ease, background 0.3s; }
+  .bar-ticks { display: flex; justify-content: space-between;
+               font-size: 0.67rem; color: var(--text-3); }
+
+  /* stats row */
+  .stats {
+    display: grid; grid-template-columns: repeat(4,1fr);
+    border-top: 0.5px solid var(--border-1);
+  }
+  .sc { padding: 9px 13px; border-right: 0.5px solid var(--border-1); }
+  .sc:last-child { border-right: none; }
+  .sl { font-size: 0.67rem; color: var(--text-3); margin-bottom: 2px; }
+  .sv { font-size: 0.83rem; font-family: var(--mono); color: var(--text-1); }
+
+  /* logit breakdown */
+  .breakdown {
+    border-top: 0.5px solid var(--border-1); padding: 0.75rem 1.4rem;
+    font-size: 0.78rem; color: var(--text-2); font-family: var(--mono);
+    line-height: 1.9; overflow-x: auto;
+  }
+  .breakdown .lbl { color: var(--text-3); display: inline-block; min-width: 240px; }
+  .breakdown .val { color: var(--text-1); }
+  .breakdown .pos { color: var(--err-fg); }
+  .breakdown .neg { color: var(--ok-fg); }
+
+  /* citation */
+  .cit {
+    border-top: 0.5px solid var(--border-1); padding-top: 1.2rem;
+    font-size: 0.775rem; line-height: 1.75; color: var(--text-2);
+  }
+  .cit strong { color: var(--text-1); }
+  .cit a { color: var(--accent); text-decoration: none; }
+  .cit a:hover { text-decoration: underline; }
+  .cit .note  { font-size: 0.71rem; color: var(--text-3); margin-top: 5px; }
+  .cit .lic   { font-size: 0.71rem; color: var(--text-3); margin-top: 7px; padding-top: 7px;
+                border-top: 0.5px solid var(--border-1); }
+  .cit .disc  { font-size: 0.71rem; color: var(--text-3); margin-top: 5px; line-height: 1.6; }
+
+  @media (max-width: 520px) {
+    .stats { grid-template-columns: repeat(2,1fr); }
+    .sc:nth-child(2) { border-right: none; }
+    .sc:nth-child(3) { border-top: 0.5px solid var(--border-1); }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ── Header ── -->
+  <div class="hdr">
+    <h1>MPM₀-III — Mortality Probability Admission Model</h1>
+    <p>ICU admission mortality predictor &nbsp;·&nbsp; Adults ≥ 18 yr &nbsp;·&nbsp;
+       Variables assessed at or within 1 hour of ICU admission</p>
+  </div>
+
+  <!-- ── Age ── -->
+  <div class="sec">
+    <p class="sec-ttl">Patient age</p>
+    <div class="age-row">
+      <span>Age (years) — continuous variable
+        <small>Mandatory; all other values assumed normal if not assessed</small>
+      </span>
+      <input class="n" type="number" id="age" min="18" max="120" value="60" oninput="calc()">
+    </div>
+  </div>
+
+  <!-- ── Physiology ── -->
+  <div class="sec">
+    <p class="sec-ttl">Physiology at ICU admission</p>
+    <div class="grid">
+
+      <label class="row">
+        <input type="checkbox" id="coma" onchange="calc()">
+        <span class="vname">Coma or deep stupor
+          <small>GCS 3 (no response) or 4–5 with decorticate/decerebrate posturing.
+            Excludes drug overdose. Use pre-sedation best estimate if on paralytic or anaesthesia.</small>
+        </span>
+        <span class="coef">β = +2.050514 *</span>
+      </label>
+
+      <label class="row">
+        <input type="checkbox" id="hr" onchange="calc()">
+        <span class="vname">Heart rate ≥ 150 bpm
+          <small>Documented within 1 hour before or after ICU admission</small>
+        </span>
+        <span class="coef">β = +0.433188</span>
+      </label>
+
+      <label class="row">
+        <input type="checkbox" id="sbp" onchange="calc()">
+        <span class="vname">Systolic BP ≤ 90 mmHg
+          <small>Documented within 1 hour before or after ICU admission</small>
+        </span>
+        <span class="coef">β = +1.451005 *</span>
+      </label>
+
+    </div>
+  </div>
+
+  <!-- ── Chronic diagnoses ── -->
+  <div class="sec">
+    <p class="sec-ttl">Chronic diagnoses</p>
+    <div class="grid">
+
+      <label class="row">
+        <input type="checkbox" id="cri" onchange="calc()">
+        <span class="vname">Chronic Kidney Disease (CKD)
+          <small>Most recent creatinine &gt; 176 µmol/L (2.0 mg/dL) chronically, on dialysis,
+            or prior renal transplant</small>
+        </span>
+        <span class="coef">β = +0.5395209</span>
+      </label>
+
+      <label class="row">
+        <input type="checkbox" id="cirr" onchange="calc()">
+        <span class="vname">Cirrhosis
+          <small>History of portal hypertension and varices, or biopsy confirmation</small>
+        </span>
+        <span class="coef">β = +2.070695 *</span>
+      </label>
+
+      <label class="row">
+        <input type="checkbox" id="meta" onchange="calc()">
+        <span class="vname">Metastatic neoplasm
+          <small>Stage IV cancer (excluding regional lymphatic spread only); obvious metastases on imaging or pathology.
+            <strong>Includes</strong> acute haematologic malignancies (acute leukaemia, aggressive lymphoma).
+            <strong>Excludes</strong> chronic leukaemia — unless attributable findings are present
+            (sepsis, anaemia, tumour lysis syndrome, lymphangiectatic ARDS) or the patient is under active treatment for the chronic leukaemia.</small>
+        </span>
+        <span class="coef">β = +3.204902 *</span>
+      </label>
+
+    </div>
+  </div>
+
+  <!-- ── Acute diagnoses ── -->
+  <div class="sec">
+    <p class="sec-ttl">Acute diagnoses at ICU admission</p>
+    <div class="grid">
+
+      <label class="row">
+        <input type="checkbox" id="arf" onchange="calc()">
+        <span class="vname">Acute renal failure / AKI
+          <small>Acute tubular necrosis or acute decompensation of CKD. AKI is present if ANY ONE KDIGO 2012 criterion is met (in absence of known CKD):</small>
+          <span class="crit">
+            <span>SCr rise ≥ 0.3 mg/dL (≥ 26.5 µmol/L) within 48 h</span>
+            <span>SCr rise ≥ 1.5× baseline within 7 days</span>
+            <span>Urine output &lt; 0.5 mL/kg/h for ≥ 6 consecutive hours</span>
+          </span>
+        </span>
+        <span class="coef">β = +0.8412274</span>
+      </label>
+
+      <label class="row">
+        <input type="checkbox" id="arr" onchange="calc()">
+        <span class="vname">Cardiac dysrhythmia requiring treatment
+          <small>Acute change in heart rhythm: paroxysmal tachycardia, AF with rapid ventricular response,
+            2nd/3rd-degree heart block, ventricular dysrhythmias. Excludes chronic stable arrhythmias.</small>
+        </span>
+        <span class="coef">β = +0.8219612 *</span>
+      </label>
+
+      <label class="row">
+        <input type="checkbox" id="cvi" onchange="calc()">
+        <span class="vname">Cerebrovascular incident
+          <small>Acute cerebral embolism, occlusion, CVA, stroke, brain stem infarction, or AVM with
+            acute stroke/haemorrhage</small>
+        </span>
+        <span class="coef">β = +0.4107686</span>
+      </label>
+
+      <label class="row">
+        <input type="checkbox" id="gib" onchange="calc()">
+        <span class="vname">Gastrointestinal bleeding
+          <small>New-onset melaena or haematemesis with clinically plausible decrease in haemoglobin.
+            Excludes unexplained Hb drop alone or perforated ulcer without bleeding evidence.</small>
+        </span>
+        <span class="coef">β = −0.165253 <span class="prot">protective</span></span>
+      </label>
+
+      <label class="row">
+        <input type="checkbox" id="icm" onchange="calc()">
+        <span class="vname">Intracranial mass effect
+          <small>Abscess, tumour, or intracranial/subdural haemorrhage on CT/imaging with: midline shift,
+            obliteration of cerebral ventricles, gross intraventricular/SAH haemorrhage,
+            visible mass &gt; 4 cm, or contrast-enhancing mass.</small>
+        </span>
+        <span class="coef">β = +1.855276 *</span>
+      </label>
+
+    </div>
+  </div>
+
+  <!-- ── Other factors ── -->
+  <div class="sec">
+    <p class="sec-ttl">Other factors</p>
+    <div class="grid">
+
+      <label class="row">
+        <input type="checkbox" id="cpr" onchange="calc()">
+        <span class="vname">CPR within 24 hours before ICU admission
+          <small>Chest compression, defibrillation, or cardiac massage. Excludes emergent intubation
+            alone, or planned electrical stimulation (e.g. electrophysiologic studies, cardiac surgery).</small>
+        </span>
+        <span class="coef">β = +1.497258 *</span>
+      </label>
+
+      <label class="row">
+        <input type="checkbox" id="mv" onchange="calc()">
+        <span class="vname">Mechanical ventilation within 1 hour of admission
+          <small>Excludes BiPAP/NIV unless delivered via tracheostomy</small>
+        </span>
+        <span class="coef">β = +0.821648</span>
+      </label>
+
+      <label class="row">
+        <input type="checkbox" id="med" onchange="calc()">
+        <span class="vname">Medical or unscheduled surgical admission
+          <small>All patients EXCEPT those admitted following an elective surgical procedure
+            (i.e., scheduled ≥ 24 hours in advance). Elective pre-op ICU admission for a scheduled
+            operation is also excluded (= not ticked).</small>
+        </span>
+        <span class="coef">β = +0.9097936</span>
+      </label>
+
+      <label class="row">
+        <input type="checkbox" id="fc" onchange="calc()">
+        <span class="vname">Full code resuscitation status <span class="new">new in MPM₀-III</span>
+          <small>No restrictions on emergency therapies or interventions at time of ICU admission.
+            Excludes patients with DNR or DNI orders.</small>
+        </span>
+        <span class="coef">β = −0.7969783 <span class="prot">protective</span></span>
+      </label>
+
+    </div>
+  </div>
+
+  <!-- ── Zero factor ── -->
+  <div class="sec">
+    <p class="sec-ttl">Auto-calculated term</p>
+    <div class="zrow">
+      <span class="vname" style="font-size:0.85rem">
+        Zero factor <span class="new">new in MPM₀-III</span>
+        <small>= 1 only when ALL 14 risk-factor variables above are absent (only age present).
+          Improves calibration in low-risk patients (observed mortality 1.97% in this subset).</small>
+      </span>
+      <span class="zbadge" id="zf">0</span>
+      <span class="coef">β = −0.4243604</span>
+    </div>
+  </div>
+
+  <!-- ── Result card ── -->
+  <div class="card">
+    <div class="card-top">
+      <p class="card-hint">Predicted hospital mortality probability</p>
+      <p class="prob-val" id="pval">—</p>
+      <div class="card-meta">
+        <span class="card-desc" id="pdesc">Enter patient data above</span>
+        <span class="badge" id="pbadge" style="display:none"></span>
+        <button type="button" class="copy-btn" id="copyBtn" onclick="copyResultsText()">Copy results text</button>
+        <span class="copy-status" id="copyStatus"></span>
+      </div>
+    </div>
+
+    <div class="bar-wrap">
+      <div class="bar-track"><div class="bar-fill" id="bar" style="width:0%"></div></div>
+      <div class="bar-ticks"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div>
+    </div>
+
+    <div class="stats">
+      <div class="sc"><p class="sl">Logit (log-odds)</p><p class="sv" id="sv-logit">—</p></div>
+      <div class="sc"><p class="sl">Constant</p><p class="sv">−5.36283</p></div>
+      <div class="sc"><p class="sl">Age term</p><p class="sv" id="sv-age">—</p></div>
+      <div class="sc"><p class="sl">Interaction sum (7)</p><p class="sv" id="sv-int">—</p></div>
+    </div>
+
+    <!-- Logit breakdown (only shown when any variable selected) -->
+    <div class="breakdown" id="breakdown" style="display:none">
+      <div id="bd-lines"></div>
+    </div>
+  </div>
+
+  <!-- ── Verification note ── -->
+  <div class="sec" style="background:var(--bg-2);border:0.5px solid var(--border-1);border-radius:var(--radius-md);padding:10px 13px;font-size:0.8rem;color:var(--text-2)">
+    <strong style="color:var(--text-1)">Worked example check (Appendix C, Higgins 2007)</strong><br>
+    60-yr-old female, GI bleed, emergency surgery (medical/unscheduled), full code, SBP ≤ 90.<br>
+    Expected logit = −2.162 → mortality = 10.3%.
+    <button onclick="runExample()" style="margin-left:10px;font-size:0.78rem;padding:3px 10px;
+      border:0.5px solid var(--border-2);border-radius:var(--radius-sm);background:var(--bg);
+      color:var(--text-1);cursor:pointer">Load example</button>
+    <span id="ex-result" style="margin-left:8px;font-family:var(--mono);font-size:0.78rem;color:var(--text-3)"></span>
+  </div>
+
+  <!-- ── Citation ── -->
+  <div class="cit" style="margin-top:1.4rem">
+    <p><strong>Model source</strong> &nbsp;Higgins TL, Teres D, Copes WS, Nathanson BH, Stark M, Kramer AA.
+      Assessing contemporary intensive care unit outcome: an updated Mortality Probability Admission Model (MPM₀-III).
+      <em>Crit Care Med.</em> 2007;35(3):827–835.
+      doi:<a href="https://doi.org/10.1097/01.CCM.0000257337.63529.9F" target="_blank">10.1097/01.CCM.0000257337.63529.9F</a>
+      &nbsp;PMID:&nbsp;<a href="https://pubmed.ncbi.nlm.nih.gov/17255863/" target="_blank">17255863</a>
+    </p>
+    <p style="margin-top:4px"><strong>Prospective validation</strong> &nbsp;Higgins TL, Kramer AA, Nathanson BH, Copes W, Stark M, Teres D.
+      <em>Crit Care Med.</em> 2009;37(5):1619–1623.
+      PMID:&nbsp;<a href="https://pubmed.ncbi.nlm.nih.gov/19295463/" target="_blank">19295463</a>
+    </p>
+    <p style="margin-top:4px"><strong>AKI criterion</strong> &nbsp;KDIGO Clinical Practice Guideline for Acute Kidney Injury.
+      <em>Kidney Int Suppl.</em> 2012;2(1):1–138.
+      doi:<a href="https://doi.org/10.1038/kisup.2012.1" target="_blank">10.1038/kisup.2012.1</a>
+    </p>
+    <p class="note">* Asterisk = variable carries an age-interaction term (7 total: coma, SBP, cirrhosis,
+      metastatic, cardiac dysrhythmia, intracranial mass, CPR). All coefficients from Table 3, Higgins 2007;
+      verified against Appendix C worked example (logit −2.162, P = 10.3%).
+      AKI operational definition updated to KDIGO 2012; original derivation used ATN/acute CRF decompensation criteria.</p>
+    <p class="lic">Copyright &copy; 2026 Prof. Jyotirmay Kirtania, MPMMCC &amp; HBCH, Tata Memorial Centre, Varanasi, India.
+      Licensed under the <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank">GNU General Public License v3.0</a>.
+    </p>
+    <p class="disc">For clinical audit, educational and research use only. Not a substitute for clinical judgement.
+      Validated in adult ICU patients (Project IMPACT 2001–2004; n = 124,855; observed mortality 13.8%;
+      AUROC 0.823; SMR 1.018). Excludes cardiac surgery, AMI, burns, age &lt; 18.</p>
+  </div>
+
+</div><!-- /page -->
+
+<script>
+/* ── Coefficients from Higgins 2007 Table 3 ── */
+var C = {
+  intercept:  -5.36283,
+  age:         0.0385582,
+  coma:        2.050514,
+  hr:          0.433188,
+  sbp:         1.451005,
+  cri:         0.5395209,
+  cirr:        2.070695,
+  meta:        3.204902,
+  arf:         0.8412274,
+  arr:         0.8219612,
+  cvi:         0.4107686,
+  gib:        -0.165253,
+  icm:         1.855276,
+  cpr:         1.497258,
+  mv:          0.821648,
+  med:         0.9097936,
+  zf:         -0.4243604,
+  fc:         -0.7969783,
+  /* interaction coefficients (age × binary) */
+  i_coma:     -0.0075284,
+  i_sbp:      -0.0085197,
+  i_cirr:     -0.0224333,
+  i_meta:     -0.0330237,
+  i_arr:      -0.0101286,
+  i_icm:      -0.0169215,
+  i_cpr:      -0.011214
+};
+
+function g(id) { return document.getElementById(id); }
+function chk(id) { return g(id).checked ? 1 : 0; }
+
+function calc() {
+  var age  = parseFloat(g('age').value) || 0;
+  var coma = chk('coma'), hr  = chk('hr'),  sbp = chk('sbp');
+  var cri  = chk('cri'),  cirr= chk('cirr'),meta= chk('meta');
+  var arf  = chk('arf'),  arr = chk('arr'),  cvi = chk('cvi');
+  var gib  = chk('gib'),  icm = chk('icm'),  cpr = chk('cpr');
+  var mv   = chk('mv'),   med = chk('med'),  fc  = chk('fc');
+
+  /* zero factor: 1 if ALL 14 risk-factor variables are absent */
+  var anyRisk = coma||hr||sbp||cri||cirr||meta||arf||arr||cvi||gib||icm||cpr||mv||med;
+  var zf = anyRisk ? 0 : 1;
+  g('zf').textContent = zf;
+
+  /* main terms */
+  var ageTerm = C.age * age;
+  var binSum  = C.coma*coma + C.hr*hr + C.sbp*sbp
+              + C.cri*cri   + C.cirr*cirr + C.meta*meta
+              + C.arf*arf   + C.arr*arr   + C.cvi*cvi
+              + C.gib*gib   + C.icm*icm   + C.cpr*cpr
+              + C.mv*mv     + C.med*med   + C.zf*zf + C.fc*fc;
+  var intSum  = C.i_coma*age*coma + C.i_sbp*age*sbp
+              + C.i_cirr*age*cirr + C.i_meta*age*meta
+              + C.i_arr*age*arr   + C.i_icm*age*icm
+              + C.i_cpr*age*cpr;
+
+  var logit = C.intercept + ageTerm + binSum + intSum;
+  var prob  = 1 / (1 + Math.exp(-logit));
+  var pct   = (prob * 100).toFixed(1);
+
+  /* update display */
+  g('pval').textContent      = pct + '%';
+  g('sv-logit').textContent  = logit.toFixed(4);
+  g('sv-age').textContent    = ageTerm.toFixed(4);
+  g('sv-int').textContent    = intSum.toFixed(4);
+
+  var bar   = g('bar');
+  var badge = g('pbadge');
+  var desc  = g('pdesc');
+  bar.style.width = Math.min(100, prob*100).toFixed(1) + '%';
+  badge.style.display = 'inline-block';
+  desc.textContent = 'Predicted hospital mortality';
+
+  if (prob < 0.10) {
+    badge.className = 'badge b-ok';   badge.textContent = 'Low risk';
+    bar.style.background = 'var(--ok-fg)';
+  } else if (prob < 0.25) {
+    badge.className = 'badge b-warn'; badge.textContent = 'Moderate risk';
+    bar.style.background = 'var(--warn-fg)';
+  } else {
+    badge.className = 'badge b-err';  badge.textContent = 'High risk';
+    bar.style.background = 'var(--err-fg)';
+  }
+
+  /* breakdown table */
+  buildBreakdown(age, coma, hr, sbp, cri, cirr, meta, arf, arr, cvi, gib, icm, cpr, mv, med, zf, fc, ageTerm, intSum, logit);
+}
+
+function fmt(v) {
+  var s = v >= 0 ? '+' : '';
+  return '<span class="' + (v >= 0 ? 'pos' : 'neg') + '">' + s + v.toFixed(6) + '</span>';
+}
+
+function buildBreakdown(age,coma,hr,sbp,cri,cirr,meta,arf,arr,cvi,gib,icm,cpr,mv,med,zf,fc,ageTerm,intSum,logit) {
+  var bd = g('breakdown');
+  var lines = [];
+  var push = function(label, val) {
+    if (val !== 0) lines.push('<div><span class="lbl">' + label + '</span>' + fmt(val) + '</div>');
+  };
+  push('Constant',                         C.intercept);
+  push('Age (' + age + ' yr × 0.0385582)', ageTerm);
+  if (coma) push('Coma/deep stupor',        C.coma);
+  if (hr)   push('Heart rate ≥150',         C.hr);
+  if (sbp)  push('SBP ≤90 mmHg',           C.sbp);
+  if (cri)  push('Chronic renal insuf.',    C.cri);
+  if (cirr) push('Cirrhosis',               C.cirr);
+  if (meta) push('Metastatic neoplasm',     C.meta);
+  if (arf)  push('Acute renal failure',     C.arf);
+  if (arr)  push('Cardiac dysrhythmia',     C.arr);
+  if (cvi)  push('Cerebrovascular incident',C.cvi);
+  if (gib)  push('GI bleeding',             C.gib);
+  if (icm)  push('Intracranial mass effect',C.icm);
+  if (cpr)  push('CPR before admission',    C.cpr);
+  if (mv)   push('Mechanical ventilation',  C.mv);
+  if (med)  push('Medical/unscheduled surg',C.med);
+  if (zf)   push('Zero factor',             C.zf);
+  if (fc)   push('Full code',               C.fc);
+  if (intSum !== 0) push('Interaction terms (sum)', intSum);
+  lines.push('<div style="border-top:0.5px solid var(--border-1);margin-top:4px;padding-top:4px">'
+    + '<span class="lbl"><strong>Logit (sum)</strong></span>'
+    + '<span class="val"><strong>' + logit.toFixed(4) + '</strong></span></div>');
+
+  if (lines.length > 2) {
+    bd.style.display = 'block';
+    g('bd-lines').innerHTML = lines.join('');
+  } else {
+    bd.style.display = 'none';
+  }
+}
+
+
+function getCheckedParameterLabels(zf, fc) {
+  var labels = [];
+  var map = [
+    ['coma', 'Coma or deep stupor'],
+    ['hr', 'Heart rate ≥150 bpm'],
+    ['sbp', 'Systolic BP ≤90 mmHg'],
+    ['cri', 'Chronic Kidney Disease (CKD)'],
+    ['cirr', 'Cirrhosis'],
+    ['meta', 'Metastatic neoplasm'],
+    ['arf', 'Acute renal failure / AKI'],
+    ['arr', 'Cardiac dysrhythmia requiring treatment'],
+    ['cvi', 'Cerebrovascular incident'],
+    ['gib', 'Gastrointestinal bleeding'],
+    ['icm', 'Intracranial mass effect'],
+    ['cpr', 'CPR within 24 hours before ICU admission'],
+    ['mv', 'Mechanical ventilation within 1 hour of admission'],
+    ['med', 'Medical or unscheduled surgical admission']
+  ];
+  map.forEach(function(item) {
+    if (chk(item[0])) labels.push(item[1]);
+  });
+  if (zf) labels.push('Zero factor');
+  if (fc) labels.push('Full code resuscitation status');
+  return labels;
+}
+
+function buildCopyResultsText() {
+  var age = parseFloat(g('age').value) || 0;
+  var fc  = chk('fc');
+  var anyRisk = chk('coma')||chk('hr')||chk('sbp')||chk('cri')||chk('cirr')||chk('meta')||chk('arf')||chk('arr')||chk('cvi')||chk('gib')||chk('icm')||chk('cpr')||chk('mv')||chk('med');
+  var zf = anyRisk ? 0 : 1;
+  var params = getCheckedParameterLabels(zf, fc);
+  var paramsText = params.length ? params.join('; ') : 'None';
+  return 'MPM0-III predicted hospital mortality: ' + g('pval').textContent
+    + ' | Age: ' + age + ' years'
+    + ' | Checked parameters: ' + paramsText + '.';
+}
+
+async function copyResultsText() {
+  var text = buildCopyResultsText();
+  var status = g('copyStatus');
+  try {
+    await navigator.clipboard.writeText(text);
+    status.textContent = 'Copied';
+    setTimeout(function(){ status.textContent = ''; }, 1800);
+  } catch (e) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'absolute';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    status.textContent = 'Copied';
+    setTimeout(function(){ status.textContent = ''; }, 1800);
+  }
+}
+
+
+/* Appendix C worked example verification */
+function runExample() {
+  /* Reset all */
+  ['coma','hr','cri','cirr','meta','arf','arr','cvi','icm','cpr','mv'].forEach(function(id){
+    g(id).checked = false;
+  });
+  g('age').value  = 60;
+  g('gib').checked = true;   /* GI bleed */
+  g('sbp').checked = true;   /* SBP ≤90 */
+  g('med').checked = true;   /* emergency surgery = medical/unscheduled */
+  g('fc').checked  = true;   /* full code */
+  calc();
+  var logit = parseFloat(g('sv-logit').textContent);
+  var ok = Math.abs(logit - (-2.16195)) < 0.005;
+  g('ex-result').textContent = 'logit = ' + logit.toFixed(4)
+    + ' | P = ' + g('pval').textContent
+    + (ok ? '  ✓ matches paper' : '  ✗ mismatch');
+  g('ex-result').style.color = ok ? 'var(--ok-fg)' : 'var(--err-fg)';
+}
+
+calc(); /* initialise */
+</script>
+</body>
+</html>

@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<!--
+  PIM3 Mortality Probability Admission Model Calculator
+  Copyright (C) 2026  Prof. Jyotirmay Kirtania
+  Department of Anaesthesiology and Critical Care
+  Mahamana Pandit Madan Mohan Malaviya Cancer Centre & Homi Bhabha Cancer Hospital
+  Tata Memorial Centre, Varanasi, India
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  Model source:
+    ANZPICR PIM2 & PIM3 Information Booklet, Jan 2019.
+    PIM3val= (3.8233 * Pupils) – (0.5378 * Elective) + (0.9763 * MechVent)
+           + (0.0671 * |Base Excess|) – (0.0431*SBP) + (0.1716*(SBP*SBP/1000))
+           + (0.4214 * (100*FiO2/PaO2))
+           – (1.2246*Recov_CardBypPr) – (0.8762*Recov_CardNonBypPr)
+           – (1.5164*Recov_NonCardPr) + (1.6225*VHRdiag) + (1.0725*HRdiag)
+           – (2.1766*LRdiag) – 1.7928
+    PIM3 risk of death = e^(PIM3val) / (1 + e^(PIM3val))
+
+  Strict logic implemented:
+    - first value from first ICU contact to 1 hour after ICU arrival
+    - missing SBP defaults to 120 mmHg
+    - missing base excess contributes 0
+    - missing FiO2/PaO2 ratio defaults to 0.23
+    - only the highest diagnosis tier (VHR > HR > LR) is used
+    - mechanical ventilation includes invasive/NIV/CPAP/BiPAP, excludes HFNC
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PIM3 Calculator</title>
+<style>
+  :root {
+    --bg:         #ffffff;
+    --bg-2:       #f5f5f3;
+    --bg-3:       #edecea;
+    --text-1:     #1a1a18;
+    --text-2:     #4a4a46;
+    --text-3:     #88887f;
+    --border-1:   rgba(0,0,0,0.09);
+    --border-2:   rgba(0,0,0,0.17);
+    --accent:     #185fa5;
+    --accent-bg:  #e6f1fb;
+    --accent-text:#0c447c;
+    --ok-bg:      #eaf3de;
+    --ok-fg:      #3b6d11;
+    --warn-bg:    #faeeda;
+    --warn-fg:    #854f0b;
+    --err-bg:     #fcebeb;
+    --err-fg:     #a32d2d;
+    --mono: 'Courier New', Courier, monospace;
+    --radius-sm: 5px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:         #1c1c1a;
+      --bg-2:       #252523;
+      --bg-3:       #2e2e2b;
+      --text-1:     #f0ede8;
+      --text-2:     #aeaba6;
+      --text-3:     #706e68;
+      --border-1:   rgba(255,255,255,0.07);
+      --border-2:   rgba(255,255,255,0.14);
+      --accent:     #85b7eb;
+      --accent-bg:  #0c2a45;
+      --accent-text:#b5d4f4;
+      --ok-bg:      #173404;
+      --ok-fg:      #97c459;
+      --warn-bg:    #412402;
+      --warn-fg:    #ef9f27;
+      --err-bg:     #501313;
+      --err-fg:     #f09595;
+    }
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text-1);
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+  .page { max-width: 760px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+
+  .hdr { border-bottom: 0.5px solid var(--border-1); padding-bottom: 1.1rem; margin-bottom: 1.6rem; }
+  .hdr h1 { font-size: 1.1rem; font-weight: 600; letter-spacing: -0.01em; }
+  .hdr p  { font-size: 0.8rem; color: var(--text-3); margin-top: 3px; }
+  .pill {
+    display: inline-block; font-size: 0.68rem; padding: 1px 7px;
+    border-radius: 20px; background: var(--accent-bg); color: var(--accent-text);
+    margin-left: 7px; vertical-align: middle; font-weight: 500;
+  }
+
+  .sec { margin-bottom: 1.4rem; }
+  .sec-ttl {
+    font-size: 0.67rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--text-3); margin-bottom: 0.45rem;
+  }
+
+  .panel {
+    background: var(--bg-2); border: 0.5px solid var(--border-1);
+    border-radius: var(--radius-md); padding: 10px 13px;
+  }
+
+  .grid { display: grid; gap: 3px; }
+  .row {
+    display: flex; align-items: flex-start; gap: 9px;
+    padding: 8px 11px; border-radius: var(--radius-md);
+    cursor: pointer; border: 0.5px solid transparent;
+    transition: background 0.1s;
+  }
+  .row:hover { background: var(--bg-2); border-color: var(--border-1); }
+  .row input[type=checkbox], .row input[type=radio] {
+    width: 15px; height: 15px; flex-shrink: 0; margin-top: 2px;
+    accent-color: var(--accent); cursor: pointer;
+  }
+  .vname { font-size: 0.865rem; color: var(--text-1); line-height: 1.4; flex: 1; }
+  .vname small { display: block; font-size: 0.74rem; color: var(--text-2); margin-top: 2px; line-height: 1.5; }
+  .crit {
+    display: block; margin-top: 4px; padding-left: 9px;
+    border-left: 2px solid var(--border-2);
+  }
+  .crit span { display: block; font-size: 0.72rem; color: var(--text-3); line-height: 1.6; }
+  .coef {
+    font-size: 0.73rem; font-family: var(--mono); color: var(--text-3);
+    flex-shrink: 0; padding-top: 2px; min-width: 120px; text-align: right;
+  }
+  .new, .prot, .tag {
+    font-size: 0.64rem; padding: 1px 5px; border-radius: 3px; vertical-align: middle; margin-left: 4px; font-weight:500;
+  }
+  .new, .tag { background: var(--accent-bg); color: var(--accent-text); }
+  .prot { background: var(--ok-bg); color: var(--ok-fg); }
+
+  .input-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+  }
+  .field {
+    background: var(--bg-2); border: 0.5px solid var(--border-1);
+    border-radius: var(--radius-md); padding: 9px 13px;
+  }
+  .field label { display: block; font-size: 0.83rem; margin-bottom: 6px; }
+  .field small { display: block; font-size: 0.72rem; color: var(--text-3); margin-top: 4px; line-height: 1.45; }
+  input.n, select.sel {
+    width: 100%; text-align: center; font-size: 0.9rem; font-weight: 600;
+    padding: 6px 7px; border: 0.5px solid var(--border-2);
+    border-radius: var(--radius-sm); background: var(--bg); color: var(--text-1);
+    outline: none; transition: border-color 0.15s;
+  }
+  input.n:focus, select.sel:focus { border-color: var(--accent); }
+
+  .inline-note {
+    font-size: 0.75rem; color: var(--text-2); margin-top: 8px;
+  }
+
+  .card {
+    border: 0.5px solid var(--border-2); border-radius: var(--radius-lg);
+    background: var(--bg); overflow: hidden; margin-bottom: 1.6rem;
+  }
+  .card-top { padding: 1.2rem 1.4rem 0.9rem; border-bottom: 0.5px solid var(--border-1); }
+  .card-hint { font-size: 0.7rem; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 5px; }
+  .prob-val { font-size: 2.75rem; font-weight: 600; letter-spacing: -0.03em; color: var(--text-1); line-height: 1; }
+  .card-meta { display: flex; align-items: center; gap: 9px; margin-top: 7px; flex-wrap: wrap; }
+  .card-desc { font-size: 0.84rem; color: var(--text-2); }
+  .badge { font-size: 0.7rem; font-weight: 600; padding: 3px 9px; border-radius: 20px; }
+  .b-ok   { background: var(--ok-bg);   color: var(--ok-fg); }
+  .b-warn { background: var(--warn-bg); color: var(--warn-fg); }
+  .b-err  { background: var(--err-bg);  color: var(--err-fg); }
+  .copy-btn {
+    font-size: 0.76rem; padding: 4px 10px; border-radius: var(--radius-sm);
+    border: 0.5px solid var(--border-2); background: var(--bg); color: var(--text-1);
+    cursor: pointer; line-height: 1.2;
+  }
+  .copy-btn:hover { background: var(--bg-2); }
+  .copy-status { font-size: 0.72rem; color: var(--text-3); }
+
+  .bar-wrap { padding: 0 1.4rem 0.9rem; }
+  .bar-track { height: 5px; background: var(--bg-3); border-radius: 3px; margin: 11px 0 5px; overflow: hidden; }
+  .bar-fill  { height: 100%; border-radius: 3px; transition: width 0.3s ease, background 0.3s; }
+  .bar-ticks { display: flex; justify-content: space-between; font-size: 0.67rem; color: var(--text-3); }
+
+  .stats {
+    display: grid; grid-template-columns: repeat(4,1fr);
+    border-top: 0.5px solid var(--border-1);
+  }
+  .sc { padding: 9px 13px; border-right: 0.5px solid var(--border-1); }
+  .sc:last-child { border-right: none; }
+  .sl { font-size: 0.67rem; color: var(--text-3); margin-bottom: 2px; }
+  .sv { font-size: 0.83rem; font-family: var(--mono); color: var(--text-1); }
+
+  .breakdown {
+    border-top: 0.5px solid var(--border-1); padding: 0.75rem 1.4rem;
+    font-size: 0.78rem; color: var(--text-2); font-family: var(--mono);
+    line-height: 1.9; overflow-x: auto;
+  }
+  .breakdown .lbl { color: var(--text-3); display: inline-block; min-width: 260px; }
+  .breakdown .val { color: var(--text-1); }
+  .breakdown .pos { color: var(--err-fg); }
+  .breakdown .neg { color: var(--ok-fg); }
+
+  .advisory {
+    margin-top: 1rem;
+    background: var(--warn-bg);
+    color: var(--warn-fg);
+    border-top: 0.5px solid var(--border-1);
+    padding: 0.85rem 1.4rem;
+    font-size: 0.78rem;
+    line-height: 1.65;
+  }
+  .advisory strong { color: var(--text-1); }
+
+  .cit {
+    border-top: 0.5px solid var(--border-1); padding-top: 1.2rem;
+    font-size: 0.775rem; line-height: 1.75; color: var(--text-2);
+  }
+  .cit strong { color: var(--text-1); }
+  .cit a { color: var(--accent); text-decoration: none; }
+  .cit a:hover { text-decoration: underline; }
+  .cit .note  { font-size: 0.71rem; color: var(--text-3); margin-top: 5px; }
+  .cit .lic   { font-size: 0.71rem; color: var(--text-3); margin-top: 7px; padding-top: 7px; border-top: 0.5px solid var(--border-1); }
+  .cit .disc  { font-size: 0.71rem; color: var(--text-3); margin-top: 5px; line-height: 1.6; }
+
+  @media (max-width: 700px) {
+    .input-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 520px) {
+    .stats { grid-template-columns: repeat(2,1fr); }
+    .sc:nth-child(2) { border-right: none; }
+    .sc:nth-child(3) { border-top: 0.5px solid var(--border-1); }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="hdr">
+    <h1>PIM3 — Paediatric Index of Mortality </h1>
+    <p>PICU admission mortality predictor · first ICU contact to 1 hour after PICU arrival </p>
+  </div>
+
+  <div class="sec">
+    <p class="sec-ttl">Physiology at first ICU contact / within first hour</p>
+    <div class="input-grid">
+      <div class="field">
+        <label for="sbp">Systolic BP (mmHg)</label>
+        <input class="n" type="number" id="sbp" min="0" max="300" placeholder="120" oninput="calc()">
+        <small>Leave blank if unknown. Strict PIM3 default = 120 mmHg. If cardiac arrest, record 0. If shocked and immeasurable, record 30.</small>
+      </div>
+      <div class="field">
+        <label for="be">Base excess (mmol/L)</label>
+        <input class="n" type="number" id="be" min="-50" max="50" step="0.1" placeholder="unknown" oninput="calc()">
+        <small>Enter the value exactly as shown on the ABG report, with its <strong>+ or − sign</strong>. Example: −8.5 or +3.0. Arterial or capillary only. Leave blank if unknown. Strict PIM3 default contribution = 0.</small>
+      </div>
+      <div class="field">
+        <label for="fio2">FiO₂ (fraction)</label>
+        <input class="n" type="number" id="fio2" min="0.21" max="1" step="0.01" placeholder="0.21" oninput="calc()">
+        <small>Enter as a fraction, not percent. Example: room air = 0.21, 50% oxygen = 0.50.</small>
+      </div>
+      <div class="field">
+        <label for="pao2">PaO₂ (mmHg)</label>
+        <input class="n" type="number" id="pao2" min="1" max="800" step="0.1" placeholder="90" oninput="calc()">
+        <small>Arterial PaO₂ only. FiO₂ and PaO₂ should refer to the same time point.</small>
+      </div>
+      <div class="field">
+        <label for="ratio_display">100 × FiO₂ / PaO₂</label>
+        <input class="n" type="text" id="ratio_display" value="0.2300" readonly>
+        <small>Auto-calculated from FiO₂ and PaO₂. If either is missing, strict PIM3 default = 0.23.</small>
+      </div>
+    </div>
+    <div class="inline-note">PIM3 uses the first available value, not the worst value. Missing data are treated as normal, except the oxygenation ratio defaults to 0.23. </div>
+  </div>
+
+  <div class="sec">
+    <p class="sec-ttl">Binary admission factors</p>
+    <div class="grid">
+      <label class="row">
+        <input type="checkbox" id="pupils" onchange="calc()">
+        <span class="vname">Pupils fixed to bright light
+          <small>Code yes only if both pupils are &gt; 3 mm and both are fixed, and the finding is not due to drugs, toxins, or direct eye injury.</small>
+        </span>
+        <span class="coef">β = +3.8233</span>
+      </label>
+
+      <label class="row">
+        <input type="checkbox" id="elective" onchange="calc()">
+        <span class="vname">Elective ICU admission
+          <small>Admission after an elective procedure, elective monitoring, elective PICU procedure, or review of home ventilation. Unexpected ICU admission after elective surgery is not elective.</small>
+        </span>
+        <span class="coef">β = −0.5378 <span class="prot">protective</span></span>
+      </label>
+
+      <label class="row">
+        <input type="checkbox" id="mv" onchange="calc()">
+        <span class="vname">Mechanical ventilation within first hour
+          <small>Includes invasive ventilation, CPAP, BiPAP, and other non-invasive ventilation. Excludes HFNC.</small>
+        </span>
+        <span class="coef">β = +0.9763</span>
+      </label>
+    </div>
+  </div>
+
+  <div class="sec">
+    <p class="sec-ttl">Recovery category <span class="tag">choose one</span></p>
+    <div class="grid">
+      <label class="row">
+        <input type="radio" name="recovery" id="rec_none" value="none" checked onchange="calc()">
+        <span class="vname">No recovery-from-procedure category
+          <small>Use this when recovery from surgery/procedure is not the main reason for PICU admission.</small>
+        </span>
+        <span class="coef">β = 0</span>
+      </label>
+
+      <label class="row">
+        <input type="radio" name="recovery" id="rec_bypass" value="bypass" onchange="calc()">
+        <span class="vname">Recovery from bypass cardiac procedure
+          <small>Use only when recovery is the main reason for PICU admission and the procedure was a bypass cardiac procedure.</small>
+        </span>
+        <span class="coef">β = −1.2246 <span class="prot">protective</span></span>
+      </label>
+
+      <label class="row">
+        <input type="radio" name="recovery" id="rec_nonbypass" value="nonbypass" onchange="calc()">
+        <span class="vname">Recovery from non-bypass cardiac procedure
+          <small>Use only when recovery is the main reason for PICU admission and the procedure was cardiac but non-bypass.</small>
+        </span>
+        <span class="coef">β = −0.8762 <span class="prot">protective</span></span>
+      </label>
+
+      <label class="row">
+        <input type="radio" name="recovery" id="rec_noncard" value="noncard" onchange="calc()">
+        <span class="vname">Recovery from non-cardiac procedure
+          <small>Use only when recovery is the main reason for PICU admission and the procedure was non-cardiac.</small>
+        </span>
+        <span class="coef">β = −1.5164 <span class="prot">protective</span></span>
+      </label>
+    </div>
+  </div>
+
+  <div class="sec">
+    <p class="sec-ttl">Diagnosis risk category <span class="tag">highest tier overrides</span></p>
+    <div class="grid">
+      <label class="row">
+        <input type="radio" name="riskdiag" id="risk_none" value="none" checked onchange="calc()">
+        <span class="vname">No low / high / very-high-risk diagnosis selected
+          <small>Use when none of the listed strict PIM3 diagnostic categories apply, or if in doubt.</small>
+        </span>
+        <span class="coef">β = 0</span>
+      </label>
+
+      <label class="row">
+        <input type="radio" name="riskdiag" id="risk_lr" value="lr" onchange="calc()">
+        <span class="vname">Low-risk diagnosis
+          <small>Asthma, bronchiolitis, croup, obstructive sleep apnoea, diabetic ketoacidosis, or seizures — only if this is the main reason for PICU admission.</small>
+        </span>
+        <span class="coef">β = −2.1766 <span class="prot">protective</span></span>
+      </label>
+
+      <label class="row">
+        <input type="radio" name="riskdiag" id="risk_hr" value="hr" onchange="calc()">
+        <span class="vname">High-risk diagnosis
+          <small>Spontaneous cerebral haemorrhage, cardiomyopathy/myocarditis, hypoplastic left heart syndrome, neurodegenerative disorder, or necrotising enterocolitis.</small>
+        </span>
+        <span class="coef">β = +1.0725</span>
+      </label>
+
+      <label class="row">
+        <input type="radio" name="riskdiag" id="risk_vhr" value="vhr" onchange="calc()">
+        <span class="vname">Very-high-risk diagnosis
+          <small>Cardiac arrest preceding ICU admission, SCID, leukaemia/lymphoma after first induction, bone marrow transplant recipient, or liver failure.</small>
+        </span>
+        <span class="coef">β = +1.6225</span>
+      </label>
+    </div>
+  </div>
+
+  <div class="sec">
+    <p class="sec-ttl">Oncology ICU option</p>
+    <div class="panel">
+      <label class="row" style="padding:0; border:none; background:transparent; cursor:default;">
+        <input type="checkbox" id="oncoMode" onchange="calc()">
+        <span class="vname">Show oncology ICU caution panel
+          <small>Advisory only. This does <strong>not</strong> change strict PIM3 mathematics. It adds a warning that general PIM3 may underestimate mortality in hemato-oncological subgroups and should be interpreted cautiously for individual patients.</small>
+        </span>
+      </label>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-top">
+      <p class="card-hint">Predicted hospital mortality probability</p>
+      <p class="prob-val" id="pval">—</p>
+      <div class="card-meta">
+        <span class="card-desc" id="pdesc">Enter admission data above</span>
+        <span class="badge" id="pbadge" style="display:none"></span>
+        <button type="button" class="copy-btn" id="copyBtn" onclick="copyResultsText()">Copy results text</button>
+        <span class="copy-status" id="copyStatus"></span>
+      </div>
+    </div>
+
+    <div class="bar-wrap">
+      <div class="bar-track"><div class="bar-fill" id="bar" style="width:0%"></div></div>
+      <div class="bar-ticks"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div>
+    </div>
+
+    <div class="stats">
+      <div class="sc"><p class="sl">PIM3 score (logit)</p><p class="sv" id="sv-logit">—</p></div>
+      <div class="sc"><p class="sl">Constant</p><p class="sv">−1.7928</p></div>
+      <div class="sc"><p class="sl">SBP quadratic term</p><p class="sv" id="sv-sbp2">—</p></div>
+      <div class="sc"><p class="sl">100×FiO₂/PaO₂ term</p><p class="sv" id="sv-ratio">—</p></div>
+    </div>
+
+    <div class="breakdown" id="breakdown">
+      <div id="bd-lines"></div>
+    </div>
+
+    <div class="advisory" id="oncoAdvisory" style="display:none">
+      <strong>Oncology ICU caution.</strong> This panel is advisory only and does not alter the strict PIM3 result.
+      Published validation data suggest that PIM3 may underestimate mortality in hemato-oncological subgroups,
+      with one Korean PICU study reporting observed mortality 18.73% versus predicted 7.13% and c-index 0.66 in that subgroup.
+      Use the numerical result for audit/benchmarking context, not for individual treatment limitation decisions.
+    </div>
+  </div>
+
+  <div class="sec" style="background:var(--bg-2);border:0.5px solid var(--border-1);border-radius:var(--radius-md);padding:10px 13px;font-size:0.8rem;color:var(--text-2)">
+    <strong style="color:var(--text-1)">Worked example check (ANZPICR booklet, Jan 2019)</strong><br>
+    Six-year-old child with relapsed leukaemia after first induction, non-elective admission, ventilated, reactive pupils, SBP 70 mmHg, base excess −12, 100×FiO₂/PaO₂ = 100×0.7/65 = 1.0769, no recovery category, very-high-risk diagnosis.<br>
+    Expected PIM3 score ≈ −0.1111 → mortality ≈ 47.22%.
+    <button onclick="runExample()" style="margin-left:10px;font-size:0.78rem;padding:3px 10px;border:0.5px solid var(--border-2);border-radius:var(--radius-sm);background:var(--bg);color:var(--text-1);cursor:pointer">Load example</button>
+    <span id="ex-result" style="margin-left:8px;font-family:var(--mono);font-size:0.78rem;color:var(--text-3)"></span>
+  </div>
+
+  <div class="cit" style="margin-top:1.4rem">
+    <p><strong>Primary coding source</strong> ANZPICR PIM2 &amp; PIM3 Information Booklet, Jan 2019.</p>
+    <p style="margin-top:4px"><strong>Validation references</strong><br>
+    Jung JH, Sol IS, Kim MJ, et al. Validation of pediatric index of mortality 3 for predicting mortality among patients admitted to a pediatric intensive care unit. <em>Acute Crit Care</em> 2018;33:170–177.<br>
+    Straney L, Clements A, Parslow RC, et al. Paediatric index of mortality 3: An updated model for predicting mortality in pediatric intensive care. <em>Pediatr Crit Care Med</em> 2013;14:673–681.<br>
+    Wolfler A, Osello R, Gualino J, et al. Validation of the pediatric index of mortality 3 score. <em>Pediatr Crit Care Med</em> 2016;17:251–256.<br>
+    Arias López MDP, Boada N, Fernández A, et al. Performance of the pediatric index of mortality 3 score in PICUs in Argentina: A prospective multicenter study. <em>Pediatr Crit Care Med</em> 2018;19:e653–e661.
+    </p>
+    <p class="note">Strict PIM3 logic implemented: SBP unknown=120, base excess unknown=0, oxygenation ratio unknown=0.23, and only the highest diagnosis tier is used. Mechanical ventilation includes CPAP/BiPAP but excludes HFNC.</p>
+    <p class="lic">Copyright &copy; 2026 Prof. Jyotirmay Kirtania, MPMMCC &amp; HBCH, Tata Memorial Centre, Varanasi, India. Licensed under the GNU GPL v3.0.</p>
+    <p class="disc">For clinical audit, educational and research use only. PIM3 is intended for groups of patients and benchmarking; it should not be used to make management decisions for individual patients.</p>
+  </div>
+
+</div>
+
+<script>
+var C = {
+  intercept: -1.7928,
+  pupils: 3.8233,
+  elective: -0.5378,
+  mv: 0.9763,
+  be: 0.0671,
+  sbp: -0.0431,
+  sbp2: 0.1716,
+  ratio: 0.4214,
+  rec_bypass: -1.2246,
+  rec_nonbypass: -0.8762,
+  rec_noncard: -1.5164,
+  vhr: 1.6225,
+  hr: 1.0725,
+  lr: -2.1766
+};
+
+function g(id) { return document.getElementById(id); }
+function chk(id) { return g(id).checked ? 1 : 0; }
+function valNum(id) {
+  var v = parseFloat(g(id).value);
+  return isNaN(v) ? null : v;
+}
+function getRadioValue(name) {
+  var nodes = document.querySelectorAll('input[name="' + name + '"]');
+  for (var i = 0; i < nodes.length; i++) if (nodes[i].checked) return nodes[i].value;
+  return null;
+}
+function fmt(v) {
+  var s = v >= 0 ? '+' : '';
+  return '<span class="' + (v >= 0 ? 'pos' : 'neg') + '">' + s + v.toFixed(6) + '</span>';
+}
+
+function effectiveInputs() {
+  var sbpRaw = valNum('sbp');
+  var beRaw = valNum('be');
+  var fio2Raw = valNum('fio2');
+  var pao2Raw = valNum('pao2');
+  var ratioRaw = (fio2Raw !== null && pao2Raw !== null && pao2Raw > 0) ? (100 * fio2Raw / pao2Raw) : null;
+
+  var sbp = (sbpRaw === null) ? 120 : sbpRaw;
+  var be = (beRaw === null) ? 0 : Math.abs(beRaw);
+  var ratio = (ratioRaw === null) ? 0.23 : ratioRaw;
+
+  var pupils = chk('pupils');
+  var elective = chk('elective');
+  var mv = chk('mv');
+
+  var recovery = getRadioValue('recovery');
+  var rec_bypass = recovery === 'bypass' ? 1 : 0;
+  var rec_nonbypass = recovery === 'nonbypass' ? 1 : 0;
+  var rec_noncard = recovery === 'noncard' ? 1 : 0;
+
+  var risk = getRadioValue('riskdiag');
+  var vhr = risk === 'vhr' ? 1 : 0;
+  var hr = risk === 'hr' ? 1 : 0;
+  var lr = risk === 'lr' ? 1 : 0;
+
+  return {
+    sbpRaw, beRaw, fio2Raw, pao2Raw, ratioRaw, sbp, be, ratio,
+    pupils, elective, mv,
+    recovery, rec_bypass, rec_nonbypass, rec_noncard,
+    risk, vhr, hr, lr
+  };
+}
+
+function calc() {
+  var I = effectiveInputs();
+
+  var termPupils = C.pupils * I.pupils;
+  var termElective = C.elective * I.elective;
+  var termMV = C.mv * I.mv;
+  var termBE = C.be * I.be;
+  var termSBP = C.sbp * I.sbp;
+  var termSBP2 = C.sbp2 * ((I.sbp * I.sbp) / 1000);
+  var termRatio = C.ratio * I.ratio;
+  var termRecBypass = C.rec_bypass * I.rec_bypass;
+  var termRecNonBypass = C.rec_nonbypass * I.rec_nonbypass;
+  var termRecNonCard = C.rec_noncard * I.rec_noncard;
+  var termVHR = C.vhr * I.vhr;
+  var termHR = C.hr * I.hr;
+  var termLR = C.lr * I.lr;
+
+  var logit = C.intercept + termPupils + termElective + termMV + termBE + termSBP + termSBP2 + termRatio
+            + termRecBypass + termRecNonBypass + termRecNonCard + termVHR + termHR + termLR;
+  var prob = 1 / (1 + Math.exp(-logit));
+  var pct = (prob * 100).toFixed(2);
+
+  g('ratio_display').value = I.ratio.toFixed(4) + (I.ratioRaw === null ? ' (default)' : '');
+  g('pval').textContent = pct + '%';
+  g('sv-logit').textContent = logit.toFixed(5);
+  g('sv-sbp2').textContent = termSBP2.toFixed(5);
+  g('sv-ratio').textContent = termRatio.toFixed(5);
+
+  var bar = g('bar');
+  var badge = g('pbadge');
+  var desc = g('pdesc');
+  bar.style.width = Math.min(100, prob * 100).toFixed(2) + '%';
+  badge.style.display = 'inline-block';
+  desc.textContent = 'Predicted hospital mortality';
+
+  if (prob < 0.10) {
+    badge.className = 'badge b-ok'; badge.textContent = 'Lower predicted risk';
+    bar.style.background = 'var(--ok-fg)';
+  } else if (prob < 0.25) {
+    badge.className = 'badge b-warn'; badge.textContent = 'Intermediate predicted risk';
+    bar.style.background = 'var(--warn-fg)';
+  } else {
+    badge.className = 'badge b-err'; badge.textContent = 'Higher predicted risk';
+    bar.style.background = 'var(--err-fg)';
+  }
+
+  buildBreakdown(I, {
+    termPupils, termElective, termMV, termBE, termSBP, termSBP2, termRatio,
+    termRecBypass, termRecNonBypass, termRecNonCard, termVHR, termHR, termLR, logit
+  });
+
+  g('oncoAdvisory').style.display = chk('oncoMode') ? 'block' : 'none';
+}
+
+function buildBreakdown(I, T) {
+  var lines = [];
+  function push(label, val) {
+    if (val !== 0) lines.push('<div><span class="lbl">' + label + '</span>' + fmt(val) + '</div>');
+  }
+
+  push('Constant', C.intercept);
+  push('Pupils fixed', T.termPupils);
+  push('Elective admission', T.termElective);
+  push('Mechanical ventilation', T.termMV);
+  push('|Base excess| × 0.0671', T.termBE);
+  push('SBP × (-0.0431)', T.termSBP);
+  push('(SBP²/1000) × 0.1716', T.termSBP2);
+  push('(100×FiO₂/PaO₂) × 0.4214', T.termRatio);
+  push('Recovery: bypass cardiac', T.termRecBypass);
+  push('Recovery: non-bypass cardiac', T.termRecNonBypass);
+  push('Recovery: non-cardiac', T.termRecNonCard);
+  push('Very-high-risk diagnosis', T.termVHR);
+  push('High-risk diagnosis', T.termHR);
+  push('Low-risk diagnosis', T.termLR);
+
+  lines.push('<div style="border-top:0.5px solid var(--border-1);margin-top:4px;padding-top:4px">' +
+    '<span class="lbl"><strong>PIM3 score (sum)</strong></span>' +
+    '<span class="val"><strong>' + T.logit.toFixed(5) + '</strong></span></div>');
+
+  lines.push('<div><span class="lbl">Effective SBP used</span><span class="val">' + I.sbp + (I.sbpRaw === null ? ' (default)' : '') + '</span></div>');
+  lines.push('<div><span class="lbl">Effective |Base excess| used</span><span class="val">' + I.be + (I.beRaw === null ? ' (default 0)' : '') + '</span></div>');
+  lines.push('<div><span class="lbl">Effective 100×FiO₂/PaO₂ used</span><span class="val">' + I.ratio.toFixed(4) + (I.ratioRaw === null ? ' (default 0.23)' : '') + '</span></div>');
+
+  g('bd-lines').innerHTML = lines.join('');
+}
+
+function getRecoveryLabel() {
+  var r = getRadioValue('recovery');
+  if (r === 'bypass') return 'Recovery from bypass cardiac procedure';
+  if (r === 'nonbypass') return 'Recovery from non-bypass cardiac procedure';
+  if (r === 'noncard') return 'Recovery from non-cardiac procedure';
+  return 'No recovery category';
+}
+
+function getRiskLabel() {
+  var r = getRadioValue('riskdiag');
+  if (r === 'lr') return 'Low-risk diagnosis';
+  if (r === 'hr') return 'High-risk diagnosis';
+  if (r === 'vhr') return 'Very-high-risk diagnosis';
+  return 'No low/high/very-high-risk diagnosis';
+}
+
+function buildCopyResultsText() {
+  var I = effectiveInputs();
+  var lines = [];
+  lines.push('PIM3 predicted hospital mortality: ' + g('pval').textContent);
+  lines.push('SBP: ' + I.sbp + ' mmHg' + (I.sbpRaw === null ? ' (defaulted)' : ''));
+  lines.push('Base excess: ' + (I.beRaw === null ? 'unknown -> default 0' : I.beRaw));
+  lines.push('FiO2: ' + (I.fio2Raw === null ? 'unknown' : I.fio2Raw));
+  lines.push('PaO2: ' + (I.pao2Raw === null ? 'unknown' : I.pao2Raw));
+  lines.push('100×FiO2/PaO2: ' + I.ratio.toFixed(4) + (I.ratioRaw === null ? ' (defaulted)' : ''));
+  lines.push('Pupils fixed: ' + (I.pupils ? 'Yes' : 'No'));
+  lines.push('Mechanical ventilation: ' + (I.mv ? 'Yes' : 'No'));
+  lines.push('Elective admission: ' + (I.elective ? 'Yes' : 'No'));
+  lines.push('Recovery category: ' + getRecoveryLabel());
+  lines.push('Risk category: ' + getRiskLabel());
+  if (chk('oncoMode')) {
+    lines.push('Oncology ICU caution panel: ON (advisory only; strict PIM3 unchanged)');
+  }
+  return lines.join(' | ');
+}
+
+async function copyResultsText() {
+  var text = buildCopyResultsText();
+  var status = g('copyStatus');
+  try {
+    await navigator.clipboard.writeText(text);
+    status.textContent = 'Copied';
+    setTimeout(function(){ status.textContent = ''; }, 1800);
+  } catch (e) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'absolute';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    status.textContent = 'Copied';
+    setTimeout(function(){ status.textContent = ''; }, 1800);
+  }
+}
+
+function runExample() {
+  g('sbp').value = 70;
+  g('be').value = -12;
+  g('fio2').value = 0.70;
+  g('pao2').value = 65;
+  g('pupils').checked = false;
+  g('elective').checked = false;
+  g('mv').checked = true;
+  g('rec_none').checked = true;
+  g('risk_vhr').checked = true;
+  g('oncoMode').checked = true;
+  calc();
+
+  var logit = parseFloat(g('sv-logit').textContent);
+  var ptxt = g('pval').textContent;
+  var ok = Math.abs(logit - (-0.11114)) < 0.01 && Math.abs(parseFloat(ptxt) - 47.22) < 0.1;
+  g('ex-result').textContent = 'score = ' + logit.toFixed(5) + ' | P = ' + ptxt + (ok ? '  ✓ matches booklet' : '  ✗ mismatch');
+  g('ex-result').style.color = ok ? 'var(--ok-fg)' : 'var(--err-fg)';
+}
+
+calc();
+</script>
+</body>
+</html>

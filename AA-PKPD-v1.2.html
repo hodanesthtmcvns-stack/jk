@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Inhaled Anaesthetic Agent PK PD Simulator (AA-PKPD-Sim-v1.2)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+/* ── LIGHT THEME — Association of Anaesthetists colour palette ──
+   Agent colours follow ISO/clinical vaporiser convention:
+     Halothane   → Scarlet    (#C41E1E)  — universal red
+     Isoflurane  → Mauve      (#6840AA)  — Forane label
+     Sevoflurane → Amber      (#B87C00)  — Sevorane label
+     Desflurane  → Teal-blue  (#0076A8)  — Suprane label
+     Xenon       → Steel-blue (#2E6E8E)
+     N₂O         → Cobalt     (#1A5DB0)  — cylinder colour
+   ──────────────────────────────────────────────────────────── */
+:root {
+  --bg:    #eef2f5;
+  --su:    #ffffff;
+  --s2:    #f3f6f9;
+  --s3:    #e6ecf1;
+  --bo:    #c8d6e0;
+  --bo2:   #a8bcca;
+  --tx:    #162230;
+  --mu:    #5a7284;
+  --mu2:   #3a5870;
+  --ac:    #003a5c;   /* AA navy */
+  --ac2:   #0071a4;   /* AA mid-blue */
+  --gr:    #1a7a48;
+  --ye:    #8a5c00;
+  --re:    #c41e1e;
+  --pu:    #6840aa;
+  --te:    #006f6a;
+  --or:    #b04a00;
+  --shadow:rgba(22,50,70,.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:13px;background:var(--bg);color:var(--tx);display:flex;flex-direction:column}
+
+/* ── HEADER ────────────────────────────────────────────────── */
+#hdr{
+  background:var(--ac);
+  border-bottom:2px solid rgba(0,0,0,.12);
+  padding:9px 18px;
+  display:flex;align-items:center;gap:12px;
+  flex-shrink:0;
+  box-shadow:0 2px 8px rgba(0,58,92,.25);
+}
+#hdr h1{
+  font-family:'IBM Plex Sans',sans-serif;
+  font-size:13px;font-weight:700;
+  color:#ffffff;letter-spacing:.3px;
+}
+.hm{color:rgba(255,255,255,.55);font-size:10.5px;font-weight:300;letter-spacing:.2px}
+#agt{
+  margin-left:auto;
+  padding:3px 12px;border-radius:10px;
+  font-size:11px;font-weight:700;
+  border:1.5px solid;
+  font-family:'IBM Plex Mono',monospace;
+  letter-spacing:.3px;transition:.25s;
+  background:rgba(255,255,255,.10);
+  color:#fff;
+}
+
+/* ── MAIN LAYOUT ───────────────────────────────────────────── */
+#main{display:flex;flex:1;overflow:hidden}
+
+/* ── SIDEBAR ───────────────────────────────────────────────── */
+#sb{
+  width:218px;flex-shrink:0;
+  background:var(--su);
+  border-right:1px solid var(--bo);
+  overflow-y:auto;
+  padding:10px 11px;
+  display:flex;flex-direction:column;gap:10px;
+  scrollbar-width:thin;scrollbar-color:var(--bo) transparent;
+}
+.gl{
+  font-size:8px;font-weight:700;
+  text-transform:uppercase;letter-spacing:1.2px;
+  color:var(--mu);margin-bottom:4px;
+}
+
+/* Agent buttons */
+.ag{display:grid;grid-template-columns:1fr 1fr;gap:3px}
+.ab{
+  padding:6px 3px;
+  border:1.5px solid var(--bo);border-radius:5px;
+  background:var(--s2);color:var(--mu);
+  font-size:11px;font-weight:600;font-family:'IBM Plex Sans',sans-serif;
+  cursor:pointer;text-align:center;
+  transition:.14s;user-select:none;
+}
+.ab:hover{color:var(--tx);border-color:var(--bo2);background:var(--s3)}
+.ab.on{font-weight:700;border-width:2px;box-shadow:0 1px 5px rgba(0,0,0,.15)}
+.ab.fw{grid-column:1/-1}
+
+/* Carrier buttons */
+.cg{display:grid;grid-template-columns:1fr 1fr;gap:3px}
+.cb{
+  padding:5px 4px;
+  border:1.5px solid var(--bo);border-radius:5px;
+  background:var(--s2);color:var(--mu);
+  font-size:9.5px;font-weight:600;
+  cursor:pointer;text-align:center;
+  transition:.14s;user-select:none;
+}
+.cb.on{background:var(--ac);color:#fff;border-color:var(--ac);box-shadow:0 1px 5px rgba(0,58,92,.25)}
+.cb:disabled{opacity:.30;cursor:not-allowed}
+#cn{font-size:8.5px;color:var(--or);text-align:center;min-height:13px;margin-top:2px;font-style:italic}
+
+/* Sliders */
+.slk{display:flex;flex-direction:column;gap:2px}
+.sr{display:flex;justify-content:space-between;align-items:baseline}
+.sn{font-size:10px;color:var(--mu)}
+.sv{
+  font-size:11px;font-weight:600;
+  font-family:'IBM Plex Mono',monospace;
+  color:var(--tx);
+}
+input[type=range]{
+  -webkit-appearance:none;width:100%;height:3px;
+  background:var(--s3);border-radius:2px;
+  cursor:pointer;outline:none;margin:2px 0;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:12px;height:12px;border-radius:50%;
+  background:var(--ac2);cursor:pointer;
+  box-shadow:0 1px 4px rgba(0,58,92,.3);
+  transition:.1s;
+}
+input[type=range]:hover::-webkit-slider-thumb{
+  transform:scale(1.15);
+  box-shadow:0 1px 7px rgba(0,113,164,.4);
+}
+
+/* Info cards */
+.ic{
+  background:var(--s2);
+  border:1px solid var(--bo);border-radius:6px;
+  padding:8px 9px;
+}
+.ir{display:flex;justify-content:space-between;align-items:center;padding:1.5px 0}
+.il{color:var(--mu);font-size:9.5px}
+.iv{
+  font-size:10.5px;font-weight:600;
+  font-family:'IBM Plex Mono',monospace;
+}
+.dv{height:1px;background:var(--bo);margin:4px 0}
+
+/* ── CHART GRID ────────────────────────────────────────────── */
+#ch{
+  flex:1;overflow:hidden;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  grid-template-rows:1fr 1fr;
+  gap:6px;padding:7px;
+}
+.cc{
+  background:var(--su);
+  border:1px solid var(--bo);border-radius:8px;
+  padding:8px 10px 5px;
+  display:flex;flex-direction:column;overflow:hidden;
+  box-shadow:0 1px 6px var(--shadow);
+}
+.cht{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;flex-shrink:0}
+.cttl{font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--mu)}
+.cbdg{
+  font-size:8px;padding:1px 6px;border-radius:3px;
+  background:var(--ac);color:#fff;
+  font-family:'IBM Plex Mono',monospace;font-weight:600;
+}
+.cw{flex:1;position:relative;min-height:0}
+.cw canvas{position:absolute!important;top:0;left:0;width:100%!important;height:100%!important}
+
+/* ── FOOTER ────────────────────────────────────────────────── */
+#rf{
+  background:var(--s2);
+  border-top:1px solid var(--bo);
+  padding:3px 14px;
+  font-size:7.5px;color:var(--mu);
+  flex-shrink:0;line-height:1.5;
+  font-family:'IBM Plex Mono',monospace;
+}
+
+/* ── PHYSIOLOGY OVERRIDE SECTION ───────────────────────────── */
+.gl-row{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:4px;
+}
+.gl-row .gl{margin-bottom:0}
+.btn-rst{
+  font-size:8.5px;font-weight:700;font-family:'IBM Plex Mono',monospace;
+  color:var(--mu2);background:none;border:1px solid var(--bo2);
+  border-radius:4px;padding:1px 6px;cursor:pointer;
+  transition:.14s;letter-spacing:.2px;
+}
+.btn-rst:hover{background:var(--s3);color:var(--ac);border-color:var(--ac2)}
+/* Track colour inside info cards */
+.ic input[type=range]{background:var(--bo)}
+.ov-ind{
+  font-size:8px;font-weight:700;font-family:'IBM Plex Mono',monospace;
+  color:var(--or);min-height:11px;text-align:right;margin-bottom:2px;
+}
+</style>
+</head>
+<body>
+
+<div id="hdr">
+  <h1>AA-PKPD-Sim-v1.2 | Inhaled Anaesthetic Agent Pharmacokinetics Pharmacodynamics Simulator | License: GNU GPL v3.0, Copyright (C) [2026] [Prof. Jyotirmay Kirtania]</h1>
+  <span class="hm">4-compartment · RK4 · Age-corrected MAC · BIS · 0–12 h</span>
+  <span id="agt">Sevoflurane</span>
+</div>
+
+<div id="main">
+  <div id="sb">
+
+    <div>
+      <div class="gl">Agent</div>
+      <div class="ag" id="agGrid">
+        <button class="ab on" data-ag="sevo">Sevo</button>
+        <button class="ab" data-ag="des">Des</button>
+        <button class="ab" data-ag="iso">Iso</button>
+        <button class="ab" data-ag="halo">Halo</button>
+        <button class="ab fw" data-ag="xeno">Xenon</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="gl">Carrier Gas</div>
+      <div class="cg">
+        <button class="cb on" id="cbAir">Air + O₂</button>
+        <button class="cb" id="cbN2O">N₂O + O₂</button>
+      </div>
+      <div id="cn"></div>
+    </div>
+
+    <div>
+      <div class="gl">Patient &amp; Dose</div>
+      <div class="slk">
+        <div class="sr"><span class="sn">Age (years)</span><span class="sv" id="vAge">40</span></div>
+        <input type="range" id="sAge" min="0" max="120" step="1" value="40">
+      </div>
+      <div class="slk" style="margin-top:7px">
+        <div class="sr"><span class="sn">Target (× MAC)</span><span class="sv" id="vMac">1.00 ×</span></div>
+        <input type="range" id="sMac" min="0.3" max="2.5" step="0.05" value="1.0">
+      </div>
+      <div class="slk" style="margin-top:7px">
+        <div class="sr"><span class="sn">FGF (L/min)</span><span class="sv" id="vFgf">2.0</span></div>
+        <input type="range" id="sFgf" min="0.3" max="10" step="0.1" value="2.0">
+      </div>
+      <div class="slk" style="margin-top:7px">
+        <div class="sr"><span class="sn">Duration (h)</span><span class="sv" id="vDur">4</span></div>
+        <input type="range" id="sDur" min="0.5" max="12" step="0.5" value="4">
+      </div>
+    </div>
+
+    <div>
+      <div class="gl-row">
+        <span class="gl" style="margin-bottom:0">Pharmacokinetics</span>
+        <button class="btn-rst" id="btnReset" title="Reset all physiology to age-predicted values">↺ age</button>
+      </div>
+      <div class="ic">
+        <div class="ir"><span class="il">MAC at age</span><span class="iv" id="imac" style="color:var(--ac2)">—</span></div>
+        <div class="ir"><span class="il">Target FI (vol%)</span><span class="iv" id="ifi" style="color:var(--ac2)">—</span></div>
+        <div class="ir"><span class="il">λ blood:gas</span><span class="iv" id="ilbg" style="color:var(--te)">—</span></div>
+        <div class="ir"><span class="il">VRG t½</span><span class="iv" id="it50" style="color:var(--ye)">—</span></div>
+        <div class="dv" style="margin:5px 0 3px"></div>
+        <div class="ov-ind" id="ovInd"></div>
+        <div class="slk">
+          <div class="sr"><span class="il">Weight (kg)</span><span class="iv" id="vWt" style="color:var(--mu2)">70.0</span></div>
+          <input type="range" id="sWt" min="1.5" max="150" step="0.5" value="70">
+        </div>
+        <div class="slk" style="margin-top:5px">
+          <div class="sr"><span class="il">CO (L/min)</span><span class="iv" id="vCO" style="color:var(--mu2)">5.60</span></div>
+          <input type="range" id="sCO" min="0.5" max="15" step="0.1" value="5.6">
+        </div>
+        <div class="slk" style="margin-top:5px">
+          <div class="sr"><span class="il">VA (L/min)</span><span class="iv" id="vVA" style="color:var(--mu2)">4.55</span></div>
+          <input type="range" id="sVA" min="0.3" max="13" step="0.1" value="4.55">
+        </div>
+        <div class="slk" style="margin-top:5px">
+          <div class="sr"><span class="il">FRC (L)</span><span class="iv" id="vFRC" style="color:var(--mu2)">2.45</span></div>
+          <input type="range" id="sFRC" min="0.3" max="6" step="0.05" value="2.45">
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="gl">Pharmacodynamics (BIS)</div>
+      <div class="ic">
+        <div class="ir"><span class="il">BIS (steady state)</span><span class="iv" id="ibis">—</span></div>
+        <div class="ir"><span class="il">Anaesthetic state</span><span class="iv" id="istate" style="font-size:9px">—</span></div>
+        <div class="ir"><span class="il">t → 1 MAC brain</span><span class="iv" id="it1mac" style="color:var(--ye)">—</span></div>
+        <div class="dv"></div>
+        <div class="ir" id="n2oRow" style="display:none">
+          <span class="il">N₂O MAC equiv.</span>
+          <span class="iv" id="in2omac" style="color:var(--pu)">—</span>
+        </div>
+        <div class="ir" id="n2oBisRow" style="display:none">
+          <span class="il">N₂O BIS contrib.</span>
+          <span class="iv" id="in2obis" style="color:var(--pu)">—</span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- #sb -->
+
+  <div id="ch">
+    <div class="cc">
+      <div class="cht"><span class="cttl">Alveolar Uptake — FA/FI</span><span class="cbdg">PK</span></div>
+      <div class="cw"><canvas id="cFaFi"></canvas></div>
+    </div>
+    <div class="cc">
+      <div class="cht"><span class="cttl">Tissue Distribution (MAC equiv.)</span><span class="cbdg">PK</span></div>
+      <div class="cw"><canvas id="cComp"></canvas></div>
+    </div>
+    <div class="cc">
+      <div class="cht"><span class="cttl">Bispectral Index (BIS)</span><span class="cbdg">PD</span></div>
+      <div class="cw"><canvas id="cBis"></canvas></div>
+    </div>
+    <div class="cc">
+      <div class="cht"><span class="cttl">Alveolar Concentration (vol%)</span><span class="cbdg">PK</span></div>
+      <div class="cw"><canvas id="cAlv"></canvas></div>
+    </div>
+  </div>
+
+</div>
+
+<div id="rf">
+  PK PD Model References: Eger EI II (1963–1994) · Mapleson WW, Br J Anaesth 1996;76:179 (MAC age) · Nickalls &amp; Mapleson, BJA 2003;91:170 · Lerman J (1984,1994; paediatric MAC) · Yasuda N, Anesth Analg 1989;68:791 (partition coefficients) · Goto T et al, Anesthesiology 1998;89:867 (xenon) · Vanluchene ALG, Anesthesiology 2004;100:292 · Cederholm I, Acta Anaesth Scand 2000 (N₂O BIS) · Model: 4-compartment VRG/MG/FG/VPG · RK4 Δt=0.25 min · Circle-system wash-in model. IMPORTANT NOTE: This is a mechanistic teaching model based on classical compartmental theory. It uses simplified assumptions and should not be used for clinical decision-making.
+</div>
+
+<script>
+'use strict';
+
+/* ══════════════════════════════════════════════════════════════
+   PHARMACOLOGICAL PARAMETERS
+   Sources listed in footer references
+   ══════════════════════════════════════════════════════════════ */
+
+// Agent parameters: name, MAC at 40y, λ blood:gas, λ tissue:blood {v=VRG,m=Muscle,f=Fat,p=VPG}
+// Eger EI II (1974,1992,1994); Yasuda N (1989); Goto T (1998)
+// Colours follow ISO/clinical vaporiser convention (AA standard):
+//   Halothane → Scarlet, Isoflurane → Mauve, Sevoflurane → Amber, Desflurane → Teal-blue, Xenon → Steel
+const AG = {
+  sevo:{ name:'Sevoflurane', mac40:2.05,  lbg:0.65,  lt:{v:1.7, m:3.1, f:47.5,p:1.5}, c:'#B87800', o2:false },
+  des: { name:'Desflurane',  mac40:6.00,  lbg:0.42,  lt:{v:1.3, m:2.0, f:27.2,p:1.1}, c:'#0076A8', o2:false },
+  iso: { name:'Isoflurane',  mac40:1.17,  lbg:1.46,  lt:{v:2.6, m:4.0, f:44.9,p:2.0}, c:'#6840AA', o2:false },
+  halo:{ name:'Halothane',   mac40:0.75,  lbg:2.54,  lt:{v:2.9, m:3.4, f:51.1,p:2.5}, c:'#C41E1E', o2:false },
+  xeno:{ name:'Xenon',       mac40:63,    lbg:0.115, lt:{v:1.3, m:0.83,f:1.65,p:0.5}, c:'#2E6E8E', o2:true  }
+};
+
+// N₂O: 70% in O₂ (standard); MAC 104% (Eger 1965); λ b:g 0.47 (Eger 1974)
+const N2O = { lbg:0.47, mac:104, fi:0.70, lt:{v:1.06,m:1.2,f:2.3,p:0.8} };
+
+// Compartment fractions of body weight (vol) and cardiac output (flow) — Eger 1974
+const VF = {v:0.085, m:0.470, f:0.200, p:0.150};
+const QF = {v:0.750, m:0.180, f:0.050, p:0.020};
+const V_CIRCUIT = 7.0;  // circle system + patient airways (L)
+
+/* ══════════════════════════════════════════════════════════════
+   AGE-DEPENDENT PHYSIOLOGY
+   Sources: Lerman J (1984); Nunn JF Applied Resp Physiology;
+            Motoyama & Davis Paediatric Anaesthesia
+   ══════════════════════════════════════════════════════════════ */
+
+const AGE_BP = [0, 0.08, 0.5, 1, 5, 10, 15, 20, 40, 60, 80, 120];
+
+function lerp(x, xs, ys) {
+  if (x <= xs[0]) return ys[0];
+  const n = xs.length;
+  if (x >= xs[n-1]) return ys[n-1];
+  for (let i = 0; i < n-1; i++) {
+    if (x < xs[i+1]) return ys[i] + (x-xs[i])/(xs[i+1]-xs[i])*(ys[i+1]-ys[i]);
+  }
+  return ys[n-1];
+}
+
+function physio(age) {
+  // Weight (kg) — growth curve approximation
+  const w = lerp(age, AGE_BP, [3.5, 4.2, 7.5, 10, 18, 30, 50, 65, 70, 70, 68, 64]);
+  // Cardiac output index (L/min/kg)
+  const co = w * lerp(age, AGE_BP, [.200,.188,.155,.130,.115,.105,.095,.088,.080,.075,.068,.060]);
+  // Alveolar ventilation index (L/min/kg) — (VT-Vd)×RR/kg
+  const va = w * lerp(age, AGE_BP, [.190,.170,.150,.130,.100,.090,.080,.075,.065,.062,.059,.056]);
+  // FRC index (L/kg)
+  const frc = w * lerp(age, AGE_BP, [.025,.026,.027,.028,.030,.031,.032,.033,.035,.038,.042,.046]);
+  return {
+    w, co, va, frc,
+    V:{v:w*VF.v, m:w*VF.m, f:w*VF.f, p:w*VF.p},
+    Q:{v:co*QF.v, m:co*QF.m, f:co*QF.f, p:co*QF.p}
+  };
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MAC AGE CORRECTION
+   Adults >40y: Mapleson WW, Br J Anaesth 1996;76:179–185
+     MAC(age) = MAC40 × exp(−0.00269 × (age−40))
+   Children: Lerman J Anesthesiology 1994; anchor-point interpolation
+   ══════════════════════════════════════════════════════════════ */
+
+function macAtAge(mac40, age) {
+  if (age > 40) return mac40 * Math.exp(-0.00269 * (age - 40));
+  // Paediatric MAC factor relative to MAC40
+  // Peak at ~6 months (~1.5×), declining to 1.0 at age 40
+  const A = [0,   0.08, 0.5,  1,    3,    5,    10,   16,   20,   40  ];
+  const F = [1.40,1.42, 1.50, 1.45, 1.34, 1.28, 1.15, 1.05, 1.02, 1.00];
+  return mac40 * lerp(age, A, F);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   BIS MODEL
+   Hill equation fitted to sevoflurane/isoflurane data:
+     BIS = 20 + 77 × EC50² / (MAC_eff² + EC50²)
+     EC50 = 0.71 MAC, γ = 2
+   N₂O weighting = 0.50 (Cederholm I et al Acta Anaesth Scand 2000)
+   Anchor points: MAC 0→97, 0.5→72, 1.0→46, 1.5→33, 2.0→29
+   ══════════════════════════════════════════════════════════════ */
+
+function calcBIS(macBr, macN2Obr) {
+  const eff = macBr + 0.50 * macN2Obr;
+  if (eff <= 0) return 97;
+  const EC50sq = 0.5041;  // 0.71²
+  return Math.max(5, Math.min(97, 20 + 77 * EC50sq / (eff * eff + EC50sq)));
+}
+
+function bisLabel(b) {
+  if (b >= 90) return ['Conscious / Recall likely',  '#c41e1e'];
+  if (b >= 70) return ['Light sedation',              '#b04a00'];
+  if (b >= 55) return ['Moderate sedation',           '#8a5c00'];
+  if (b >= 40) return ['Surgical anaesthesia ✓',      '#1a7a48'];
+  if (b >= 25) return ['Deep anaesthesia',            '#006f6a'];
+  return               ['Burst suppression risk',     '#2e5eb0'];
+}
+
+/* ══════════════════════════════════════════════════════════════
+   4-COMPARTMENT SIMULATION  (Eger EI II 1974)
+   
+   Compartments: VRG (vessel-rich), MG (muscle), FG (fat), VPG (vessel-poor)
+   Circuit: circle-system wash-in (Lowe & Ernst 1981)
+   Second gas effect: Eger & Epstein 1964 (approximation)
+   
+   State vector [11]:
+     [0]   FI_circuit  — volatile inspired fraction in circuit
+     [1]   FA_vol      — volatile alveolar fraction
+     [2–5] P_vol       — volatile partial pressure: VRG, MG, FG, VPG
+     [6]   FA_N2O      — N₂O alveolar fraction
+     [7–10]P_N2O       — N₂O partial pressure: VRG, MG, FG, VPG
+   
+   All pressures in fraction of 1 atm (= vol% / 100)
+   ══════════════════════════════════════════════════════════════ */
+
+function simulate(cfg) {
+  const {agk, carrier, age, macTgt, fgf, durH, wt, co, va, frc} = cfg;
+  const ag   = AG[agk];
+  const macA = macAtAge(ag.mac40, age);         // MAC at patient's age (vol%)
+
+  // Cap Xenon inspired at 70% (leave ≥30% O₂); others at 100%
+  const maxFI  = ag.o2 ? 0.70 : 1.0;
+  const Fset   = Math.min(maxFI, macTgt * macA / 100);  // target inspired fraction
+
+  const useN2O = (carrier === 'n2o') && !ag.o2;
+  const FIN2O  = useN2O ? N2O.fi : 0;
+  const durMin = durH * 60;
+
+  // Build physiology from cfg values (user-set or age-predicted, same path)
+  const ph = {
+    w: wt, co, va, frc,
+    V:{v:wt*VF.v, m:wt*VF.m, f:wt*VF.f, p:wt*VF.p},
+    Q:{v:co*QF.v, m:co*QF.m, f:co*QF.f, p:co*QF.p}
+  };
+
+  const lv = ag.lbg;   // volatile λ blood:gas
+
+  // Initial state: all zero
+  let s = new Array(11).fill(0);
+
+  // Derivative function
+  function ddt(s) {
+    const d = new Array(11).fill(0);
+    const {V, Q} = ph;  // use ph from outer scope
+
+    // 1. Circuit wash-in (volatile) — time constant = V_CIRCUIT / FGF
+    d[0] = fgf * (Fset - s[0]) / V_CIRCUIT;
+
+    // 2. N₂O dynamics
+    let fa_n2o = 0;
+    if (useN2O) {
+      fa_n2o = s[6];
+      const pv_n = (Q.v*s[7] + Q.m*s[8] + Q.f*s[9] + Q.p*s[10]) / co;
+      d[6]  = (va*(FIN2O - s[6]) - co*N2O.lbg*(s[6] - pv_n)) / frc;
+      d[7]  = Q.v*(s[6]-s[7]) / (V.v*N2O.lt.v);
+      d[8]  = Q.m*(s[6]-s[8]) / (V.m*N2O.lt.m);
+      d[9]  = Q.f*(s[6]-s[9]) / (V.f*N2O.lt.f);
+      d[10] = Q.p*(s[6]-s[10])/ (V.p*N2O.lt.p);
+    }
+
+    // 3. Second gas / concentration effect (Eger & Epstein 1964)
+    //    N₂O uptake concentrates volatile; ~15% of N₂O fraction
+    const fi_eff = s[0] * (useN2O ? 1 + fa_n2o * 0.15 : 1);
+
+    // 4. Volatile alveolar and tissue dynamics
+    const pv_v = (Q.v*s[2] + Q.m*s[3] + Q.f*s[4] + Q.p*s[5]) / co;
+    d[1] = (va*(fi_eff - s[1]) - co*lv*(s[1] - pv_v)) / frc;
+    d[2] = Q.v*(s[1]-s[2]) / (V.v*ag.lt.v);
+    d[3] = Q.m*(s[1]-s[3]) / (V.m*ag.lt.m);
+    d[4] = Q.f*(s[1]-s[4]) / (V.f*ag.lt.f);
+    d[5] = Q.p*(s[1]-s[5]) / (V.p*ag.lt.p);
+
+    return d;
+  }
+
+  // RK4 integration step
+  function rk4(s, dt) {
+    const k1 = ddt(s);
+    const s2 = s.map((v,i) => v + .5*dt*k1[i]);
+    const k2 = ddt(s2);
+    const s3 = s.map((v,i) => v + .5*dt*k2[i]);
+    const k3 = ddt(s3);
+    const s4 = s.map((v,i) => v + dt*k3[i]);
+    const k4 = ddt(s4);
+    return s.map((v,i) => Math.max(0, v + dt/6*(k1[i]+2*k2[i]+2*k3[i]+k4[i])));
+  }
+
+  // ── Adaptive time step — ensures RK4 stability across full physiology range ──
+  // Critical time constants: alveolar compartment and VRG
+  // RK4 stable when |a·dt| ≤ 2.83; use 0.8 safety factor → dt ≤ 2.26 · τ_min
+  const tau_alv_v  = frc * lv             / (va + co * lv);
+  const tau_alv_n  = useN2O ? frc * N2O.lbg / (va + co * N2O.lbg) : Infinity;
+  const tau_vrg_v  = ph.V.v * ag.lt.v    / ph.Q.v;
+  const tau_vrg_n  = useN2O ? ph.V.v * N2O.lt.v / ph.Q.v : Infinity;
+  const tau_min    = Math.min(tau_alv_v, tau_alv_n, tau_vrg_v, tau_vrg_n);
+  const DT         = Math.min(0.25, Math.max(0.005, 2.26 * tau_min));
+
+  const N     = Math.ceil(durMin / DT);
+  const SRATE = Math.max(1, Math.round(2 / DT));  // sample every 2 min
+
+  const res = [];
+  let t1mac = null;
+
+  for (let i = 0; i <= N; i++) {
+    if (i % SRATE === 0) {
+      const t         = i * DT / 60;              // hours
+      const fa_n2o    = useN2O ? s[6] : 0;
+      const p_n2o_v   = useN2O ? s[7] : 0;
+      const macBr     = s[2] / (macA / 100);
+      const macN2Obr  = p_n2o_v / (N2O.mac / 100);
+      const bis       = calcBIS(macBr, macN2Obr);
+
+      if (t1mac === null && macBr >= 1.0) t1mac = t * 60;  // in minutes
+
+      res.push({
+        t,
+        FA:      s[1] * 100,           // vol%
+        FI:      s[0] * 100,           // vol%
+        faFI:    s[0] > 1e-6 ? Math.min(1, s[1]/s[0]) : 0,
+        P_VRG: s[2], P_MG: s[3], P_FG: s[4],
+        macBr, macN2Obr,
+        FA_N2O:    fa_n2o * 100,
+        faFI_N2O:  FIN2O > 0 ? Math.min(1, fa_n2o/FIN2O) : 0,
+        bis
+      });
+    }
+    if (i >= N) break;
+    s = rk4(s, DT);
+  }
+
+  // VRG analytical half-time (tissue time constant × ln 2)
+  const tVRG_half = Math.log(2) * ph.V.v * ag.lt.v / ph.Q.v;
+
+  const last = res[res.length - 1];
+  return { res, ph, macA, Fset, useN2O, t1mac, tVRG_half, ssBIS: last.bis };
+}
+
+/* ══════════════════════════════════════════════════════════════
+   CHART.JS CONFIGURATION
+   ══════════════════════════════════════════════════════════════ */
+
+Chart.defaults.color = '#5a7284';
+Chart.defaults.font.size = 9;
+Chart.defaults.font.family = "'IBM Plex Sans', system-ui, sans-serif";
+
+// Plugin: BIS depth zone backgrounds (Chart 3 only)
+Chart.register({
+  id: 'bisZones',
+  beforeDraw(chart) {
+    if (chart.canvas.id !== 'cBis') return;
+    const {ctx, scales, chartArea:{left,right}} = chart;
+    if (!scales.y) return;
+    const y = scales.y;
+    const zones = [
+      {lo:85,hi:100, c:'rgba(196,30,30,.07)',    lb:'Awake'},
+      {lo:70,hi:85,  c:'rgba(176,74,0,.07)',     lb:'Lt Sed'},
+      {lo:40,hi:70,  c:'rgba(26,122,72,.08)',    lb:'GA target'},
+      {lo:0, hi:40,  c:'rgba(40,80,160,.07)',    lb:'Deep/BS'},
+    ];
+    ctx.save();
+    zones.forEach(z => {
+      const y1 = y.getPixelForValue(z.hi), y2 = y.getPixelForValue(z.lo);
+      ctx.fillStyle = z.c;
+      ctx.fillRect(left, y1, right-left, y2-y1);
+      ctx.fillStyle = 'rgba(80,110,130,.40)';
+      ctx.font = "7.5px 'IBM Plex Mono',monospace";
+      ctx.textAlign = 'right';
+      ctx.fillText(z.lb, right-4, (y1+y2)/2+3);
+    });
+    ctx.restore();
+  }
+});
+
+// Plugin: dashed reference lines
+Chart.register({
+  id: 'refLines',
+  afterDraw(chart) {
+    const lines = chart.options._refLines;
+    if (!lines || !lines.length) return;
+    const {ctx, scales, chartArea:{left,right}} = chart;
+    if (!scales.y) return;
+    ctx.save();
+    lines.forEach(rl => {
+      const yp = scales.y.getPixelForValue(rl.v);
+      ctx.beginPath();
+      ctx.strokeStyle = rl.c || 'rgba(0,0,0,.12)';
+      ctx.setLineDash(rl.dash || [4,4]);
+      ctx.lineWidth = 0.9;
+      ctx.moveTo(left, yp); ctx.lineTo(right, yp);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      if (rl.lb) {
+        ctx.fillStyle = rl.c || 'rgba(0,0,0,.25)';
+        ctx.font = "7.5px 'IBM Plex Mono',monospace";
+        ctx.textAlign = 'left';
+        ctx.fillText(rl.lb, left+4, yp-2);
+      }
+    });
+    ctx.restore();
+  }
+});
+
+function mkOpts(yLabel, yMin, yMax, yStep) {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: { duration: 150 },
+    interaction: { mode:'index', intersect:false },
+    plugins: {
+      legend: {
+        display: true, position:'top',
+        labels:{ boxWidth:9, padding:5, font:{size:8.5, family:"'IBM Plex Mono',monospace"}, color:'#3a5870' }
+      },
+      tooltip: {
+        backgroundColor:'rgba(22,34,48,.94)',
+        borderColor:'#6090a8', borderWidth:1,
+        titleFont:{size:8.5, family:"'IBM Plex Mono',monospace"},
+        bodyFont:{size:8.5, family:"'IBM Plex Mono',monospace"},
+        padding:6,
+        callbacks:{title: items=>`t = ${Number(items[0].parsed.x).toFixed(2)} h`}
+      }
+    },
+    scales: {
+      x:{
+        type:'linear', min:0, max:4,
+        ticks:{ callback:v=>`${v}h`, maxTicksLimit:8, font:{size:8, family:"'IBM Plex Mono',monospace"}, color:'#5a7284' },
+        grid:{ color:'rgba(180,200,215,.55)' },
+        title:{ display:true, text:'Time (h)', font:{size:8.5}, color:'#5a7284' }
+      },
+      y:{
+        min: yMin ?? undefined,
+        max: yMax ?? undefined,
+        ticks:{ font:{size:8, family:"'IBM Plex Mono',monospace"}, stepSize:yStep??undefined, color:'#5a7284' },
+        grid:{ color:'rgba(180,200,215,.55)' },
+        title:{ display:true, text:yLabel, font:{size:8.5}, color:'#5a7284' }
+      }
+    },
+    _refLines: []
+  };
+}
+
+function mkDS(label, data, color, dash=[], fill=false) {
+  const [r,g,b] = [color.slice(1,3),color.slice(3,5),color.slice(5,7)].map(h=>parseInt(h,16));
+  return {
+    label, data,
+    borderColor: color,
+    backgroundColor: fill ? `rgba(${r},${g},${b},.07)` : 'transparent',
+    borderWidth: 1.8,
+    borderDash: dash,
+    pointRadius: 0,
+    tension: 0.25,
+    fill: fill ? 'origin' : false
+  };
+}
+
+let C = {};  // chart instances
+
+function initCharts() {
+  C.faFi = new Chart('cFaFi', {
+    type:'line',
+    data:{ datasets:[
+      mkDS('Volatile FA/FI', [], '#B87800'),
+      mkDS('N₂O FA/FI',     [], '#1A5DB0', [4,3])
+    ]},
+    options: mkOpts('FA/FI', 0, 1.05)
+  });
+  C.faFi.options._refLines = [{v:1.0, c:'rgba(0,0,0,.15)', lb:'FA=FI', dash:[4,4]}];
+
+  C.comp = new Chart('cComp', {
+    type:'line',
+    data:{ datasets:[
+      mkDS('VRG (brain)', [], '#B87800'),
+      mkDS('Muscle',      [], '#B04A00', [5,3]),
+      mkDS('Fat',         [], '#6840AA', [2,2]),
+      mkDS('Total (BIS-eff)', [], '#1A7A48', [4,2])
+    ]},
+    options: mkOpts('MAC equiv.', 0)
+  });
+
+  C.bis = new Chart('cBis', {
+    type:'line',
+    data:{ datasets:[
+      mkDS('BIS', [], '#B87800')
+    ]},
+    options: mkOpts('BIS', 0, 100, 20)
+  });
+  C.bis.options._refLines = [
+    {v:60, c:'rgba(26,122,72,.5)', lb:'60', dash:[3,4]},
+    {v:40, c:'rgba(26,122,72,.5)', lb:'40', dash:[3,4]}
+  ];
+
+  C.alv = new Chart('cAlv', {
+    type:'line',
+    data:{ datasets:[
+      mkDS('FA (alveolar)', [], '#B87800', [], true),
+      mkDS('FI (inspired)', [], '#5a7284', [5,3]),
+      mkDS('N₂O FA',        [], '#1A5DB0', [3,2])
+    ]},
+    options: mkOpts('vol%', 0)
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════
+   APPLICATION STATE & UPDATE
+   ══════════════════════════════════════════════════════════════ */
+
+const ST = {
+  agk:'sevo', carrier:'air', age:40, macTgt:1.0, fgf:2.0, durH:4,
+  // Physiology — initialised at age-40 predicted values; overrideable by sliders
+  wt:70.0, co:5.60, va:4.55, frc:2.45
+};
+
+/* Return age-predicted physiology WITHOUT applying any overrides */
+function agePredicted(age) { return physio(age); }
+
+/* Sync all four physiology sliders to current age-predicted values */
+function syncPhysioToAge() {
+  const ph = agePredicted(ST.age);
+  ST.wt  = +ph.w.toFixed(1);
+  ST.co  = +ph.co.toFixed(2);
+  ST.va  = +ph.va.toFixed(2);
+  ST.frc = +ph.frc.toFixed(2);
+  document.getElementById('sWt').value  = ST.wt;
+  document.getElementById('sCO').value  = ST.co;
+  document.getElementById('sVA').value  = ST.va;
+  document.getElementById('sFRC').value = ST.frc;
+  document.getElementById('vWt').textContent  = ST.wt.toFixed(1);
+  document.getElementById('vCO').textContent  = ST.co.toFixed(2);
+  document.getElementById('vVA').textContent  = ST.va.toFixed(2);
+  document.getElementById('vFRC').textContent = ST.frc.toFixed(2);
+}
+
+/* Show orange badge when any physiology value differs from age-predicted */
+function updateOvIndicator() {
+  const ph  = agePredicted(ST.age);
+  const TOL = 0.05;
+  const manual = Math.abs(ST.wt  - ph.w)   > TOL ||
+                 Math.abs(ST.co  - ph.co)  > TOL ||
+                 Math.abs(ST.va  - ph.va)  > TOL ||
+                 Math.abs(ST.frc - ph.frc) > TOL;
+  document.getElementById('ovInd').textContent = manual ? '⚠ MANUAL PHYSIOLOGY' : '';
+}
+
+function setText(id, v) { document.getElementById(id).textContent = v; }
+
+function update() {
+  const sim = simulate(ST);
+  const ag  = AG[ST.agk];
+  const {res, ph, macA, Fset, useN2O, t1mac, tVRG_half, ssBIS} = sim;
+  const H = ST.durH;
+
+  // Chart data arrays
+  const macFrac = macA / 100;
+  const faFI_d    = res.map(r=>({x:r.t, y:r.faFI}));
+  const n2oFI_d   = res.map(r=>({x:r.t, y:r.faFI_N2O}));
+  const vrg_d     = res.map(r=>({x:r.t, y:r.macBr}));
+  const mg_d      = res.map(r=>({x:r.t, y:r.P_MG / macFrac}));
+  const fg_d      = res.map(r=>({x:r.t, y:r.P_FG / macFrac}));
+  const tot_d     = res.map(r=>({x:r.t, y:r.macBr + 0.50*r.macN2Obr}));
+  const bis_d     = res.map(r=>({x:r.t, y:r.bis}));
+  const fa_d      = res.map(r=>({x:r.t, y:r.FA}));
+  const fi_d      = res.map(r=>({x:r.t, y:r.FI}));
+  const fan2o_d   = res.map(r=>({x:r.t, y:r.FA_N2O}));
+
+  // Parse color to rgba for fill
+  const [cr,cg,cb] = [ag.c.slice(1,3),ag.c.slice(3,5),ag.c.slice(5,7)].map(h=>parseInt(h,16));
+
+  // ── Chart 1: FA/FI ──────────────────────────────────────────
+  C.faFi.data.datasets[0].data = faFI_d;
+  C.faFi.data.datasets[0].borderColor = ag.c;
+  C.faFi.data.datasets[0].label = `${ag.name} FA/FI`;
+  C.faFi.data.datasets[1].data   = useN2O ? n2oFI_d : [];
+  C.faFi.data.datasets[1].hidden = !useN2O;
+  C.faFi.options.scales.x.max = H;
+  C.faFi.update('none');
+
+  // ── Chart 2: Tissue distribution ───────────────────────────
+  C.comp.data.datasets[0].data = vrg_d;
+  C.comp.data.datasets[0].borderColor = ag.c;
+  C.comp.data.datasets[1].data = mg_d;
+  C.comp.data.datasets[2].data = fg_d;
+  C.comp.data.datasets[3].data   = useN2O ? tot_d : [];
+  C.comp.data.datasets[3].hidden = !useN2O;
+  C.comp.options.scales.x.max = H;
+  C.comp.options._refLines = [
+    {v:ST.macTgt, c:`${ag.c}cc`, lb:`${ST.macTgt.toFixed(2)}× MAC`, dash:[3,4]},
+    ...(Math.abs(ST.macTgt-1.0)>0.05 ? [{v:1.0,c:'rgba(0,0,0,.18)',lb:'1 MAC',dash:[4,4]}]:[])
+  ];
+  C.comp.update('none');
+
+  // ── Chart 3: BIS ─────────────────────────────────────────────
+  C.bis.data.datasets[0].data = bis_d;
+  C.bis.data.datasets[0].borderColor = ag.c;
+  C.bis.data.datasets[0].segment = {
+    borderColor: ctx => {
+      const b = ctx.p1.parsed.y;
+      if (b >= 70) return '#C41E1E';
+      if (b >= 55) return '#B04A00';
+      if (b >= 40) return '#1A7A48';
+      return '#2E6E8E';
+    }
+  };
+  C.bis.options.scales.x.max = H;
+  C.bis.update('none');
+
+  // ── Chart 4: Alveolar concentration ───────────────────────
+  C.alv.data.datasets[0].data  = fa_d;
+  C.alv.data.datasets[0].borderColor    = ag.c;
+  C.alv.data.datasets[0].backgroundColor= `rgba(${cr},${cg},${cb},.08)`;
+  C.alv.data.datasets[1].data  = fi_d;
+  C.alv.data.datasets[2].data   = useN2O ? fan2o_d : [];
+  C.alv.data.datasets[2].hidden = !useN2O;
+  C.alv.options.scales.x.max = H;
+  C.alv.options._refLines = [
+    {v:macA,       c:`${ag.c}bb`,       lb:`1×MAC = ${macA.toFixed(2)}%`, dash:[4,3]},
+    {v:Fset*100,   c:'rgba(0,0,0,.15)', lb:`${ST.macTgt.toFixed(2)}× = ${(Fset*100).toFixed(2)}%`, dash:[3,4]}
+  ];
+  C.alv.update('none');
+
+  // ── Sidebar info panel ──────────────────────────────────────
+  setText('imac',  `${macA.toFixed(3)} vol%`);
+  setText('ifi',   `${(Fset*100).toFixed(2)} vol%`);
+  setText('ilbg',  ag.lbg.toFixed(3));
+  setText('it50',  `${tVRG_half.toFixed(2)} min`);
+  // Physiology slider value displays (kept in sync with ST)
+  document.getElementById('vWt').textContent  = ST.wt.toFixed(1);
+  document.getElementById('vCO').textContent  = ST.co.toFixed(2);
+  document.getElementById('vVA').textContent  = ST.va.toFixed(2);
+  document.getElementById('vFRC').textContent = ST.frc.toFixed(2);
+  updateOvIndicator();
+
+  const bisEl = document.getElementById('ibis');
+  const [lbl,col] = bisLabel(ssBIS);
+  bisEl.textContent   = ssBIS.toFixed(0);
+  bisEl.style.color   = col;
+  const stEl = document.getElementById('istate');
+  stEl.textContent    = lbl;
+  stEl.style.color    = col;
+
+  if (t1mac !== null) {
+    setText('it1mac', t1mac < 60 ? `${t1mac.toFixed(0)} min` : `${(t1mac/60).toFixed(2)} h`);
+  } else {
+    setText('it1mac', '> duration');
+  }
+
+  // N₂O panel rows
+  const n2oRow    = document.getElementById('n2oRow');
+  const n2oBisRow = document.getElementById('n2oBisRow');
+  if (useN2O) {
+    n2oRow.style.display    = '';
+    n2oBisRow.style.display = '';
+    const macN2Oss = N2O.fi / (N2O.mac/100);  // ~0.673 MAC
+    setText('in2omac', `${macN2Oss.toFixed(3)} MAC`);
+    setText('in2obis', `−${(0.50*macN2Oss*100).toFixed(0)} BIS pts`);
+  } else {
+    n2oRow.style.display    = 'none';
+    n2oBisRow.style.display = 'none';
+  }
+
+  // Header tag — white background badge on coloured border
+  const agt = document.getElementById('agt');
+  agt.textContent  = ag.name + (useN2O ? ' + N₂O' : '') + (ag.o2 ? ' [O₂]' : '');
+  agt.style.color  = '#ffffff';
+  agt.style.borderColor = 'rgba(255,255,255,.4)';
+  agt.style.background  = `${ag.c}55`;
+  agt.style.textShadow  = 'none';
+
+  // Agent button active states — dark text on light agents, white on dark agents
+  document.querySelectorAll('.ab').forEach(btn => {
+    const on = btn.dataset.ag === ST.agk;
+    btn.classList.toggle('on', on);
+    if (on) {
+      const [r,g,b2] = [ag.c.slice(1,3),ag.c.slice(3,5),ag.c.slice(5,7)].map(h=>parseInt(h,16));
+      // Relative luminance check for text contrast
+      const lum = (0.299*r + 0.587*g + 0.114*b2) / 255;
+      btn.style.background    = ag.c;
+      btn.style.color         = lum > 0.45 ? '#1a2230' : '#ffffff';
+      btn.style.borderColor   = ag.c;
+    } else {
+      btn.style.background  = '';
+      btn.style.color       = '';
+      btn.style.borderColor = '';
+    }
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════
+   EVENT LISTENERS
+   ══════════════════════════════════════════════════════════════ */
+
+document.getElementById('agGrid').addEventListener('click', e => {
+  const btn = e.target.closest('.ab');
+  if (!btn || !btn.dataset.ag) return;
+  ST.agk = btn.dataset.ag;
+  const isO2 = AG[ST.agk].o2;
+  const cbA = document.getElementById('cbAir');
+  const cbN = document.getElementById('cbN2O');
+  const cn  = document.getElementById('cn');
+
+  if (isO2) {
+    cbA.disabled = true; cbN.disabled = true;
+    cbA.classList.add('on'); cbN.classList.remove('on');
+    ST.carrier = 'air';
+    cn.textContent = '⚠ Xenon: O₂ carrier only';
+  } else {
+    cbA.disabled = false; cbN.disabled = false;
+    cn.textContent = '';
+    cbA.classList.toggle('on', ST.carrier === 'air');
+    cbN.classList.toggle('on', ST.carrier === 'n2o');
+  }
+  update();
+});
+
+document.getElementById('cbAir').addEventListener('click', function() {
+  if (this.disabled) return;
+  ST.carrier = 'air';
+  this.classList.add('on');
+  document.getElementById('cbN2O').classList.remove('on');
+  update();
+});
+
+document.getElementById('cbN2O').addEventListener('click', function() {
+  if (this.disabled) return;
+  ST.carrier = 'n2o';
+  this.classList.add('on');
+  document.getElementById('cbAir').classList.remove('on');
+  update();
+});
+
+[
+  ['sMac','vMac', v=>+v,  v=>`${(+v).toFixed(2)} ×`,'macTgt'],
+  ['sFgf','vFgf', v=>+v,  v=>`${(+v).toFixed(1)}`, 'fgf'   ],
+  ['sDur','vDur', v=>+v,  v=>`${v}`,               'durH'  ],
+].forEach(([sid,vid,parse,fmt,key]) => {
+  document.getElementById(sid).addEventListener('input', function() {
+    ST[key] = parse(this.value);
+    setText(vid, fmt(this.value));
+    update();
+  });
+});
+
+// Age slider — also resets physiology to age-predicted
+document.getElementById('sAge').addEventListener('input', function() {
+  ST.age = +this.value;
+  setText('vAge', this.value);
+  syncPhysioToAge();  // auto-update physiology sliders to new age predictions
+  update();
+});
+
+// Physiology override sliders (wt, CO, VA, FRC)
+[
+  ['sWt',  'vWt',  v=>+v, v=>(+v).toFixed(1), 'wt'  ],
+  ['sCO',  'vCO',  v=>+v, v=>(+v).toFixed(2), 'co'  ],
+  ['sVA',  'vVA',  v=>+v, v=>(+v).toFixed(2), 'va'  ],
+  ['sFRC', 'vFRC', v=>+v, v=>(+v).toFixed(2), 'frc' ],
+].forEach(([sid,vid,parse,fmt,key]) => {
+  document.getElementById(sid).addEventListener('input', function() {
+    ST[key] = parse(this.value);
+    setText(vid, fmt(this.value));
+    update();  // updateOvIndicator() called inside update()
+  });
+});
+
+// Reset button — revert all physiology to age-predicted values
+document.getElementById('btnReset').addEventListener('click', () => {
+  syncPhysioToAge();
+  update();
+});
+
+/* ══════════════════════════════════════════════════════════════
+   INIT
+   ══════════════════════════════════════════════════════════════ */
+initCharts();
+update();
+</script>
+</body>
+</html>
