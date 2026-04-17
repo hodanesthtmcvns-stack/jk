@@ -1,4 +1,5 @@
-# PRANA - Platform for Resuscitation & Acute-care Networked Applications are a set of Software Tools created and maintained by Prof. Jyotirmay Kirtania for Critical Care & Anesthesia Applications, Point of Care Decision Support and Training of Residents 
+# PRANA - Platform for Resuscitation & Acute-care Networked Applications
+These are a set of Software Tools created and maintained by Prof. Jyotirmay Kirtania for Critical Care & Anesthesia Applications, Point of Care Decision Support and Training of Residents.
 
 **Mission:** Bridging the gap between theory and bedside practice through open-access, physiologically-weighted, evidence-based decision support and documentation tools for anesthesia and intensive care.
 
@@ -159,4 +160,4 @@ This project is licensed under **GNU GPL v3**.
 These tools are intended for **clinical decision support and educational purposes only**. They do not replace professional medical judgment, bedside physical examination, or institutional clinical protocols.
 
 ***
-*Software stack created and maintained by Prof. (Dr.) Jyotirmay Kirtania, Department of Anesthesiology, Critical Care & Pain, MPMMCC & HBCH (Tata Memorial Centre), HBNI, Varanasi.*
+*PRANA software stack was created and maintained by Prof. (Dr.) Jyotirmay Kirtania, Department of Anesthesiology, Critical Care & Pain, MPMMCC & HBCH (Tata Memorial Centre), HBNI, Varanasi.*
