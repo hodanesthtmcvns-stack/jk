@@ -238,15 +238,6 @@ Displayed results include:
 
 ---
 
-## 🧠 Best Practice
-
-Use alongside:
-- Clinical judgment  
-- Hemodynamic assessment  
-- Organ dysfunction scores (SOFA/APACHE)  
-
----
-
 ## ❌ Common Errors
 
 - Over-selecting variables without strict criteria  
