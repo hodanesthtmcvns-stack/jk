@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inhalational Anaesthesia Cost Simulator - IACS-v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* theme tokens — updated by JS on agent change */
+:root {
+  --page-bg:     #fffbeb;
+  --tint:        #fef9ec;
+  --tint2:       #fef3c7;
+  --accent:      #d97706;
+  --accent-deep: #92400e;
+  --accent-mid:  #f59e0b;
+  --accent-pale: #fde68a;
+  --n2o:         #0369a1;
+  --n2o-bg:      #e0f2fe;
+  --card:        #ffffff;
+  --border:      rgba(0,0,0,0.08);
+  --border2:     rgba(0,0,0,0.14);
+  --text:        #111827;
+  --text2:       #4b5563;
+  --text3:       #9ca3af;
+  --sans:        'Inter', system-ui, sans-serif;
+  --mono:        'JetBrains Mono', 'Fira Mono', monospace;
+}
+
+body {
+  background: var(--page-bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 100vh;
+  padding: 28px 16px 56px;
+  transition: background 0.4s ease;
+}
+
+.page { max-width: 880px; margin: 0 auto; }
+
+/* header */
+.header {
+  margin-bottom: 22px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid var(--accent-pale);
+  transition: border-color 0.4s;
+}
+.header-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.header h1 { font-size: 16px; font-weight: 600; color: var(--accent-deep); }
+.header p  { font-size: 10.5px; color: var(--text3); margin-top: 3px; }
+.agent-badge {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
+  padding: 4px 12px; border-radius: 20px;
+  background: var(--tint2); color: var(--accent-deep);
+  white-space: nowrap; transition: background 0.3s, color 0.3s;
+}
+
+/* section label */
+.sec-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.10em;
+  text-transform: uppercase; color: var(--text3); margin-bottom: 8px;
+}
+.sec { margin-bottom: 18px; }
+
+/* agent buttons */
+.agent-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.agent-btn {
+  flex: 1; min-width: 90px; padding: 9px 8px;
+  border-radius: 9px; border: 2px solid transparent;
+  font-family: var(--sans); font-size: 12px; font-weight: 500;
+  cursor: pointer; transition: all 0.18s;
+  background: var(--card); color: var(--text2);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+}
+.agent-btn:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.11); }
+.agent-btn[data-agent="sevo"].active { background:#fffbeb; border-color:#d97706; color:#92400e; box-shadow:0 0 0 3px #fde68a; }
+.agent-btn[data-agent="iso"].active  { background:#faf5ff; border-color:#7c3aed; color:#5b21b6; box-shadow:0 0 0 3px #ede9fe; }
+.agent-btn[data-agent="des"].active  { background:#eff6ff; border-color:#2563eb; color:#1e40af; box-shadow:0 0 0 3px #dbeafe; }
+.agent-btn[data-agent="halo"].active { background:#fff1f2; border-color:#e11d48; color:#9f1239; box-shadow:0 0 0 3px #ffe4e6; }
+
+/* circuit & sodalime buttons */
+.circ-bar, .sl-bar { display: flex; gap: 6px; margin-bottom: 12px; }
+.circ-btn, .sl-btn {
+  flex: 1; padding: 8px 10px; border-radius: 8px;
+  border: 1.5px solid var(--border2);
+  background: var(--card); color: var(--text2);
+  font-family: var(--sans); font-size: 12.5px; font-weight: 500;
+  cursor: pointer; transition: all 0.18s;
+}
+.circ-btn.active, .sl-btn.active {
+  background: var(--tint2); border-color: var(--accent-mid); color: var(--accent-deep);
+}
+
+/* grids */
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.g4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+@media(max-width:640px){ .g3,.g4{ grid-template-columns:1fr 1fr; } .g2{ grid-template-columns:1fr; } }
+
+/* inputs */
+.ig { display: flex; flex-direction: column; gap: 4px; }
+.ig label { font-size: 11px; font-weight: 500; color: var(--text2); }
+.ig input, .ig select {
+  padding: 7px 10px; border: 1px solid var(--border2); border-radius: 7px;
+  background: var(--card); color: var(--text); font-size: 13px; font-family: var(--mono);
+  width: 100%; transition: border-color 0.15s, box-shadow 0.15s;
+}
+.ig input:focus, .ig select:focus {
+  outline: none; border-color: var(--accent-mid); box-shadow: 0 0 0 3px var(--accent-pale);
+}
+.ig input.dv { background: var(--tint); color: var(--accent-deep); font-weight: 500; border-color: var(--accent-pale); }
+.ig input:disabled { opacity: 0.32; cursor: not-allowed; background: #f9fafb; }
+.ig .hint { font-size: 10.5px; color: var(--text3); line-height: 1.4; }
+
+/* card */
+.card { background: var(--card); border: 1.5px solid var(--accent-pale); border-radius: 11px; padding: 14px 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+
+/* metrics */
+.mg { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 12px; }
+@media(max-width:640px){ .mg{ grid-template-columns:1fr 1fr; } }
+.met {
+  background: var(--tint); border: 1px solid var(--accent-pale);
+  border-radius: 9px; padding: 11px 13px;
+  transition: background 0.3s, border-color 0.3s;
+}
+.met .lbl { font-size: 10.5px; color: var(--text3); margin-bottom: 4px; font-weight: 500; }
+.met .val { font-size: 19px; font-weight: 500; font-family: var(--mono); color: var(--accent-deep); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.met .sub { font-size: 10px; color: var(--text3); margin-top: 2px; }
+.met.hero { background: var(--tint2); }
+.met.hero .val { font-size: 22px; color: var(--accent); }
+.met.n2m { background: var(--n2o-bg); border-color: #bae6fd; }
+.met.n2m .val { color: var(--n2o); }
+
+/* divider */
+hr { border: none; border-top: 1.5px solid var(--tint2); margin: 18px 0; }
+
+/* MAC bar */
+.mac-wrap { background: var(--card); border: 1.5px solid var(--accent-pale); border-radius: 11px; padding: 14px 16px; margin-bottom: 14px; }
+.mac-top  { display: flex; justify-content: space-between; align-items: center; margin-bottom: 9px; }
+.mac-ttl  { font-size: 12px; font-weight: 500; color: var(--text2); }
+.mac-bdg  { font-size: 12px; font-weight: 600; font-family: var(--mono); padding: 3px 10px; border-radius: 14px; }
+.mac-trk  { height: 7px; background: var(--tint2); border-radius: 4px; overflow: hidden; margin-bottom: 6px; }
+.mac-fill { height: 100%; border-radius: 4px; transition: width 0.3s, background 0.3s; }
+.mac-det  { font-size: 11px; color: var(--text3); font-family: var(--mono); }
+
+/* cumulative */
+.cum-row  { display: flex; justify-content: space-between; align-items: baseline; padding: 5px 0; font-size: 13px; border-bottom: 1px solid var(--tint2); }
+.cum-row:last-child { border-bottom: none; }
+.cum-row .cl { color: var(--text2); }
+.cum-row .cv { font-family: var(--mono); }
+.cum-row.tot { border-top: 1.5px solid var(--accent-pale); margin-top: 4px; padding-top: 9px; }
+.cum-row.tot .cl { font-weight: 600; color: var(--text); }
+.cum-row.tot .cv { font-size: 15px; font-weight: 600; color: var(--accent); }
+.cum-note { font-size: 10.5px; color: var(--text3); margin-top: 8px; font-family: var(--mono); }
+
+/* panel title */
+.pt { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 10px; }
+.dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; background: var(--accent); }
+
+/* N2O info strip */
+.n2o-strip {
+  display: none; background: var(--n2o-bg); border: 1px solid #bae6fd;
+  border-radius: 9px; padding: 9px 13px; margin-bottom: 12px;
+  font-size: 11.5px; color: var(--n2o); font-family: var(--mono); line-height: 1.6;
+}
+
+/* ref table */
+.rt { width: 100%; border-collapse: collapse; font-size: 12px; }
+.rt th { padding: 7px 8px; text-align: left; color: var(--text3); font-weight: 500; font-size: 10.5px; border-bottom: 1px solid var(--border2); background: var(--tint); }
+.rt th:not(:first-child) { text-align: right; }
+.rt td { padding: 6px 8px; border-bottom: 1px solid var(--border); }
+.rt td:not(:first-child) { text-align: right; font-family: var(--mono); }
+.rt tr:last-child td { border-bottom: none; }
+.rt tr.ar td { background: var(--tint2); }
+.sw { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+
+/* refs */
+.ref-btn { background: none; border: none; color: var(--accent); font-size: 12px; font-family: var(--sans); font-weight: 500; cursor: pointer; padding: 4px 0; }
+.ref-box { display: none; background: var(--tint); border: 1px solid var(--accent-pale); border-radius: 11px; padding: 16px 18px; margin-top: 10px; font-size: 12px; color: var(--text2); line-height: 1.8; }
+.ref-box strong { color: var(--text); }
+.ref-box a { color: var(--accent); text-decoration: none; }
+.ref-box a:hover { text-decoration: underline; }
+.fbox { background: var(--card); border: 1px solid var(--accent-pale); border-radius: 8px; padding: 11px 14px; font-family: var(--mono); font-size: 11.5px; color: var(--text); line-height: 2; margin: 8px 0; }
+.wn { color: #b45309; font-size: 11px; }
+
+/* price mode toggle */
+.price-toggle-bar { display:flex; gap:6px; margin-bottom:10px; }
+.pt-btn {
+  flex:1; padding:8px 10px; border-radius:8px;
+  border:1.5px solid var(--border2);
+  background:var(--card); color:var(--text2);
+  font-family:var(--sans); font-size:12.5px; font-weight:500;
+  cursor:pointer; transition:all 0.18s;
+}
+.pt-btn.active { background:var(--tint2); border-color:var(--accent-mid); color:var(--accent-deep); }
+.price-badge {
+  display:inline-block; font-size:10px; font-weight:700;
+  letter-spacing:0.06em; padding:2px 7px; border-radius:8px;
+  margin-left:6px; vertical-align:middle;
+}
+.price-badge.inst { background:#dcfce7; color:#166534; }
+.price-badge.retail { background:#fee2e2; color:#991b1b; }
+/* sodalime CLIC highlight */
+.sl-btn[data-sl="clic"] { font-size:11.5px; }
+
+/* FiO2 display */
+.fio2-bar {
+  display: flex; align-items: stretch; gap: 10px;
+  background: var(--card); border: 1.5px solid var(--accent-pale);
+  border-radius: 10px; padding: 10px 14px; margin-top: 8px;
+  transition: border-color 0.25s, background 0.25s;
+}
+.fio2-bar.warn   { border-color: #f59e0b; background: #fffbeb; }
+.fio2-bar.danger { border-color: #ef4444; background: #fff1f2;
+                   animation: fio2pulse 1.2s ease-in-out infinite; }
+@keyframes fio2pulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.0); }
+  50%      { box-shadow: 0 0 0 5px rgba(239,68,68,0.18); }
+}
+.fio2-left { flex: 1; }
+.fio2-label { font-size: 10px; font-weight: 700; letter-spacing: 0.09em;
+              text-transform: uppercase; color: var(--text3); margin-bottom: 5px; }
+.fio2-value { font-size: 28px; font-weight: 600; font-family: var(--mono);
+              line-height: 1; transition: color 0.25s; }
+.fio2-value .fio2-unit { font-size: 13px; font-weight: 400; margin-left: 2px; }
+.fio2-track-wrap { margin-top: 7px; }
+.fio2-track { height: 6px; background: var(--tint2); border-radius: 3px;
+              overflow: hidden; position: relative; }
+.fio2-fill  { height: 100%; border-radius: 3px; transition: width 0.3s, background 0.3s; }
+.fio2-ticks { display: flex; justify-content: space-between;
+              font-size: 9px; color: var(--text3); margin-top: 3px;
+              font-family: var(--mono); padding: 0 1px; }
+.fio2-right { display: flex; flex-direction: column; justify-content: center;
+              align-items: flex-end; gap: 4px; min-width: 160px; }
+.fio2-alert { font-size: 11.5px; font-weight: 600; padding: 4px 10px;
+              border-radius: 7px; text-align: right; line-height: 1.4;
+              transition: background 0.25s, color 0.25s; }
+.fio2-alert.ok     { background: #dcfce7; color: #166534; }
+.fio2-alert.warn   { background: #fef3c7; color: #92400e; }
+.fio2-alert.danger { background: #fee2e2; color: #991b1b; }
+.fio2-breakdown { font-size: 10px; color: var(--text3); font-family: var(--mono);
+                  text-align: right; line-height: 1.6; }
+
+/* dial over-range highlight */
+#dialPct:out-of-range {
+  border-color: #ef4444 !important;
+  background: #fff1f2 !important;
+  box-shadow: 0 0 0 3px rgba(239,68,68,0.18) !important;
+}
+
+/* ── mobile touch targets ── */
+.agent-btn   { min-height: 52px; padding: 10px 8px; }
+.circ-btn, .sl-btn, .pt-btn { min-height: 44px; }
+.ig input, .ig select { min-height: 40px; padding: 8px 10px; font-size: 14px; }
+@media (max-width: 640px) {
+  .agent-btn   { min-height: 56px; font-size: 13px; }
+  .circ-btn, .sl-btn, .pt-btn { min-height: 48px; font-size: 13px; }
+  .ig input, .ig select { min-height: 44px; font-size: 15px; }
+  .ig label { font-size: 12px; }
+  .met .val { font-size: 16px; }
+  .met.hero .val { font-size: 18px; }
+  .mac-bdg { font-size: 13px; padding: 5px 12px; }
+  .fio2-right { min-width: 120px; }
+  .fio2-value { font-size: 22px; }
+}
+
+/* ── low-flow hint strip ── */
+.lf-hint {
+  display: flex; align-items: flex-start; gap: 10px;
+  border-radius: 9px; padding: 9px 13px; margin-top: 8px;
+  font-size: 12px; line-height: 1.5;
+  border: 1.5px solid; transition: all 0.25s;
+}
+.lf-hint.ok     { background:#f0fdf4; border-color:#86efac; color:#166534; }
+.lf-hint.info   { background:#eff6ff; border-color:#93c5fd; color:#1e40af; }
+.lf-hint.warn   { background:#fffbeb; border-color:#fcd34d; color:#92400e; }
+.lf-hint.danger { background:#fff1f2; border-color:#fca5a5; color:#991b1b;
+                  animation: fio2pulse 1.4s ease-in-out infinite; }
+.lf-icon { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+.lf-main { font-weight: 600; }
+.lf-sub  { font-weight: 400; color: inherit; opacity: 0.8; font-size: 11px; margin-top: 2px; }
+
+/* ── GWP metrics ── */
+.gwp-card {
+  background: var(--tint); border: 1.5px solid #d1d5db;
+  border-radius: 10px; padding: 12px 14px; margin-top: 14px;
+}
+.gwp-header { display:flex; align-items:center; justify-content:space-between;
+              margin-bottom:10px; flex-wrap:wrap; gap:6px; }
+.gwp-title  { font-size:12px; font-weight:600; color:var(--text2);
+              display:flex; align-items:center; gap:6px; }
+.gwp-leaf   { font-size:15px; }
+.gwp-badge  { font-size:10px; font-weight:700; padding:2px 8px; border-radius:8px;
+              letter-spacing:0.05em; }
+.gwp-badge.lo { background:#dcfce7; color:#166534; }
+.gwp-badge.md { background:#fef3c7; color:#92400e; }
+.gwp-badge.hi { background:#fee2e2; color:#991b1b; }
+.gwp-grid   { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+@media(max-width:640px){ .gwp-grid{ grid-template-columns:1fr 1fr; } }
+.gwp-met    { background:var(--card); border-radius:8px; padding:9px 11px;
+              border:1px solid var(--border2); }
+.gwp-met .gl { font-size:10px; color:var(--text3); font-weight:500; margin-bottom:3px; }
+.gwp-met .gv { font-size:16px; font-weight:500; font-family:var(--mono); color:var(--text); }
+.gwp-met .gs { font-size:10px; color:var(--text3); margin-top:2px; }
+.gwp-bar-wrap { margin-top:10px; }
+.gwp-bar-label { display:flex; justify-content:space-between;
+                 font-size:10.5px; color:var(--text3); margin-bottom:4px; }
+.gwp-track { height:8px; background:#e5e7eb; border-radius:4px; overflow:hidden; }
+.gwp-fill  { height:100%; border-radius:4px; transition:width .3s, background .3s; }
+.gwp-equiv { font-size:11px; color:var(--text2); margin-top:8px; font-style:italic; }
+.gwp-refs  { font-size:10px; color:var(--text3); margin-top:6px; }
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-top">
+    <div>
+      <h1>Inhalational Anaesthesia Cost Simulator - IACS-v2</h1>
+      <p>License: GNU GPL v3. Copyright (C) 2026 Prof. Jyotirmay Kirtania</p>
+    </div>
+    <div class="agent-badge" id="agentBadge">SEVOFLURANE</div>
+  </div>
+</div>
+
+<!-- AGENT -->
+<div class="sec">
+  <div class="sec-label">Agent — ISO vaporiser colour code</div>
+  <div class="agent-bar" id="agentBar">
+    <button class="agent-btn active" data-agent="sevo">
+      <span style="display:block;font-size:10px;color:#d97706;margin-bottom:2px;">&#9632;</span>Sevoflurane
+    </button>
+    <button class="agent-btn" data-agent="iso">
+      <span style="display:block;font-size:10px;color:#7c3aed;margin-bottom:2px;">&#9632;</span>Isoflurane
+    </button>
+    <button class="agent-btn" data-agent="des">
+      <span style="display:block;font-size:10px;color:#2563eb;margin-bottom:2px;">&#9632;</span>Desflurane
+    </button>
+    <button class="agent-btn" data-agent="halo">
+      <span style="display:block;font-size:10px;color:#e11d48;margin-bottom:2px;">&#9632;</span>Halothane
+    </button>
+  </div>
+</div>
+
+<!-- CIRCUIT -->
+<div class="sec">
+  <div class="sec-label">Gas circuit</div>
+  <div class="circ-bar">
+    <button class="circ-btn active" id="circO2Air">O&#8322; + Air</button>
+    <button class="circ-btn" id="circN2OO2">
+      <span style="color:var(--n2o);">&#9632;</span> N&#8322;O + O&#8322;
+      <span style="font-size:10px;opacity:0.65;margin-left:4px;"></span>
+    </button>
+  </div>
+</div>
+
+<!-- N2O INFO STRIP -->
+<div class="n2o-strip" id="n2oStrip">
+  <strong>N&#8322;O &#8212; Blue cylinder (India)&nbsp;&nbsp;&#9632;</strong>&nbsp;&nbsp;
+  <span id="n2oStripText">D-type &middot; 30 kg &middot; 16 395 L at 20&thinsp;&deg;C &middot; &#8377;6 000 refill &middot; &#8377;0.3660/L &middot; &#8377;200/kg</span>
+</div>
+
+<!-- FGF -->
+<div class="sec">
+  <div class="sec-label">Fresh gas flows (L/min)</div>
+  <div class="g4">
+    <div class="ig"><label>O&#8322; (L/min)</label><input type="number" id="fgfO2" value="1.0" min="0" max="15" step="0.1"></div>
+    <div class="ig"><label>Air (L/min)</label><input type="number" id="fgfAir" value="1.0" min="0" max="15" step="0.1"></div>
+    <div class="ig">
+      <label>N&#8322;O (L/min)</label>
+      <input type="number" id="fgfN2O" value="2.0" min="0" max="15" step="0.1" disabled>
+      <span class="hint">Enable N&#8322;O+O&#8322; circuit above</span>
+    </div>
+    <div class="ig"><label>Total FGF</label><input type="text" id="totalFGFout" class="dv" readonly></div>
+  </div>
+
+  <!-- FiO2 display -->
+  <div class="fio2-bar" id="fio2Bar">
+    <div class="fio2-left">
+      <div class="fio2-label">Inspired O&#8322; fraction &mdash; FiO&#8322; (from FGF composition)</div>
+      <div class="fio2-value" id="fio2Val">
+        <span id="fio2Num">&#8212;</span><span class="fio2-unit">%</span>
+      </div>
+      <div class="fio2-track-wrap">
+        <div class="fio2-track">
+          <div class="fio2-fill" id="fio2Fill" style="width:50%;background:#16a34a;"></div>
+        </div>
+        <div class="fio2-ticks">
+          <span>0</span><span>21</span><span>25</span><span>30</span><span>40</span><span>60</span><span>100%</span>
+        </div>
+      </div>
+    </div>
+    <div class="fio2-right">
+      <div class="fio2-alert ok" id="fio2Alert">&#10003;&ensp;FiO&#8322; safe</div>
+      <div class="fio2-breakdown" id="fio2Breakdown">
+        O&#8322;: &mdash; &nbsp;Air: &mdash; &nbsp;N&#8322;O: &mdash;
+      </div>
+    </div>
+  </div>
+
+  <!-- Low-flow optimization hint -->
+  <div class="lf-hint ok" id="lfHint">
+    <span class="lf-icon" id="lfIcon">&#9432;</span>
+    <div>
+      <div class="lf-main" id="lfMain">FGF within recommended range</div>
+      <div class="lf-sub"  id="lfSub"></div>
+    </div>
+  </div>
+</div>
+
+<!-- DIAL -->
+<div class="sec">
+  <div class="sec-label">Vaporizer &amp; timing</div>
+  <div class="g3">
+    <div class="ig">
+      <label>Dial setting (%)</label>
+      <input type="number" id="dialPct" value="2.0" min="0.1" max="8" step="0.1">
+      <span class="hint" id="dialHint" style="color:var(--accent-deep);font-weight:500;">Max 8% (Sevoflurane vaporizer)</span>
+    </div>
+    <div class="ig"><label>Duration (minutes)</label><input type="number" id="duration" value="60" min="1" step="5"></div>
+    <div class="ig">
+      <label>Altitude (atm)</label>
+      <input type="number" id="atm" value="1.000" min="0.5" max="1.1" step="0.001">
+      <span class="hint">1.000 = sea level &middot; Varanasi &asymp; 1.000</span>
+    </div>
+  </div>
+</div>
+
+<!-- PRICES -->
+<div class="sec">
+  <div class="sec-label">Volatile agent price — India 2026</div>
+  <div class="price-toggle-bar">
+    <button class="pt-btn active" id="ptInst">
+      &#127968; Institutional / tender price
+      <span class="price-badge inst">INST</span>
+    </button>
+    <button class="pt-btn" id="ptRetail">
+      &#127978; Retail MRP (open market)
+      <span class="price-badge retail">MRP</span>
+    </button>
+  </div>
+  <div class="g4">
+    <div class="ig">
+      <label>&#8377; per 250 mL bottle</label>
+      <input type="number" id="bottlePrice" value="3500" min="0" step="50">
+      <span class="hint" id="priceHint">Inst: Sevorane/Kelsevo tender rate</span>
+    </div>
+    <div class="ig">
+      <label>&#8377; per mL agent (derived)</label>
+      <input type="text" id="pricePerMLout" class="dv" readonly>
+    </div>
+    <div class="ig">
+      <label>&#8377; per kg N&#8322;O</label>
+      <input type="number" id="n2oKgPrice" value="200" min="0" step="5">
+      <span class="hint">D-cyl 30 kg refill &#8776; &#8377;6 000 &rarr; &#8377;200/kg</span>
+    </div>
+    <div class="ig">
+      <label>Price mode active</label>
+      <input type="text" id="priceModeOut" class="dv" readonly value="INSTITUTIONAL">
+    </div>
+  </div>
+  <!-- Agent price reference table -->
+  <div style="background:var(--tint);border:1px solid var(--accent-pale);border-radius:9px;padding:10px 13px;font-size:11.5px;margin-bottom:2px;">
+    <table style="width:100%;border-collapse:collapse;" id="priceRefTable">
+      <thead>
+        <tr style="border-bottom:1px solid var(--accent-pale);">
+          <th style="padding:4px 6px;text-align:left;color:var(--text3);font-size:10px;font-weight:600;">Agent</th>
+          <th style="padding:4px 6px;text-align:right;color:#166534;font-size:10px;font-weight:600;">Institutional &#8377;/250mL</th>
+          <th style="padding:4px 6px;text-align:right;color:#991b1b;font-size:10px;font-weight:600;">Retail MRP &#8377;/250mL</th>
+          <th style="padding:4px 6px;text-align:left;color:var(--text3);font-size:10px;font-weight:600;">Common brands</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:4px 6px;"><span style="display:inline-block;width:8px;height:8px;background:#d97706;border-radius:50%;margin-right:5px;"></span>Sevoflurane</td>
+          <td style="padding:4px 6px;text-align:right;font-family:var(--mono);">&#8377; 3,500</td>
+          <td style="padding:4px 6px;text-align:right;font-family:var(--mono);">&#8377; 8,500</td>
+          <td style="padding:4px 6px;color:var(--text3);font-size:10.5px;">Sevorane (Abbott), Kelsevo (Celon), Sevitrue</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:4px 6px;"><span style="display:inline-block;width:8px;height:8px;background:#7c3aed;border-radius:50%;margin-right:5px;"></span>Isoflurane</td>
+          <td style="padding:4px 6px;text-align:right;font-family:var(--mono);">&#8377; 500</td>
+          <td style="padding:4px 6px;text-align:right;font-family:var(--mono);">&#8377; 1,200</td>
+          <td style="padding:4px 6px;color:var(--text3);font-size:10.5px;">Forane (Abbott), Aerrane (Baxter), Isifrane, Piramal</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:4px 6px;"><span style="display:inline-block;width:8px;height:8px;background:#2563eb;border-radius:50%;margin-right:5px;"></span>Desflurane</td>
+          <td style="padding:4px 6px;text-align:right;font-family:var(--mono);">&#8377; 5,000</td>
+          <td style="padding:4px 6px;text-align:right;font-family:var(--mono);">&#8377; 9,500</td>
+          <td style="padding:4px 6px;color:var(--text3);font-size:10.5px;">Suprane 240 mL (Baxter) — only brand in India</td>
+        </tr>
+        <tr>
+          <td style="padding:4px 6px;"><span style="display:inline-block;width:8px;height:8px;background:#e11d48;border-radius:50%;margin-right:5px;"></span>Halothane</td>
+          <td style="padding:4px 6px;text-align:right;font-family:var(--mono);">&#8377; 400</td>
+          <td style="padding:4px 6px;text-align:right;font-family:var(--mono);">&#8377; 700</td>
+          <td style="padding:4px 6px;color:var(--text3);font-size:10.5px;">Fluothane (Piramal) — limited availability</td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="font-size:9.5px;color:var(--text3);margin-top:6px;">Prices as of 2026 · Institutional = tender/contract rate · Retail = open market/chemist MRP · Desflurane pack is 240 mL (Suprane); price shown normalized to 250 mL equivalent</div>
+  </div>
+</div>
+
+<!-- N2O CYLINDER -->
+<div class="sec" id="n2oCylSec" style="display:none;">
+  <div class="sec-label" style="color:var(--n2o);">N&#8322;O cylinder reference &#8212; India: A-type &amp; D-type</div>
+  <div class="g4">
+    <div class="ig">
+      <label>Cylinder type</label>
+      <select id="cylType" style="font-family:var(--sans);font-size:13px;">
+        <option value="D">D-type (30 kg)</option>
+        <option value="A">A-type (1.8 kg)</option>
+        <option value="custom">Custom</option>
+      </select>
+    </div>
+    <div class="ig">
+      <label>Fill weight (kg N&#8322;O)</label>
+      <input type="number" id="cylKg" value="30" min="0.5" step="0.5">
+      <span class="hint" id="cylLitresHint">= 16 395 L gas at 20&thinsp;&deg;C</span>
+    </div>
+    <div class="ig"><label>Refill cost (&#8377;)</label><input type="number" id="cylRefill" value="6000" min="0" step="100"></div>
+    <div class="ig">
+      <label>&#8377; per L N&#8322;O (derived)</label>
+      <input type="text" id="n2oPerLout" class="dv" readonly>
+      <span class="hint" id="cylLifeHint" style="color:var(--n2o);">Cylinder life: &mdash;</span>
+    </div>
+  </div>
+</div>
+
+<!-- SODALIME -->
+<div class="sec">
+  <div class="sec-label">Sodalime &mdash; amortized separately (India: 5 L can standard)</div>
+  <div class="sl-bar">
+    <button class="sl-btn active" data-sl="draeger">Dr&auml;gersorb 800+</button>
+    <button class="sl-btn" data-sl="inter">Intersorb Plus</button>
+    <button class="sl-btn" data-sl="clic">Dr&auml;gersorb CLIC (1.2 L)</button>
+  </div>
+  <div class="g4">
+    <div class="ig">
+      <label>&#8377; per can / cartridge</label>
+      <input type="number" id="canisterPrice" value="2000" min="0" step="50">
+      <span class="hint" id="slPriceHint">Dr&auml;gersorb 800+ 5 L &middot; &#8377;1850&ndash;2250</span>
+    </div>
+    <div class="ig">
+      <label>Can / cartridge volume (L)</label>
+      <input type="number" id="canVolL" value="5.0" min="0.5" max="10" step="0.1">
+      <span class="hint" id="slVolHint">Standard India hospital pack = 5 L</span>
+    </div>
+    <div class="ig">
+      <label>Patient CO&#8322; (mL/min)</label>
+      <input type="number" id="co2Rate" value="200" min="50" max="600" step="10">
+      <span class="hint">Adult ~200 &middot; Paediatric ~100&ndash;150</span>
+    </div>
+    <div class="ig">
+      <label>Can life (derived)</label>
+      <input type="text" id="canisterLifeOut" class="dv" readonly>
+      <span class="hint" id="slCapNote" style="color:var(--accent-deep);"></span>
+    </div>
+  </div>
+  <div style="background:var(--tint);border:1px solid var(--accent-pale);border-radius:9px;padding:9px 13px;font-size:11px;color:var(--text2);margin-top:-6px;">
+    <table style="width:100%;border-collapse:collapse;">
+      <thead><tr style="border-bottom:1px solid var(--accent-pale);">
+        <th style="padding:3px 6px;text-align:left;font-size:10px;color:var(--text3);">Product</th>
+        <th style="padding:3px 6px;text-align:center;font-size:10px;color:var(--text3);">Pack</th>
+        <th style="padding:3px 6px;text-align:right;font-size:10px;color:var(--text3);">&#8377; Institutional</th>
+        <th style="padding:3px 6px;text-align:right;font-size:10px;color:var(--text3);">CO&#8322; cap (L/L)</th>
+        <th style="padding:3px 6px;text-align:left;font-size:10px;color:var(--text3);">Indicator</th>
+      </tr></thead>
+      <tbody>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:3px 6px;">Dr&auml;gersorb 800+</td>
+          <td style="padding:3px 6px;text-align:center;font-family:var(--mono);">5 L</td>
+          <td style="padding:3px 6px;text-align:right;font-family:var(--mono);">&#8377; 2,000</td>
+          <td style="padding:3px 6px;text-align:right;font-family:var(--mono);">221</td>
+          <td style="padding:3px 6px;">White &#8594; Violet-blue</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:3px 6px;">Intersorb Plus</td>
+          <td style="padding:3px 6px;text-align:center;font-family:var(--mono);">5 L</td>
+          <td style="padding:3px 6px;text-align:right;font-family:var(--mono);">&#8377; 1,800</td>
+          <td style="padding:3px 6px;text-align:right;font-family:var(--mono);">265</td>
+          <td style="padding:3px 6px;">Pink &#8594; White (exhausted)</td>
+        </tr>
+        <tr>
+          <td style="padding:3px 6px;">Dr&auml;gersorb CLIC</td>
+          <td style="padding:3px 6px;text-align:center;font-family:var(--mono);">1.2 L</td>
+          <td style="padding:3px 6px;text-align:right;font-family:var(--mono);">&#8377; 550</td>
+          <td style="padding:3px 6px;text-align:right;font-family:var(--mono);">221</td>
+          <td style="padding:3px 6px;">White &#8594; Violet (single use)</td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="font-size:9.5px;color:var(--text3);margin-top:5px;">
+      CO&#8322; capacity: Dr&auml;gersorb 260 mL/g &times; 850 g/L bulk density = 221 L CO&#8322;/L &middot; Intersorb 265 mL/g &times; 1000 g/L = 265 L CO&#8322;/L &middot; Source: manufacturer data; Moody et al. Med Gas Res 2020
+    </div>
+  </div>
+</div>
+
+<hr>
+
+<!-- PER-MINUTE RESULTS -->
+<div class="sec">
+  <div class="pt"><span class="dot" id="agentDot"></span><span id="agentNameOut">Sevoflurane</span> &mdash; per-minute consumption &amp; cost</div>
+  <div class="mg">
+    <div class="met"><div class="lbl">Vapor output</div><div class="val" id="vaporPerMin">&mdash;</div><div class="sub">mL vapor / min</div></div>
+    <div class="met"><div class="lbl">Liquid consumed</div><div class="val" id="liquidPerMin">&mdash;</div><div class="sub">mL liquid / min</div></div>
+    <div class="met"><div class="lbl">Mass consumed</div><div class="val" id="massPerMin">&mdash;</div><div class="sub">mg / min</div></div>
+    <div class="met"><div class="lbl">Agent cost</div><div class="val" id="agentCostPerMin">&mdash;</div><div class="sub">&#8377; / min</div></div>
+    <div class="met n2m"><div class="lbl">N&#8322;O cost</div><div class="val" id="n2oCostPerMin">&mdash;</div><div class="sub">&#8377; / min</div></div>
+    <div class="met"><div class="lbl">Sodalime cost</div><div class="val" id="slCostPerMin">&mdash;</div><div class="sub">&#8377; / min</div></div>
+    <div class="met hero" style="grid-column:span 2;">
+      <div class="lbl">Total cost / minute</div>
+      <div class="val" id="totalPerMin">&mdash;</div>
+      <div class="sub">agent + N&#8322;O + sodalime (workstation &amp; CMC excluded)</div>
+    </div>
+    <div class="met"><div class="lbl">Cost / MAC-hour</div><div class="val" id="costPerMACHr">&mdash;</div><div class="sub">volatile agent only</div></div>
+  </div>
+</div>
+
+<!-- MAC BAR -->
+<div class="mac-wrap">
+  <div class="mac-top">
+    <div class="mac-ttl">MAC fraction delivered &nbsp;<span id="macCircNote" style="font-size:10px;color:var(--text3);"></span></div>
+    <span class="mac-bdg" id="macBadge">&mdash; MAC</span>
+  </div>
+  <div class="mac-trk"><div class="mac-fill" id="macFill" style="width:50%;"></div></div>
+  <div class="mac-det" id="macDetail">&mdash;</div>
+</div>
+
+<!-- CUMULATIVE -->
+<div class="sec">
+  <div class="pt"><span class="dot" style="background:#0369a1;"></span>Cumulative costs &mdash; <span id="durOut">60</span> minutes</div>
+  <div class="card">
+    <div class="cum-row"><span class="cl">Volatile liquid consumed</span><span class="cv" id="totLiquid">&mdash;</span></div>
+    <div class="cum-row"><span class="cl" style="font-size:10.5px;color:var(--text3);">Fraction of 250 mL bottle</span><span class="cv" style="font-size:11px;color:var(--text3);" id="totBottlesNote">&mdash;</span></div>
+    <div class="cum-row"><span class="cl">N&#8322;O consumed</span><span class="cv" id="totN2Ogas" style="color:var(--n2o);">&mdash;</span></div>
+    <div class="cum-row"><span class="cl">Sodalime consumed</span><span class="cv" id="totSLg">&mdash;</span></div>
+    <div style="height:4px;"></div>
+    <div class="cum-row"><span class="cl">Agent cost</span><span class="cv" id="totAgentCost">&mdash;</span></div>
+    <div class="cum-row"><span class="cl">N&#8322;O cost</span><span class="cv" id="totN2Ocost" style="color:var(--n2o);">&mdash;</span></div>
+    <div class="cum-row"><span class="cl">Sodalime cost</span><span class="cv" id="totSLcost">&mdash;</span></div>
+    <div class="cum-row tot"><span class="cl">Total anaesthetic gas cost</span><span class="cv" id="totAll">&mdash;</span></div>
+    <div class="cum-note" id="n2oKgNote"></div>
+  </div>
+</div>
+
+<!-- GWP -->
+<div class="sec">
+  <div class="gwp-card">
+    <div class="gwp-header">
+      <div class="gwp-title">
+        <span class="gwp-leaf">&#127807;</span>
+        Environmental impact &mdash; Global Warming Potential (GWP&#8321;&#8320;&#8320;)
+      </div>
+      <span class="gwp-badge lo" id="gwpBadge">Low impact</span>
+    </div>
+    <div class="gwp-grid">
+      <div class="gwp-met">
+        <div class="gl">Agent CO&#8322;-eq / min</div>
+        <div class="gv" id="gwpAgentMin">&mdash;</div>
+        <div class="gs">g CO&#8322;-eq / min</div>
+      </div>
+      <div class="gwp-met">
+        <div class="gl">N&#8322;O CO&#8322;-eq / min</div>
+        <div class="gv" id="gwpN2oMin">&mdash;</div>
+        <div class="gs">g CO&#8322;-eq / min (GWP 273)</div>
+      </div>
+      <div class="gwp-met">
+        <div class="gl">Total CO&#8322;-eq / min</div>
+        <div class="gv" id="gwpTotalMin">&mdash;</div>
+        <div class="gs">g CO&#8322;-eq / min</div>
+      </div>
+      <div class="gwp-met">
+        <div class="gl">Session total CO&#8322;-eq</div>
+        <div class="gv" id="gwpSession">&mdash;</div>
+        <div class="gs">kg CO&#8322;-eq for <span id="gwpDurOut">60</span> min</div>
+      </div>
+      <div class="gwp-met">
+        <div class="gl">Agent GWP&#8321;&#8320;&#8320;</div>
+        <div class="gv" id="gwpAgentGWP">&mdash;</div>
+        <div class="gs">× CO&#8322; over 100 yr</div>
+      </div>
+      <div class="gwp-met">
+        <div class="gl">Equivalent driving</div>
+        <div class="gv" id="gwpKm">&mdash;</div>
+        <div class="gs">km (120 g CO&#8322;/km avg car)</div>
+      </div>
+    </div>
+    <div class="gwp-bar-wrap">
+      <div class="gwp-bar-label">
+        <span>GWP relative to agents (Sevo=1)</span>
+        <span id="gwpBarLabel">&mdash;</span>
+      </div>
+      <div class="gwp-track"><div class="gwp-fill" id="gwpFill" style="width:10%;background:#16a34a;"></div></div>
+    </div>
+    <div class="gwp-equiv" id="gwpEquiv"></div>
+    <div class="gwp-refs">
+      GWP&#8321;&#8320;&#8320; source: Sulbaek Andersen MG et al. J Phys Chem A 2010 &middot; N&#8322;O: IPCC AR6 2021 (GWP=273) &middot;
+      Sevo 130 &middot; Iso 510 &middot; Des 2540 &middot; Halo ~40 &middot;
+      Sherman J et al. Anesth Analg 2012;114:1086 &middot; McGain F et al. Anaesth Intens Care 2021
+    </div>
+  </div>
+</div>
+
+<!-- REFERENCE TABLE -->
+<div class="sec">
+  <div class="sec-label">Agent physical properties &amp; MAC &mdash; reference</div>
+  <div style="background:var(--card);border:1.5px solid var(--accent-pale);border-radius:11px;padding:14px 16px;overflow-x:auto;">
+    <table class="rt" id="agentTable"></table>
+    <p style="font-size:10px;color:var(--text3);margin-top:10px;">
+      &dagger; mL vapour per mL liquid at 20&thinsp;&deg;C, 1 atm — derived: (&rho;/MW) &times; 24&thinsp;040 mL/mol.&ensp;
+      MAC: Eger EI, Am J Health Syst Pharm 2004;61(S4):S3&ndash;10.&ensp;
+      N&#8322;O: 1 kg = 546.5 L at 20&thinsp;&deg;C.&ensp;
+      Colour codes: ISO vaporiser convention (Dr&auml;ger / GE / Penlon).
+    </p>
+  </div>
+</div>
+
+<!-- REFS -->
+<div>
+  <button class="ref-btn" id="refBtn" onclick="toggleRefs()">&#9658; Formula derivation &amp; key peer-reviewed references</button>
+  <div class="ref-box" id="refBox">
+    <strong>Core formula &mdash; ideal gas law at 20&thinsp;&deg;C, 1 atm (molar volume 24.04 L/mol):</strong>
+    <div class="fbox">
+      V_vapor (mL/min) = FGF_total (mL/min) &times; dial% / 100<br>
+      n&ensp;(mol/min)&ensp;&ensp;= V_vapor / 24&thinsp;040<br>
+      m&ensp;(g/min)&ensp;&ensp;&ensp; = n &times; MW<sub>agent</sub><br>
+      V_liq (mL/min)&ensp;= m / &rho;<sub>agent</sub><br><br>
+      N&#8322;O: 1 kg &rarr; (1&thinsp;000/44.01) mol &times; 24.04 L/mol = 546.5 L at 20&thinsp;&deg;C<br>
+      Sodalime (g/min) = CO&#8322;_production (mL/min) &divide; capacity (mL CO&#8322;/g)
+    </div>
+    <strong>References:</strong><br><br>
+    1. <strong>Biro P.</strong> Calculation of volatile anaesthetics consumption from agent concentration and FGF. <em>Acta Anaesthesiol Scand</em> 2014;58(8):968&ndash;72. <a href="https://pubmed.ncbi.nlm.nih.gov/25060161/" target="_blank">PMID 25060161</a><br><br>
+    2. <strong>Moody AE et al.</strong> Predicting cost of inhalational anaesthesia at low FGF. <em>Med Gas Res</em> 2020;10(2):64&ndash;66. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7885709/" target="_blank">PMC7885709</a><br><br>
+    3. <strong>Pierce JMT et al.</strong> Validation of anaesthetic impact calculator mathematics. <em>Anaesthesia</em> 2020;75(1):112&ndash;15. <a href="https://doi.org/10.1111/anae.14896" target="_blank">doi:10.1111/anae.14896</a><br><br>
+    4. <strong>Eger EI.</strong> Characteristics of anaesthetic agents. <em>Am J Health Syst Pharm</em> 2004;61(S4):S3&ndash;10.<br><br>
+    5. <strong>Weinberg L et al.</strong> Pharmacoeconomics of volatile agents. <em>Anaesth Intensive Care</em> 2010;38(5). <a href="https://doi.org/10.1177/0310057X1003800507" target="_blank">DOI</a><br><br>
+    6. <strong>Boldt J et al.</strong> Economic considerations: propofol vs volatiles. <em>Anesth Analg</em> 1998;86:504&ndash;9. <a href="https://pubmed.ncbi.nlm.nih.gov/9495402/" target="_blank">PMID 9495402</a><br><br>
+    7. <strong>Odin I, Feiss P.</strong> Low flow and economics. <em>Best Pract Res Clin Anaesthesiol</em> 2005;19:399&ndash;413.<br><br>
+    8. <strong>Tollinche L et al.</strong> Volatile consumption audit by FGF. <em>Int J Anesthetic Anesthesiol</em> 2018;5:064. <a href="https://www.clinmedjournals.org/articles/ijaa/international-journal-of-anesthetics-and-anesthesiology-ijaa-5-064.php" target="_blank">Open access</a><br><br>
+    <span class="wn">&#9888; Workstation purchase price and annual 5% CMC are excluded from amortized cost. Sodalime is an amortized line item separate from agent cost. Cost/MAC-hour is for volatile agent only. Medical oxygen constitutes an essential infrastructure requirement for critical care and anesthesia; consequently, its separate billing is considered unfair business practice under current Indian regulatory guidelines. Disclaimer: This software is intended to be used only for medical education and training. It is not a regulator approved anaesthesia billing software.</span>
+  </div>
+</div>
+
+</div>
+<script>
+const MOLAR_VOL   = 24040;
+const N2O_L_PER_KG = (1000/44.01)*24.04;
+
+const AGENTS = {
+  sevo:{ name:'Sevoflurane', abbr:'SEVOFLURANE',
+    mw:200.05, rho:1.520, mac_o2:2.00, mac_n2o:1.40, defDial:2.0, maxDial:8,
+    instPrice:3500, retailPrice:8500,
+    instHint:'Sevorane/Kelsevo tender rate 2026',
+    retailHint:'Sevorane MRP (Abbott) 2026',
+    th:{ pageBg:'#fffbeb', tint:'#fef9ec', tint2:'#fef3c7', accent:'#d97706',
+         accentDeep:'#92400e', accentMid:'#f59e0b', accentPale:'#fde68a', dot:'#d97706' } },
+  iso:{ name:'Isoflurane', abbr:'ISOFLURANE',
+    mw:184.49, rho:1.496, mac_o2:1.17, mac_n2o:0.66, defDial:1.2, maxDial:5,
+    instPrice:500, retailPrice:1200,
+    instHint:'Forane/Piramal institutional 2026',
+    retailHint:'Forane/Aerrane retail MRP 2026',
+    th:{ pageBg:'#faf5ff', tint:'#f5f0ff', tint2:'#ede9fe', accent:'#7c3aed',
+         accentDeep:'#5b21b6', accentMid:'#8b5cf6', accentPale:'#c4b5fd', dot:'#7c3aed' } },
+  des:{ name:'Desflurane', abbr:'DESFLURANE',
+    mw:168.04, rho:1.465, mac_o2:6.00, mac_n2o:2.83, defDial:6.0, maxDial:18,
+    instPrice:5000, retailPrice:9500,
+    instHint:'Suprane 240mL (Baxter) institutional — normalized to 250mL',
+    retailHint:'Suprane MRP ₹9460 (PharmEasy 2025) — normalized to 250mL',
+    th:{ pageBg:'#eff6ff', tint:'#f0f7ff', tint2:'#dbeafe', accent:'#2563eb',
+         accentDeep:'#1e40af', accentMid:'#3b82f6', accentPale:'#93c5fd', dot:'#2563eb' } },
+  halo:{ name:'Halothane', abbr:'HALOTHANE',
+    mw:197.38, rho:1.871, mac_o2:0.74, mac_n2o:0.29, defDial:0.8, maxDial:5,
+    instPrice:400, retailPrice:700,
+    instHint:'Fluothane (Piramal) institutional — limited availability',
+    retailHint:'Fluothane retail MRP — limited availability 2026',
+    th:{ pageBg:'#fff1f2', tint:'#fff4f5', tint2:'#ffe4e6', accent:'#e11d48',
+         accentDeep:'#9f1239', accentMid:'#f43f5e', accentPale:'#fda4af', dot:'#e11d48' } }
+};
+
+const SODALIME = {
+  /* capLperL = L CO2 absorbed per L of sodalime
+     Draeger: 260 mL CO2/g x 850 g/L bulk density = 221 L/L
+     Intersorb: 265 mL CO2/g x 1000 g/L bulk density = 265 L/L   */
+  draeger:{ name:'Drägersorb 800+',  capLperL:221, defVolL:5.0, defPrice:2000,
+            hint:'5 L can · ₹1850–2250 · White→Violet-blue' },
+  inter:  { name:'Intersorb Plus',         capLperL:265, defVolL:5.0, defPrice:1800,
+            hint:'5 L jerican · ₹1750–1800 · Pink→White (exhausted)' },
+  clic:   { name:'Drägersorb CLIC',   capLperL:221, defVolL:1.2, defPrice:550,
+            hint:'1.2 L single-use CLIC cartridge · ₹500–600' }
+};
+const CYL = { D:{ kg:30, refill:6000 }, A:{ kg:1.8, refill:360 } };
+
+let ST = { agent:'sevo', circuit:'o2air', sl:'draeger', priceMode:'inst' };
+
+const g  = id => document.getElementById(id);
+const fv = id => parseFloat(g(id).value)||0;
+const fc = (n,d=2) => (!isFinite(n)||isNaN(n)) ? '\u2014' : '\u20b9\u202f'+n.toFixed(d);
+const ff = (n,d=2) => (!isFinite(n)||isNaN(n)) ? '\u2014' : n.toFixed(d);
+
+function applyTheme(k){
+  const t=AGENTS[k].th, r=document.documentElement.style;
+  r.setProperty('--page-bg',     t.pageBg);
+  r.setProperty('--tint',        t.tint);
+  r.setProperty('--tint2',       t.tint2);
+  r.setProperty('--accent',      t.accent);
+  r.setProperty('--accent-deep', t.accentDeep);
+  r.setProperty('--accent-mid',  t.accentMid);
+  r.setProperty('--accent-pale', t.accentPale);
+}
+
+function buildTable(){
+  const SW={ sevo:'#d97706', iso:'#7c3aed', des:'#2563eb', halo:'#e11d48' };
+  let h='<thead><tr><th>Agent</th><th>MW</th><th>\u03c1 (g/mL)</th><th>Biro \u2020</th><th>MAC O\u2082 %</th><th>MAC+N\u2082O %</th></tr></thead><tbody>';
+  ['sevo','iso','des','halo'].forEach(k=>{
+    const a=AGENTS[k], biro=(a.rho/a.mw)*MOLAR_VOL;
+    h+=`<tr id="tr-${k}"><td><span class="sw" style="background:${SW[k]};"></span><strong>${a.name}</strong></td>
+      <td>${a.mw.toFixed(2)}</td><td>${a.rho.toFixed(3)}</td><td>${biro.toFixed(1)}</td>
+      <td>${a.mac_o2.toFixed(2)}</td><td>${a.mac_n2o.toFixed(2)}</td></tr>`;
+  });
+  h+=`<tr><td><span class="sw" style="background:#0369a1;"></span>Nitrous oxide</td>
+    <td>44.01</td><td>gas</td><td>\u2014</td><td>104</td><td>\u2014</td></tr>`;
+  h+='</tbody>';
+  g('agentTable').innerHTML=h;
+}
+
+function updateCylinder(){
+  const kg=fv('cylKg'), ref=fv('cylRefill');
+  const L=kg*N2O_L_PER_KG, perL=L>0?ref/L:0;
+  g('cylLitresHint').textContent='= '+L.toFixed(0)+' L gas at 20\u202f\u00b0C';
+  g('n2oPerLout').value='\u20b9'+perL.toFixed(4)+' / L';
+  if(kg>0&&ref>0) g('n2oKgPrice').value=(ref/kg).toFixed(2);
+  const fN2O=fv('fgfN2O');
+  g('cylLifeHint').textContent=fN2O>0
+    ? 'Cylinder life: '+ff(L/fN2O,0)+' min ('+ff(L/fN2O/60,1)+' hr) at '+ff(fN2O,1)+' L/min'
+    : 'Set N\u2082O FGF to compute cylinder life';
+}
+
+
+/* ── GWP constants (GWP100, Sulbaek Andersen 2010; N2O IPCC AR6 2021) ── */
+const GWP = { sevo:130, iso:510, des:2540, halo:40, n2o:273 };
+
+/* ── Low-flow rules per agent ────────────────────────────────────────────
+   thresholds checked in order; first match wins.
+   fgf = total FGF in L/min  ──────────────────────────────────────────── */
+const LF_RULES = {
+  sevo: [
+    { fgf:0,   level:'danger', icon:'\u26d4',
+      main:'Minimal flow (<0.5 L/min): Compound A risk + rebreathing',
+      sub:'Keep FGF \u22651 L/min with Sevoflurane. Ensure fresh sodalime. \u22652 L/min recommended by FDA for exposures >2 MAC-hr.' },
+    { fgf:0.5, level:'danger', icon:'\u26d4',
+      main:'Minimal flow (<0.5 L/min): Compound A accumulation',
+      sub:'Keep FGF \u22651 L/min with Sevoflurane. FDA label: \u22652 L/min for prolonged use.' },
+    { fgf:1.0, level:'warn',   icon:'\u26a0\ufe0f',
+      main:'Low flow (0.5\u20131 L/min): Compound A monitoring advised',
+      sub:'Sevoflurane + FGF <1 L/min increases Compound A (nephrotoxic degradant). Acceptable for <2 MAC-hr; increase FGF if prolonged.' },
+    { fgf:2.0, level:'info',   icon:'\u2139\ufe0f',
+      main:'Low-flow technique (1\u20132 L/min): clinically acceptable',
+      sub:'Compound A levels negligible at 1\u20132 L/min. FDA minimum: 2 L/min for >2 MAC-hr exposures. Economical and environmentally preferable.' },
+    { fgf:99,  level:'ok',     icon:'\u2713',
+      main:'FGF within recommended range for Sevoflurane',
+      sub:'Consider reducing to 1\u20132 L/min after wash-in for cost and environmental benefit.' },
+  ],
+  iso: [
+    { fgf:0,   level:'warn', icon:'\u26a0\ufe0f',
+      main:'Very low flow: CO risk if sodalime is desiccated',
+      sub:'Isoflurane + desiccated sodalime can produce CO at ultra-low FGF. No Compound A concern. Confirm sodalime is fresh.' },
+    { fgf:0.5, level:'info', icon:'\u2139\ufe0f',
+      main:'Low flow (\u22640.5 L/min): suitable for Isoflurane',
+      sub:'No Compound A. Minimal-flow technique well-validated. Confirm sodalime adequacy.' },
+    { fgf:99,  level:'ok',   icon:'\u2713',
+      main:'Isoflurane: low-flow technique is safe and economical',
+      sub:'No nephrotoxic degradants. Reducing FGF to 0.5\u20131 L/min reduces cost and CO\u2082-eq significantly.' },
+  ],
+  des: [
+    { fgf:0,   level:'warn', icon:'\u26a0\ufe0f',
+      main:'Ultra-low flow with Desflurane: CO production risk',
+      sub:'Desflurane + desiccated sodalime \u2192 significant CO at very low FGF. Ensure sodalime is fresh. High GWP (2540): minimise use.' },
+    { fgf:0.5, level:'info', icon:'\u2139\ufe0f',
+      main:'Desflurane: no Compound A; low-flow is feasible',
+      sub:'CO from desiccated sodalime is the main low-flow risk. GWP 2540 \u2014 consider Sevoflurane for environmental reasons.' },
+    { fgf:99,  level:'ok',   icon:'\u2713',
+      main:'Desflurane: FGF in range \u2014 note high GWP (2540 \xd7 CO\u2082)',
+      sub:'Environmental impact 20\xd7 Sevoflurane. Green Anaesthesia guidelines favour Sevo or TIVA where clinically equivalent.' },
+  ],
+  halo: [
+    { fgf:0,   level:'warn', icon:'\u26a0\ufe0f',
+      main:'Very low flow with Halothane: sensitisation risk',
+      sub:'Limited low-flow data for Halothane. Halothane hepatitis risk is not FGF-dependent. Ensure adequate monitoring.' },
+    { fgf:0.5, level:'info', icon:'\u2139\ufe0f',
+      main:'Halothane low-flow: limited modern evidence',
+      sub:'Halothane largely withdrawn in high-income countries. Low-flow technique described but monitor closely.' },
+    { fgf:99,  level:'ok',   icon:'\u2713',
+      main:'Halothane: FGF in range',
+      sub:'Low GWP (40). Avoid repeated exposures (hepatitis risk). Low flow acceptable where resources limit alternatives.' },
+  ],
+};
+
+function updateLFHint() {
+  const fgf = fv('fgfO2') + (ST.circuit==='n2oo2'?0:fv('fgfAir')) + (ST.circuit==='n2oo2'?fv('fgfN2O'):0);
+  const rules = LF_RULES[ST.agent];
+  let rule = rules[rules.length-1]; /* default = last (ok) */
+  for (let i=0; i<rules.length-1; i++) {
+    if (fgf <= rules[i].fgf) { rule = rules[i]; break; }
+  }
+  const el=document.getElementById('lfHint'),
+        ic=document.getElementById('lfIcon'),
+        mn=document.getElementById('lfMain'),
+        sb=document.getElementById('lfSub');
+  if(!el) return;
+  el.className='lf-hint '+rule.level;
+  ic.textContent=rule.icon;
+  mn.textContent=rule.main;
+  sb.textContent=rule.sub;
+}
+
+function updateGWP() {
+  const ag     = AGENTS[ST.agent];
+  const useN2O = ST.circuit === 'n2oo2';
+  const gwpAg  = GWP[ST.agent];
+  const fO2    = fv('fgfO2');
+  const fAir   = useN2O ? 0 : fv('fgfAir');
+  const fN2O   = useN2O ? fv('fgfN2O') : 0;
+  const fgfML  = (fO2+fAir+fN2O)*1000;
+  const dial   = fv('dialPct');
+  const dur    = fv('duration');
+
+  /* mass of agent per minute (g/min) */
+  const vML   = fgfML*(dial/100);
+  const massG = (vML/MOLAR_VOL)*ag.mw;
+
+  /* CO2-eq per minute */
+  const agCO2min  = massG * gwpAg;               /* g CO2-eq/min */
+  const n2oMassG  = useN2O ? fN2O*(1000/N2O_L_PER_KG) : 0; /* g N2O/min */
+  const n2oCO2min = n2oMassG * GWP.n2o;
+  const totCO2min = agCO2min + n2oCO2min;
+  const sessKg    = totCO2min * dur / 1000;
+  const equivKm   = sessKg / 0.12;
+
+  /* GWP bar: relative to Sevo (GWP=130) as baseline=1 */
+  const gwpRatio = gwpAg / GWP.sevo; /* 1=sevo, ~3.9=iso, ~19.5=des, ~0.3=halo */
+  const barPct   = Math.min(gwpRatio/20*100, 100); /* Des~97%, Sevo~5%, Iso~19%, Halo~1.5% */
+  const barCol   = gwpAg<=200?'#16a34a':gwpAg<=600?'#f59e0b':'#ef4444';
+
+  const badge  = gwpAg<=200?'lo':gwpAg<=600?'md':'hi';
+  const bLabel = gwpAg<=200?'Low impact':gwpAg<=600?'Moderate impact':'High impact';
+
+  const ge = id=>document.getElementById(id);
+  const fmtG = n=>isNaN(n)||!isFinite(n)?'\u2014':n.toFixed(1);
+
+  if(ge('gwpAgentMin'))  ge('gwpAgentMin').textContent  = fmtG(agCO2min);
+  if(ge('gwpN2oMin'))    ge('gwpN2oMin').textContent    = fmtG(n2oCO2min);
+  if(ge('gwpTotalMin'))  ge('gwpTotalMin').textContent  = fmtG(totCO2min);
+  if(ge('gwpSession'))   ge('gwpSession').textContent   = isNaN(sessKg)?'\u2014':sessKg.toFixed(3)+' kg';
+  if(ge('gwpDurOut'))    ge('gwpDurOut').textContent    = dur;
+  if(ge('gwpAgentGWP'))  ge('gwpAgentGWP').textContent  = gwpAg;
+  if(ge('gwpKm'))        ge('gwpKm').textContent        = isNaN(equivKm)?'\u2014':equivKm.toFixed(1);
+  if(ge('gwpFill'))      { ge('gwpFill').style.width=barPct+'%'; ge('gwpFill').style.background=barCol; }
+  if(ge('gwpBarLabel'))  ge('gwpBarLabel').textContent  = 'GWP '+gwpAg+' ('+gwpRatio.toFixed(1)+'\u00d7 Sevo)';
+  if(ge('gwpBadge'))     { ge('gwpBadge').textContent=bLabel; ge('gwpBadge').className='gwp-badge '+badge; }
+  if(ge('gwpEquiv')) {
+    const mins_per_bottle = massG>0?(250*ag.rho/massG):0;
+    ge('gwpEquiv').textContent = sessKg>0
+      ? 'Session CO\u2082-eq \u2248 '+ sessKg.toFixed(2)+' kg \u2014 equivalent to driving '
+        +equivKm.toFixed(1)+' km in an average car'
+        +(useN2O&&n2oCO2min>agCO2min?' (N\u2082O dominates the footprint)':'')
+      : '';
+  }
+}
+
+function updateFiO2(){
+  const useN2O = ST.circuit === 'n2oo2';
+  const fO2  = fv('fgfO2');
+  const fAir = useN2O ? 0 : fv('fgfAir');
+  const fN2O = useN2O ? fv('fgfN2O') : 0;
+  const total = fO2 + fAir + fN2O;
+
+  /* FiO2: O2 from pure O2 line + O2 from Air (21%) */
+  const o2contribution = fO2 + 0.21 * fAir;
+  const fio2 = total > 0 ? (o2contribution / total) * 100 : 0;
+
+  const bar   = document.getElementById('fio2Bar');
+  const numEl = document.getElementById('fio2Num');
+  const fill  = document.getElementById('fio2Fill');
+  const alert = document.getElementById('fio2Alert');
+  const bkdn  = document.getElementById('fio2Breakdown');
+  if (!bar) return;
+
+  numEl.textContent = total > 0 ? fio2.toFixed(1) : '—';
+
+  /* bar fill: scale 0–100% mapped to 0–100% width, but anchor 21% at 21/100 */
+  const fillPct = Math.min(fio2, 100);
+  fill.style.width = fillPct + '%';
+
+  if (fio2 < 21 && total > 0) {
+    fill.style.background = '#ef4444';
+    bar.className = 'fio2-bar danger';
+    alert.className = 'fio2-alert danger';
+    alert.innerHTML = '⛔️ HYPOXIC MIXTURE<br>FiO₂ ' + fio2.toFixed(1) + '% — BELOW AIR!';
+  } else if (fio2 < 25 && total > 0) {
+    fill.style.background = '#f59e0b';
+    bar.className = 'fio2-bar warn';
+    alert.className = 'fio2-alert warn';
+    alert.innerHTML = '⚠️ WARNING<br>FiO₂ ' + fio2.toFixed(1) + '% — approaching hypoxic';
+  } else {
+    fill.style.background = '#16a34a';
+    bar.className = 'fio2-bar';
+    alert.className = 'fio2-alert ok';
+    alert.innerHTML = '✓&ensp;FiO₂ safe &ensp;(' + fio2.toFixed(1) + '%)';
+  }
+
+  /* breakdown */
+  const pO2from = (fO2 / (total||1) * 100).toFixed(0);
+  const pAirfrom = (fAir / (total||1) * 100).toFixed(0);
+  const pN2O = (fN2O / (total||1) * 100).toFixed(0);
+  bkdn.innerHTML =
+    'O₂ line: ' + fO2.toFixed(1) + ' L (' + pO2from + '%)' +
+    (useN2O
+      ? '&ensp;&nbsp;N₂O: ' + fN2O.toFixed(1) + ' L (' + pN2O + '%)'
+      : '&ensp;&nbsp;Air: ' + fAir.toFixed(1) + ' L (' + pAirfrom + '%, →3.5 % O₂)');
+}
+
+function update(){
+  const ag=AGENTS[ST.agent], useN2O=ST.circuit==='n2oo2', sl=SODALIME[ST.sl];
+  const fO2=fv('fgfO2'), fAir=useN2O?0:fv('fgfAir'), fN2O=useN2O?fv('fgfN2O'):0;
+  const fgf=fO2+fAir+fN2O, fgfML=fgf*1000;
+  const ag_max=AGENTS[ST.agent].maxDial;
+  const dialEl2=g('dialPct');
+  if(parseFloat(dialEl2.value)>ag_max){ dialEl2.value=ag_max; }
+  const dial=fv('dialPct'), dur=fv('duration');
+  const bP=fv('bottlePrice'), n2oKg=fv('n2oKgPrice');
+  const canP=fv('canisterPrice'), canVolL=(fv('canVolL')||sl.defVolL), co2=fv('co2Rate');
+
+  const vML=fgfML*(dial/100), mol=vML/MOLAR_VOL, mG=mol*ag.mw, lML=mG/ag.rho;
+  const pML=bP/250, agCPM=lML*pML;
+  const n2oCPM=useN2O?fN2O*(n2oKg/N2O_L_PER_KG):0;
+  const slLmin=co2/(sl.capLperL*1000);
+  const slCPM=slLmin*(canP/canVolL), canLife=canVolL/slLmin;
+  const mac=useN2O?ag.mac_n2o:ag.mac_o2, macF=dial>0?dial/mac:0;
+  const cMH=macF>0?(agCPM*60)/macF:0, totCPM=agCPM+n2oCPM+slCPM;
+
+  g('totalFGFout').value=ff(fgf,2)+' L/min';
+  g('pricePerMLout').value='\u20b9'+pML.toFixed(2);
+  g('canisterLifeOut').value=ff(canLife/60,1)+' hr ('+ff(canLife,0)+' min)';
+  const scn=g('slCapNote'); if(scn) scn.textContent=sl.capLperL+' L CO₂/L · '+ff(slLmin*1000,3)+' mL sodalime/min';
+
+  g('vaporPerMin').textContent=ff(vML,1);
+  g('liquidPerMin').textContent=ff(lML,4);
+  g('massPerMin').textContent=ff(mG*1000,1);
+  g('agentCostPerMin').textContent=fc(agCPM);
+  g('n2oCostPerMin').textContent=fc(n2oCPM);
+  g('slCostPerMin').textContent=fc(slCPM);
+  g('totalPerMin').textContent=fc(totCPM);
+  g('costPerMACHr').textContent=fc(cMH);
+
+  const barCol=macF<0.5?'#60a5fa':macF<=1.5?ag.th.accent:'#dc2626';
+  g('macFill').style.cssText='width:'+Math.min(macF*100,100)+'%;background:'+barCol;
+  const bd=g('macBadge');
+  bd.textContent=macF.toFixed(2)+' MAC';
+  if(macF<0.5){bd.style.background='#dbeafe';bd.style.color='#1e40af';}
+  else if(macF<=1.5){bd.style.background=ag.th.tint2;bd.style.color=ag.th.accentDeep;}
+  else{bd.style.background='#ffe4e6';bd.style.color='#9f1239';}
+  g('macCircNote').textContent=useN2O?'(adjusted MAC \u2014 60\u201370\u202f% N\u2082O)':'(in O\u2082 / Air)';
+  g('macDetail').textContent='Dial: '+dial.toFixed(1)+' % \u00f7 MAC: '+mac.toFixed(2)+' % = '+macF.toFixed(3)+' MAC-eq  \u00b7  1 MAC '+ag.name+': '+mac.toFixed(2)+' %';
+
+  const totL=lML*dur, totN2L=useN2O?fN2O*dur:0, totN2K=totN2L/N2O_L_PER_KG;
+  const totSLml=slLmin*dur;
+  g('durOut').textContent=dur;
+  g('totLiquid').textContent=ff(totL,3)+' mL';
+  g('totBottlesNote').textContent=ff(totL/250,4)+' \u00d7 250 mL bottles';
+  g('totN2Ogas').textContent=useN2O?ff(totN2L,1)+' L ('+ff(totN2K,3)+' kg)':'0 L (not used)';
+  g('totSLg').textContent=ff(totSLml*1000,1)+' mL  ('+ff(totSLml/canVolL*100,2)+'% of '+canVolL+'L can)';
+  g('totAgentCost').textContent=fc(agCPM*dur);
+  g('totN2Ocost').textContent=fc(n2oCPM*dur);
+  g('totSLcost').textContent=fc(slCPM*dur)+'  ['+ff(totSLml/canVolL,4)+' cans]';
+  g('totAll').textContent=fc(totCPM*dur);
+  g('n2oKgNote').textContent=useN2O
+    ?'N\u2082O: '+ff(fN2O,1)+' L/min \u00d7 '+dur+' min = '+ff(totN2L,1)+' L = '+ff(totN2K,3)+' kg  \u00b7  1 kg = '+N2O_L_PER_KG.toFixed(1)+' L at 20\u202f\u00b0C'
+    :'';
+
+  if(useN2O){
+    const cKg=fv('cylKg')||30, cRef=fv('cylRefill')||6000, cL=cKg*N2O_L_PER_KG;
+    g('n2oStripText').textContent=g('cylType').options[g('cylType').selectedIndex].text
+      +'  \u00b7  '+cKg+' kg  \u00b7  '+cL.toFixed(0)+' L at 20\u202f\u00b0C'
+      +'  \u00b7  \u20b9'+cRef.toLocaleString()+' refill'
+      +'  \u00b7  \u20b9'+(cRef/cL).toFixed(4)+'/L'
+      +'  \u00b7  \u20b9'+(cRef/cKg).toFixed(0)+'/kg';
+  }
+
+  ['sevo','iso','des','halo'].forEach(k=>{const tr=g('tr-'+k);if(tr)tr.className=k===ST.agent?'ar':'';});
+  updateCylinder();
+  updateFiO2();
+  updateLFHint();
+  updateGWP();
+}
+
+function setAgent(k){
+  ST.agent=k;
+  const ag=AGENTS[k];
+  document.querySelectorAll('.agent-btn').forEach(b=>b.classList.toggle('active',b.dataset.agent===k));
+  g('agentDot').style.background=ag.th.dot;
+  g('agentNameOut').textContent=ag.name;
+  g('agentBadge').textContent=ag.abbr;
+  /* dial: enforce vaporizer max, clamp if current value exceeds new max */
+  const dialEl=g('dialPct');
+  dialEl.max=ag.maxDial;
+  dialEl.value=ag.defDial;
+  const dh=g('dialHint');
+  if(dh) dh.textContent='Max '+ag.maxDial+'% ('+ag.name+' vaporizer)';
+  /* set price based on current mode */
+  const isInst=ST.priceMode==='inst';
+  g('bottlePrice').value=isInst?ag.instPrice:ag.retailPrice;
+  const ph=g('priceHint'); if(ph) ph.textContent=isInst?ag.instHint:ag.retailHint;
+  applyTheme(k);
+  update();
+}
+
+function setPriceMode(mode){
+  ST.priceMode=mode;
+  const isInst=mode==='inst';
+  g('ptInst').classList.toggle('active',isInst);
+  g('ptRetail').classList.toggle('active',!isInst);
+  const pmo=g('priceModeOut');
+  if(pmo) pmo.value=isInst?'INSTITUTIONAL':'RETAIL MRP';
+  /* update bottle price to match mode for current agent */
+  const ag=AGENTS[ST.agent];
+  g('bottlePrice').value=isInst?ag.instPrice:ag.retailPrice;
+  const ph=g('priceHint');
+  if(ph) ph.textContent=isInst?ag.instHint:ag.retailHint;
+  update();
+}
+
+function setCircuit(c){
+  ST.circuit=c;
+  const n2o=c==='n2oo2';
+  g('circO2Air').classList.toggle('active',!n2o);
+  g('circN2OO2').classList.toggle('active',n2o);
+  g('fgfN2O').disabled=!n2o; g('fgfAir').disabled=n2o;
+  if(n2o){g('fgfAir').value=0;g('fgfN2O').value=2.0;}
+  else{g('fgfAir').value=1.0;g('fgfN2O').value=0;}
+  g('n2oCylSec').style.display=n2o?'':'none';
+  g('n2oStrip').style.display=n2o?'':'none';
+  update();
+  updateFiO2();
+  updateLFHint();
+  updateGWP();
+}
+
+function toggleRefs(){
+  const open=g('refBox').style.display==='block';
+  g('refBox').style.display=open?'none':'block';
+  g('refBtn').textContent=(open?'\u25ba':'\u25bc')+' Formula derivation & key peer-reviewed references';
+}
+
+document.getElementById('agentBar').addEventListener('click',e=>{const b=e.target.closest('[data-agent]');if(b)setAgent(b.dataset.agent);});
+g('circO2Air').onclick=()=>setCircuit('o2air');
+g('circN2OO2').onclick=()=>setCircuit('n2oo2');
+document.querySelector('.sl-bar').addEventListener('click',e=>{
+  const b=e.target.closest('[data-sl]');
+  if(b){
+    ST.sl=b.dataset.sl;
+    document.querySelectorAll('.sl-btn').forEach(x=>x.classList.toggle('active',x.dataset.sl===b.dataset.sl));
+    const sl=SODALIME[b.dataset.sl];
+    const cpEl=g('canisterPrice'), cvEl=g('canVolL');
+    const phEl=g('slPriceHint'), vhEl=g('slVolHint');
+    if(cpEl) cpEl.value=sl.defPrice;
+    if(cvEl) cvEl.value=sl.defVolL;
+    if(phEl) phEl.textContent=sl.hint;
+    if(vhEl) vhEl.textContent=sl.name+' · default '+sl.defVolL+' L';
+    update();
+  }
+});
+document.querySelectorAll('input[type=number]').forEach(inp=>inp.addEventListener('input',update));
+const ct=g('cylType');
+if(ct){
+  ct.addEventListener('change',()=>{const p=CYL[ct.value];if(p){g('cylKg').value=p.kg;g('cylRefill').value=p.refill;}updateCylinder();update();});
+  g('cylKg').addEventListener('input',()=>{updateCylinder();update();});
+  g('cylRefill').addEventListener('input',()=>{updateCylinder();update();});
+}
+/* price mode buttons */
+const ptI=g('ptInst'), ptR=g('ptRetail');
+if(ptI) ptI.addEventListener('click',()=>setPriceMode('inst'));
+if(ptR) ptR.addEventListener('click',()=>setPriceMode('retail'));
+
+buildTable();
+setAgent('sevo');
+/* update title */
+const titleEl=document.querySelector('h1');
+if(titleEl) titleEl.innerHTML='Inhalational Anaesthesia Cost Simulator &mdash; IACS v2';
+</script>
+</body>
+</html>
