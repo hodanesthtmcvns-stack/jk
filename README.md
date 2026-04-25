@@ -30,7 +30,7 @@ This repository hosts a suite of portable, offline-ready HTML applications desig
 |**IBIDA** | Inpatient Basal Insulin Dosing Assistant | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/IBIDA-v1.4.html) | 
 |**IVAA-PK-PD-Sim** | IV Anesthetic Agents Pharmacokinetics Pharmacodynamics Simulator | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/IVAA-PK-PD-Simulator-v3.0.html) |
 |**AA-PKPD** | Inhaled Anaesthetic Agent Pharmacokinetics–Pharmacodynamics Simulator | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/AA-PKPD-v1.2.html) |
-|**IACS** | Inhalational Anaesthesia Cost Simulator | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/IACS-v2.html) |
+|**IACS** | Inhalational Anaesthesia Cost Simulator | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/IACS-v3.html) |
 |**ADR-Reporter** | Adverse Drug Reaction Reporting | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/ADR-Reporter-v1.4.html) | 
 |**STTS** | Simple Text To Speech in any language | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/STTS-v1.5.html) | 
 
