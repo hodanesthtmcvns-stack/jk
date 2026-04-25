@@ -388,6 +388,14 @@ hr { border: none; border-top: 1.5px solid var(--tint2); margin: 18px 0; }
 .age-child    { background:#dcfce7; color:#166534; }
 .age-adult    { background:var(--tint2); color:var(--accent-deep); }
 .age-elderly  { background:#ede9fe; color:#5b21b6; }
+
+.co2-link-btn {
+  font-size:10px; font-weight:600; padding:2px 7px; border-radius:5px;
+  border:1px solid var(--accent-pale); background:var(--tint2);
+  color:var(--accent-deep); cursor:pointer; font-family:var(--sans);
+  transition:all 0.15s; white-space:nowrap;
+}
+.co2-link-btn.manual { background:#fee2e2; border-color:#fca5a5; color:#991b1b; }
 </style>
 </head>
 <body>
@@ -746,9 +754,12 @@ hr { border: none; border-top: 1.5px solid var(--tint2); margin: 18px 0; }
       <span class="hint" id="slVolHint">Standard India hospital pack = 5 L</span>
     </div>
     <div class="ig">
-      <label>Patient CO&#8322; (mL/min)</label>
-      <input type="number" autocomplete="off" id="co2Rate" value="200" min="50" max="600" step="10">
-      <span class="hint">Adult ~200 &middot; Paediatric ~100&ndash;150</span>
+      <label style="display:flex;align-items:center;gap:6px;">
+        Patient VCO₂ (mL/min)
+        <button class="co2-link-btn" id="co2LinkBtn">🔗 auto</button>
+      </label>
+      <input type="number" autocomplete="off" id="co2Rate" value="200" min="10" max="800" step="5">
+      <span class="hint" id="co2Hint">← VCO₂ = VO₂ × RQ 0.82 · edit to override</span>
     </div>
     <div class="ig">
       <label>Can life (derived)</label>
@@ -1469,6 +1480,7 @@ function update(){
   const vco2v=vo2_up*0.82;
   const vo2b=g('vo2Badge');    if(vo2b)  vo2b.textContent=vo2_up.toFixed(0);
   const vco2b=g('vco2Badge');  if(vco2b) vco2b.textContent=vco2v.toFixed(0);
+  if (typeof window._co2UpdateAuto==='function') window._co2UpdateAuto(vco2v);
   const mmb=g('macMultBadge'); if(mmb)   mmb.textContent=macMult.toFixed(3)+'×';
   const mao=g('macAgeOut');
   if(mao) mao.value=mac.toFixed(3)+'%  |  N₂O MAC: '+MAC_N2O_age.toFixed(1)+'%';
@@ -1635,7 +1647,9 @@ document.querySelector('.sl-bar').addEventListener('click',e=>{
     update();
   }
 });
-document.querySelectorAll('input[type=number]').forEach(inp=>inp.addEventListener('input',update));
+document.querySelectorAll('input[type=number]').forEach(inp=>{
+  if(inp.id!=='co2Rate') inp.addEventListener('input',update); /* co2Rate handled by IIFE */
+});
 const ct=g('cylType');
 if(ct){
   ct.addEventListener('change',()=>{const p=CYL[ct.value];if(p){g('cylKg').value=p.kg;g('cylRefill').value=p.refill;}updateCylinder();update();});
@@ -1649,6 +1663,49 @@ if(ptR) ptR.addEventListener('click',()=>setPriceMode('retail'));
 
 buildTable();
 setAgent('sevo');
+
+/* co2Rate auto-link to VCO2 */
+(function(){
+  var co2Auto = true;
+  var co2El  = document.getElementById('co2Rate');
+  var btnEl  = document.getElementById('co2LinkBtn');
+  var hintEl = document.getElementById('co2Hint');
+
+  function setCo2Mode(auto, vco2val) {
+    co2Auto = auto;
+    if (btnEl) {
+      btnEl.textContent = auto ? '🔗 auto' : '✎ manual';
+      btnEl.className   = auto ? 'co2-link-btn' : 'co2-link-btn manual';
+    }
+    if (hintEl) hintEl.textContent = auto
+      ? '← VCO₂ = VO₂ × RQ 0.82 · edit to override'
+      : 'Manual override — click button to re-link';
+    if (auto && vco2val != null && co2El) {
+      co2El.value = Math.round(vco2val);
+      update();
+    }
+  }
+
+  if (co2El) co2El.addEventListener('input', function() {
+    if (co2Auto) { co2Auto = false; setCo2Mode(false, null); }
+    update();  /* always recalculate sodalime with new value */
+  });
+
+  if (btnEl) btnEl.addEventListener('click', function() {
+    var wEl = document.getElementById('ptWt');
+    var wKg = wEl ? (parseFloat(wEl.value)||70) : 70;
+    var vco2 = typeof brodyVO2==='function' ? brodyVO2(wKg)*0.82 : 163;
+    setCo2Mode(true, vco2);
+  });
+
+  window._co2UpdateAuto = function(vco2val) {
+    if (co2Auto && co2El) { co2El.value = Math.round(vco2val); }
+  };
+  /* initialise on load */
+  var initWt = document.getElementById('ptWt');
+  var initVco2 = typeof brodyVO2==='function' ? brodyVO2(parseFloat(initWt&&initWt.value)||70)*0.82 : 198;
+  if (co2El) co2El.value = Math.round(initVco2);
+})();
 
 /* ── capnograph button wiring ────────────────────────────── */
 (function(){
