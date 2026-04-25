@@ -525,7 +525,7 @@ hr { border: none; border-top: 1.5px solid var(--tint2); margin: 18px 0; }
   <!-- FiO2 display -->
   <div class="fio2-bar" id="fio2Bar">
     <div class="fio2-left">
-      <div class="fio2-label">FiO&#8322; &mdash; corrected for VO&#8322; &amp; capnograph loss (circle system)</div>
+      <div class="fio2-label">FiO&#8322; &mdash; steady-state approximation (VO&#8322; + capno; simplified; not a full circle uptake model)</div>
       <div class="fio2-value" id="fio2Val">
         <span id="fio2Num">&#8212;</span><span class="fio2-unit">%</span>
       </div>
@@ -602,7 +602,7 @@ hr { border: none; border-top: 1.5px solid var(--tint2); margin: 18px 0; }
     </div>
     <div style="font-size:9.5px;color:var(--text3);padding:3px 10px 6px;">
       Leak test: APL closed, FGF = 0, observe bag/bellows volume loss per minute.
-      &ensp;Ref: Baum J. <em>Low Flow Anaesthesia</em> 2nd ed. · Closed circuit = VO&#8322; + N&#8322;O uptake only
+      &ensp;Ref: Baum J. <em>Low Flow Anaesthesia</em> 2nd ed. · Closed circuit ≈ VO₂ demand ×1.2 (safety margin); N₂O uptake not separately modelled
     </div>
   </div>
 </div>
@@ -895,7 +895,7 @@ hr { border: none; border-top: 1.5px solid var(--tint2); margin: 18px 0; }
     <div class="gwp-equiv" id="gwpEquiv"></div>
     <div class="gwp-refs">
       GWP&#8321;&#8320;&#8320; source: Sulbaek Andersen MG et al. J Phys Chem A 2010 &middot; N&#8322;O: IPCC AR6 2021 (GWP=273) &middot;
-      Sevo 130 &middot; Iso 510 &middot; Des 2540 &middot; Halo ~40 &middot;
+      Sevo 130 &middot; Iso 510 &middot; Des 2540 &middot; Halo ~40 <em>(approximate &mdash; limited atmospheric measurement data)</em> &middot;
       Sherman J et al. Anesth Analg 2012;114:1086 &middot; McGain F et al. Anaesth Intens Care 2021
     </div>
   </div>
@@ -1038,6 +1038,7 @@ function updateCylinder(){
 
 /* ── GWP constants (GWP100, Sulbaek Andersen 2010; N2O IPCC AR6 2021) ── */
 const GWP = { sevo:130, iso:510, des:2540, halo:40, n2o:273 };
+const GWP_APPROX = { halo: true };  /* halothane: limited atmospheric data */
 
 /* ── Low-flow rules per agent ────────────────────────────────────────────
    thresholds checked in order; first match wins.
@@ -1091,7 +1092,7 @@ const LF_RULES = {
       sub:'Halothane largely withdrawn in high-income countries. Low-flow technique described but monitor closely.' },
     { fgf:99,  level:'ok',   icon:'\u2713',
       main:'Halothane: FGF in range',
-      sub:'Low GWP (40). Avoid repeated exposures (hepatitis risk). Low flow acceptable where resources limit alternatives.' },
+      sub:'GWP ~40 (approximate — limited atmospheric data; Brown & Hammitt 2013). Avoid repeated exposures (halothane hepatitis). Low flow acceptable where alternatives unavailable.' },
   ],
 };
 
@@ -1126,7 +1127,8 @@ function updateGWP() {
 
   /* mass of agent per minute (g/min) */
   const vML   = fgfML*(dial/100);
-  const massG = (vML/MOLAR_VOL)*ag.mw;
+  const atm_gwp = fv('atm') || 1.0;
+  const massG = (vML*atm_gwp/MOLAR_VOL)*ag.mw;
 
   /* CO2-eq per minute */
   const agCO2min  = massG * gwpAg;               /* g CO2-eq/min */
@@ -1152,11 +1154,12 @@ function updateGWP() {
   if(ge('gwpTotalMin'))  ge('gwpTotalMin').textContent  = fmtG(totCO2min);
   if(ge('gwpSession'))   ge('gwpSession').textContent   = isNaN(sessKg)?'\u2014':sessKg.toFixed(3)+' kg';
   if(ge('gwpDurOut'))    ge('gwpDurOut').textContent    = dur;
-  if(ge('gwpAgentGWP'))  ge('gwpAgentGWP').textContent  = gwpAg;
   if(ge('gwpKm'))        ge('gwpKm').textContent        = isNaN(equivKm)?'\u2014':equivKm.toFixed(1);
   if(ge('gwpFill'))      { ge('gwpFill').style.width=barPct+'%'; ge('gwpFill').style.background=barCol; }
   if(ge('gwpBarLabel'))  ge('gwpBarLabel').textContent  = 'GWP '+gwpAg+' ('+gwpRatio.toFixed(1)+'\u00d7 Sevo)';
-  if(ge('gwpBadge'))     { ge('gwpBadge').textContent=bLabel; ge('gwpBadge').className='gwp-badge '+badge; }
+  const haloNote = ST.agent==='halo' ? ' (≈, limited data)' : '';
+  if(ge('gwpBadge'))     { ge('gwpBadge').textContent=bLabel+haloNote; ge('gwpBadge').className='gwp-badge '+badge; }
+  if(ge('gwpAgentGWP'))  ge('gwpAgentGWP').textContent = gwpAg+(ST.agent==='halo'?' (≈)':'');
   if(ge('gwpEquiv')) {
     const mins_per_bottle = massG>0?(250*ag.rho/massG):0;
     ge('gwpEquiv').textContent = sessKg>0
@@ -1217,13 +1220,17 @@ function ageMACmult(ageYr) {
   if (mo <  6) return 1.30;   /* 4–5 months: approaching peak */
   if (mo < 12) return 1.30;   /* 6–11 months: peak MAC period */
   /* ── children & adolescents ── */
-  if (ageYr < 3)  return 1.20;
+  /* ── children 1–11 yr: fixed approximations (Lerman; Gregory) ── */
+  if (ageYr < 3)  return 1.20;   /* approx — paediatric teaching/cost estimate */
   if (ageYr < 6)  return 1.15;
   if (ageYr < 12) return 1.10;
-  if (ageYr < 40) return 1.00;   /* standard reference age */
-  /* ── adults > 40 yr: 6.2% decline per decade (Mapleson 1996) ── */
+  /* ── age ≥ 12: Mapleson formula extended symmetrically around age 40 ──────
+     MAC_age = MAC_40 × (1 − 0.0062 × (age − 40))
+     At age 12: ×1.174  |  age 20: ×1.124  |  age 30: ×1.062
+     At age 40: ×1.000 (reference) | age 70: ×0.814 | age 120: ×0.504
+     Mapleson WW. Br J Anaesth 1996;76:179.                               */
   const m = 1.0 - 0.0062 * (ageYr - 40);
-  return Math.max(m, 0.30);      /* min 30% at extreme age (120 yr → 0.50) */
+  return Math.max(m, 0.30);
 }
 
 /* ── Brody VO2 (mL/min) = 10 × W^0.75  (Kleiber's Law) ── */
@@ -1234,12 +1241,12 @@ function brodyVO2(wKg) {
 /* ── classify FGF strategy for leak table ── */
 function fgfStrategy(fgfLmin, vo2mL) {
   /* Boundaries = midpoints between nominal FGF values (Baum 2nd ed.)
-     Closed:  = metabolic demand (VO2 + N2O uptake)
+     Closed:  ≈ VO₂ demand × 1.2 (20% margin; N₂O uptake not separately modelled)
      Minimal: < 0.75 L/min  (nominal 0.5 L/min)
      Low:     0.75 – 2.0 L/min  (nominal 1.0 L/min)
      Medium:  2.0  – 3.0 L/min  (nominal 2.0 L/min, Baum)
      High:    > 3.0 L/min                                               */
-  const closedThresh = (vo2mL * 1.2) / 1000;
+  const closedThresh = (vo2mL * 1.2) / 1000;  /* VO₂ × 1.2 — 20% safety margin; N₂O uptake not modelled */
   if (fgfLmin <= closedThresh + 0.05) return 'closed';
   if (fgfLmin <  0.75)  return 'minimal';
   if (fgfLmin <  2.0)   return 'low';
@@ -1335,15 +1342,20 @@ function updateFiO2(){
   const effNote = document.getElementById('effFGFnote');
   if (effNote) {
     const parts = [];
-    if (vo2 > 0)     parts.push('VO2 ' + vo2.toFixed(0) + ' mL/min');
+    if (vo2 > 0)     parts.push('VO₂ ' + vo2.toFixed(0) + ' mL/min');
     if (capnoML > 0) parts.push('capno ' + capnoML + ' mL/min');
     if (leakML > 0)  parts.push('leak ' + leakML.toFixed(0) + ' mL/min');
+    /* N2O uptake: not modelled — add advisory when N2O circuit active */
+    const n2oUptakeNote = (ST.circuit === 'n2oo2')
+      ? '  ⚠ N₂O uptake (~100–500 mL/min early; declining) not included — true demand higher at induction'
+      : '';
     if (parts.length) {
       effNote.style.display = 'inline-block';
       effNote.textContent = 'Min FGF required: ' + minFGF_L.toFixed(2)
         + ' L/min (' + parts.join(' + ') + ')'
-        + (deficit ? '  -- DEFICIT by ' + Math.abs(headroom).toFixed(0) + ' mL/min'
-                   : '  -- headroom ' + headroom.toFixed(0) + ' mL/min');
+        + (deficit ? '  — DEFICIT by ' + Math.abs(headroom).toFixed(0) + ' mL/min'
+                   : '  — headroom ' + headroom.toFixed(0) + ' mL/min')
+        + n2oUptakeNote;
       effNote.style.background  = deficit ? '#fee2e2' : 'var(--n2o-bg)';
       effNote.style.color       = deficit ? '#991b1b' : 'var(--n2o)';
     } else {
@@ -1394,19 +1406,22 @@ function updateFiO2(){
       ? '&ensp;N2O: ' + fN2O.toFixed(1) + ' L (' + pN2O + '%)'
       : '&ensp;Air: ' + fAir.toFixed(1) + ' L (' + pAir + '%, 21% O2)');
 
+  const n2oFiO2note = (ST.circuit === 'n2oo2')
+    ? '<br><em style="color:#92400e;">&#9888; N₂O uptake reduces circuit O₂ at low FGF (not modelled) — FiO₂ may drift lower; monitor SpO₂</em>'
+    : '';
   if (bkdn2) {
     if (deficit) {
       bkdn2.innerHTML = 'FGF DEFICIT: ' + Math.abs(headroom).toFixed(0)
-        + ' mL/min short of demand (VO2 + capno + leak = '
-        + minFGF_ML.toFixed(0) + ' mL/min). Increase FGF or reduce losses.';
+        + ' mL/min short (VO₂ + capno + leak = '
+        + minFGF_ML.toFixed(0) + ' mL/min). Increase FGF or reduce losses.' + n2oFiO2note;
     } else if (diffSig) {
-      bkdn2.innerHTML = 'Raw FiO2 (FGF composition): ' + fio2Raw.toFixed(1)
-        + '% &rarr; VO2-corrected (Lowe formula): <strong>' + fio2Corr.toFixed(1) + '%</strong>'
-        + ' (-' + diffAbs.toFixed(1) + '%). Capno+leak: APL compensates, affects min FGF only.';
+      bkdn2.innerHTML = 'Raw FiO₂ (FGF): ' + fio2Raw.toFixed(1)
+        + '% → VO₂-corrected: <strong>' + fio2Corr.toFixed(1) + '%</strong>'
+        + ' (−' + diffAbs.toFixed(1) + '%). APL compensates capno+leak.' + n2oFiO2note;
     } else {
-      bkdn2.innerHTML = 'VO2 correction &lt;0.5% at this FGF. Min FGF = '
-        + minFGF_L.toFixed(2) + ' L/min (VO2 ' + vo2.toFixed(0)
-        + ' + capno ' + capnoML + ' + leak ' + leakML.toFixed(0) + ' mL/min).';
+      bkdn2.innerHTML = 'VO₂ correction &lt;0.5% at this FGF. Min FGF = '
+        + minFGF_L.toFixed(2) + ' L/min (VO₂ ' + vo2.toFixed(0)
+        + ' + capno ' + capnoML + ' + leak ' + leakML.toFixed(0) + ' mL/min).' + n2oFiO2note;
     }
   }
 }
@@ -1422,7 +1437,9 @@ function update(){
   const bP=fv('bottlePrice'), n2oKg=fv('n2oKgPrice');
   const canP=fv('canisterPrice'), canVolL=(fv('canVolL')||sl.defVolL), co2=fv('co2Rate');
 
-  const vML=fgfML*(dial/100), mol=vML/MOLAR_VOL, mG=mol*ag.mw, lML=mG/ag.rho;
+  const atm_corr = fv('atm') || 1.0;
+  /* At altitude: n = (P × V) / RT = vapor_mL × atm / 24040  */
+  const vML=fgfML*(dial/100), mol=(vML*atm_corr)/MOLAR_VOL, mG=mol*ag.mw, lML=mG/ag.rho;
   const pML=bP/250, agCPM=lML*pML;
   const n2oCPM=useN2O?fN2O*(n2oKg/N2O_L_PER_KG):0;
   const slLmin=co2/(sl.capLperL*1000);
@@ -1432,9 +1449,16 @@ function update(){
   const wKg    = fv('ptWt')  || 70;
   const vo2_up = brodyVO2(wKg);
   const macMult= ageMACmult(age);
-  const macBase= useN2O ? ag.mac_n2o : ag.mac_o2;
-  const mac    = macBase * macMult;
-  const macF   = dial > 0 ? dial / mac : 0;
+  /* Additive MAC (Eger 1984): MAC_frac = dial/MAC_volatile_age + N2O%/MAC_N2O_age
+     N2O% in circuit estimated as FGF fraction (approximation at high flow).          */
+  const macBase    = ag.mac_o2;                    /* single-agent MAC at age 40 */
+  const mac        = macBase * macMult;             /* age-adjusted volatile MAC */
+  const MAC_N2O_40 = 104;                           /* N2O MAC at age 40, 1 atm */
+  const MAC_N2O_age = MAC_N2O_40 * macMult;         /* age-adjusted N2O MAC */
+  const n2oCircPct = useN2O ? (fN2O / (fgf || 1)) * 100 : 0; /* est. N2O% in circuit */
+  const macFvolatile = dial > 0 ? dial / mac : 0;
+  const macFN2O      = n2oCircPct > 0 ? n2oCircPct / MAC_N2O_age : 0;
+  const macF         = macFvolatile + macFN2O;
   const cMH=macF>0?(agCPM*60)/macF:0, totCPM=agCPM+n2oCPM+slCPM;
 
   g('totalFGFout').value=ff(fgf,2)+' L/min';
@@ -1447,7 +1471,7 @@ function update(){
   const vco2b=g('vco2Badge');  if(vco2b) vco2b.textContent=vco2v.toFixed(0);
   const mmb=g('macMultBadge'); if(mmb)   mmb.textContent=macMult.toFixed(3)+'×';
   const mao=g('macAgeOut');
-  if(mao) mao.value=mac.toFixed(3)+'% ('+macBase.toFixed(2)+' × '+macMult.toFixed(3)+')';
+  if(mao) mao.value=mac.toFixed(3)+'%  |  N₂O MAC: '+MAC_N2O_age.toFixed(1)+'%';
   /* age category badge */
   const cat = ageCat(age);
   const badgeEl = g('ageCatBadge');
@@ -1461,8 +1485,8 @@ function update(){
       ? (moAg < 1 ? '< 1 month (neonate)' : Math.round(moAg) + ' months')
       : age.toFixed(age < 10 ? 1 : 0) + ' yr';
     if (moAg < 1)        mah.textContent = 'Neonate < 1 month -- term MAC approx adult';
-    else if (age < 1)    mah.textContent = 'Infant ' + ageStr + ' -- peak MAC period (Lerman 1994)';
-    else if (age < 12)   mah.textContent = 'Paediatric ' + ageStr + ' (Mapleson 1996)';
+    else if (age < 1)    mah.textContent = 'Infant ' + ageStr + ' — peak MAC (Lerman 1994) · cost approx only';
+    else if (age < 12)   mah.textContent = 'Paediatric ' + ageStr + ' — teaching/cost approx; agent-specific variation not modelled';
     else if (age < 40)   mah.textContent = 'Standard -- ' + ageStr;
     else                 mah.textContent = 'Reduced ' + ((1-macMult)*100).toFixed(1) + '% -- ' + ageStr + ' (Mapleson 1996)';
   }
@@ -1492,8 +1516,14 @@ function update(){
   if(macF<0.5){bd.style.background='#dbeafe';bd.style.color='#1e40af';}
   else if(macF<=1.5){bd.style.background=ag.th.tint2;bd.style.color=ag.th.accentDeep;}
   else{bd.style.background='#ffe4e6';bd.style.color='#9f1239';}
-  g('macCircNote').textContent=useN2O?'(adjusted MAC \u2014 60\u201370\u202f% N\u2082O)':'(in O\u2082 / Air)';
-  g('macDetail').textContent='Dial: '+dial.toFixed(1)+' % ÷ MACₐᴳᵉ: '+mac.toFixed(3)+' % = '+macF.toFixed(3)+' MAC-eq  ·  Std MAC: '+macBase.toFixed(2)+'%  ·  Age mult: '+macMult.toFixed(3)+'x (age '+age+')';
+  g('macCircNote').textContent = useN2O
+    ? '(additive: volatile ' + macFvolatile.toFixed(3) + ' + N\u2082O ' + macFN2O.toFixed(3) + ' = ' + macF.toFixed(3) + ' MAC)'
+    : '(volatile only \u2014 no N\u2082O)';
+  g('macDetail').textContent=useN2O
+    ?'Volatile: '+dial.toFixed(1)+'%÷'+mac.toFixed(2)+'% = '+macFvolatile.toFixed(3)
+      +'  +  N₂O(est.FGF): '+n2oCircPct.toFixed(1)+'%÷'+MAC_N2O_age.toFixed(1)+'% = '+macFN2O.toFixed(3)
+      +'  =  '+macF.toFixed(3)+' MAC total  [est. from FGF comp.; not measured Et₂N₂O]'
+    :'Dial: '+dial.toFixed(1)+'% ÷ MAC: '+mac.toFixed(2)+'% = '+macF.toFixed(3)+' MAC-eq';
 
   const totL=lML*dur, totN2L=useN2O?fN2O*dur:0, totN2K=totN2L/N2O_L_PER_KG;
   const totSLml=slLmin*dur;
