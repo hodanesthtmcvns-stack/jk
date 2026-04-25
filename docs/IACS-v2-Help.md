@@ -1,4 +1,4 @@
-# IACS — Inhalational Anaesthesia Cost Simulator v2
+# IACS — Inhalational Anaesthesia Cost Simulator v3
 
 **Version 2 · Single-file · Offline-capable · GPL v3**
 
@@ -212,7 +212,7 @@ IACS is part of a suite of open-source, offline-capable, HTML/JavaScript clinica
 
 ## Quick Start
 
-1. Download `IACS-v2.html`
+1. Download `IACS-v3.html`
 2. Open it in any browser — no installation, no internet required
 3. Select your agent → set FGF → read cost per minute
 
@@ -450,6 +450,7 @@ Yes — GPL v3. You must release any modified version under the same licence and
 |---|---|
 | v1.0 | Initial release — cost/min, MAC bar, FGF inputs, N₂O cylinder reference |
 | v2.0 | Dual institutional/retail pricing · 5 L sodalime can (India standard) · India A/D-type N₂O cylinders · FiO₂ monitor with hypoxic alert · Low-flow optimization hints (agent-specific, evidence-based) · GWP₁₀₀ environmental panel with driving-equivalent · Mobile touch-target CSS (44–52 px min-height) · Agent-specific vaporiser dial hard limits |
+| v3.0 | Age adjusted MAC | FiO2 calculated according to FGF, oxygen consumption of patient, loss from sidestream capnography, circuit loss | 
 
 ---
 
