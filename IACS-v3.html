@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Inhalational Anaesthesia Cost Simulator - IACS-v2</title>
+<title>Inhalational Anaesthesia Cost Simulator - IACS-v3</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -314,6 +314,80 @@ hr { border: none; border-top: 1.5px solid var(--tint2); margin: 18px 0; }
 .gwp-fill  { height:100%; border-radius:4px; transition:width .3s, background .3s; }
 .gwp-equiv { font-size:11px; color:var(--text2); margin-top:8px; font-style:italic; }
 .gwp-refs  { font-size:10px; color:var(--text3); margin-top:6px; }
+
+/* ── patient physiology panel ── */
+.phys-panel {
+  background: var(--card); border: 1.5px solid var(--accent-pale);
+  border-radius: 11px; padding: 12px 15px; margin-bottom: 8px;
+}
+.phys-panel .panel-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:6px; }
+.phys-panel .panel-row:last-child { margin-bottom:0; }
+.phys-badge {
+  display:inline-flex; align-items:center; gap:5px;
+  background:var(--tint2); border:1px solid var(--accent-pale);
+  border-radius:7px; padding:4px 10px; font-size:11.5px;
+  font-family:var(--mono); color:var(--accent-deep); white-space:nowrap;
+}
+.phys-badge .pb-label { font-size:10px; color:var(--text3); font-family:var(--sans); }
+.mac-age-badge {
+  display:inline-block; font-size:11px; font-weight:600; font-family:var(--mono);
+  padding:2px 8px; border-radius:8px; background:var(--tint2);
+  color:var(--accent-deep); margin-left:6px;
+}
+
+/* ── capnograph panel ── */
+.capno-panel {
+  background:var(--tint); border:1px solid var(--border2);
+  border-radius:9px; padding:9px 13px; margin-top:8px;
+  font-size:12px;
+}
+.capno-btn {
+  padding:5px 10px; border-radius:7px;
+  border:1.5px solid var(--border2);
+  background:var(--card); color:var(--text2);
+  font-family:var(--sans); font-size:11.5px; font-weight:500;
+  cursor:pointer; transition:all 0.15s;
+}
+.capno-btn.active { background:var(--tint2); border-color:var(--accent-mid); color:var(--accent-deep); }
+
+/* ── circuit leak table ── */
+.leak-table-wrap {
+  margin-top:8px; background:var(--card);
+  border:1.5px solid var(--accent-pale); border-radius:10px;
+  overflow:hidden;
+}
+.leak-table { width:100%; border-collapse:collapse; font-size:11.5px; }
+.leak-table th { padding:6px 10px; background:var(--tint2); font-size:10px;
+  font-weight:700; letter-spacing:0.06em; color:var(--text3); text-align:left; }
+.leak-table td { padding:5px 10px; border-top:1px solid var(--tint2); color:var(--text2); }
+.leak-table tr.active-strategy td { background:var(--tint2); color:var(--accent-deep); font-weight:600; }
+.leak-table .strategy-tag {
+  display:inline-block; font-size:9.5px; font-weight:700; letter-spacing:0.05em;
+  padding:1px 6px; border-radius:5px; margin-right:4px;
+}
+.st-high { background:#dbeafe; color:#1e40af; }
+.st-low  { background:#dcfce7; color:#166534; }
+.st-min  { background:#fef3c7; color:#92400e; }
+.st-clos { background:#fee2e2; color:#991b1b; }
+
+/* ── effective FGF note ── */
+.eff-fgf-note {
+  font-size:11px; font-family:var(--mono); color:var(--n2o);
+  padding:4px 8px; border-radius:6px; background:var(--n2o-bg);
+  display:inline-block; margin-top:4px;
+}
+
+/* ── age category badge ── */
+.age-cat-badge {
+  display:inline-block; font-size:10.5px; font-weight:700;
+  letter-spacing:0.04em; padding:2px 9px; border-radius:7px;
+  margin-top:3px; font-family:var(--sans);
+}
+.age-neonate  { background:#fee2e2; color:#991b1b; }
+.age-infant   { background:#fef3c7; color:#92400e; }
+.age-child    { background:#dcfce7; color:#166534; }
+.age-adult    { background:var(--tint2); color:var(--accent-deep); }
+.age-elderly  { background:#ede9fe; color:#5b21b6; }
 </style>
 </head>
 <body>
@@ -323,7 +397,7 @@ hr { border: none; border-top: 1.5px solid var(--tint2); margin: 18px 0; }
 <div class="header">
   <div class="header-top">
     <div>
-      <h1>Inhalational Anaesthesia Cost Simulator - IACS-v2</h1>
+      <h1>Inhalational Anaesthesia Cost Simulator - IACS-v3</h1>
       <p>License: GNU GPL v3. Copyright (C) 2026 Prof. Jyotirmay Kirtania</p>
     </div>
     <div class="agent-badge" id="agentBadge">SEVOFLURANE</div>
@@ -371,20 +445,87 @@ hr { border: none; border-top: 1.5px solid var(--tint2); margin: 18px 0; }
 <div class="sec">
   <div class="sec-label">Fresh gas flows (L/min)</div>
   <div class="g4">
-    <div class="ig"><label>O&#8322; (L/min)</label><input type="number" id="fgfO2" value="1.0" min="0" max="15" step="0.1"></div>
-    <div class="ig"><label>Air (L/min)</label><input type="number" id="fgfAir" value="1.0" min="0" max="15" step="0.1"></div>
+    <div class="ig"><label>O&#8322; (L/min)</label><input type="number" autocomplete="off" id="fgfO2" value="1.0" min="0" max="15" step="0.1"></div>
+    <div class="ig"><label>Air (L/min)</label><input type="number" autocomplete="off" id="fgfAir" value="1.0" min="0" max="15" step="0.1"></div>
     <div class="ig">
       <label>N&#8322;O (L/min)</label>
-      <input type="number" id="fgfN2O" value="2.0" min="0" max="15" step="0.1" disabled>
+      <input type="number" autocomplete="off" id="fgfN2O" value="2.0" min="0" max="15" step="0.1" disabled>
       <span class="hint">Enable N&#8322;O+O&#8322; circuit above</span>
     </div>
     <div class="ig"><label>Total FGF</label><input type="text" id="totalFGFout" class="dv" readonly></div>
   </div>
 
+  <!-- Patient physiology -->
+  <div class="phys-panel" style="margin-top:10px;">
+    <div class="sec-label" style="margin-bottom:8px;">Patient physiology &amp; VO&#8322; (Brody · Kleiber&apos;s Law)</div>
+    <div class="g4" style="margin-bottom:8px;">
+      <div class="ig">
+        <label>Weight (kg)</label>
+        <input type="number" autocomplete="off" id="ptWt" value="70" min="0.5" max="200" step="0.5">
+        <span class="hint">Neonates 0.5–3 kg · Children to 70 kg</span>
+      </div>
+      <div class="ig">
+        <label>Age</label>
+        <div style="display:flex;gap:5px;align-items:center;">
+          <input type="number" autocomplete="off" id="ptAgeYr" value="40" min="0" max="120" step="1"
+            style="width:76px;flex-shrink:0;" title="Years (0&#8211;120)">
+          <span style="font-size:11px;color:var(--text3);">yr</span>
+          <input type="number" autocomplete="off" id="ptAgeMo" value="0" min="0" max="11" step="1"
+            style="width:52px;flex-shrink:0;display:none;" title="Months (0&#8211;11)">
+          <span id="ptAgeMoLabel" style="font-size:11px;color:var(--text3);display:none;">mo</span>
+        </div>
+        <span class="age-cat-badge age-adult" id="ageCatBadge">Adult</span>
+        <span class="hint" id="ageHint">Mapleson 1996 &middot; max 120 yr</span>
+      </div>
+      <div class="ig">
+        <label>VO&#8322; &mdash; Brody (mL/min)</label>
+        <input type="text" id="vo2Out" class="dv" readonly>
+        <span class="hint">10 &times; W<sup>0.75</sup> · Kleiber&apos;s Law</span>
+      </div>
+      <div class="ig">
+        <label>Age-adjusted MAC</label>
+        <input type="text" id="macAgeOut" class="dv" readonly>
+        <span class="hint" id="macAgeHint">Standard (age 40)</span>
+      </div>
+    </div>
+    <!-- derived display row -->
+    <div class="panel-row" id="physBadgeRow">
+      <span class="phys-badge"><span class="pb-label">RQ</span>&nbsp;0.82</span>
+      <span class="phys-badge"><span class="pb-label">VCO&#8322;</span>&nbsp;<span id="vco2Badge">&mdash;</span>&nbsp;mL/min</span>
+      <span class="phys-badge"><span class="pb-label">O&#8322; consumed</span>&nbsp;<span id="vo2Badge">&mdash;</span>&nbsp;mL/min</span>
+      <span class="phys-badge"><span class="pb-label">MAC multiplier</span>&nbsp;<span id="macMultBadge">&mdash;</span></span>
+    </div>
+  </div>
+
+  <!-- Sidestream capnograph loss -->
+  <div class="capno-panel">
+    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
+      <div style="font-size:11.5px; font-weight:600; color:var(--text2);">
+        Sidestream capnograph gas loss
+        <span style="font-size:10px; color:var(--text3); font-weight:400; margin-left:6px;">(non-return systems — excludes Dräger Perseus/Apollo, GE Aisys)</span>
+      </div>
+      <div style="display:flex; gap:5px; flex-wrap:wrap;" id="capnoBar">
+        <button class="capno-btn active" data-capno="0">None / return</button>
+        <button class="capno-btn" data-capno="50">50 mL/min</button>
+        <button class="capno-btn" data-capno="100">100 mL/min</button>
+        <button class="capno-btn" data-capno="150">150 mL/min</button>
+        <button class="capno-btn" data-capno="200">200 mL/min</button>
+        <button class="capno-btn" data-capno="custom">Custom</button>
+      </div>
+    </div>
+    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+      <div class="ig" style="flex:0 0 160px;">
+        <label>Custom loss (mL/min)</label>
+        <input type="number" autocomplete="off" id="capnoCustom" value="150" min="0" max="250" step="10" disabled>
+      </div>
+      <div id="effFGFnote" class="eff-fgf-note" style="display:none;"></div>
+    </div>
+  </div>
+
   <!-- FiO2 display -->
   <div class="fio2-bar" id="fio2Bar">
     <div class="fio2-left">
-      <div class="fio2-label">Inspired O&#8322; fraction &mdash; FiO&#8322; (from FGF composition)</div>
+      <div class="fio2-label">FiO&#8322; &mdash; corrected for VO&#8322; &amp; capnograph loss (circle system)</div>
       <div class="fio2-value" id="fio2Val">
         <span id="fio2Num">&#8212;</span><span class="fio2-unit">%</span>
       </div>
@@ -399,9 +540,8 @@ hr { border: none; border-top: 1.5px solid var(--tint2); margin: 18px 0; }
     </div>
     <div class="fio2-right">
       <div class="fio2-alert ok" id="fio2Alert">&#10003;&ensp;FiO&#8322; safe</div>
-      <div class="fio2-breakdown" id="fio2Breakdown">
-        O&#8322;: &mdash; &nbsp;Air: &mdash; &nbsp;N&#8322;O: &mdash;
-      </div>
+      <div class="fio2-breakdown" id="fio2Breakdown">O&#8322;: &mdash;</div>
+      <div class="fio2-breakdown" id="fio2BreakdownSub" style="margin-top:3px;"></div>
     </div>
   </div>
 
@@ -413,6 +553,58 @@ hr { border: none; border-top: 1.5px solid var(--tint2); margin: 18px 0; }
       <div class="lf-sub"  id="lfSub"></div>
     </div>
   </div>
+
+  <!-- Circuit leak acceptability -->
+  <div class="leak-table-wrap" style="margin-top:8px;">
+    <table class="leak-table">
+      <thead><tr>
+        <th>Flow strategy</th>
+        <th>FGF range</th>
+        <th>Max acceptable leak</th>
+        <th>Capnograph impact</th>
+      </tr></thead>
+      <tbody id="leakTableBody">
+        <tr id="leak-high">
+          <td><span class="strategy-tag st-high">HIGH FLOW</span></td>
+          <td>&gt; 3.0 L/min</td><td>&lt; 300 mL/min</td>
+          <td style="font-size:10.5px;color:var(--text3);">Capno / leak negligible vs FGF</td>
+        </tr>
+        <tr id="leak-med">
+          <td><span class="strategy-tag" style="background:#e0e7ff;color:#3730a3;">MEDIUM FLOW</span></td>
+          <td>2.0 – 3.0 L/min</td><td>&lt; 200 mL/min</td>
+          <td style="font-size:10.5px;color:var(--text3);">Capno 150–200 mL/min = 5–10% FGF</td>
+        </tr>
+        <tr id="leak-low">
+          <td><span class="strategy-tag st-low">LOW FLOW</span></td>
+          <td>0.75 – 2.0 L/min</td><td>&lt; 150 mL/min</td>
+          <td style="font-size:10.5px;color:var(--text3);">50–100 mL/min = 5–13% of FGF</td>
+        </tr>
+        <tr id="leak-min">
+          <td><span class="strategy-tag st-min">MINIMAL FLOW</span></td>
+          <td>&lt; 0.75 L/min</td><td>&lt; 50 mL/min</td>
+          <td style="font-size:10.5px;color:var(--text3);">Capno 150–200 mL/min exceeds limit</td>
+        </tr>
+        <tr id="leak-closed">
+          <td><span class="strategy-tag st-clos">CLOSED CIRCUIT</span></td>
+          <td>= Metabolic demand</td><td>&lt; 20 mL/min</td>
+          <td style="font-size:10.5px;color:var(--text3);">Any capno/leak must be compensated by FGF</td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--tint);flex-wrap:wrap;border-top:1px solid var(--tint2);">
+      <div class="ig" style="flex:0 0 200px;">
+        <label>Measured circuit leak (mL/min)</label>
+        <input type="number" autocomplete="off" id="measuredLeak" value="0" min="0" max="1000" step="10">
+      </div>
+      <div id="leakResult" style="font-size:12px;font-family:var(--mono);padding:6px 12px;border-radius:8px;background:var(--card);border:1px solid var(--border2);flex:1;min-width:200px;">
+        Enter measured leak above
+      </div>
+    </div>
+    <div style="font-size:9.5px;color:var(--text3);padding:3px 10px 6px;">
+      Leak test: APL closed, FGF = 0, observe bag/bellows volume loss per minute.
+      &ensp;Ref: Baum J. <em>Low Flow Anaesthesia</em> 2nd ed. · Closed circuit = VO&#8322; + N&#8322;O uptake only
+    </div>
+  </div>
 </div>
 
 <!-- DIAL -->
@@ -421,13 +613,13 @@ hr { border: none; border-top: 1.5px solid var(--tint2); margin: 18px 0; }
   <div class="g3">
     <div class="ig">
       <label>Dial setting (%)</label>
-      <input type="number" id="dialPct" value="2.0" min="0.1" max="8" step="0.1">
+      <input type="number" autocomplete="off" id="dialPct" value="2.0" min="0.1" max="8" step="0.1">
       <span class="hint" id="dialHint" style="color:var(--accent-deep);font-weight:500;">Max 8% (Sevoflurane vaporizer)</span>
     </div>
-    <div class="ig"><label>Duration (minutes)</label><input type="number" id="duration" value="60" min="1" step="5"></div>
+    <div class="ig"><label>Duration (minutes)</label><input type="number" autocomplete="off" id="duration" value="60" min="1" step="5"></div>
     <div class="ig">
       <label>Altitude (atm)</label>
-      <input type="number" id="atm" value="1.000" min="0.5" max="1.1" step="0.001">
+      <input type="number" autocomplete="off" id="atm" value="1.000" min="0.5" max="1.1" step="0.001">
       <span class="hint">1.000 = sea level &middot; Varanasi &asymp; 1.000</span>
     </div>
   </div>
@@ -449,7 +641,7 @@ hr { border: none; border-top: 1.5px solid var(--tint2); margin: 18px 0; }
   <div class="g4">
     <div class="ig">
       <label>&#8377; per 250 mL bottle</label>
-      <input type="number" id="bottlePrice" value="3500" min="0" step="50">
+      <input type="number" autocomplete="off" id="bottlePrice" value="3500" min="0" step="50">
       <span class="hint" id="priceHint">Inst: Sevorane/Kelsevo tender rate</span>
     </div>
     <div class="ig">
@@ -458,7 +650,7 @@ hr { border: none; border-top: 1.5px solid var(--tint2); margin: 18px 0; }
     </div>
     <div class="ig">
       <label>&#8377; per kg N&#8322;O</label>
-      <input type="number" id="n2oKgPrice" value="200" min="0" step="5">
+      <input type="number" autocomplete="off" id="n2oKgPrice" value="200" min="0" step="5">
       <span class="hint">D-cyl 30 kg refill &#8776; &#8377;6 000 &rarr; &#8377;200/kg</span>
     </div>
     <div class="ig">
@@ -522,10 +714,10 @@ hr { border: none; border-top: 1.5px solid var(--tint2); margin: 18px 0; }
     </div>
     <div class="ig">
       <label>Fill weight (kg N&#8322;O)</label>
-      <input type="number" id="cylKg" value="30" min="0.5" step="0.5">
+      <input type="number" autocomplete="off" id="cylKg" value="30" min="0.5" step="0.5">
       <span class="hint" id="cylLitresHint">= 16 395 L gas at 20&thinsp;&deg;C</span>
     </div>
-    <div class="ig"><label>Refill cost (&#8377;)</label><input type="number" id="cylRefill" value="6000" min="0" step="100"></div>
+    <div class="ig"><label>Refill cost (&#8377;)</label><input type="number" autocomplete="off" id="cylRefill" value="6000" min="0" step="100"></div>
     <div class="ig">
       <label>&#8377; per L N&#8322;O (derived)</label>
       <input type="text" id="n2oPerLout" class="dv" readonly>
@@ -545,17 +737,17 @@ hr { border: none; border-top: 1.5px solid var(--tint2); margin: 18px 0; }
   <div class="g4">
     <div class="ig">
       <label>&#8377; per can / cartridge</label>
-      <input type="number" id="canisterPrice" value="2000" min="0" step="50">
+      <input type="number" autocomplete="off" id="canisterPrice" value="2000" min="0" step="50">
       <span class="hint" id="slPriceHint">Dr&auml;gersorb 800+ 5 L &middot; &#8377;1850&ndash;2250</span>
     </div>
     <div class="ig">
       <label>Can / cartridge volume (L)</label>
-      <input type="number" id="canVolL" value="5.0" min="0.5" max="10" step="0.1">
+      <input type="number" autocomplete="off" id="canVolL" value="5.0" min="0.5" max="10" step="0.1">
       <span class="hint" id="slVolHint">Standard India hospital pack = 5 L</span>
     </div>
     <div class="ig">
       <label>Patient CO&#8322; (mL/min)</label>
-      <input type="number" id="co2Rate" value="200" min="50" max="600" step="10">
+      <input type="number" autocomplete="off" id="co2Rate" value="200" min="50" max="600" step="10">
       <span class="hint">Adult ~200 &middot; Paediatric ~100&ndash;150</span>
     </div>
     <div class="ig">
@@ -818,7 +1010,7 @@ function applyTheme(k){
 
 function buildTable(){
   const SW={ sevo:'#d97706', iso:'#7c3aed', des:'#2563eb', halo:'#e11d48' };
-  let h='<thead><tr><th>Agent</th><th>MW</th><th>\u03c1 (g/mL)</th><th>Biro \u2020</th><th>MAC O\u2082 %</th><th>MAC+N\u2082O %</th></tr></thead><tbody>';
+  let h='<thead><tr><th>Agent</th><th>MW</th><th>ρ (g/mL)</th><th>Biro †</th><th>MAC O₂ %</th><th>MAC+N₂O %</th><th>MAC age 20</th><th>MAC age 70</th></tr></thead><tbody>';
   ['sevo','iso','des','halo'].forEach(k=>{
     const a=AGENTS[k], biro=(a.rho/a.mw)*MOLAR_VOL;
     h+=`<tr id="tr-${k}"><td><span class="sw" style="background:${SW[k]};"></span><strong>${a.name}</strong></td>
@@ -975,56 +1167,248 @@ function updateGWP() {
   }
 }
 
+/* ── capnograph state ── */
+let CAPNO_ML = 0;  /* mL/min gas lost to sidestream capnograph */
+
+/* ── Age-adjusted MAC multiplier (Mapleson 1996 / Eger data) ───────────────
+   Standard MAC values (as in AGENTS) are defined at age 40.
+   Paediatric peak ~ 1 yr; linear decline from age 40 onward (6.2%/decade).
+   Formula for adults: MAC_age = MAC_40 × (1 - 0.0062 × (age - 40))
+   Clamp to minimum 0.30 to avoid nonsensical values at extreme age.         */
+/* ── getAgeYears(): reads year + month inputs → decimal years ── */
+function getAgeYears() {
+  const yr = parseFloat(document.getElementById('ptAgeYr')?.value) || 0;
+  const mo = yr === 0 ? (parseFloat(document.getElementById('ptAgeMo')?.value) || 0) : 0;
+  return Math.min(yr + mo / 12, 120);
+}
+
+/* ── age category string ── */
+function ageCat(ageYr) {
+  const mo = ageYr * 12;
+  if (mo < 1)       return { label:'Neonate', cls:'age-neonate' };
+  if (ageYr < 1)    return { label:'Infant ' + Math.round(mo) + ' mo', cls:'age-infant' };
+  if (ageYr < 3)    return { label:'Toddler', cls:'age-child' };
+  if (ageYr < 6)    return { label:'Pre-school', cls:'age-child' };
+  if (ageYr < 12)   return { label:'Child', cls:'age-child' };
+  if (ageYr < 18)   return { label:'Adolescent', cls:'age-child' };
+  if (ageYr < 40)   return { label:'Adult', cls:'age-adult' };
+  if (ageYr < 65)   return { label:'Adult (MAC adj.)', cls:'age-adult' };
+  if (ageYr < 80)   return { label:'Elderly', cls:'age-elderly' };
+  if (ageYr < 100)  return { label:'Very elderly', cls:'age-elderly' };
+  return { label:'Centenarian', cls:'age-elderly' };
+}
+
+/* ── ageMACmult: age in decimal years — monthly resolution for < 1 yr ──────
+   Sources: Lerman J et al. Anesthesiology 1994;80:788 (sevoflurane infant MAC);
+            Gregory GA et al. Anesthesiology 1969;30:488 (halothane);
+            Mapleson WW. Br J Anaesth 1996;76:179 (adult decline formula);
+            Eger EI. Am J Health Syst Pharm 2004;61(S4):S3–10.
+   Note: MAC values here are defined at age 40 (Mapleson convention).
+   Agent-specific neonatal values differ; this multiplier is a consensus
+   estimate suitable for pharmacoeconomic—not dosing—calculations.         */
+function ageMACmult(ageYr) {
+  if (ageYr < 0) return 1.10;
+  const mo = ageYr * 12;
+  /* ── neonates & infants (finer resolution in months) ── */
+  if (mo <  1) return 1.10;   /* neonate < 1 month: term MAC ~ adult or slightly above */
+  if (mo <  2) return 1.18;   /* 1 month */
+  if (mo <  3) return 1.25;   /* 2 months */
+  if (mo <  4) return 1.28;   /* 3 months */
+  if (mo <  6) return 1.30;   /* 4–5 months: approaching peak */
+  if (mo < 12) return 1.30;   /* 6–11 months: peak MAC period */
+  /* ── children & adolescents ── */
+  if (ageYr < 3)  return 1.20;
+  if (ageYr < 6)  return 1.15;
+  if (ageYr < 12) return 1.10;
+  if (ageYr < 40) return 1.00;   /* standard reference age */
+  /* ── adults > 40 yr: 6.2% decline per decade (Mapleson 1996) ── */
+  const m = 1.0 - 0.0062 * (ageYr - 40);
+  return Math.max(m, 0.30);      /* min 30% at extreme age (120 yr → 0.50) */
+}
+
+/* ── Brody VO2 (mL/min) = 10 × W^0.75  (Kleiber's Law) ── */
+function brodyVO2(wKg) {
+  return wKg > 0 ? 10 * Math.pow(wKg, 0.75) : 0;
+}
+
+/* ── classify FGF strategy for leak table ── */
+function fgfStrategy(fgfLmin, vo2mL) {
+  /* Boundaries = midpoints between nominal FGF values (Baum 2nd ed.)
+     Closed:  = metabolic demand (VO2 + N2O uptake)
+     Minimal: < 0.75 L/min  (nominal 0.5 L/min)
+     Low:     0.75 – 2.0 L/min  (nominal 1.0 L/min)
+     Medium:  2.0  – 3.0 L/min  (nominal 2.0 L/min, Baum)
+     High:    > 3.0 L/min                                               */
+  const closedThresh = (vo2mL * 1.2) / 1000;
+  if (fgfLmin <= closedThresh + 0.05) return 'closed';
+  if (fgfLmin <  0.75)  return 'minimal';
+  if (fgfLmin <  2.0)   return 'low';
+  if (fgfLmin <= 3.0)   return 'medium';
+  return 'high';
+}
+
+/* ── update leak table highlight ── */
+function updateLeakResult() {
+  updateFiO2();  /* leak change affects min FGF display */
+  const measLeak = fv('measuredLeak');
+  const fgf = fv('fgfO2') + (ST.circuit==='n2oo2' ? fv('fgfN2O') : fv('fgfAir'));
+  const strat = fgfStrategy(fgf, brodyVO2(fv('ptWt')||70));
+  const limits  = { high:300, medium:200, low:150, minimal:50, closed:20 };
+  const labels  = { high:'High flow (>3 L/min)', medium:'Medium flow (2-3 L/min)',
+                    low:'Low flow (0.75-2 L/min)', minimal:'Minimal flow (<0.75 L/min)',
+                    closed:'Closed circuit (= metabolic demand)' };
+  const limit = limits[strat];
+  const el = document.getElementById('leakResult');
+  if (!el) return;
+  if (measLeak <= 0) {
+    el.textContent = 'Enter measured leak above';
+    el.style.cssText = 'font-size:12px;font-family:var(--mono);padding:6px 12px;border-radius:8px;background:var(--card);border:1px solid var(--border2);flex:1;min-width:200px;';
+    return;
+  }
+  const pass = measLeak < limit;
+  const margin = limit - measLeak;
+  el.innerHTML = (pass ? '<strong>PASS</strong>' : '<strong>FAIL</strong>')
+    + '  ' + measLeak + ' mL/min  (limit ' + limit + ' mL/min for ' + labels[strat] + ')'
+    + (pass ? '  -- margin ' + margin + ' mL/min' : '  -- EXCEEDS by ' + Math.abs(margin) + ' mL/min');
+  el.style.cssText = 'font-size:12px;font-family:var(--mono);padding:6px 12px;border-radius:8px;flex:1;min-width:200px;'
+    + (pass ? 'background:#dcfce7;color:#166534;border:1px solid #86efac;'
+            : 'background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;');
+}
+
+function updateLeakTable(fgfLmin, vo2mL) {
+  const strat = fgfStrategy(fgfLmin, vo2mL);
+  const map = { 'high':'leak-high', 'medium':'leak-med', 'low':'leak-low', 'minimal':'leak-min', 'closed':'leak-closed' };
+  ['leak-high','leak-med','leak-low','leak-min','leak-closed'].forEach(id => {
+    const tr = document.getElementById(id);
+    if (tr) tr.className = id === map[strat] ? 'active-strategy' : '';
+  });
+}
+
+
 function updateFiO2(){
-  const useN2O = ST.circuit === 'n2oo2';
-  const fO2  = fv('fgfO2');
-  const fAir = useN2O ? 0 : fv('fgfAir');
-  const fN2O = useN2O ? fv('fgfN2O') : 0;
-  const total = fO2 + fAir + fN2O;
+  const useN2O  = ST.circuit === 'n2oo2';
+  const fO2     = fv('fgfO2');
+  const fAir    = useN2O ? 0 : fv('fgfAir');
+  const fN2O    = useN2O ? fv('fgfN2O') : 0;
+  const fgfL    = fO2 + fAir + fN2O;          /* L/min */
+  const fgfML   = fgfL * 1000;                /* mL/min */
 
-  /* FiO2: O2 from pure O2 line + O2 from Air (21%) */
-  const o2contribution = fO2 + 0.21 * fAir;
-  const fio2 = total > 0 ? (o2contribution / total) * 100 : 0;
+  /* ── patient physiology ── */
+  const wKg   = fv('ptWt') || 70;
+  const vo2   = brodyVO2(wKg);               /* mL/min O2 consumed */
+  const vco2  = vo2 * 0.82;                  /* mL/min CO2 produced (RQ 0.82) */
 
-  const bar   = document.getElementById('fio2Bar');
-  const numEl = document.getElementById('fio2Num');
-  const fill  = document.getElementById('fio2Fill');
-  const alert = document.getElementById('fio2Alert');
-  const bkdn  = document.getElementById('fio2Breakdown');
-  if (!bar) return;
+  /* ── gas losses (both affect minimum FGF, not directly FiO2) ── */
+  const capnoML = CAPNO_ML;                  /* mL/min sidestream capno */
+  const leakML  = fv('measuredLeak') || 0;   /* mL/min measured circuit leak */
 
-  numEl.textContent = total > 0 ? fio2.toFixed(1) : '—';
+  /* ── minimum FGF required to avoid circuit deficit ────────────────────
+     In a circle system the APL valve compensates for capno/leak losses,
+     so FiO2 is unaffected UNLESS FGF < total demand (deficit mode).
+     Ref: Baum J. Low Flow Anaesthesia 2nd ed.;
+          Lowe & Ernst, Anaesthesia 1981                                  */
+  const minFGF_ML = vo2 + capnoML + leakML;  /* mL/min minimum demand */
+  const minFGF_L  = minFGF_ML / 1000;
+  const deficit   = fgfL < minFGF_L && fgfL > 0;
+  const headroom  = fgfML - minFGF_ML;       /* mL/min surplus (negative = deficit) */
 
-  /* bar fill: scale 0–100% mapped to 0–100% width, but anchor 21% at 21/100 */
-  const fillPct = Math.min(fio2, 100);
-  fill.style.width = fillPct + '%';
+  /* ── O2 delivery ── */
+  const o2DelML   = (fO2 + 0.21 * fAir) * 1000;    /* mL/min O2 from FGF */
+  const fio2Raw   = fgfL > 0 ? (o2DelML / fgfML) * 100 : 0; /* raw FGF composition */
 
-  if (fio2 < 21 && total > 0) {
-    fill.style.background = '#ef4444';
-    bar.className = 'fio2-bar danger';
-    alert.className = 'fio2-alert danger';
-    alert.innerHTML = '⛔️ HYPOXIC MIXTURE<br>FiO₂ ' + fio2.toFixed(1) + '% — BELOW AIR!';
-  } else if (fio2 < 25 && total > 0) {
-    fill.style.background = '#f59e0b';
-    bar.className = 'fio2-bar warn';
-    alert.className = 'fio2-alert warn';
-    alert.innerHTML = '⚠️ WARNING<br>FiO₂ ' + fio2.toFixed(1) + '% — approaching hypoxic';
+  /* ── VO2-corrected FiO2 (Lowe formula)
+     f = (O2_delivered - VO2) / (FGF_total - VO2)
+     Valid when FGF > VO2/1000; capno/leak cancel because APL compensates.
+     In deficit mode, the circuit is depleting and FiO2 falls — shown as warning. */
+  const denomML  = fgfML - vo2;
+  const netO2ML  = o2DelML - vo2;
+  let   fio2Corr;
+  if   (denomML > 30 && netO2ML >= 0) {
+    fio2Corr = Math.min((netO2ML / denomML) * 100, 100);
   } else {
-    fill.style.background = '#16a34a';
-    bar.className = 'fio2-bar';
-    alert.className = 'fio2-alert ok';
-    alert.innerHTML = '✓&ensp;FiO₂ safe &ensp;(' + fio2.toFixed(1) + '%)';
+    fio2Corr = 0;   /* FGF cannot sustain VO2 — hypoxic */
+  }
+  const diffAbs  = Math.abs(+(fio2Raw - fio2Corr).toFixed(1));
+  const diffSig  = diffAbs >= 0.5;
+
+  /* ── effective FGF note ── */
+  const effNote = document.getElementById('effFGFnote');
+  if (effNote) {
+    const parts = [];
+    if (vo2 > 0)     parts.push('VO2 ' + vo2.toFixed(0) + ' mL/min');
+    if (capnoML > 0) parts.push('capno ' + capnoML + ' mL/min');
+    if (leakML > 0)  parts.push('leak ' + leakML.toFixed(0) + ' mL/min');
+    if (parts.length) {
+      effNote.style.display = 'inline-block';
+      effNote.textContent = 'Min FGF required: ' + minFGF_L.toFixed(2)
+        + ' L/min (' + parts.join(' + ') + ')'
+        + (deficit ? '  -- DEFICIT by ' + Math.abs(headroom).toFixed(0) + ' mL/min'
+                   : '  -- headroom ' + headroom.toFixed(0) + ' mL/min');
+      effNote.style.background  = deficit ? '#fee2e2' : 'var(--n2o-bg)';
+      effNote.style.color       = deficit ? '#991b1b' : 'var(--n2o)';
+    } else {
+      effNote.style.display = 'none';
+    }
   }
 
-  /* breakdown */
-  const pO2from = (fO2 / (total||1) * 100).toFixed(0);
-  const pAirfrom = (fAir / (total||1) * 100).toFixed(0);
-  const pN2O = (fN2O / (total||1) * 100).toFixed(0);
-  bkdn.innerHTML =
-    'O₂ line: ' + fO2.toFixed(1) + ' L (' + pO2from + '%)' +
+  /* ── display ── */
+  const bar     = document.getElementById('fio2Bar');
+  const numEl   = document.getElementById('fio2Num');
+  const fill    = document.getElementById('fio2Fill');
+  const alertEl = document.getElementById('fio2Alert');
+  const bkdn    = document.getElementById('fio2Breakdown');
+  const bkdn2   = document.getElementById('fio2BreakdownSub');
+  if (!bar) return;
+
+  const displayFiO2 = fio2Corr;
+
+  numEl.textContent = fgfL > 0 ? displayFiO2.toFixed(1) : '--';
+  fill.style.width  = Math.min(displayFiO2, 100) + '%';
+
+  if (deficit) {
+    fill.style.background = '#ef4444'; bar.className = 'fio2-bar danger';
+    alertEl.className = 'fio2-alert danger';
+    alertEl.innerHTML = 'CIRCUIT DEFICIT -- FiO2 falling<br>FGF ' + fgfL.toFixed(1)
+      + ' L/min &lt; demand ' + minFGF_L.toFixed(2) + ' L/min';
+  } else if (displayFiO2 < 21 && fgfL > 0) {
+    fill.style.background = '#ef4444'; bar.className = 'fio2-bar danger';
+    alertEl.className = 'fio2-alert danger';
+    alertEl.innerHTML = 'HYPOXIC MIXTURE<br>FiO2 ' + displayFiO2.toFixed(1) + '% -- BELOW AIR!';
+  } else if (displayFiO2 < 25 && fgfL > 0) {
+    fill.style.background = '#f59e0b'; bar.className = 'fio2-bar warn';
+    alertEl.className = 'fio2-alert warn';
+    alertEl.innerHTML = 'WARNING: FiO2 ' + displayFiO2.toFixed(1) + '% -- approaching hypoxic';
+  } else {
+    fill.style.background = '#16a34a'; bar.className = 'fio2-bar';
+    alertEl.className = 'fio2-alert ok';
+    alertEl.innerHTML = 'FiO2 safe (' + displayFiO2.toFixed(1) + '%)';
+  }
+
+  /* ── gas composition breakdown ── */
+  const pO2  = (fO2 / (fgfL||1) * 100).toFixed(0);
+  const pAir = (fAir / (fgfL||1) * 100).toFixed(0);
+  const pN2O = (fN2O / (fgfL||1) * 100).toFixed(0);
+  if (bkdn) bkdn.innerHTML =
+    'O2 line: ' + fO2.toFixed(1) + ' L (' + pO2 + '%)' +
     (useN2O
-      ? '&ensp;&nbsp;N₂O: ' + fN2O.toFixed(1) + ' L (' + pN2O + '%)'
-      : '&ensp;&nbsp;Air: ' + fAir.toFixed(1) + ' L (' + pAirfrom + '%, →3.5 % O₂)');
+      ? '&ensp;N2O: ' + fN2O.toFixed(1) + ' L (' + pN2O + '%)'
+      : '&ensp;Air: ' + fAir.toFixed(1) + ' L (' + pAir + '%, 21% O2)');
+
+  if (bkdn2) {
+    if (deficit) {
+      bkdn2.innerHTML = 'FGF DEFICIT: ' + Math.abs(headroom).toFixed(0)
+        + ' mL/min short of demand (VO2 + capno + leak = '
+        + minFGF_ML.toFixed(0) + ' mL/min). Increase FGF or reduce losses.';
+    } else if (diffSig) {
+      bkdn2.innerHTML = 'Raw FiO2 (FGF composition): ' + fio2Raw.toFixed(1)
+        + '% &rarr; VO2-corrected (Lowe formula): <strong>' + fio2Corr.toFixed(1) + '%</strong>'
+        + ' (-' + diffAbs.toFixed(1) + '%). Capno+leak: APL compensates, affects min FGF only.';
+    } else {
+      bkdn2.innerHTML = 'VO2 correction &lt;0.5% at this FGF. Min FGF = '
+        + minFGF_L.toFixed(2) + ' L/min (VO2 ' + vo2.toFixed(0)
+        + ' + capno ' + capnoML + ' + leak ' + leakML.toFixed(0) + ' mL/min).';
+    }
+  }
 }
 
 function update(){
@@ -1043,12 +1427,53 @@ function update(){
   const n2oCPM=useN2O?fN2O*(n2oKg/N2O_L_PER_KG):0;
   const slLmin=co2/(sl.capLperL*1000);
   const slCPM=slLmin*(canP/canVolL), canLife=canVolL/slLmin;
-  const mac=useN2O?ag.mac_n2o:ag.mac_o2, macF=dial>0?dial/mac:0;
+  /* age-adjusted MAC */
+  const age    = getAgeYears();
+  const wKg    = fv('ptWt')  || 70;
+  const vo2_up = brodyVO2(wKg);
+  const macMult= ageMACmult(age);
+  const macBase= useN2O ? ag.mac_n2o : ag.mac_o2;
+  const mac    = macBase * macMult;
+  const macF   = dial > 0 ? dial / mac : 0;
   const cMH=macF>0?(agCPM*60)/macF:0, totCPM=agCPM+n2oCPM+slCPM;
 
   g('totalFGFout').value=ff(fgf,2)+' L/min';
   g('pricePerMLout').value='\u20b9'+pML.toFixed(2);
   g('canisterLifeOut').value=ff(canLife/60,1)+' hr ('+ff(canLife,0)+' min)';
+  /* physiology panel */
+  const vo2el=g('vo2Out'); if(vo2el) vo2el.value=vo2_up.toFixed(1)+' mL/min';
+  const vco2v=vo2_up*0.82;
+  const vo2b=g('vo2Badge');    if(vo2b)  vo2b.textContent=vo2_up.toFixed(0);
+  const vco2b=g('vco2Badge');  if(vco2b) vco2b.textContent=vco2v.toFixed(0);
+  const mmb=g('macMultBadge'); if(mmb)   mmb.textContent=macMult.toFixed(3)+'×';
+  const mao=g('macAgeOut');
+  if(mao) mao.value=mac.toFixed(3)+'% ('+macBase.toFixed(2)+' × '+macMult.toFixed(3)+')';
+  /* age category badge */
+  const cat = ageCat(age);
+  const badgeEl = g('ageCatBadge');
+  if (badgeEl) { badgeEl.textContent = cat.label; badgeEl.className = 'age-cat-badge ' + cat.cls; }
+
+  /* macAgeHint with month resolution */
+  const mah = g('macAgeHint');
+  if (mah) {
+    const moAg = age * 12;
+    const ageStr = age < 1
+      ? (moAg < 1 ? '< 1 month (neonate)' : Math.round(moAg) + ' months')
+      : age.toFixed(age < 10 ? 1 : 0) + ' yr';
+    if (moAg < 1)        mah.textContent = 'Neonate < 1 month -- term MAC approx adult';
+    else if (age < 1)    mah.textContent = 'Infant ' + ageStr + ' -- peak MAC period (Lerman 1994)';
+    else if (age < 12)   mah.textContent = 'Paediatric ' + ageStr + ' (Mapleson 1996)';
+    else if (age < 40)   mah.textContent = 'Standard -- ' + ageStr;
+    else                 mah.textContent = 'Reduced ' + ((1-macMult)*100).toFixed(1) + '% -- ' + ageStr + ' (Mapleson 1996)';
+  }
+
+  /* show/hide month input when year = 0 */
+  const yrEl = g('ptAgeYr'), moEl = g('ptAgeMo'), moLbl = g('ptAgeMoLabel');
+  if (yrEl && moEl && moLbl) {
+    const showMo = (parseFloat(yrEl.value) || 0) === 0;
+    moEl.style.display  = showMo ? '' : 'none';
+    moLbl.style.display = showMo ? '' : 'none';
+  }
   const scn=g('slCapNote'); if(scn) scn.textContent=sl.capLperL+' L CO₂/L · '+ff(slLmin*1000,3)+' mL sodalime/min';
 
   g('vaporPerMin').textContent=ff(vML,1);
@@ -1068,7 +1493,7 @@ function update(){
   else if(macF<=1.5){bd.style.background=ag.th.tint2;bd.style.color=ag.th.accentDeep;}
   else{bd.style.background='#ffe4e6';bd.style.color='#9f1239';}
   g('macCircNote').textContent=useN2O?'(adjusted MAC \u2014 60\u201370\u202f% N\u2082O)':'(in O\u2082 / Air)';
-  g('macDetail').textContent='Dial: '+dial.toFixed(1)+' % \u00f7 MAC: '+mac.toFixed(2)+' % = '+macF.toFixed(3)+' MAC-eq  \u00b7  1 MAC '+ag.name+': '+mac.toFixed(2)+' %';
+  g('macDetail').textContent='Dial: '+dial.toFixed(1)+' % ÷ MACₐᴳᵉ: '+mac.toFixed(3)+' % = '+macF.toFixed(3)+' MAC-eq  ·  Std MAC: '+macBase.toFixed(2)+'%  ·  Age mult: '+macMult.toFixed(3)+'x (age '+age+')';
 
   const totL=lML*dur, totN2L=useN2O?fN2O*dur:0, totN2K=totN2L/N2O_L_PER_KG;
   const totSLml=slLmin*dur;
@@ -1099,6 +1524,8 @@ function update(){
   updateFiO2();
   updateLFHint();
   updateGWP();
+  updateLeakTable(fgf, vo2_up);
+  updateLeakResult();
 }
 
 function setAgent(k){
@@ -1151,6 +1578,7 @@ function setCircuit(c){
   updateFiO2();
   updateLFHint();
   updateGWP();
+  updateLeakTable(fv('fgfO2')+(ST.circuit==='n2oo2'?fv('fgfN2O'):fv('fgfAir')), brodyVO2(fv('ptWt')||70));
 }
 
 function toggleRefs(){
@@ -1191,9 +1619,48 @@ if(ptR) ptR.addEventListener('click',()=>setPriceMode('retail'));
 
 buildTable();
 setAgent('sevo');
+
+/* ── capnograph button wiring ────────────────────────────── */
+(function(){
+  const capBar = document.getElementById('capnoBar');
+  if (capBar) {
+    capBar.addEventListener('click', e => {
+      const btn = e.target.closest('[data-capno]');
+      if (!btn) return;
+      document.querySelectorAll('.capno-btn').forEach(b=>b.classList.toggle('active',b===btn));
+      const val = btn.dataset.capno;
+      const customEl = document.getElementById('capnoCustom');
+      if (val === 'custom') {
+        if (customEl){ customEl.disabled=false; CAPNO_ML=parseFloat(customEl.value)||150; }
+      } else {
+        if (customEl) customEl.disabled = true;
+        CAPNO_ML = parseInt(val,10) || 0;
+      }
+      update(); updateFiO2();
+    });
+    const ce = document.getElementById('capnoCustom');
+    if (ce) ce.addEventListener('input', ()=>{ CAPNO_ML=parseFloat(ce.value)||0; update(); updateFiO2(); });
+  }
+
+  /* weight & age -- also explicitly call updateFiO2 */
+  ['ptWt','ptAgeYr','ptAgeMo'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.addEventListener('input',()=>{ update(); updateFiO2(); });
+  });
+
+  /* measured leak */
+  const ml = document.getElementById('measuredLeak');
+  if (ml) ml.addEventListener('input', updateLeakResult);
+})();
 /* update title */
 const titleEl=document.querySelector('h1');
-if(titleEl) titleEl.innerHTML='Inhalational Anaesthesia Cost Simulator &mdash; IACS v2';
+if(titleEl) titleEl.innerHTML='Inhalational Anaesthesia Cost Simulator &mdash; IACS v3.0';
+
+window.addEventListener('beforeunload', function(e) {
+  e.preventDefault();
+  e.returnValue = 'Refreshing will reset all inputs to defaults. Continue?';
+  return e.returnValue;
+});
 </script>
 </body>
 </html>
