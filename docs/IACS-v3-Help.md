@@ -1,6 +1,6 @@
 # IACS — Inhalational Anaesthesia Cost Simulator v3
 
-**Version 2 · Single-file · Offline-capable · GPL v3**
+**Version 3 · Single-file · Offline-capable · GPL v3**
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![HTML5](https://img.shields.io/badge/Built%20with-HTML5%20%2B%20Vanilla%20JS-orange.svg)]()
