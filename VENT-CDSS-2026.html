@@ -1,0 +1,499 @@
+f<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VENT-CDSS 2026 | Ventilator Weaning, Troubleshooting, PEEP, Proning & ECMO Escalation</title>
+  <!--
+    VENT-CDSS 2026: Ventilator Weaning, Troubleshooting, PEEP, Proning & ECMO Escalation
+    Author: Prof. (Dr) Jyotirmay Kirtania
+    Copyright (C) 2026 Prof. (Dr) Jyotirmay Kirtania
+    SPDX-License-Identifier: GPL-3.0-or-later
+
+    This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License
+    as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+    warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+  -->
+  <style>
+    :root{--bg:#f7f7f4;--panel:#fff;--ink:#111827;--muted:#5b6472;--line:#d8ded6;--good:#0f766e;--warn:#b45309;--bad:#b91c1c;--blue:#1d4ed8;--violet:#6d28d9;--softGood:#e7f5f2;--softWarn:#fff4df;--softBad:#fee2e2;--softBlue:#e8f0ff;--softViolet:#f1eaff;--shadow:0 8px 24px rgba(15,23,42,.08);--r:18px}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.45}header{padding:16px 18px 12px;background:linear-gradient(135deg,#111827,#263241);color:white;position:sticky;top:0;z-index:10;box-shadow:var(--shadow)}header h1{font-size:20px;margin:0 0 4px;font-weight:800}header p{margin:0;color:#d1d5db;font-size:13px}.author{font-size:12px;color:#e5e7eb;margin-top:5px}.wrap{max-width:1280px;margin:0 auto;padding:16px}.grid{display:grid;grid-template-columns:320px 1fr;gap:16px;align-items:start}nav{position:sticky;top:92px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:12px}nav button{width:100%;text-align:left;border:0;background:transparent;padding:11px 12px;border-radius:12px;color:var(--ink);font-weight:700;cursor:pointer;margin:2px 0}nav button.active{background:#111827;color:white}.small{font-size:12px;color:var(--muted)}.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:16px;margin-bottom:16px}.section{display:none}.section.active{display:block}h2{font-size:21px;margin:0 0 10px}h3{font-size:16px;margin:14px 0 8px}h4{font-size:14px;margin:12px 0 6px}.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.four{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}label{display:block;font-size:12px;color:var(--muted);margin:0 0 4px;font-weight:700}input,select,textarea{width:100%;border:1px solid var(--line);border-radius:12px;padding:10px 11px;background:white;font:inherit;color:var(--ink)} input:required:invalid,input.invalidField{border-color:var(--bad);background:#fff7f7;box-shadow:0 0 0 3px rgba(185,28,28,.08)} .fieldError{display:none;color:var(--bad);font-size:11px;margin-top:4px}.fieldError.show{display:block}textarea{min-height:96px;resize:vertical}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.check{display:flex;gap:8px;align-items:flex-start;margin:6px 0;font-size:14px;color:var(--ink);font-weight:500}.check input{width:auto;margin-top:3px}.btn{border:0;border-radius:12px;padding:10px 13px;font-weight:800;cursor:pointer;background:#111827;color:white}.btn.secondary{background:#e5e7eb;color:#111827}.btn.blue{background:var(--blue)}.btn.bad{background:var(--bad)}.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:5px 9px;font-size:12px;font-weight:800;background:#eef2f7;color:#111827;margin:2px}.pill.good{background:var(--softGood);color:var(--good)}.pill.warn{background:var(--softWarn);color:var(--warn)}.pill.bad{background:var(--softBad);color:var(--bad)}.pill.blue{background:var(--softBlue);color:var(--blue)}.pill.violet{background:var(--softViolet);color:var(--violet)}.out{border-radius:16px;border:1px solid var(--line);padding:12px;background:#fafafa;margin-top:12px}.out.good{background:var(--softGood);border-color:#99d8ce}.out.warn{background:var(--softWarn);border-color:#f1c27d}.out.bad{background:var(--softBad);border-color:#f5a3a3}.out.blue{background:var(--softBlue);border-color:#a9c4ff}.out.violet{background:var(--softViolet);border-color:#cdb8ff}table{width:100%;border-collapse:collapse;font-size:13px;margin:8px 0}th,td{border:1px solid var(--line);padding:8px;text-align:left;vertical-align:top}th{background:#f1f5f9}.notice{border-left:5px solid #111827;background:#fff;padding:10px 12px;border-radius:10px;margin:10px 0}.danger{border-left-color:var(--bad);background:var(--softBad)}.warning{border-left-color:var(--warn);background:var(--softWarn)}.ok{border-left-color:var(--good);background:var(--softGood)}.kpi{border:1px solid var(--line);border-radius:16px;background:#fff;padding:12px}.kpi .label{font-size:12px;color:var(--muted);font-weight:800}.kpi .value{font-size:24px;font-weight:850}.progress{height:10px;background:#e5e7eb;border-radius:999px;overflow:hidden}.progress>div{height:100%;background:#111827;width:0%}.task{border:1px solid var(--line);border-radius:14px;background:#fff;padding:10px;margin:8px 0}.task.done{background:var(--softGood);border-color:#99d8ce}.task.urgent{background:var(--softBad);border-color:#f5a3a3}.miniCard{border:1px solid var(--line);border-radius:14px;background:#fff;padding:10px;margin:6px 0}.miniCard h4{margin-top:0}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}.redFlag{background:var(--softBad);border:1px solid #f5a3a3;border-radius:12px;padding:8px;margin:6px 0}.amberFlag{background:var(--softWarn);border:1px solid #f1c27d;border-radius:12px;padding:8px;margin:6px 0}.greenFlag{background:var(--softGood);border:1px solid #99d8ce;border-radius:12px;padding:8px;margin:6px 0}details{border:1px solid var(--line);border-radius:14px;padding:10px 12px;background:#fff;margin:8px 0}summary{font-weight:800;cursor:pointer}.citation{font-size:12px;color:#374151;margin:6px 0;padding-left:18px}.footer{font-size:12px;color:#4b5563;margin-top:24px}.printOnly{display:none}@media(max-width:900px){.grid{grid-template-columns:1fr}nav{position:static}.two,.three,.four{grid-template-columns:1fr}header{position:static}}@media print{header,nav,.btn,.noPrint{display:none!important}.grid{display:block}.section{display:block}.panel{box-shadow:none;break-inside:avoid}.printOnly{display:block}}
+  </style>
+</head>
+<body>
+<header>
+  <h1>VENT-CDSS 2026</h1>
+  <p>Ventilator weaning, troubleshooting, PEEP titration, proning and ECMO escalation support for adult ICU use.</p>
+  <div class="author">Author: Prof. (Dr) Jyotirmay Kirtania | Copyright © 2026 | GNU GPL v3.0-or-later</div>
+</header>
+<div class="wrap grid">
+  <nav>
+    <div class="small" style="padding:8px 12px 4px">Modules</div>
+    <button class="tab active" data-tab="dashboard">1. Dashboard</button>
+    <button class="tab" data-tab="weaning">2. Weaning & Extubation</button>
+    <button class="tab" data-tab="ards">3. ARDS Rescue</button>
+    <button class="tab" data-tab="trouble">4. Ventilator Troubleshooting</button>
+    <button class="tab" data-tab="peep">5. PEEP Titration</button>
+    <button class="tab" data-tab="prone">6. Proning Decision</button>
+    <button class="tab" data-tab="ecmo">7. ECMO Escalation</button>
+    <button class="tab" data-tab="notes">8. Notes / Export</button>
+    <div class="small" style="padding:8px 12px 4px">Actions</div>
+    <button onclick="saveCase()">Save case locally</button>
+    <button onclick="resetAll()">Reset</button>
+    <button onclick="window.print()">Print / Save PDF</button>
+  </nav>
+
+  <main>
+    <section id="dashboard" class="section active">
+      <div class="panel">
+        <h2>Patient & Ventilator Data</h2>
+        <div class="notice warning"><strong>Clinical safety:</strong> Bedside cognitive aid only. It does not replace consultant judgement, institutional protocol, ABG review, imaging, airway assessment or ECMO-centre discussion.</div>
+        <div id="dailyFocus" class="out blue"><h3>Daily focus</h3><p class="small">Enter current ventilator and patient data. The app will show the next safe bedside action.</p></div>
+        <div class="three">
+          <div><label>Case / ID</label><input id="caseId" placeholder="Case number / bed" /></div>
+          <div><label>Age, years</label><input id="age" type="number" min="0" /></div>
+          <div><label>Sex for PBW</label><select id="sex"><option value="male">Male</option><option value="female">Female</option></select></div>
+          <div><label>Height, cm <span style="color:var(--bad)">*</span></label><input id="height" type="number" min="90" max="230" required inputmode="decimal" /><div id="heightErr" class="fieldError">Enter valid height: 90–230 cm.</div></div>
+          <div><label>Weight, kg <span style="color:var(--bad)">*</span></label><input id="weight" type="number" min="1" max="300" required inputmode="decimal" /><div id="weightErr" class="fieldError">Enter valid weight: 1–300 kg.</div></div>
+        </div>
+        <h3>Primary indication(s) for mechanical ventilation</h3>
+        <div class="two">
+          <div>
+            <label>Select all that apply (multiselect)</label>
+            <select id="dxSelect" multiple size="12" style="height:auto;padding:0.4rem" onchange="updateDiagnosis()">
+              <option value="ARDS (aspiration)">ARDS (aspiration)</option>
+              <option value="ARDS (pneumonia)">ARDS (pneumonia)</option>
+              <option value="ARDS (sepsis)">ARDS (sepsis)</option>
+              <option value="ARDS (COVID-19)">ARDS (COVID-19)</option>
+              <option value="ARDS (other)">ARDS (other)</option>
+              <option value="Pneumonia (community-acquired)">Pneumonia (community-acquired)</option>
+              <option value="Pneumonia (hospital-acquired/VAP)">Pneumonia (hospital-acquired/VAP)</option>
+              <option value="Sepsis / septic shock">Sepsis / septic shock</option>
+              <option value="Post-operative respiratory failure">Post-operative respiratory failure</option>
+              <option value="COPD / asthma exacerbation">COPD / asthma exacerbation</option>
+              <option value="Cardiogenic pulmonary edema">Cardiogenic pulmonary edema</option>
+              <option value="Acute heart failure">Acute heart failure</option>
+              <option value="Pulmonary embolism">Pulmonary embolism</option>
+              <option value="Trauma (chest)">Trauma (chest)</option>
+              <option value="Trauma (multi-system)">Trauma (multi-system)</option>
+              <option value="Neuromuscular failure">Neuromuscular failure</option>
+              <option value="Neurological (GCS <8, airway protection)">Neurological (GCS &lt;8, airway protection)</option>
+              <option value="Status epilepticus">Status epilepticus</option>
+              <option value="Upper airway obstruction">Upper airway obstruction</option>
+              <option value="Other">Other (specify in free text)</option>
+            </select>
+          </div>
+          <div>
+            <label>Additional free-text diagnosis / context</label>
+            <textarea id="dxFreeText" placeholder="Add any additional diagnoses, comorbidities, or clinical context not covered above..." style="min-height:200px" oninput="updateDiagnosis()"></textarea>
+          </div>
+        </div>
+        <div><label>Combined diagnosis summary (auto-generated)</label><input id="dx" readonly style="background:#f9f9f9;cursor:not-allowed" /></div>
+        <h3>Current settings and monitoring</h3>
+        <div class="four">
+          <div><label>Mode</label><select id="mode"><option>VCV/AC</option><option>PCV/AC</option><option>SIMV</option><option>PSV/CPAP</option><option>APRV</option><option>NIV</option></select></div>
+          <div><label>FiO₂, 0.21–1.0</label><input id="fio2" type="number" min="0.21" max="1" step="0.01" /></div>
+          <div><label>PEEP, cmH₂O</label><input id="peepVal" type="number" step="1" /></div>
+          <div><label>RR set, /min</label><input id="rrSet" type="number" step="1" /></div>
+          <div><label>RR observed, /min</label><input id="rrObs" type="number" step="1" /></div>
+          <div><label>Tidal volume, mL</label><input id="vt" type="number" step="10" /></div>
+          <div><label>Peak pressure, cmH₂O</label><input id="peak" type="number" step="1" /></div>
+          <div><label>Plateau pressure, cmH₂O</label><input id="plat" type="number" step="1" /></div>
+          <div><label>PaO₂, mmHg</label><input id="pao2" type="number" step="1" /></div>
+          <div><label>PaCO₂, mmHg</label><input id="paco2" type="number" step="1" /></div>
+          <div><label>pH</label><input id="ph" type="number" step="0.01" /></div>
+          <div><label>SpO₂, %</label><input id="spo2" type="number" step="1" /></div>
+          <div><label>MAP, mmHg</label><input id="map" type="number" step="1" /></div>
+          <div><label>Vasopressor dose / status</label><input id="pressor" placeholder="Nil / low / escalating" /></div>
+          <div><label>Lactate, mmol/L</label><input id="lactate" type="number" step="0.1" /></div>
+          <div><label>Urine output, mL/kg/h</label><input id="uop" type="number" step="0.1" /></div>
+        </div>
+        <div class="row" style="margin-top:12px"><button class="btn" onclick="calculateAll()">Calculate</button><button class="btn secondary" onclick="copySummary()">Copy summary</button></div>
+      </div>
+      <div class="panel">
+        <h2>Calculated Dashboard</h2>
+        <div class="four">
+          <div class="kpi"><div class="label">PBW</div><div class="value" id="pbwOut">—</div></div>
+          <div class="kpi"><div class="label">VT / PBW</div><div class="value" id="vtpbwOut">—</div></div>
+          <div class="kpi"><div class="label">P/F ratio</div><div class="value" id="pfOut">—</div></div>
+          <div class="kpi"><div class="label">Driving pressure</div><div class="value" id="driveOut">—</div></div>
+          <div class="kpi"><div class="label">BMI</div><div class="value" id="bmiOut">—</div></div>
+        </div>
+        <div id="globalAdvice" class="out blue"><h3>Immediate interpretation</h3><p class="small">Enter data and press Calculate.</p></div>
+      </div>
+    </section>
+
+    <section id="weaning" class="section">
+      <div class="panel">
+        <h2>Weaning & Extubation: ISCCM 2024-aligned Workflow</h2>
+        <div class="notice">Plan liberation from day 1 of mechanical ventilation, but start SBT only after preparedness criteria are met. The app separates ventilator liberation, extubation readiness, post-extubation support, and difficult-weaning evaluation.</div>
+        <div class="two">
+          <div class="kpi"><div class="label">Checklist completion</div><div class="value" id="weanPercent">0%</div><div class="progress"><div id="weanBar"></div></div></div>
+          <div class="kpi"><div class="label">Next bedside action</div><div class="value" id="nextAction" style="font-size:17px;line-height:1.25">Enter data</div></div>
+        </div>
+
+        <h3>Step 1 — Daily liberation screen</h3>
+        <div class="three">
+          <label class="check"><input type="checkbox" id="w_resolving">Primary cause improving / stable</label>
+          <label class="check"><input type="checkbox" id="w_spont">Spontaneous respiratory effort present</label>
+          <label class="check"><input type="checkbox" id="w_hemo">Hemodynamically stable or low-dose vasopressor only</label>
+          <label class="check"><input type="checkbox" id="w_oxygen">FiO₂ ≤0.50 and PEEP ≤8 cmH₂O, or acceptable local threshold</label>
+          <label class="check"><input type="checkbox" id="w_awake">Awake enough; cough/airway reflexes likely adequate</label>
+          <label class="check"><input type="checkbox" id="w_secretions">Secretions manageable</label>
+          <label class="check"><input type="checkbox" id="w_sedation">Sedation reviewed; benzodiazepine-heavy long-term sedation avoided where possible</label>
+          <label class="check"><input type="checkbox" id="w_window">Daily sedation window / awakening trial done if MV >24 h</label>
+          <label class="check"><input type="checkbox" id="w_fluid">No positive fluid balance target in last 24 h unless clinically contraindicated</label>
+          <label class="check"><input type="checkbox" id="w_electrolytes">Na⁺/K⁺/Cl⁻/Mg²⁺/PO₄³⁻ corrected or actively addressed</label>
+          <label class="check"><input type="checkbox" id="w_mobility">ABCDEF bundle / early mobility / delirium prevention reviewed</label>
+          <label class="check"><input type="checkbox" id="w_nmba">No unnecessary NMBA infusion; if used, duration and weakness risk reviewed</label>
+        </div>
+
+        <h3>Step 2 — SBT and RSBI</h3>
+        <div class="four">
+          <div><label>SBT method</label><select id="sbtMethod"><option>T-piece 30 min</option><option>PSV 5–8 + PEEP 5 for 30–120 min</option><option>CPAP 5</option></select></div>
+          <div><label>SBT duration completed, min</label><input id="sbtMin" type="number" /></div>
+          <div><label>RR during SBT</label><input id="sbtRR" type="number" /></div>
+          <div><label>VT during SBT, mL</label><input id="sbtVT" type="number" /></div>
+          <div><label>SpO₂ during SBT, %</label><input id="sbtSpO2" type="number" /></div>
+          <div><label>HR during SBT</label><input id="sbtHR" type="number" /></div>
+          <div><label>SBP / MAP stability</label><select id="sbtBP"><option value="stable">Stable</option><option value="hypotension">Hypotension / escalating pressor</option><option value="hypertension">Severe hypertension</option></select></div>
+          <div><label>Subjective work of breathing</label><select id="sbtWOB"><option value="ok">Acceptable</option><option value="distress">Distress / accessory muscles / diaphoresis</option><option value="fatigue">Fatigue / exhaustion</option></select></div>
+        </div>
+        <label class="check"><input type="checkbox" id="sbtArrhythmia">New arrhythmia, ischemia, agitation or reduced consciousness during SBT</label>
+
+        <h3>Step 3 — Extubation safety screen</h3>
+        <div class="three">
+          <label class="check"><input type="checkbox" id="x_passSbt">SBT passed clinically</label>
+          <label class="check"><input type="checkbox" id="x_cough">Cough strength adequate</label>
+          <label class="check"><input type="checkbox" id="x_airway">Airway protection and mental status acceptable</label>
+          <label class="check"><input type="checkbox" id="x_secretion">Secretion burden acceptable / suction frequency manageable</label>
+          <label class="check"><input type="checkbox" id="x_plan">Post-extubation oxygen/NIV/HFNO plan selected</label>
+          <label class="check"><input type="checkbox" id="x_reintubation">Re-intubation plan, difficult airway plan and senior availability confirmed</label>
+        </div>
+        <h4>High-risk airway / stridor screen</h4>
+        <div class="three">
+          <label class="check"><input type="checkbox" id="x_stridorRisk">High-risk for post-extubation stridor: prolonged intubation, traumatic intubation, large ETT, airway edema, previous extubation failure, neck/airway surgery</label>
+          <label class="check"><input type="checkbox" id="x_cuffleak">Cuff leak test performed if high-risk</label>
+          <label class="check"><input type="checkbox" id="x_steroid">Steroid prophylaxis considered/given at least 4 h pre-extubation in high-risk patient</label>
+        </div>
+
+        <h3>Step 4 — Difficult-weaning evaluation before repeated SBTs</h3>
+        <div class="three">
+          <label class="check"><input type="checkbox" class="wfail" id="d_resp">Respiratory load: edema, consolidation, atelectasis, secretions, bronchospasm, auto-PEEP, blocked tube</label>
+          <label class="check"><input type="checkbox" class="wfail" id="d_cardiac">Cardiac failure / fluid overload / weaning-induced pulmonary edema</label>
+          <label class="check"><input type="checkbox" class="wfail" id="d_electrolyte">Electrolyte or metabolic derangement; fever; acidosis</label>
+          <label class="check"><input type="checkbox" class="wfail" id="d_delirium">Anxiety, delirium or sleep disturbance</label>
+          <label class="check"><input type="checkbox" class="wfail" id="d_neuro">ICU-acquired weakness / neuromyopathy / poor respiratory muscle strength</label>
+          <label class="check"><input type="checkbox" class="wfail" id="d_sepsis">Sepsis or uncontrolled source</label>
+          <label class="check"><input type="checkbox" class="wfail" id="d_nutrition">Underfeeding, overfeeding, malnutrition or low muscle reserve</label>
+          <label class="check"><input type="checkbox" class="wfail" id="d_drugs">Excess opioids/sedatives; NMBA/steroid-related weakness risk</label>
+          <label class="check"><input type="checkbox" class="wfail" id="d_thyroid">Thyroid or other endocrine contributor</label>
+        </div>
+        <div class="two">
+          <div><label>Failed SBTs in current episode</label><input id="failedSbt" type="number" min="0" value="0" /></div>
+          <div><label>Days since first SBT / weaning initiation</label><input id="weanDays" type="number" min="0" value="0" /></div>
+        </div>
+        <div id="weanOut" class="out"></div>
+      </div>
+    </section>
+
+    <section id="ards" class="section">
+      <div class="panel">
+        <h2>ARDS Rescue & Escalation Ladder</h2>
+        <div class="notice">Use this screen when oxygenation is worsening or P/F ratio is below 300. Confirm ARDS, protect the lung, then escalate deliberately.</div>
+        <h3>Berlin ARDS confirmation</h3>
+        <div class="four">
+          <label class="check"><input type="checkbox" id="a_acute">Acute onset within 7 days of known insult</label>
+          <label class="check"><input type="checkbox" id="a_bilat">Bilateral opacities on CXR/CT/US</label>
+          <label class="check"><input type="checkbox" id="a_pf">P/F ratio &lt;300 on PEEP/CPAP ≥5</label>
+          <label class="check"><input type="checkbox" id="a_notcardiac">Not fully explained by effusion, atelectasis, volume overload or cardiogenic edema</label>
+        </div>
+        <h3>Lung-protective bundle</h3>
+        <div class="three">
+          <label class="check"><input type="checkbox" id="a_ltv">VT set near 6 mL/kg PBW; consider 4–6 mL/kg if plateau high</label>
+          <label class="check"><input type="checkbox" id="a_plat">Plateau pressure target &lt;30 cmH₂O reviewed</label>
+          <label class="check"><input type="checkbox" id="a_oxygen">Oxygen target SaO₂ 88–95% or PaO₂ 55–80 mmHg accepted unless specific indication differs</label>
+          <label class="check"><input type="checkbox" id="a_ph">Permissive hypercapnia accepted if pH generally &gt;7.20 and no contraindication</label>
+          <label class="check"><input type="checkbox" id="a_prone">Proning considered if P/F &lt;150 after optimization</label>
+          <label class="check"><input type="checkbox" id="a_nmb">Deep sedation/NMBA considered if P/F &lt;150 with dyssynchrony despite correction</label>
+        </div>
+        <h3>Rescue readiness</h3>
+        <div class="three">
+          <label class="check"><input type="checkbox" id="a_call">Senior/critical-care help called for persistent hypoxemia</label>
+          <label class="check"><input type="checkbox" id="a_rt">Respiratory therapist / trained ventilator operator involved</label>
+          <label class="check"><input type="checkbox" id="a_ecmo">ECMO screen opened if refractory severe hypoxemia/hypercapnic acidosis persists</label>
+        </div>
+        <div id="ardsOut" class="out"></div>
+      </div>
+    </section>
+
+    <section id="trouble" class="section">
+      <div class="panel">
+        <h2>Ventilator Troubleshooting</h2>
+        <div class="notice danger"><strong>Unstable patient rule:</strong> call help, increase FiO₂ to 1.0, assess pulse/capnography/chest rise, and disconnect from ventilator for manual ventilation if ventilator/circuit failure or severe auto-PEEP is possible.</div>
+
+        <h3>1. Immediate problem definition</h3>
+        <div class="four">
+          <div><label>Primary problem</label><select id="troubleType"><option>High peak pressure</option><option>High plateau pressure</option><option>Sudden hypoxemia</option><option>Hypercapnia / acidosis</option><option>Low exhaled VT / leak</option><option>Patient-ventilator dyssynchrony</option><option>Agitation with ventilator alarms</option><option>Auto-PEEP / dynamic hyperinflation</option><option>Breath stacking / double triggering</option><option>Hypotension after ventilation</option></select></div>
+          <div><label>Onset</label><select id="onset"><option>Sudden</option><option>Gradual</option></select></div>
+          <div><label>Breath sounds</label><select id="breath"><option>Equal</option><option>Unilateral reduced</option><option>Diffuse wheeze</option><option>Crackles / wet</option><option>Silent chest</option></select></div>
+          <div><label>RASS / agitation state</label><select id="rassState"><option value="target">Target or calm</option><option value="agitated">RASS >0 / agitated</option><option value="deep">Deeply sedated</option><option value="unknown">Unknown</option></select></div>
+        </div>
+
+        <h3>2. Safety flags</h3>
+        <div class="three">
+          <label class="check"><input type="checkbox" id="t_desat">SpO₂ falling / cyanosis</label>
+          <label class="check"><input type="checkbox" id="t_hypot">Hypotension / shock</label>
+          <label class="check"><input type="checkbox" id="t_alarms">Repeated ventilator alarms</label>
+          <label class="check"><input type="checkbox" id="t_disconn">Circuit disconnection / water / kink / bite suspected</label>
+          <label class="check"><input type="checkbox" id="t_secretions">Secretions / mucus plug suspected</label>
+          <label class="check"><input type="checkbox" id="t_autopeep">Expiratory flow not returning to baseline / measured intrinsic PEEP</label>
+          <label class="check"><input type="checkbox" id="t_pneumo">Pneumothorax risk: sudden pressure rise, unilateral signs, shock</label>
+          <label class="check"><input type="checkbox" id="t_mainstem">ETT depth change / mainstem possibility</label>
+          <label class="check"><input type="checkbox" id="t_edema">Pulmonary edema / ARDS progression suspected</label>
+          <label class="check"><input type="checkbox" id="t_breathstack">Stacked breaths / double triggering on waveform</label>
+          <label class="check"><input type="checkbox" id="t_pain">Pain, hunger, dyspnea, delirium or tube discomfort possible</label>
+          <label class="check"><input type="checkbox" id="t_waveform">Abnormal waveform seen but cause uncertain</label>
+        </div>
+
+        <h3>3. Mechanics and waveform inputs</h3>
+        <div class="four">
+          <div><label>Measured auto-PEEP, cmH₂O</label><input id="autoPeepVal" type="number" step="1" /></div>
+          <div><label>Static compliance, mL/cmH₂O</label><input id="staticCompliance" type="number" step="1" /></div>
+          <div><label>Inspiratory flow pattern</label><select id="flowPattern"><option>Unknown</option><option>Square</option><option>Decelerating</option></select></div>
+          <div><label>Flow returns to zero before next breath?</label><select id="flowZero"><option>Unknown</option><option>Yes</option><option>No</option></select></div>
+          <div><label>Suction catheter passes through ETT?</label><select id="suctionPass"><option>Unknown</option><option>Yes</option><option>No</option></select></div>
+          <div><label>ETCO₂ waveform</label><select id="etco2Wave"><option>Unknown</option><option>Normal</option><option>Absent / lost</option><option>Shark-fin / obstructive</option><option>Sudden fall</option></select></div>
+          <div><label>Exhaled VT compared with set VT</label><select id="exhVT"><option>Unknown</option><option>Near set VT</option><option>Low exhaled VT</option><option>Higher than expected</option></select></div>
+          <div><label>Manual bag feel</label><select id="bagFeel"><option>Not assessed</option><option>Normal</option><option>Very stiff</option><option>Very easy / leak</option><option>Improves after disconnect</option></select></div>
+        </div>
+
+        <div id="troubleOut" class="out"></div>
+        <details><summary>Bedside interpretation guide</summary>
+          <table>
+            <thead><tr><th>Pattern</th><th>Most likely mechanism</th><th>Common causes</th><th>First checks</th></tr></thead>
+            <tbody>
+              <tr><td>Peak ↑, plateau unchanged</td><td>Resistance</td><td>Kink/bite, secretions, bronchospasm, HME/filter obstruction, small ETT, water in circuit</td><td>Pass suction catheter, inspect tube/circuit/filter, bronchodilator, check ETCO₂</td></tr>
+              <tr><td>Peak ↑ and plateau ↑</td><td>Compliance / total PEEP</td><td>ARDS/edema, atelectasis, pneumothorax, mainstem, pleural effusion, abdomen/obesity, auto-PEEP</td><td>Inspiratory pause, CXR/US, ETT depth, abdomen, expiratory hold</td></tr>
+              <tr><td>Flow not returning to zero</td><td>Auto-PEEP</td><td>COPD/asthma, high RR, short expiratory time, high minute ventilation, overbreathing</td><td>Reduce RR/VT, increase expiratory time, bronchodilate, sedation if needed</td></tr>
+              <tr><td>Double trigger / stacked breaths</td><td>Dyssynchrony with excessive neural inspiratory time or air hunger</td><td>Low VT strategy with high drive, pain, acidosis, hypoxemia, inadequate flow/Ti settings</td><td>Treat cause of drive, optimize flow/Ti, avoid injurious delivered VT, call help if persistent</td></tr>
+              <tr><td>Absent ETCO₂ + collapse</td><td>Displacement / arrest / circuit failure</td><td>Extubation, esophageal displacement, disconnect, cardiac arrest</td><td>Pulse check, bag with 100% O₂, tube position, circuit, call help</td></tr>
+            </tbody>
+          </table>
+        </details>
+      </div>
+    </section>
+
+    <section id="peep" class="section">
+      <div class="panel"><h2>PEEP Titration Support</h2><div class="notice">Aim for adequate oxygenation with lung protection: avoid derecruitment and overdistension; monitor plateau pressure, driving pressure, compliance, blood pressure and right-ventricular tolerance.</div><div class="three"><div><label>ARDS morphology / recruitability</label><select id="recruit"><option value="unknown">Unknown</option><option value="low">Low recruitability / focal disease</option><option value="moderate">Moderate recruitability</option><option value="high">High recruitability / diffuse dependent collapse</option><option value="obese">Low chest-wall compliance: obesity/ascites</option></select></div><div><label>Target SpO₂ lower bound, %</label><input id="targetLow" type="number" value="88" /></div><div><label>Target SpO₂ upper bound, %</label><input id="targetHigh" type="number" value="95" /></div></div><h3>Response to recent PEEP change, if any</h3><div class="four"><div><label>Previous PEEP</label><input id="prevPeep" type="number" /></div><div><label>Previous SpO₂</label><input id="prevSpo2" type="number" /></div><div><label>Previous plateau</label><input id="prevPlat" type="number" /></div><div><label>Previous MAP</label><input id="prevMap" type="number" /></div></div><label class="check"><input type="checkbox" id="rvFail">RV failure / severe pulmonary hypertension / rising vasopressor after PEEP</label><label class="check"><input type="checkbox" id="airLeak">Untreated pneumothorax / bronchopleural fistula / severe air leak</label><div id="peepOut" class="out"></div></div>
+    </section>
+
+    <section id="prone" class="section">
+      <div class="panel"><h2>Proning Decision Support</h2><div class="two"><div><h3>Criteria</h3><label class="check"><input type="checkbox" id="p_ards">Moderate–severe ARDS / bilateral infiltrates / noncardiogenic pattern</label><label class="check"><input type="checkbox" id="p_lungprot">Already on lung-protective ventilation</label><label class="check"><input type="checkbox" id="p_early">Early severe hypoxemic phase or persistent hypoxemia despite optimization</label><label class="check"><input type="checkbox" id="p_team">Trained proning team available</label></div><div><h3>Contraindications / cautions</h3><label class="check"><input type="checkbox" id="p_spine">Unstable spine, open abdomen/chest, unstable fracture</label><label class="check"><input type="checkbox" id="p_icp">Raised ICP / unstable neurosurgical condition</label><label class="check"><input type="checkbox" id="p_shock">Profound shock / unsafe turning</label><label class="check"><input type="checkbox" id="p_airway">High airway loss risk / fresh tracheal surgery / unsecure tubes</label></div></div><div id="proneOut" class="out"></div></div>
+    </section>
+
+    <section id="ecmo" class="section">
+      <div class="panel"><h2>ECMO Escalation Screen</h2><div class="two"><div><h3>Severe respiratory failure criteria</h3><label class="check"><input type="checkbox" id="e_reversible">Potentially reversible disease or bridge-to-transplant pathway</label><label class="check"><input type="checkbox" id="e_optimal">Conventional rescue optimized: lung-protective ventilation, PEEP optimization, paralysis/proning as appropriate</label><label class="check"><input type="checkbox" id="e_pf80">P/F &lt;80 despite FiO₂ ≥0.90 and PEEP optimization</label><label class="check"><input type="checkbox" id="e_ph">pH &lt;7.25 with severe hypercapnia despite safe ventilation</label><label class="check"><input type="checkbox" id="e_murray">Murray lung injury score ≥3 or equivalent severe ARDS physiology</label><label class="check"><input type="checkbox" id="e_shock">Combined respiratory failure + low output/shock/end-organ hypoperfusion</label></div><div><h3>Contraindications / risk modifiers</h3><label class="check"><input type="checkbox" id="e_irrecoverable">Irrecoverable condition / no decannulation, transplant or durable-support pathway</label><label class="check"><input type="checkbox" id="e_malignancy">End-stage malignancy or severe irreversible comorbidity</label><label class="check"><input type="checkbox" id="e_neuro">Severe irreversible neurologic injury / expanding intracranial hemorrhage</label><label class="check"><input type="checkbox" id="e_bleed">Uncontrolled bleeding or prohibitive anticoagulation risk</label><label class="check"><input type="checkbox" id="e_mv7">Mechanical ventilation &gt;7 days at high FiO₂ / high pressures</label><label class="check"><input type="checkbox" id="e_age">Advanced age / poor rehabilitation potential</label></div></div><div id="ecmoOut" class="out"></div></div>
+    </section>
+
+    <section id="notes" class="section">
+      <div class="panel"><h2>Notes, Audit Trail and Export</h2><label>Clinical note / consultant impression</label><textarea id="clinNote" placeholder="Paste ABG trend, CXR finding, lung ultrasound, bronchoscopy, secretion burden, hemodynamics, plan..."></textarea><div class="row" style="margin-top:10px"><button class="btn" onclick="generateNote()">Generate note</button><button class="btn secondary" onclick="copySummary()">Copy</button><button class="btn blue" onclick="downloadTxt()">Download TXT</button><button class="btn secondary" onclick="downloadJson()">Download JSON</button></div><label style="margin-top:12px">Generated output</label><textarea id="finalNote" style="min-height:260px"></textarea><details><summary>Evidence base & key references</summary>
+        
+        <h4 style="margin-top:16px">Lung-protective ventilation & ARDS</h4>
+        <ol class="citation">
+          <li>Acute Respiratory Distress Syndrome Network. Ventilation with lower tidal volumes as compared with traditional tidal volumes for acute lung injury and the acute respiratory distress syndrome. <i>N Engl J Med</i>. 2000;342(18):1301-8.</li>
+          <li>Amato MB, Meade MO, Slutsky AS, et al. Driving pressure and survival in the acute respiratory distress syndrome. <i>N Engl J Med</i>. 2015;372(8):747-55.</li>
+          <li>Brower RG, Lanken PN, MacIntyre N, et al. Higher versus lower positive end-expiratory pressures in patients with the acute respiratory distress syndrome. <i>N Engl J Med</i>. 2004;351(4):327-36.</li>
+          <li>Meade MO, Cook DJ, Guyatt GH, et al. Ventilation strategy using low tidal volumes, recruitment maneuvers, and high positive end-expiratory pressure for acute lung injury and acute respiratory distress syndrome: a randomized controlled trial. <i>JAMA</i>. 2008;299(6):637-45.</li>
+          <li>Cavalcanti AB, Suzumura ÉA, Laranjeira LN, et al. Effect of lung recruitment and titrated positive end-expiratory pressure (PEEP) vs low PEEP on mortality in patients with acute respiratory distress syndrome: a randomized clinical trial. <i>JAMA</i>. 2017;318(14):1335-45.</li>
+          <li>ARDS Definition Task Force. Acute respiratory distress syndrome: the Berlin Definition. <i>JAMA</i>. 2012;307(23):2526-33.</li>
+          <li>Fan E, Del Sorbo L, Goligher EC, et al. An official American Thoracic Society/European Society of Intensive Care Medicine/Society of Critical Care Medicine clinical practice guideline: mechanical ventilation in adult patients with acute respiratory distress syndrome. <i>Am J Respir Crit Care Med</i>. 2017;195(9):1253-63.</li>
+        </ol>
+
+        <h4 style="margin-top:16px">Prone positioning</h4>
+        <ol class="citation" start="8">
+          <li>Guérin C, Reignier J, Richard JC, et al. Prone positioning in severe acute respiratory distress syndrome. <i>N Engl J Med</i>. 2013;368(23):2159-68.</li>
+          <li>Munshi L, Del Sorbo L, Adhikari NKJ, et al. Prone position for acute respiratory distress syndrome: a systematic review and meta-analysis. <i>Ann Am Thorac Soc</i>. 2017;14(Supplement_4):S280-8.</li>
+        </ol>
+
+        <h4 style="margin-top:16px">Neuromuscular blockade</h4>
+        <ol class="citation" start="10">
+          <li>Papazian L, Forel JM, Gacouin A, et al. Neuromuscular blockers in early acute respiratory distress syndrome. <i>N Engl J Med</i>. 2010;363(12):1107-16.</li>
+          <li>National Heart, Lung, and Blood Institute PETAL Clinical Trials Network. Early neuromuscular blockade in the acute respiratory distress syndrome. <i>N Engl J Med</i>. 2019;380(21):1997-2008.</li>
+        </ol>
+
+        <h4 style="margin-top:16px">Weaning & liberation from mechanical ventilation</h4>
+        <ol class="citation" start="12">
+          <li>Yang KL, Tobin MJ. A prospective study of indexes predicting the outcome of trials of weaning from mechanical ventilation. <i>N Engl J Med</i>. 1991;324(21):1445-50.</li>
+          <li>Boles JM, Bion J, Connors A, et al. Weaning from mechanical ventilation. <i>Eur Respir J</i>. 2007;29(5):1033-56.</li>
+          <li>Girard TD, Kress JP, Fuchs BD, et al. Efficacy and safety of a paired sedation and ventilator weaning protocol for mechanically ventilated patients in intensive care (Awakening and Breathing Controlled trial): a randomised controlled trial. <i>Lancet</i>. 2008;371(9607):126-34.</li>
+          <li>Schmidt GA, Girard TD, Kress JP, et al. Official executive summary of an American Thoracic Society/American College of Chest Physicians clinical practice guideline: liberation from mechanical ventilation in critically ill adults. <i>Am J Respir Crit Care Med</i>. 2017;195(1):115-9.</li>
+          <li>Clerk AM, Shah RJ, Kothari J, Sodhi K, Vadi S, Bhattacharya PK, et al. Position statement of ISCCM Committee on weaning from mechanical ventilator. <i>Indian J Crit Care Med</i>. 2024;28(S2):S233-48.</li>
+          <li>Sengupta S, Chakravarty C, Rudra A. Evidence-based practice of weaning from ventilator: a review. Anaesthesia Tutorial of the Week 372; 6 Feb 2018. Available from: https://www.wfsahq.org/resources/anaesthesia-tutorial-of-the-week</li>
+        </ol>
+
+        <h4 style="margin-top:16px">PEEP titration & recruitment</h4>
+        <ol class="citation" start="18">
+          <li>Brower RG, Lanken PN, MacIntyre N, et al. Higher versus lower positive end-expiratory pressures in patients with the acute respiratory distress syndrome. <i>N Engl J Med</i>. 2004;351(4):327-36. [ARDSNet ALVEOLI trial]</li>
+          <li>Mercat A, Richard JC, Vielle B, et al. Positive end-expiratory pressure setting in adults with acute lung injury and acute respiratory distress syndrome: a randomized controlled trial. <i>JAMA</i>. 2008;299(6):646-55. [EXPRESS trial]</li>
+          <li>Goligher EC, Kavanagh BP, Rubenfeld GD, et al. Oxygenation response to positive end-expiratory pressure predicts mortality in acute respiratory distress syndrome: a secondary analysis of the LOVS and ExPress trials. <i>Am J Respir Crit Care Med</i>. 2014;190(1):70-6.</li>
+          <li>Talmor D, Sarge T, Malhotra A, et al. Mechanical ventilation guided by esophageal pressure in acute lung injury. <i>N Engl J Med</i>. 2008;359(20):2095-104.</li>
+          <li>Heunks L, van der Hoeven J, Strauch U, et al. How we approach titrating PEEP in patients with acute hypoxemic failure. <i>Crit Care</i>. 2023;27:415. doi: 10.1186/s13054-023-04694-1.</li>
+        </ol>
+
+        <h4 style="margin-top:16px">Fluid management in ARDS</h4>
+        <ol class="citation" start="23">
+          <li>National Heart, Lung, and Blood Institute Acute Respiratory Distress Syndrome (ARDS) Clinical Trials Network. Comparison of two fluid-management strategies in acute lung injury. <i>N Engl J Med</i>. 2006;354(24):2564-75. [FACTT trial]</li>
+        </ol>
+
+        <h4 style="margin-top:16px">ECMO for severe ARDS</h4>
+        <ol class="citation" start="24">
+          <li>Combes A, Hajage D, Capellier G, et al. Extracorporeal membrane oxygenation for severe acute respiratory distress syndrome. <i>N Engl J Med</i>. 2018;378(21):1965-75. [EOLIA trial]</li>
+          <li>Peek GJ, Mugford M, Tiruvoipati R, et al. Efficacy and economic assessment of conventional ventilatory support versus extracorporeal membrane oxygenation for severe adult respiratory failure (CESAR): a multicentre randomised controlled trial. <i>Lancet</i>. 2009;374(9698):1351-63.</li>
+          <li>Munshi L, Walkey A, Goligher E, et al. Venovenous extracorporeal membrane oxygenation for acute respiratory distress syndrome: a systematic review and meta-analysis. <i>Lancet Respir Med</i>. 2019;7(2):163-72.</li>
+        </ol>
+
+        <h4 style="margin-top:16px">Troubleshooting & ventilator emergencies</h4>
+        <ol class="citation" start="27">
+          <li>Lucangelo U, Bernabè F, Blanch L. Respiratory mechanics derived from signals in the ventilator circuit. <i>Respir Care</i>. 2005;50(1):55-65.</li>
+          <li>Tobin MJ. Advances in mechanical ventilation. <i>N Engl J Med</i>. 2001;344(26):1986-96.</li>
+          <li>Peñuelas O, Frutos-Vivar F, Fernández C, et al. Characteristics and outcomes of ventilated patients according to time to liberation from mechanical ventilation. <i>Am J Respir Crit Care Med</i>. 2011;184(4):430-7.</li>
+          <li>Owens W. Ventilator management and troubleshooting in the emergency department. <i>EM Crit Care</i>. 2014;4(5):1-16.</li>
+          <li>Steinbach TC, Albert TJ, Carmona HD, Johnson NJ, Kritek PA, Lee JD, et al. Just-in-time tools for training non-critical care providers: troubleshooting problems in the ventilated patient. <i>ATS Scholar</i>. 2020;1(2):178-85. doi: 10.34197/ats-scholar.2020-0038IN.</li>
+        </ol>
+
+        <h4 style="margin-top:16px">International guidelines</h4>
+        <ol class="citation" start="32">
+          <li>Griffiths MJD, McAuley DF, Perkins GD, et al. Guidelines on the management of acute respiratory distress syndrome. <i>BMJ Open Respir Res</i>. 2019;6(1):e000420.</li>
+          <li>Rochwerg B, Brochard L, Elliott MW, et al. Official ERS/ATS clinical practice guidelines: noninvasive ventilation for acute respiratory failure. <i>Eur Respir J</i>. 2017;50(2):1602426.</li>
+          <li>Evans L, Rhodes A, Alhazzani W, et al. Surviving sepsis campaign: international guidelines for management of sepsis and septic shock 2021. <i>Intensive Care Med</i>. 2021;47(11):1181-247.</li>
+          <li>Evans L, Rhodes A, Alhazzani W, et al. Surviving sepsis campaign: international guidelines for management of sepsis and septic shock 2026. <i>Intensive Care Med</i>. 2026. doi: 10.1007/s00134-026-08361-1.</li>
+        </ol>
+
+        <p class="small" style="margin-top:20px"><strong>Evidence grading & limitations:</strong> This tool synthesizes Level 1 evidence (RCTs, meta-analyses) and international guidelines. Individual patient factors may necessitate deviation from protocol recommendations. Clinical judgment and senior consultation remain paramount. All citations verified via primary sources as of May 2026.</p>
+        <p class="small" style="margin-top:12px"><strong>Program:</strong> VENT-CDSS 2026. <strong>Author:</strong> Prof. (Dr) Jyotirmay Kirtania. <strong>Copyright:</strong> © 2026 Prof. (Dr) Jyotirmay Kirtania. <strong>License:</strong> GNU General Public License version 3.0 or later (GPL-3.0-or-later).</p></details></div>
+    </section>
+  </main>
+</div>
+<script>
+const $=id=>document.getElementById(id);const val=id=>{const x=parseFloat($(id)?.value);return Number.isFinite(x)?x:null};const checked=id=>!!$(id)?.checked;const fmt=(x,d=0,u='')=>Number.isFinite(x)?`${x.toFixed(d)}${u}`:'—';
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));b.classList.add('active');$(b.dataset.tab).classList.add('active')}));document.querySelectorAll('input,select,textarea').forEach(el=>el.addEventListener('input',()=>{clearTimeout(window._t);window._t=setTimeout(calculateAll,200)}));
+function updateDiagnosis(){const sel=$('dxSelect');const selected=[...sel.selectedOptions].map(o=>o.value);const freeText=$('dxFreeText').value.trim();let combined=selected.join('; ');if(freeText){combined=combined?(combined+'; '+freeText):freeText}$('dx').value=combined;calculateAll()}
+function isValidNumber(id,min,max){const el=$(id);const x=val(id);const ok=Number.isFinite(x)&&x>=min&&x<=max;el.classList.toggle('invalidField',el.value!==''&&!ok);const err=$(id+'Err');if(err)err.classList.toggle('show',el.value!==''&&!ok);return ok}
+function pbw(){if(!isValidNumber('height',90,230))return null;const h=val('height');const inches=h/2.54,base=$('sex').value==='male'?50:45.5;return Math.max(20,base+2.3*(inches-60))}
+function bmi(){if(!isValidNumber('height',90,230)||!isValidNumber('weight',1,300))return null;const h=val('height')/100,w=val('weight');return w/(h*h)}
+function esc(s){return String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}function cls(level){return level==='bad'?'out bad':level==='warn'?'out warn':level==='good'?'out good':level==='violet'?'out violet':'out blue'}function pfClass(pf){if(!Number.isFinite(pf))return'Unknown';if(pf<80)return'Very severe';if(pf<100)return'Severe ARDS range';if(pf<150)return'Moderate–severe';if(pf<200)return'Moderate';if(pf<300)return'Mild';return'Not ARDS by P/F'}
+function calculateDashboard(){const p=pbw(),vt=val('vt'),fio2=val('fio2'),pao2=val('pao2'),peep=val('peepVal'),plat=val('plat'),peak=val('peak'),map=val('map');const pf=pao2&&fio2?pao2/fio2:null,vtpbw=vt&&p?vt/p:null,drive=plat!=null&&peep!=null?plat-peep:null,gap=peak!=null&&plat!=null?peak-plat:null;$('pbwOut').textContent=fmt(p,1,' kg');$('vtpbwOut').textContent=fmt(vtpbw,1,' mL/kg');$('pfOut').textContent=fmt(pf,0);$('driveOut').textContent=fmt(drive,0,' cmH₂O');$('bmiOut').textContent=fmt(bmi(),1,' kg/m²');let flags=[],level='good',focus='Proceed to daily liberation screen if stable.';if(Number.isFinite(vtpbw)&&vtpbw>8){flags.push('VT/PBW high: reduce toward lung-protective range unless a specific exception applies.');level='warn'}if(Number.isFinite(plat)&&plat>30){flags.push('Plateau pressure >30 cmH₂O: reduce VT, assess compliance, auto-PEEP, obesity/abdomen and pneumothorax.');level='bad';focus='Fix lung-protection danger flag before weaning.'}if(Number.isFinite(drive)&&drive>15){flags.push('Driving pressure >15 cmH₂O: assess recruitability, overdistension, VT and PEEP response.');if(level!=='bad')level='warn'}if(Number.isFinite(pf)&&pf<150){flags.push('P/F <150: severe hypoxemia range; review PEEP, paralysis/proning and ECMO screen if refractory.');level=pf<80?'bad':(level==='bad'?'bad':'warn');focus=pf<150?'Complete proning/PEEP pathway before weaning.':focus}if(Number.isFinite(gap)&&gap>10){flags.push('Peak–plateau gap >10: airway resistance likely; check ETT/circuit, secretions, bronchospasm and expiratory flow.');if(level!=='bad')level='warn';focus='Run ventilator troubleshooting.'}if(Number.isFinite(map)&&map<65){flags.push('MAP <65: integrate ventilator changes with shock/RV/PEEP tolerance.');level='bad';focus='Stabilize circulation before SBT.'}if(!flags.length)flags.push('No major mechanical ventilation danger flag from entered values. Continue trend-based assessment.');$('globalAdvice').className=cls(level);$('globalAdvice').innerHTML=`<h3>Immediate interpretation <span class="pill ${level}">${pfClass(pf)}</span></h3><ul>${flags.map(f=>`<li>${f}</li>`).join('')}</ul>`;$('dailyFocus').className=cls(level);$('dailyFocus').innerHTML=`<h3>Daily focus</h3><p><strong>${focus}</strong></p><p class="small">One screen, one next action, then document.</p>`}
+function calculateWeaning(){const daily=['w_resolving','w_spont','w_hemo','w_oxygen','w_awake','w_secretions','w_sedation','w_window','w_fluid','w_electrolytes','w_mobility','w_nmba'];const ext=['x_passSbt','x_cough','x_airway','x_secretion','x_plan','x_reintubation'];const done=daily.filter(checked).length+ext.filter(checked).length;const total=daily.length+ext.length;const pct=Math.round(done/total*100);$('weanPercent').textContent=pct+'%';$('weanBar').style.width=pct+'%';const coreReady=['w_resolving','w_spont','w_hemo','w_oxygen','w_awake','w_secretions'].filter(checked).length;const sbtRR=val('sbtRR'),sbtVT=val('sbtVT'),sbtMin=val('sbtMin'),sbtSpO2=val('sbtSpO2'),hr=val('sbtHR'),rsbi=sbtRR&&sbtVT?sbtRR/(sbtVT/1000):null;let fail=[];if(coreReady<6)fail.push('Core readiness screen incomplete.');if(Number.isFinite(rsbi)&&rsbi>105)fail.push('RSBI >105: high risk of failure; interpret by SBT method.');if(Number.isFinite(sbtMin)&&sbtMin<30)fail.push('SBT duration <30 min.');if(Number.isFinite(sbtSpO2)&&sbtSpO2<90)fail.push('Desaturation during SBT.');if(Number.isFinite(sbtRR)&&sbtRR>35)fail.push('RR >35/min during SBT.');if(Number.isFinite(hr)&&hr>140)fail.push('Marked tachycardia during SBT.');if($('sbtBP').value!=='stable')fail.push('Blood pressure instability during SBT.');if($('sbtWOB').value!=='ok')fail.push('Clinical distress or fatigue during SBT.');if(checked('sbtArrhythmia'))fail.push('Arrhythmia/ischemia/agitation/reduced consciousness during SBT.');const difficult=[...document.querySelectorAll('.wfail')].filter(x=>x.checked).length;const failed=val('failedSbt')||0,days=val('weanDays')||0;let type='Not classified';if(failed===0&&checked('x_passSbt'))type='Simple weaning likely';else if((failed>0&&failed<=2)||(days>0&&days<=7))type='Difficult-weaning risk/phase';if(days>7||failed>=3)type='Prolonged/difficult weaning';let next='Complete daily liberation screen.';let level='blue';if(coreReady===6&&!fail.length&&!checked('x_passSbt')){next='Perform protocolized SBT by T-piece or low PSV.';level='good'}if(coreReady===6&&fail.length){next='Treat failure cause; repeat SBT after 24 h or earlier after correction.';level='warn'}if(checked('x_passSbt')&&ext.filter(checked).length<6){next='Complete extubation safety screen before removing airway.';level='warn'}if(checked('x_passSbt')&&ext.filter(checked).length===6&&!fail.length){next='Extubation may proceed with selected post-extubation plan and re-intubation readiness.';level='good'}if(difficult>0||failed>0){next='Stop repetitive SBTs; diagnose and correct difficult-weaning causes.';level=level==='good'?'warn':level}if(checked('x_stridorRisk')&&!checked('x_cuffleak')){fail.push('High-risk stridor selected: perform cuff leak test unless local protocol says otherwise.');level='warn'}if(checked('x_stridorRisk')&&!checked('x_steroid')){fail.push('High-risk stridor selected: consider systemic corticosteroid at least 4 h before extubation.');level='warn'}$('nextAction').textContent=next;$('weanOut').className=cls(level);$('weanOut').innerHTML=`<h3>Weaning decision <span class="pill ${level}">${type}</span> <span class="pill blue">RSBI ${fmt(rsbi,0)}</span></h3><p><strong>${next}</strong></p>${fail.length?'<ul>'+fail.map(f=>`<li>${f}</li>`).join('')+'</ul>':'<div class="notice ok">Daily screen supports SBT/extubation pathway if clinical judgement agrees.</div>'}<div class="notice"><strong>ISCCM 2024 reminders:</strong> use a uniform definition; prefer T-piece or PSV SBT; RSBI is simple and reproducible; repeat failed SBT after 24 h or after correction; use NIV as a weaning strategy in difficult weaning, HFNO after extubation in selected hypoxemic high-risk patients, and tracheostomy to facilitate difficult weaning.</div>${difficult?`<div class="notice warning">Difficult-weaning domains selected: ${difficult}. Correct causes before repeated SBTs.</div>`:''}`}
+function calculateARDS(){const f=val('fio2'),pao2=val('pao2'),peep=val('peepVal'),plat=val('plat'),vt=val('vt'),p=pbw(),ph=val('ph'),pf=pao2&&f?pao2/f:null,vtpbw=vt&&p?vt/p:null;let berlin=['a_acute','a_bilat','a_pf','a_notcardiac'].filter(checked).length;let bundle=['a_ltv','a_plat','a_oxygen','a_ph','a_prone','a_nmb'].filter(checked).length;let level='blue',rec='Complete ARDS confirmation and lung-protective bundle.';if(Number.isFinite(pf)&&pf<300)checked('a_pf')||($('a_pf').checked=true);let sev=pfClass(pf);let actions=[];if(berlin===4){actions.push('Berlin criteria complete: classify severity by P/F and treat as ARDS unless later evidence changes diagnosis.');level='warn'}else actions.push('ARDS confirmation incomplete: check onset, imaging, P/F and hydrostatic/cardiac explanation.');if(Number.isFinite(vtpbw)&&vtpbw>6.5){actions.push('VT is above 6 mL/kg PBW target; reduce toward lung-protective VT if compatible with pH/ventilation goals.');level='warn'}if(Number.isFinite(plat)&&plat>=30){actions.push('Plateau pressure ≥30 cmH₂O: reduce VT to 4–6 mL/kg PBW, assess compliance/overdistension, and call senior help.');level='bad'}if(Number.isFinite(ph)&&ph<7.20){actions.push('pH <7.20: permissive hypercapnia threshold breached; reassess dead space, obstruction, RR/VT within safe pressure limits, buffering/RRT issues, and ECMO screen if refractory.');level='bad'}if(Number.isFinite(pf)&&pf<150){actions.push('P/F <150: prone positioning should be actively considered; if dyssynchronous despite correction, consider deep sedation/NMBA and call help.');level=level==='bad'?'bad':'warn'}if(Number.isFinite(pf)&&pf<80){actions.push('P/F <80: severe refractory range; open ECMO screen if optimized conventional rescue has failed.');level='bad'}if(checked('a_call')&&checked('a_rt'))actions.push('Escalation support documented: senior/RT involvement checked.');$('ardsOut').className=cls(level);$('ardsOut').innerHTML=`<h3>ARDS ladder <span class="pill ${level}">${sev}</span> <span class="pill blue">Bundle ${bundle}/6</span></h3><p><strong>${rec}</strong></p><ol>${actions.map(x=>`<li>${x}</li>`).join('')}</ol><div class="notice">Targets used: VT near 6 mL/kg PBW; plateau &lt;30 cmH₂O; SaO₂ 88–95% or PaO₂ 55–80 mmHg; pH generally &gt;7.20; prone if P/F &lt;150 after optimization; call for help if refractory.</div>`}
+function calculateTrouble(){
+  const peak=val('peak'),plat=val('plat'),peep=val('peepVal'),vt=val('vt'),rrSet=val('rrSet'),rrObs=val('rrObs'),spo2=val('spo2'),paco2=val('paco2'),ph=val('ph');
+  const gap=peak!=null&&plat!=null?peak-plat:null;
+  const drive=plat!=null&&peep!=null?plat-peep:null;
+  const totalPeep=peep!=null&&val('autoPeepVal')!=null?peep+val('autoPeepVal'):null;
+  const type=$('troubleType').value,autoP=val('autoPeepVal'),cst=val('staticCompliance');
+  const unstable=checked('t_desat')||checked('t_hypot')||checked('t_alarms')||$('etco2Wave').value==='Absent / lost'||$('etco2Wave').value==='Sudden fall';
+  let critical=false, level='warn';
+  let immediate=[],mechanism=[],actions=[],avoid=[],doc=[];
+
+  immediate.push('Look at the patient, not only the ventilator: pulse, perfusion, chest rise, SpO₂ pleth, ETCO₂ waveform, ETT depth, circuit and oxygen source.');
+  if(unstable){
+    immediate.push('Call for senior/RT help, set FiO₂ to 1.0, and hand-ventilate with 100% oxygen if tube/circuit/ventilator failure is possible. Assess bag feel and chest rise.');
+    level='bad';
+  }
+  if($('etco2Wave').value==='Absent / lost'){
+    immediate.push('Absent/lost ETCO₂ in a deteriorating patient: exclude displacement, disconnection, esophageal tube, severe obstruction and cardiac arrest immediately.');
+    critical=true;
+  }
+  if(checked('t_hypot')&&($('flowZero').value==='No'||Number.isFinite(autoP)&&autoP>0||type==='Auto-PEEP / dynamic hyperinflation'||type==='Hypotension after ventilation')){
+    immediate.push('Obstructive shock from dynamic hyperinflation is possible: briefly disconnect from the ventilator to allow exhalation while preparing corrected settings.');
+    critical=true;
+  }
+  if(checked('t_pneumo')&&(checked('t_hypot')||$('breath').value==='Unilateral reduced')){
+    immediate.push('Tension pneumothorax is possible: if severe shock with unilateral signs, decompress/drain as per protocol without waiting for imaging.');
+    critical=true;
+  }
+
+  if(Number.isFinite(gap)&&gap>10){mechanism.push('Resistance pattern: peak pressure is disproportionately higher than plateau.');}
+  if(Number.isFinite(plat)&&Number.isFinite(peak)&&peak>=plat&&Number.isFinite(drive)&&drive>15){mechanism.push('Compliance/total-PEEP pattern: plateau/driving pressure is high.');}
+  if(Number.isFinite(cst)&&cst<20){mechanism.push('Very low static compliance (<20 mL/cmH₂O) supports severe lung/chest-wall compliance problem.');}
+  if(Number.isFinite(autoP)&&autoP>0){mechanism.push(`Intrinsic PEEP measured: ${autoP.toFixed(0)} cmH₂O; total PEEP ≈ ${fmt(totalPeep,0,' cmH₂O')}.`);}
+  if($('flowZero').value==='No'){mechanism.push('Expiratory flow does not return to zero before the next breath: dynamic hyperinflation/auto-PEEP likely.');}
+  if($('suctionPass').value==='No'){mechanism.push('Suction catheter does not pass: ETT obstruction/kink/biting is likely until proven otherwise.');critical=true;}
+  if($('bagFeel').value==='Very stiff'){mechanism.push('Manual bag feels very stiff: severe resistance, poor compliance, pneumothorax, mainstem or auto-PEEP possible.');}
+  if($('bagFeel').value==='Very easy / leak'||$('exhVT').value==='Low exhaled VT'){mechanism.push('Low exhaled VT/easy bagging suggests leak, disconnection, cuff leak, circuit leak or bronchopleural fistula.');}
+  if($('bagFeel').value==='Improves after disconnect'){mechanism.push('Improvement after disconnect supports ventilator/circuit/synchrony/auto-PEEP contribution.');}
+
+  if(type==='High peak pressure'||Number.isFinite(gap)&&gap>10){
+    actions.push('Resistance pathway: check kink/bite, water in tubing, HME/filter obstruction, small ETT, mucus plug and bronchospasm. Pass suction catheter; change filter; suction; give bronchodilator if wheeze/shark-fin ETCO₂.');
+  }
+  if(type==='High plateau pressure'||(Number.isFinite(drive)&&drive>15)||Number.isFinite(cst)&&cst<20){
+    actions.push('Compliance pathway: check ARDS/pulmonary edema, atelectasis/lobar collapse, pneumothorax, mainstem intubation, pleural effusion, abdominal distension/compartment pressure and obesity/chest-wall load. Reduce unsafe VT/pressure while investigating.');
+  }
+  if(type==='Sudden hypoxemia'){
+    actions.push('Sudden hypoxemia pathway: use DOPE—Displacement, Obstruction, Pneumothorax, Equipment—then consider aspiration, edema/ARDS progression, pulmonary embolism, mucus plug and shock/low cardiac output.');
+  }
+  if(type==='Hypercapnia / acidosis'||(Number.isFinite(ph)&&ph<7.25&&Number.isFinite(paco2)&&paco2>60)){
+    actions.push('Hypercapnia pathway: check minute ventilation, dead space, obstruction, auto-PEEP, severe bronchospasm, ventilator synchrony and circuit dead space. Increase ventilation only within safe plateau/driving pressure limits.');
+  }
+  if(type==='Low exhaled VT / leak'||$('exhVT').value==='Low exhaled VT'){
+    actions.push('Leak pathway: check disconnection, cuff pressure/rupture, ETT position, ventilator circuit, chest drain/bronchopleural fistula and ventilator leak compensation.');
+  }
+  if(type==='Agitation with ventilator alarms'||$('rassState').value==='agitated'||checked('t_pain')){
+    actions.push('Agitation pathway: correct hypoxemia first; assess pain, dyspnea/air hunger, delirium, tube/circuit discomfort, urinary retention and restraint distress. Use analgesia-first sedation where appropriate; do not mask a mechanical problem with sedation alone.');
+  }
+  if(type==='Auto-PEEP / dynamic hyperinflation'||checked('t_autopeep')||Number.isFinite(autoP)&&autoP>0||$('flowZero').value==='No'){
+    actions.push('Auto-PEEP pathway: lower RR and/or VT to reduce minute ventilation, increase expiratory time, increase inspiratory flow or shorten inspiratory time, treat bronchospasm, suction if needed, and reduce excessive patient triggering with analgesia/sedation if necessary.');
+    avoid.push('Avoid increasing RR for hypercapnia when expiratory flow is not returning to zero; this can worsen air trapping and shock.');
+  }
+  if(type==='Breath stacking / double triggering'||checked('t_breathstack')||$('exhVT').value==='Higher than expected'){
+    actions.push('Breath-stacking pathway: treat hypoxemia, acidosis, pain and high respiratory drive; optimize trigger, flow and inspiratory time; consider short end-inspiratory pause or mode adjustment. Ensure delivered VT and plateau remain lung-protective.');
+    avoid.push('Do not accept frequent double-triggering in ARDS simply because the set VT is low; the delivered VT may be injurious.');
+  }
+  if(type==='Patient-ventilator dyssynchrony'){
+    actions.push('Dyssynchrony pathway: identify trigger delay/auto-triggering, flow starvation, cycling mismatch, double triggering, reverse triggering and auto-PEEP. Correct settings and clinical drivers before escalating sedation/paralysis.');
+  }
+  if(type==='Hypotension after ventilation'){
+    actions.push('Post-ventilation hypotension pathway: check auto-PEEP, high intrathoracic pressure from excessive PEEP/VT, tension pneumothorax, sedation/vasodilation, hypovolemia and RV failure.');
+  }
+
+  if(Number.isFinite(plat)&&plat>30)avoid.push('Avoid further VT/pressure increase while plateau pressure is >30 cmH₂O unless a senior clinician accepts the risk for a specific indication.');
+  if(Number.isFinite(drive)&&drive>15)avoid.push('Driving pressure >15 cmH₂O: reassess VT, PEEP response and recruitability; avoid automatic PEEP escalation.');
+  if($('breath').value==='Silent chest')actions.push('Silent chest with high pressure may represent life-threatening bronchospasm or tube obstruction; call help, hand-ventilate, bronchodilate and exclude obstruction/pneumothorax.');
+  if($('breath').value==='Crackles / wet')actions.push('Wet/crackles pattern: consider pulmonary edema, aspiration, ARDS progression or fluid overload; correlate with imaging, ultrasound, hemodynamics and fluid balance.');
+  if($('breath').value==='Unilateral reduced')actions.push('Unilateral reduced air entry: check mainstem intubation, pneumothorax, mucus plug/lobar collapse and pleural effusion.');
+
+  doc.push(`Ppeak ${fmt(peak,0)}, Pplat ${fmt(plat,0)}, Ppeak−Pplat ${fmt(gap,0)}, PEEP ${fmt(peep,0)}, driving pressure ${fmt(drive,0)}, auto-PEEP ${fmt(autoP,0)}, static compliance ${fmt(cst,0)}.`);
+  doc.push(`Flow returns to zero: ${$('flowZero').value}; ETCO₂: ${$('etco2Wave').value}; suction catheter pass: ${$('suctionPass').value}; bag feel: ${$('bagFeel').value}.`);
+
+  if(!mechanism.length)mechanism.push('Mechanism not yet defined: obtain inspiratory pause/plateau, inspect waveforms, check ETCO₂, suction catheter passage and manual bag feel.');
+  if(!actions.length)actions.push('No specific pathway selected. Start with patient stability, tube/circuit check, ventilator settings, waveform review and ABG/imaging correlation.');
+  if(!avoid.length)avoid.push('Avoid reflex ventilator changes without defining resistance vs compliance vs auto-PEEP vs leak.');
+
+  const finalLevel=critical?'bad':level;
+  $('troubleOut').className=cls(finalLevel);
+  $('troubleOut').innerHTML=`
+    <h3>Troubleshooting result <span class="pill ${finalLevel}">${critical?'Critical immediate action':'Structured pathway'}</span> ${Number.isFinite(gap)?`<span class="pill blue">Ppeak−Pplat ${gap.toFixed(0)}</span>`:''} ${Number.isFinite(autoP)?`<span class="pill violet">Auto-PEEP ${autoP.toFixed(0)}</span>`:''}</h3>
+    <div class="redFlag"><strong>Immediate safety actions</strong><ol>${immediate.map(x=>`<li>${x}</li>`).join('')}</ol></div>
+    <div class="miniCard"><h4>Likely mechanism</h4><ul>${mechanism.map(x=>`<li>${x}</li>`).join('')}</ul></div>
+    <div class="miniCard"><h4>Corrective actions</h4><ol>${actions.map(x=>`<li>${x}</li>`).join('')}</ol></div>
+    <div class="amberFlag"><strong>Avoid</strong><ul>${avoid.map(x=>`<li>${x}</li>`).join('')}</ul></div>
+    <details open><summary>Audit-ready documentation line</summary><p class="mono small">${doc.join(' ')}</p></details>
+    <div class="notice">Mechanics reminder: PIP reflects inspiratory flow, airway/circuit resistance, respiratory-system compliance and total PEEP. Inspiratory pause separates resistance from compliance. Expiratory hold and flow-time waveform identify intrinsic PEEP.</div>`;
+}
+function suggestedPeep(f){if(!Number.isFinite(f))return'Enter FiO₂';if(f<=.4)return'5–8';if(f<=.5)return'8–10';if(f<=.7)return'10–12';if(f<=.9)return'12–14';return'14–18 with senior review'}function calculatePeep(){const f=val('fio2'),peep=val('peepVal'),spo2=val('spo2'),plat=val('plat'),prevP=val('prevPeep'),prevS=val('prevSpo2'),prevPlat=val('prevPlat'),prevMap=val('prevMap'),map=val('map');const rec=suggestedPeep(f);let a=[`Current low-table PEEP suggestion for FiO₂ ${fmt(f,2)}: ${rec} cmH₂O.`],level='blue';if(Number.isFinite(plat)&&plat>30){a.push('Plateau >30: avoid blind PEEP escalation.');level='bad'}if(checked('rvFail')||(Number.isFinite(prevMap)&&Number.isFinite(map)&&map<prevMap-10)){a.push('Hemodynamic intolerance/RV concern: avoid blind PEEP escalation.');level='bad'}if(checked('airLeak')){a.push('Air leak/pneumothorax risk: individualize and treat cause.');level='bad'}if($('recruit').value==='high'){a.push('High recruitability: cautious stepwise PEEP trial may be reasonable if mechanics/hemodynamics improve.');if(level!=='bad')level='good'}if($('recruit').value==='low'){a.push('Low recruitability/focal disease: high PEEP may overdistend normal lung; consider lower PEEP and prone positioning if hypoxemic.');if(level!=='bad')level='warn'}if($('recruit').value==='obese')a.push('Low chest-wall compliance: higher PEEP may be needed, guided by mechanics/hemodynamics.');if(Number.isFinite(prevP)&&Number.isFinite(peep)&&Number.isFinite(prevS)&&Number.isFinite(spo2)){if(peep>prevP&&spo2<=prevS&&Number.isFinite(plat)&&Number.isFinite(prevPlat)&&plat>prevPlat){a.push('PEEP increase did not improve oxygenation and raised plateau: probable overdistension/non-recruitment.');level='warn'}if(peep>prevP&&spo2>prevS&&Number.isFinite(plat)&&Number.isFinite(prevPlat)&&plat<=prevPlat+2){a.push('PEEP increase improved oxygenation without major plateau rise: suggests recruitment/tolerance.');if(level!=='bad')level='good'}}$('peepOut').className=cls(level);$('peepOut').innerHTML=`<h3>PEEP advice <span class="pill ${level}">Suggested: ${rec}</span></h3><ul>${a.map(x=>`<li>${x}</li>`).join('')}</ul>`}
+function calculateProne(){const f=val('fio2'),peep=val('peepVal'),pao2=val('pao2'),pf=pao2&&f?pao2/f:null,major=Number.isFinite(pf)&&pf<150&&f>=.6&&peep>=5,crit=['p_ards','p_lungprot','p_early','p_team'].filter(checked).length,contra=['p_spine','p_icp','p_shock','p_airway'].filter(checked).length;let level='blue',rec='Insufficient data.';if(contra){level='bad';rec='Major caution/contraindication selected. Senior risk-benefit decision required.'}else if(major&&crit>=3){level='good';rec='Prone ventilation is strongly supported. Plan prolonged prone session with trained team.'}else if(major){level='warn';rec='Physiologic threshold met but checklist incomplete.'}else rec='Routine proning threshold not met from entered values.';$('proneOut').className=cls(level);$('proneOut').innerHTML=`<h3>Proning advice <span class="pill ${level}">P/F ${fmt(pf,0)}</span></h3><p><strong>${rec}</strong></p><ul><li>Before turn: ETT fixation, sedation/paralysis plan, eye/pressure protection, lines/drains, feeding pause, emergency airway plan.</li><li>Stop/return supine for arrest, accidental extubation, life-threatening instability, or unsafe line/tube compromise.</li></ul>`}
+function calculateEcmo(){const f=val('fio2'),pao2=val('pao2'),ph=val('ph'),pco2=val('paco2'),map=val('map'),lac=val('lactate'),uop=val('uop'),pf=pao2&&f?pao2/f:null;let c=[],contra=[];if(checked('e_reversible'))c.push('potential reversibility/bridge pathway');if(checked('e_optimal'))c.push('conventional rescue optimized');if(checked('e_pf80')||(Number.isFinite(pf)&&pf<80&&f>=.8))c.push('P/F <80 severe refractory hypoxemia');if(checked('e_ph')||(Number.isFinite(ph)&&ph<7.25&&Number.isFinite(pco2)&&pco2>=60))c.push('severe hypercapnic acidosis');if(checked('e_murray'))c.push('Murray score/severe lung injury');if(checked('e_shock')||(Number.isFinite(map)&&map<65)||(Number.isFinite(lac)&&lac>=4)||(Number.isFinite(uop)&&uop<.3))c.push('shock/end-organ hypoperfusion');['e_irrecoverable','e_malignancy','e_neuro','e_bleed','e_mv7','e_age'].forEach(id=>{if(checked(id))contra.push($(id).parentElement.textContent.trim())});let level='blue',rec='Continue conventional optimization and reassess.';if(checked('e_irrecoverable')){level='bad';rec='ECMO generally inappropriate without recovery/decannulation or bridge pathway.'}else if(c.includes('P/F <80 severe refractory hypoxemia')&&checked('e_reversible')&&checked('e_optimal')){level='bad';rec='Discuss urgently with ECMO centre. Do not delay referral.'}else if(c.length>=3&&checked('e_reversible')){level='warn';rec='Early ECMO-centre discussion is appropriate.'}else if(!checked('e_reversible')){level='warn';rec='Clarify reversibility, goals of care and rehabilitation potential.'}const mode=c.includes('shock/end-organ hypoperfusion')?'Combined cardiac/respiratory failure may require VA or hybrid ECMO rather than VV alone.':'Predominant isolated respiratory failure generally maps to VV-ECMO assessment.';$('ecmoOut').className=cls(level);$('ecmoOut').innerHTML=`<h3>ECMO screen <span class="pill ${level}">${rec}</span></h3><p>${mode}</p><h4>Criteria present</h4><ul>${c.length?c.map(x=>`<li>${x}</li>`).join(''):'<li>No major ECMO criterion entered.</li>'}</ul><h4>Risk modifiers / contraindications</h4><ul>${contra.length?contra.map(x=>`<li>${x}</li>`).join(''):'<li>None selected.</li>'}</ul>`}
+function calculateAll(){isValidNumber('height',90,230);isValidNumber('weight',1,300);calculateDashboard();calculateWeaning();calculateARDS();calculateTrouble();calculatePeep();calculateProne();calculateEcmo()}function collectSummary(){const p=pbw(),f=val('fio2'),pao2=val('pao2'),pf=pao2&&f?pao2/f:null,vt=val('vt'),vtpbw=vt&&p?vt/p:null,peep=val('peepVal'),plat=val('plat'),drive=plat!=null&&peep!=null?plat-peep:null;return`VENT-CDSS 2026 Summary\nAuthor: Prof. (Dr) Jyotirmay Kirtania\nCopyright (C) 2026 Prof. (Dr) Jyotirmay Kirtania | License: GNU GPL v3.0-or-later\nCreated: ${new Date().toLocaleString()}\nCase: ${esc($('caseId').value)||'NA'}
+Diagnosis: ${esc($('dx').value)||'NA'}\nMode: ${$('mode').value}; FiO2 ${fmt(f,2)}; PEEP ${fmt(peep,0)}; VT ${fmt(vt,0)} mL; PBW ${fmt(p,1)} kg; VT/PBW ${fmt(vtpbw,1)} mL/kg; Pplat ${fmt(plat,0)}; Driving pressure ${fmt(drive,0)}; PaO2 ${fmt(pao2,0)}; P/F ${fmt(pf,0)}; pH ${fmt(val('ph'),2)}; PaCO2 ${fmt(val('paco2'),0)}\n\nDaily focus:\n${$('dailyFocus').innerText}\n\nWeaning:\n${$('weanOut').innerText}
+
+ARDS rescue:
+${$('ardsOut').innerText}
+
+Troubleshooting:
+${$('troubleOut').innerText}\n\nPEEP:\n${$('peepOut').innerText}\n\nProning:\n${$('proneOut').innerText}\n\nECMO:\n${$('ecmoOut').innerText}\n\nClinical note:
+${esc($('clinNote').value)||'NA'}`}function generateNote(){calculateAll();$('finalNote').value=collectSummary()}async function copySummary(){generateNote();try{await navigator.clipboard.writeText($('finalNote').value);alert('Copied to clipboard.')}catch(e){$('finalNote').select();document.execCommand('copy');alert('Copied.')}}function blob(text,name,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click();URL.revokeObjectURL(a.href)}function base(){return($('caseId').value||'ventcdss').toLowerCase().replace(/[^a-z0-9]+/g,'_')+'_'+new Date().toISOString().slice(0,16).replace(/[-:T]/g,'')}function downloadTxt(){generateNote();blob($('finalNote').value,base()+'.txt','text/plain')}function downloadJson(){const data={created:new Date().toISOString(),program:'VENT-CDSS 2026',author:'Prof. (Dr) Jyotirmay Kirtania',license:'GPL-3.0-or-later',fields:{}};document.querySelectorAll('input,select,textarea').forEach(el=>{if(el.id){if(el.id==='dxSelect'){data.fields[el.id]=[...el.selectedOptions].map(o=>o.value)}else{data.fields[el.id]=el.type==='checkbox'?el.checked:el.value}}});blob(JSON.stringify(data,null,2),base()+'.json','application/json')}function saveCase(){const data={};document.querySelectorAll('input,select,textarea').forEach(el=>{if(el.id){if(el.id==='dxSelect'){data[el.id]=[...el.selectedOptions].map(o=>o.value)}else{data[el.id]=el.type==='checkbox'?el.checked:el.value}}});localStorage.setItem('ventcdss_case',JSON.stringify(data));alert('Saved locally in this browser.')}function loadCase(){const raw=localStorage.getItem('ventcdss_case');if(!raw){alert('No saved case found.');return}const data=JSON.parse(raw);Object.entries(data).forEach(([id,v])=>{const el=$(id);if(el){if(el.type==='checkbox'){el.checked=!!v}else if(id==='dxSelect'&&Array.isArray(v)){Array.from(el.options).forEach(opt=>{opt.selected=v.includes(opt.value)});updateDiagnosis()}else{el.value=v}}});calculateAll()}function resetAll(){if(!confirm('Clear all fields?'))return;document.querySelectorAll('input,textarea').forEach(el=>{if(el.type==='checkbox')el.checked=false;else el.value=''});document.querySelectorAll('select').forEach(el=>{if(el.id==='dxSelect'){Array.from(el.options).forEach(opt=>opt.selected=false)}else{el.selectedIndex=0}});$('targetLow').value=88;$('targetHigh').value=95;$('failedSbt').value=0;$('weanDays').value=0;updateDiagnosis();calculateAll()}calculateAll();
+</script>
+</body>
+</html>
