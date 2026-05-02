@@ -7,7 +7,7 @@ Weaning, Troubleshooting, PEEP Titration, Proning & ECMO Escalation Support for 
 
 ## About
 
-VENT-CDSS 2026 is a comprehensive, evidence-based bedside cognitive aid for mechanical ventilation management in adult intensive care units. Built as a single-page HTML application requiring no installation or internet connectivity, it provides structured clinical decision support across the complete spectrum of ventilator therapy — from initial optimization through liberation.
+VENT-CDSS 2026 is a comprehensive, evidence-based bedside cognitive aid for mechanical ventilation management in adult intensive care units. Built as a single-page HTML application requiring no installation or internet connectivity, it provides structured clinical decision support across the complete spectrum of ventilator therapy — from initial optimization, troubleshooting, weaning and liberation from the ventilator.
 
 **Author:** Prof. (Dr) Jyotirmay Kirtania  
 Professor & Head, Department of Anaesthesiology, Critical Care & Pain  
@@ -37,7 +37,7 @@ Structured 4-step workflow with progress tracking:
 - **Step 4:** Difficult-weaning evaluation with failed SBT tracking
 
 ### 3. **ARDS Rescue & Escalation Ladder**
-- Berlin criteria confirmation
+- ARDS Berlin criteria confirmation
 - Lung-protective ventilation bundle tracking
 - Severity classification (P/F-based)
 - Rescue therapy escalation pathway
@@ -80,7 +80,7 @@ Systematic approach to ventilator emergencies:
 
 ## Evidence Base
 
-VENT-CDSS 2026 synthesizes **35 verified citations** from landmark trials, systematic reviews, and international guidelines:
+VENT-CDSS 2026 incorporates **35 verified citations** from landmark trials, systematic reviews, and international guidelines:
 
 - **Lung-protective ventilation:** ARDSNet, Amato driving pressure, Berlin Definition, ATS/ERS/SCCM guidelines
 - **Prone positioning:** PROSEVA trial, Munshi meta-analysis
@@ -88,7 +88,7 @@ VENT-CDSS 2026 synthesizes **35 verified citations** from landmark trials, syste
 - **Weaning:** Yang-Tobin RSBI, ABC trial, ATS/ACCP guidelines, ISCCM 2024 position statement
 - **PEEP titration:** ALVEOLI, EXPRESS, esophageal pressure-guided ventilation
 - **ECMO:** EOLIA, CESAR trials, Munshi VV-ECMO meta-analysis
-- **Guidelines:** Surviving Sepsis Campaign 2021/2026, UK ARDS guidelines, ERS/ATS NIV guidelines
+- **Guidelines:** Surviving Sepsis Campaign guidelines 2021 and 2026, UK ARDS guidelines, ERS/ATS NIV guidelines
 
 All citations verified against primary sources as of May 2026.
 
@@ -97,7 +97,7 @@ All citations verified against primary sources as of May 2026.
 ## Technical Specifications
 
 - **Format:** Single HTML file (no dependencies, no internet required)
-- **Size:** ~95 KB
+- **Size:** ~75 KB
 - **Compatibility:** Modern browsers (Chrome, Firefox, Safari, Edge)
 - **Offline capability:** Fully functional without network connectivity
 - **Mobile-friendly:** Responsive design for tablets and smartphones
@@ -286,7 +286,6 @@ Invalid entries trigger:
 
 Planned enhancements (community feedback welcome):
 - Export to standardized formats (FHIR, HL7)
-- Ventilator waveform visualization
 - Trend graphs (P/F ratio, driving pressure over time)
 - Protocol templates for common scenarios
 - Enhanced mobile UI optimization
@@ -312,7 +311,7 @@ If you use VENT-CDSS 2026 in clinical practice, education, or research, please c
 
 ```
 Kirtania J. VENT-CDSS 2026: Ventilator Clinical Decision Support System. 
-GitHub repository. 2026. https://github.com/[username]/VENT-CDSS-2026
+GitHub repository. 2026. https://hodanesthtmcvns-stack.github.io/jk/VENT-CDSS-2026.html
 ```
 
 ---
@@ -348,4 +347,4 @@ VENT-CDSS 2026 is provided as-is for educational and clinical decision support p
 
 **Version:** 2026.1  
 **Last Updated:** May 2026  
-**Evidence Base Current Through:** January 2025
+**Evidence Base Current Through:** April 2026
