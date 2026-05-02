@@ -20,6 +20,7 @@ This repository hosts a suite of portable, offline-ready HTML applications desig
 | **BEAT-C** | Empiric Antibiotics in Sepsis | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/BEAT-C-v1.0.html) |
 | **PEEP Titrator** | Optimal PEEP Selection | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/PEEP-titration-v1.4.html) |
 | **Ventilator Simulator** | Respiratory Education | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/ICU-vent-sim-v%201.2.html) |
+| **VENT-CDSS-2026** | Clinical Decision Support | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/VENT-CDSS-2026.html) |
 | **Lab Trends & Alerts** | Clinical Decision Support | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/ICU-lab-trends-alerts-v2.0.html) |
 | **Agitation Manager** | ICU Delirium | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/acute-agitation-v1.0.html) |
 | **Label Generator** | Workflow Efficiency | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/Patient-label-generator-v1.5.html) |
