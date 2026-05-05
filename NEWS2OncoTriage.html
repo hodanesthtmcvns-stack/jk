@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NEWS2OncoTriage</title>
+  <style>
+    :root {
+      --bg-color: #f4f7f6;
+      --card-bg: #ffffff;
+      --text-main: #2d3748;
+      --text-muted: #718096;
+      --border: #e2e8f0;
+      --primary: #4299e1;
+      --score-0: #48bb78;
+      --score-1: #ecc94b;
+      --score-2: #ed8936;
+      --score-3: #e53e3e;
+      --panel: #1a202c;
+      --panel-muted: #a0aec0;
+      --panel-border: #2d3748;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .dashboard {
+      background: var(--card-bg);
+      border-radius: 24px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.05), 0 20px 48px rgba(0,0,0,0.05);
+      width: 100%;
+      max-width: 1080px;
+      display: grid;
+      grid-template-columns: 0.95fr 1.55fr;
+      overflow: hidden;
+    }
+
+    .gauge-panel {
+      background: var(--panel);
+      color: white;
+      padding: 38px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .gauge-panel h2 { margin: 0 0 8px 0; font-weight: 600; letter-spacing: 1px; }
+    .gauge-panel p { color: var(--panel-muted); margin: 0 0 26px 0; font-size: 14px; }
+
+    .svg-container { position: relative; width: 220px; height: 220px; }
+    .radial-bg { fill: none; stroke: var(--panel-border); stroke-width: 15; }
+    .radial-fill {
+      fill: none;
+      stroke: var(--score-0);
+      stroke-width: 15;
+      stroke-linecap: round;
+      stroke-dasharray: 565.48;
+      stroke-dashoffset: 565.48;
+      transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.5s ease;
+      transform: rotate(-90deg);
+      transform-origin: 50% 50%;
+    }
+
+    .score-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 56px;
+      font-weight: 750;
+      color: white;
+      transition: color 0.5s ease;
+    }
+
+    .risk-label {
+      margin-top: 28px;
+      padding: 8px 18px;
+      border-radius: 30px;
+      font-weight: 700;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      background: var(--score-0);
+      color: #fff;
+      transition: background 0.5s ease;
+      max-width: 92%;
+      line-height: 1.25;
+    }
+
+    .action-box {
+      margin-top: 18px;
+      width: 100%;
+      padding: 14px;
+      border-radius: 16px;
+      border: 1px solid var(--panel-border);
+      background: rgba(255,255,255,0.04);
+      text-align: left;
+      box-sizing: border-box;
+    }
+
+    .action-box b { display: block; margin-bottom: 6px; color: #fff; }
+    .action-box span { color: #d3def2; font-size: 14px; line-height: 1.45; }
+
+    .context-box {
+      margin-top: 12px;
+      width: 100%;
+      padding: 12px;
+      border-radius: 14px;
+      background: rgba(237,137,54,0.12);
+      border: 1px solid rgba(237,137,54,0.45);
+      color: #ffe0c4;
+      font-size: 13px;
+      line-height: 1.45;
+      text-align: left;
+      box-sizing: border-box;
+    }
+
+    .controls-panel {
+      padding: 34px 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .topline {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 14px;
+    }
+
+    .topline h1 { font-size: 22px; margin: 0; line-height: 1.2; }
+    .topline p { margin: 6px 0 0 0; color: var(--text-muted); font-size: 13px; line-height: 1.35; }
+
+    .pill {
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 12px;
+      color: var(--text-muted);
+      background: #f8fafc;
+      white-space: nowrap;
+    }
+
+    .control-group { display: flex; flex-direction: column; gap: 8px; }
+    .control-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .control-label { font-weight: 650; font-size: 14px; color: var(--text-main); }
+    .control-value-display { font-size: 18px; font-weight: 750; color: var(--primary); min-width: 60px; text-align: right; }
+    .input-row { display: flex; align-items: center; gap: 15px; }
+
+    input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+    input[type=range]:focus { outline: none; }
+    input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 6px; cursor: pointer; background: #e2e8f0; border-radius: 3px; }
+    input[type=range]::-webkit-slider-thumb {
+      height: 20px; width: 20px; border-radius: 50%; background: var(--primary); cursor: pointer;
+      -webkit-appearance: none; margin-top: -7px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: transform 0.1s;
+    }
+    input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+    select, input[type=text] {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      font-size: 14px;
+      font-family: inherit;
+      background: #f8fafc;
+      color: var(--text-main);
+      outline: none;
+      min-width: 0;
+    }
+
+    .weight-indicator { display: flex; gap: 4px; width: 60px; height: 12px; flex-shrink: 0; }
+    .weight-block { flex: 1; background: #edf2f7; border-radius: 2px; transition: background 0.3s ease; }
+
+    .context-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; }
+    .context-item {
+      display: flex; align-items: center; gap: 8px; border: 1px solid var(--border); border-radius: 10px;
+      padding: 8px 10px; background: #f8fafc; font-size: 13px; color: var(--text-main);
+    }
+    .context-item input { width: auto; }
+
+    details { border: 1px solid var(--border); border-radius: 12px; padding: 10px; background: #f8fafc; }
+    summary { cursor: pointer; font-weight: 700; font-size: 14px; }
+    .reference { color: var(--text-muted); font-size: 12px; line-height: 1.45; margin-top: 8px; }
+    .breakdown { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+    .breakdown th, .breakdown td { border: 1px solid var(--border); padding: 6px; text-align: left; }
+    .breakdown th:last-child, .breakdown td:last-child { text-align: center; width: 56px; }
+
+
+
+    .advanced-triage {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: #fbfdff;
+      padding: 10px;
+    }
+    .advanced-triage summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 11px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(194, 65, 12, 0.35);
+      background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 55%, #fdba74 100%);
+      color: #7c2d12;
+      box-shadow: 0 2px 8px rgba(194, 65, 12, 0.14);
+    }
+    .advanced-triage summary::after {
+      content: 'Tap to open';
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.3px;
+      color: #9a3412;
+      background: rgba(255,255,255,0.72);
+      border: 1px solid rgba(154, 52, 18, 0.18);
+      border-radius: 999px;
+      padding: 4px 8px;
+      white-space: nowrap;
+    }
+    .advanced-triage[open] summary::after { content: 'Open'; }
+    .advanced-triage .microcopy {
+      color: var(--text-muted);
+      font-size: 12px;
+      line-height: 1.45;
+      margin: 8px 0 10px 0;
+    }
+    .triage-stage {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #ffffff;
+      padding: 10px;
+      margin-top: 10px;
+    }
+    .triage-stage h3 {
+      margin: 0 0 8px 0;
+      font-size: 14px;
+      line-height: 1.25;
+    }
+    .triage-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .triage-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 10px;
+      background: #f8fafc;
+      font-size: 12.5px;
+      line-height: 1.35;
+    }
+    .triage-item input {
+      margin-top: 2px;
+      width: auto;
+      flex-shrink: 0;
+    }
+    .triage-result {
+      border-radius: 14px;
+      padding: 12px;
+      margin-top: 10px;
+      border: 1px solid var(--border);
+      background: #f8fafc;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .triage-result b { display: block; font-size: 14px; margin-bottom: 4px; }
+    .triage-result .triage-list { margin: 8px 0 0 18px; padding: 0; }
+    .triage-result .triage-list li { margin-bottom: 4px; }
+    .lab-panel-wrap {
+      border: 1px solid #dbeafe;
+      border-radius: 14px;
+      background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+      padding: 10px;
+      margin-top: 8px;
+    }
+    .lab-panel-lead {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+      color: var(--text-main);
+      font-size: 12.5px;
+      line-height: 1.4;
+      margin-bottom: 9px;
+    }
+    .lab-panel-lead b {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #ebf8ff;
+      border: 1px solid #bee3f8;
+      color: #2b6cb0;
+      font-size: 13px;
+    }
+    .lab-panel {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 8px;
+      font-size: 12.5px;
+    }
+    .lab-tools {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 8px 0 2px 0;
+    }
+    .lab-chip {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 8px 9px;
+      background: #ffffff;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+      line-height: 1.3;
+      cursor: pointer;
+    }
+    .lab-chip input {
+      margin-top: 2px;
+      width: auto;
+      flex-shrink: 0;
+    }
+    .lab-chip b { display: block; font-size: 12px; margin-bottom: 2px; color: var(--text-main); }
+    .lab-chip span { color: var(--text-muted); font-size: 11.5px; }
+    .lab-chip:has(input:checked) {
+      border-color: #3182ce;
+      background: #ebf8ff;
+    }
+    .triage-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .triage-meta-field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .triage-meta-field input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 9px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #ffffff;
+      font-family: inherit;
+      color: var(--text-main);
+    }
+    .timestamp-preview {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #ffffff;
+      padding: 9px;
+      color: var(--text-main);
+      min-height: 19px;
+    }
+    .copy-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .copy-button {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #ffffff;
+      color: var(--text-main);
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 8px 10px;
+      cursor: pointer;
+    }
+    .copy-button:hover { background: #edf2f7; }
+
+
+    .mode-switch-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .mode-switch {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 5px 8px;
+      background: #f8fafc;
+      color: var(--text-muted);
+      font-size: 12px;
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 46px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+
+    .switch input { opacity: 0; width: 0; height: 0; }
+
+    .slider-toggle {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: #cbd5e0;
+      transition: .25s;
+      border-radius: 999px;
+    }
+
+    .slider-toggle:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background: white;
+      transition: .25s;
+      border-radius: 50%;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+    }
+
+    .switch input:checked + .slider-toggle { background: var(--primary); }
+    .switch input:checked + .slider-toggle:before { transform: translateX(22px); }
+
+    .footer-note {
+      border-top: 1px solid var(--border);
+      margin-top: 6px;
+      padding-top: 10px;
+      color: var(--text-muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    body.mobile-scale { padding: 8px; align-items: flex-start; }
+    body.mobile-scale .dashboard { max-width: 430px; grid-template-columns: 1fr; border-radius: 18px; }
+    body.mobile-scale .gauge-panel { padding: 24px 18px; }
+    body.mobile-scale .controls-panel { padding: 22px 18px; gap: 14px; }
+    body.mobile-scale .topline { flex-direction: column; align-items: stretch; }
+    body.mobile-scale .topline h1 { font-size: 20px; }
+    body.mobile-scale .svg-container { width: 180px; height: 180px; }
+    body.mobile-scale .svg-container svg { width: 180px; height: 180px; }
+    body.mobile-scale .score-text { font-size: 46px; }
+    body.mobile-scale .context-grid { grid-template-columns: 1fr; }
+    body.mobile-scale .triage-grid { grid-template-columns: 1fr; }
+    body.mobile-scale .lab-panel { grid-template-columns: 1fr; }
+    body.mobile-scale .advanced-triage summary { align-items: flex-start; }
+    body.mobile-scale .control-value-display { font-size: 16px; min-width: 54px; }
+    body.mobile-scale .input-row { gap: 10px; }
+    body.pc-scale .dashboard { max-width: 1120px; }
+
+    @media (max-width: 860px) { .dashboard { grid-template-columns: 1fr; } .context-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body class="mobile-scale">
+  <div class="dashboard">
+    <div class="gauge-panel">
+      <h2>NEWS2OncoTriage</h2>
+      <p>Professor (Dr.) Jyotirmay Kirtania, © 2026. License: GNU GPL v3</p>
+      <div class="svg-container">
+        <svg width="220" height="220" viewBox="0 0 200 200" aria-hidden="true">
+          <circle class="radial-bg" cx="100" cy="100" r="90"></circle>
+          <circle class="radial-fill" id="gauge-fill" cx="100" cy="100" r="90"></circle>
+        </svg>
+        <div class="score-text" id="total-score-display">0</div>
+      </div>
+      <div class="risk-label" id="risk-badge">LOW / ROUTINE</div>
+      <div class="action-box">
+        <b id="action-title">Clinical response</b>
+        <span id="action-text">Continue routine observations unless clinical concern exists.</span>
+      </div>
+      <div class="context-box" id="context-alert">Disease-context modifier: none selected.</div>
+    </div>
+
+    <div class="controls-panel" id="controls-container">
+      <div class="topline">
+        <div>
+          <h1>NEWS2OncoTriage</h1>
+          <p>Author: Professor (Dr.) Jyotirmay Kirtania, © 2026. License: GNU GPL v3)</p>
+        </div>
+        <div class="mode-switch-wrap">
+          <span class="pill">Adults ≥16 yr</span>
+          <label class="mode-switch" title="Toggle layout scaling for mobile phone or PC screen">
+            <span>Mobile</span>
+            <span class="switch">
+              <input type="checkbox" id="screenModeToggle">
+              <span class="slider-toggle"></span>
+            </span>
+            <span>PC</span>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    'use strict';
+
+    const parameters = [
+      {
+        id: 'rr', label: 'Respiratory Rate (/min)', type: 'slider', min: 0, max: 40, val: 22, unit: '',
+        scorer: function(v) { return v <= 8 ? 3 : v <= 11 ? 1 : v <= 20 ? 0 : v <= 24 ? 2 : 3; },
+        display: function(v) { return String(v) + ' /min'; }
+      },
+      {
+        id: 'spo2scale', label: 'SpO₂ Scale', type: 'select',
+        options: [
+          { v: '1', l: 'Scale 1 — default for most patients' },
+          { v: '2', l: 'Scale 2 — target 88–92% only if advised' }
+        ],
+        val: '1', scorer: function() { return 0; }, hiddenScore: true
+      },
+      {
+        id: 'spo2', label: 'SpO₂ (%)', type: 'slider', min: 75, max: 100, val: 95, unit: '%',
+        scorer: function(v) {
+          const scale = getValue('spo2scale');
+          const onO2 = getValue('o2') === 'yes';
+          if (scale === '2') {
+            if (v <= 83) return 3;
+            if (v <= 85) return 2;
+            if (v <= 87) return 1;
+            if (v <= 92) return 0;
+            if (!onO2 && v >= 93) return 0;
+            if (v <= 94) return 1;
+            if (v <= 96) return 2;
+            return 3;
+          }
+          return v <= 91 ? 3 : v <= 93 ? 2 : v <= 95 ? 1 : 0;
+        },
+        display: function(v) { return String(v) + '%'; }
+      },
+      {
+        id: 'o2', label: 'Supplemental O₂', type: 'select',
+        options: [{ v: 'no', l: 'Air / No oxygen' }, { v: 'yes', l: 'Oxygen / Any device' }], val: 'no',
+        scorer: function(v) { return v === 'yes' ? 2 : 0; },
+        display: function(v) { return v === 'yes' ? 'Yes' : 'No'; }
+      },
+      {
+        id: 'bp', label: 'Systolic BP (mmHg)', type: 'slider', min: 50, max: 250, val: 100, unit: '',
+        scorer: function(v) { return v <= 90 ? 3 : v <= 100 ? 2 : v <= 110 ? 1 : v <= 219 ? 0 : 3; },
+        display: function(v) { return String(v) + ' mmHg'; }
+      },
+      {
+        id: 'hr', label: 'Heart Rate (/min)', type: 'slider', min: 30, max: 200, val: 108, unit: '',
+        scorer: function(v) { return v <= 40 ? 3 : v <= 50 ? 1 : v <= 90 ? 0 : v <= 110 ? 1 : v <= 130 ? 2 : 3; },
+        display: function(v) { return String(v) + ' /min'; }
+      },
+      {
+        id: 'tempUnit', label: 'Temperature unit', type: 'select',
+        options: [{ v: 'C', l: 'Celsius (°C)' }, { v: 'F', l: 'Fahrenheit (°F)' }], val: 'C',
+        scorer: function() { return 0; }, hiddenScore: true
+      },
+      {
+        id: 'temp', label: 'Temperature', type: 'slider', min: 34, max: 41, step: 0.1, val: 36.8, unit: ' °C',
+        scorer: function(v) { const t = tempToC(v); return t <= 35.0 ? 3 : t <= 36.0 ? 1 : t <= 38.0 ? 0 : t <= 39.0 ? 1 : 2; },
+        display: function(v) { return formatTemp(v); }
+      },
+      {
+        id: 'cvpu', label: 'Consciousness (ACVPU)', type: 'select',
+        options: [
+          { v: 'A', l: 'Alert' },
+          { v: 'C', l: 'New confusion' },
+          { v: 'V', l: 'Responds to voice' },
+          { v: 'P', l: 'Responds to pain' },
+          { v: 'U', l: 'Unresponsive' }
+        ],
+        val: 'A', scorer: function(v) { return v === 'A' ? 0 : 3; },
+        display: function(v) {
+          const map = { A: 'Alert', C: 'New confusion', V: 'Voice', P: 'Pain', U: 'Unresponsive' };
+          return map[v] || v;
+        }
+      }
+    ];
+
+    const contextItems = [
+      { id: 'neutropenia', label: 'ANC <0.5 ×10⁹/L or expected nadir (decline) of ANC' },
+      { id: 'feverNeutropenia', label: 'Fever with neutropenia / suspected Febrile Neutropenia' },
+      { id: 'postBMT', label: 'Post-BMT / cellular therapy' },
+      { id: 'steroids', label: 'Recent high-dose steroids' },
+      { id: 'mucositis', label: 'Mucositis / diarrhoea' },
+      { id: 'centralLine', label: 'Central line / PICC / Chemoport' },
+      { id: 'recentChemo', label: 'Recent chemotherapy day 7–14' },
+      { id: 'organDysfunction', label: 'Chronic Kidney Disease / Chronic Liver Disease / Chronic Heart Failure / COPD / Chronic Respiratory Failure' }
+    ];
+
+    const advancedTriageItems = [
+      { id: 'neutroFever', level: 'red', label: 'Fever ≥38.3°C or 101°F, hypothermia (core body temperature of 35°C or 95°F or lower), rigors, or sepsis physiology with ANC <0.5 ×10⁹/L, expected ANC fall, or recent chemotherapy', action: 'Febrile neutropenia / neutropenic sepsis: cultures if this does not delay care, anti-pseudomonal IV antibiotic urgently, senior oncology/hematology and ICU review.' },
+      { id: 'shock', level: 'red', label: 'Shock, hypotension, increased capillary refill time, rising lactate, skin mottling, oliguria, altered sensorium, or new vasopressor need', action: 'Resuscitate as sepsis/shock until proven otherwise: ABCDE, oxygen, IV access, lactate, cultures when relevant, fluids/vasopressors as clinically indicated, ICU-capable response.' },
+      { id: 'airwayHypoxia', level: 'red', label: 'Stridor, airway compromise, severe dyspnea, facial/neck swelling, SpO₂ fall, or new oxygen requirement', action: 'Think SVCS, central airway obstruction, PE, pneumonitis, effusion, infection: sit up, oxygen, call anesthesia/ICU/ENT/pulmonology as appropriate.' },
+      { id: 'msccNeuro', level: 'red', label: 'New limb weakness, sensory level, severe/radicular back pain, gait change, urinary retention, or bowel dysfunction', action: 'Suspected MSCC: immobilize if unstable spine possible, urgent whole-spine MRI pathway, dexamethasone if neurological signs/symptoms and no contraindication, urgent spine/radiation oncology discussion.' },
+      { id: 'seizureIcp', level: 'red', label: 'Seizure, reduced GCS, papilledema, focal deficit, severe headache/vomiting, or suspected raised ICP', action: 'Neuro-oncology emergency: airway protection if needed, avoid hypotension/hypoxia, urgent CT/MRI brain, dexamethasone if tumor edema suspected, anticonvulsant after seizure.' },
+      { id: 'tls', level: 'red', label: 'K⁺/phosphate/uric acid rising, calcium falling, creatinine rising, arrhythmia, seizure, or oliguria after chemotherapy/steroids/targeted therapy', action: 'Tumour lysis syndrome: ECG/cardiac monitor, strict urine output, repeat K/Ca/PO₄/uric acid/creatinine 4–6 hourly if unstable, hydrate if not overloaded, treat hyperkalemia, discuss rasburicase/dialysis.' },
+      { id: 'severeCalcium', level: 'red', label: 'High calcium with confusion, dehydration, AKI, arrhythmia, shortened QT, severe constipation, or polyuria', action: 'Hypercalcemia of malignancy: ECG, ionized/corrected Ca, RFT, hydration if not overloaded, calcitonin for rapid temporary effect, antiresorptive therapy per renal function/local protocol.' },
+      { id: 'leukostasis', level: 'red', label: 'Very high WBC with hypoxia, respiratory distress, confusion, visual symptoms, stroke-like signs, or priapism', action: 'Leukostasis/hyperviscosity risk: urgent hematology/ICU call, TLS prevention, avoid non-essential PRBC before cytoreduction if hyperviscosity concern.' },
+      { id: 'bleedingDic', level: 'red', label: 'Active bleeding, petechiae/purpura, line-site ooze, platelets very low, prolonged PT/aPTT, low fibrinogen, or suspected APL/DIC', action: 'DIC/catastrophic bleeding: CBC, PT/INR, aPTT, fibrinogen, D-dimer, smear; replace blood components for bleeding/procedure threshold; suspected APL needs immediate hematology and ATRA pathway.' },
+      { id: 'cartCrsIcans', level: 'red', label: 'Recent CAR-T or bispecific/T-cell engager with fever, hypotension, hypoxia, confusion, aphasia, tremor, seizure, or reduced consciousness', action: 'CRS/ICANS: use ASTCT grading, infection workup, broad antibiotics if neutropenic/septic differential, tocilizumab for significant CRS and corticosteroids for ICANS/severe CRS per protocol.' },
+      { id: 'iciSevere', level: 'red', label: 'Checkpoint inhibitor exposure with hypoxia, myocarditis suspicion, severe diarrhea/colitis, hepatitis, adrenal crisis, encephalitis, myasthenic/myositis syndrome, or DKA', action: 'Severe immune-related adverse event: hold immunotherapy, grade toxicity, organ-specific workup, early oncology/ICU involvement, corticosteroid/immunosuppression pathway as per severity.' },
+      { id: 'tamponade', level: 'red', label: 'Cancer patient with hypotension, tachycardia, raised JVP, pulsus paradoxus, muffled heart sounds, or POCUS/echo tamponade', action: 'Malignant pericardial tamponade: urgent echo/POCUS, avoid avoidable pre-drainage deterioration, call cardiology/ICU for pericardiocentesis.' },
+      { id: 'svcsStable', level: 'orange', label: 'Facial/neck/upper-limb swelling, distended chest veins, headache or dyspnea worse supine, but no stridor, coma, syncope, or severe hypoxia', action: 'Stable SVCS: head-up, oxygen if needed, avoid upper-limb central venous access if possible, contrast CT if stable, tissue diagnosis/oncology/IR pathway.' },
+      { id: 'mboTyphlitis', level: 'orange', label: 'Vomiting, abdominal distension/obstipation, peritonism, or neutropenic abdominal pain/diarrhoea', action: 'Bowel obstruction/perforation/neutropenic enterocolitis: NPO, IV fluids/electrolytes, NG if vomiting, CT if stable, broad antibiotics if sepsis/neutropenia, surgery + oncology early.' },
+      { id: 'obstructionSepsis', level: 'orange', label: 'AKI/anuria with hydronephrosis, obstructed infected kidney, or cholangitis with malignant biliary obstruction', action: 'Obstructive uropathy/cholangitis: urgent ultrasound/POCUS and source-control pathway with urology/IR/ERCP plus antibiotics if infected.' },
+      { id: 'vtePe', level: 'orange', label: 'New pleuritic pain, syncope, unilateral leg swelling, unexplained tachycardia/hypoxia, or suspected PE without shock', action: 'Cancer-associated VTE/PE: ECG, ABG/VBG/lactate, troponin/BNP where useful, POCUS/CTPA if stable, anticoagulate if no contraindication; massive PE physiology upgrades to RED.' },
+      { id: 'extravasationAnaphylaxis', level: 'orange', label: 'Infusion pain/swelling/blistering/burning, or acute urticaria, bronchospasm, hypotension during drug/chemo infusion', action: 'Extravasation/anaphylaxis: stop infusion; for extravasation leave cannula initially and aspirate, do not flush; for anaphylaxis give IM adrenaline and ABC resuscitation.' },
+      { id: 'earlyWarningTrend', level: 'yellow', label: 'No immediate red/orange trigger, but worsening trend, abnormal labs moving toward emergency, frailty, poor reserve, or caregiver concern', action: 'Expedited review: repeat observations/labs early, document safety-net, escalate if trend persists or NEWS2/context worsens.' }
+    ];
+
+    const advancedLabItems = [
+      { group: 'Hematology', detail: 'CBC with differential / ANC; peripheral smear if leukemia, APL, hemolysis, or blast concern' },
+      { group: 'Renal + electrolytes', detail: 'RFT, Na⁺, K⁺, Ca²⁺, Mg²⁺, phosphate; repeat early if unstable or TLS risk' },
+      { group: 'TLS screen', detail: 'Uric acid, LDH, creatinine, K⁺, phosphate, calcium; ECG/cardiac monitor when K⁺/Ca²⁺ abnormal' },
+      { group: 'Liver', detail: 'LFT, bilirubin, albumin; consider ammonia when encephalopathy is unexplained' },
+      { group: 'Coagulation / bleeding', detail: 'PT/INR, aPTT, fibrinogen, D-dimer when bleeding, sepsis, APL, DIC, or procedure risk exists' },
+      { group: 'Perfusion + metabolic', detail: 'ABG/VBG with lactate, glucose, bicarbonate; repeat lactate after resuscitation when shock suspected' },
+      { group: 'Infection before antibiotic', detail: 'Peripheral + line cultures when feasible, urine/sputum/site cultures; do not delay antibiotics in suspected neutropenic sepsis' },
+      { group: 'Cardiorespiratory', detail: 'ECG, CXR, POCUS/echo/lung scan as indicated; CTPA/CT/USG according to stability and suspected source' }
+    ];
+
+    const container = document.getElementById('controls-container');
+    const gaugeFill = document.getElementById('gauge-fill');
+    const totalScoreDisplay = document.getElementById('total-score-display');
+    const riskBadge = document.getElementById('risk-badge');
+    const actionTitle = document.getElementById('action-title');
+    const actionText = document.getElementById('action-text');
+    const contextAlert = document.getElementById('context-alert');
+
+    function getValue(id) {
+      const el = document.getElementById('input-' + id);
+      return el ? el.value : '';
+    }
+
+    let currentTempUnit = 'C';
+    function cToF(c) { return (c * 9 / 5) + 32; }
+    function fToC(f) { return (f - 32) * 5 / 9; }
+    function tempToC(v) {
+      const unit = getValue('tempUnit') || currentTempUnit || 'C';
+      const n = parseFloat(v);
+      return unit === 'F' ? fToC(n) : n;
+    }
+    function formatTemp(v) {
+      const unit = getValue('tempUnit') || currentTempUnit || 'C';
+      return Number(v).toFixed(1) + (unit === 'F' ? ' °F' : ' °C');
+    }
+    function setTemperatureRangeForUnit(unit, convertExisting) {
+      const tempInput = document.getElementById('input-temp');
+      const tempDisplay = document.getElementById('valdisp-temp');
+      if (!tempInput) return;
+      const previous = currentTempUnit || 'C';
+      let value = parseFloat(tempInput.value);
+      if (convertExisting && !isNaN(value) && previous !== unit) {
+        value = unit === 'F' ? cToF(value) : fToC(value);
+      }
+      if (unit === 'F') {
+        tempInput.min = '93.2';
+        tempInput.max = '105.8';
+        tempInput.step = '0.1';
+      } else {
+        tempInput.min = '34';
+        tempInput.max = '41';
+        tempInput.step = '0.1';
+      }
+      if (!isNaN(value)) tempInput.value = value.toFixed(1);
+      if (tempDisplay) tempDisplay.textContent = formatTemp(tempInput.value);
+      currentTempUnit = unit;
+    }
+
+    function buildControls() {
+      parameters.forEach(function(p) {
+        const group = document.createElement('div');
+        group.className = 'control-group';
+
+        let inputHtml = '';
+        if (p.type === 'slider') {
+          inputHtml = '<input type="range" id="input-' + p.id + '" min="' + p.min + '" max="' + p.max + '" step="' + (p.step || 1) + '" value="' + p.val + '">';
+        } else {
+          inputHtml = '<select id="input-' + p.id + '">' + p.options.map(function(o) {
+            return '<option value="' + o.v + '" ' + (String(p.val) === String(o.v) ? 'selected' : '') + '>' + o.l + '</option>';
+          }).join('') + '</select>';
+        }
+
+        const initialDisplay = p.display ? p.display(p.val) : (String(p.val) + (p.unit || ''));
+        group.innerHTML =
+          '<div class="control-header">' +
+          '<span class="control-label" id="label-' + p.id + '">' + p.label + '</span>' +
+          (p.type === 'slider' ? '<span class="control-value-display" id="valdisp-' + p.id + '">' + initialDisplay + '</span>' : '') +
+          '</div>' +
+          '<div class="input-row">' + inputHtml +
+          (!p.hiddenScore ? '<div class="weight-indicator" id="ind-' + p.id + '"><div class="weight-block" id="block1-' + p.id + '"></div><div class="weight-block" id="block2-' + p.id + '"></div><div class="weight-block" id="block3-' + p.id + '"></div></div>' : '') +
+          '</div>';
+
+        container.appendChild(group);
+        document.getElementById('input-' + p.id).addEventListener('input', function(e) {
+          if (p.id === 'tempUnit') {
+            setTemperatureRangeForUnit(e.target.value, true);
+          }
+          if (p.type === 'slider') {
+            document.getElementById('valdisp-' + p.id).textContent = p.display ? p.display(e.target.value) : (e.target.value + (p.unit || ''));
+          }
+          updateDashboard();
+        });
+      });
+
+      setTemperatureRangeForUnit(getValue('tempUnit') || 'C', false);
+
+      const diseaseDetails = document.createElement('details');
+      diseaseDetails.open = true;
+      diseaseDetails.innerHTML = '<summary>Oncology disease-context modifiers — not part of NEWS2 score</summary><div class="context-grid" id="context-grid"></div>';
+      container.appendChild(diseaseDetails);
+
+      const grid = document.getElementById('context-grid');
+      contextItems.forEach(function(item) {
+        const label = document.createElement('label');
+        label.className = 'context-item';
+        label.innerHTML = '<input type="checkbox" id="ctx-' + item.id + '"> <span>' + item.label + '</span>';
+        grid.appendChild(label);
+        document.getElementById('ctx-' + item.id).addEventListener('change', updateDashboard);
+      });
+
+      const ref = document.createElement('details');
+      ref.innerHTML =
+        '<summary>Scoring reference</summary>' +
+        '<table class="breakdown" aria-label="NEWS2 breakdown" id="breakdown-table"><thead><tr><th>Parameter</th><th>Value</th><th>Score</th></tr></thead><tbody></tbody></table>' +
+        '<div class="reference">' +
+        '<b>NEWS2 scoring used:</b> RR ≤8=3, 9–11=1, 12–20=0, 21–24=2, ≥25=3. ' +
+        'SpO₂ Scale 1: ≤91=3, 92–93=2, 94–95=1, ≥96=0. ' +
+        'SpO₂ Scale 2: ≤83=3, 84–85=2, 86–87=1, 88–92=0, ≥93 on air=0, 93–94 on O₂=1, 95–96 on O₂=2, ≥97 on O₂=3. ' +
+        'Supplemental oxygen=2. SBP ≤90=3, 91–100=2, 101–110=1, 111–219=0, ≥220=3. ' +
+        'Pulse ≤40=3, 41–50=1, 51–90=0, 91–110=1, 111–130=2, ≥131=3. ' +
+        'Temperature scoring uses °C internally: ≤35.0°C (≤95.0°F)=3, 35.1–36.0°C (95.2–96.8°F)=1, 36.1–38.0°C (97.0–100.4°F)=0, 38.1–39.0°C (100.6–102.2°F)=1, ≥39.1°C (≥102.4°F)=2. ACVPU: Alert=0, new confusion/V/P/U=3.' +
+        '</div>' +
+        '<div class="reference"><b>Clinical note:</b> Disease context does not alter the numerical NEWS2 score. It lowers the threshold for clinician review/escalation when the patient is immunosuppressed, neutropenic, post-transplant, septic, or physiologically fragile.</div>';
+      container.appendChild(ref);
+    }
+
+    function selectedContext() {
+      return contextItems.filter(function(item) {
+        const el = document.getElementById('ctx-' + item.id);
+        return el && el.checked;
+      });
+    }
+
+    function responseBand(totalScore, hasRedFlag, hasContext, hasFnContext) {
+      if (totalScore >= 7) {
+        return {
+          color: 'var(--score-3)',
+          badge: 'HIGH RISK / EMERGENCY (≥7)',
+          title: 'Emergency response',
+          action: 'Continuous monitoring. Call senior clinician / rapid response / ICU-capable team immediately and prepare for higher-dependency care.'
+        };
+      }
+      if (totalScore >= 5 || hasRedFlag) {
+        return {
+          color: 'var(--score-2)',
+          badge: hasRedFlag && totalScore < 5 ? 'RED SCORE / URGENT REVIEW' : 'MEDIUM RISK / URGENT (5–6)',
+          title: 'Urgent clinical review',
+          action: 'Minimum hourly observations. Inform senior nurse and medical team. Review cause, treatment, monitoring frequency, and need for escalation.'
+        };
+      }
+      if (hasFnContext) {
+        return {
+          color: 'var(--score-3)',
+          badge: 'ONCOLOGY EMERGENCY DESPITE LOW NEWS2',
+          title: 'Treat disease context as high-risk',
+          action: 'Febrile neutropenia / profound neutropenia can be high risk even with low NEWS2. Escalate, culture promptly, and do not delay empiric antibiotics per institutional protocol.'
+        };
+      }
+      if (hasContext && totalScore >= 1) {
+        return {
+          color: 'var(--score-2)',
+          badge: 'LOW SCORE + HIGH-RISK CONTEXT',
+          title: 'Lower escalation threshold',
+          action: 'Repeat observations early and inform senior nurse/doctor if symptoms, trend, or disease context is concerning.'
+        };
+      }
+      if (totalScore >= 1) {
+        return {
+          color: 'var(--score-1)',
+          badge: 'LOW RISK (1–4)',
+          title: 'Increased monitoring',
+          action: 'Repeat observations according to institutional policy and escalate if score rises, symptoms worsen, or clinical concern persists.'
+        };
+      }
+      return {
+        color: 'var(--score-0)',
+        badge: 'LOW / ROUTINE (0)',
+        title: 'Routine observations',
+        action: 'Continue routine monitoring unless clinical concern or oncology disease context warrants earlier review.'
+      };
+    }
+
+    function setIndicator(id, score) {
+      const b1 = document.getElementById('block1-' + id);
+      const b2 = document.getElementById('block2-' + id);
+      const b3 = document.getElementById('block3-' + id);
+      if (!b1 || !b2 || !b3) return;
+      b1.style.background = '#edf2f7';
+      b2.style.background = '#edf2f7';
+      b3.style.background = '#edf2f7';
+      if (score >= 1) b1.style.background = 'var(--score-1)';
+      if (score >= 2) { b1.style.background = 'var(--score-2)'; b2.style.background = 'var(--score-2)'; }
+      if (score >= 3) { b1.style.background = 'var(--score-3)'; b2.style.background = 'var(--score-3)'; b3.style.background = 'var(--score-3)'; }
+    }
+
+    function updateDashboard() {
+      let totalScore = 0;
+      let hasRedFlag = false;
+      const rows = [];
+
+      parameters.forEach(function(p) {
+        const rawVal = getValue(p.id);
+        const numericVal = p.type === 'slider' ? parseFloat(rawVal) : rawVal;
+        const score = p.hiddenScore ? 0 : p.scorer(numericVal);
+        totalScore += score;
+        if (score === 3) hasRedFlag = true;
+        setIndicator(p.id, score);
+        if (!p.hiddenScore) {
+          rows.push({ parameter: p.label, value: p.display ? p.display(numericVal) : String(rawVal), score: score });
+        }
+      });
+
+      const contexts = selectedContext();
+      const hasContext = contexts.length > 0;
+      const hasFnContext = contexts.some(function(x) { return x.id === 'feverNeutropenia' || x.id === 'neutropenia'; });
+      const band = responseBand(totalScore, hasRedFlag, hasContext, hasFnContext);
+
+      totalScoreDisplay.textContent = String(totalScore);
+      const maxGauge = 20;
+      const percentage = Math.min(totalScore / maxGauge, 1);
+      const circumference = 565.48;
+      gaugeFill.style.strokeDashoffset = String(circumference - (percentage * circumference));
+      gaugeFill.style.stroke = band.color;
+      totalScoreDisplay.style.color = band.color;
+      riskBadge.style.background = band.color;
+      riskBadge.textContent = band.badge;
+      actionTitle.textContent = band.title;
+      actionText.textContent = band.action;
+
+      if (hasContext) {
+        contextAlert.textContent = 'Disease-context modifier selected: ' + contexts.map(function(x) { return x.label; }).join('; ') + '. Interpret NEWS2 with lower threshold for escalation.';
+      } else {
+        contextAlert.textContent = 'Disease-context modifier: none selected.';
+      }
+
+      const tbody = document.querySelector('#breakdown-table tbody');
+      if (tbody) {
+        tbody.innerHTML = '';
+        rows.forEach(function(row) {
+          const tr = document.createElement('tr');
+          const td1 = document.createElement('td');
+          const td2 = document.createElement('td');
+          const td3 = document.createElement('td');
+          td1.textContent = row.parameter;
+          td2.textContent = row.value;
+          td3.textContent = String(row.score);
+          if (row.score === 3) td3.style.color = '#e53e3e';
+          tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3);
+          tbody.appendChild(tr);
+        });
+      }
+    }
+
+
+    function setScreenMode(isPc) {
+      document.body.classList.toggle('pc-scale', isPc);
+      document.body.classList.toggle('mobile-scale', !isPc);
+      const toggle = document.getElementById('screenModeToggle');
+      if (toggle) toggle.checked = isPc;
+      try { localStorage.setItem('news2oncotriage_screen_mode', isPc ? 'pc' : 'mobile'); } catch(e) {}
+    }
+
+    function initScreenModeToggle() {
+      const toggle = document.getElementById('screenModeToggle');
+      let saved = 'mobile';
+      try { saved = localStorage.getItem('news2oncotriage_screen_mode') || 'mobile'; } catch(e) {}
+      setScreenMode(saved !== 'mobile');
+      if (toggle) {
+        toggle.addEventListener('change', function(e) { setScreenMode(e.target.checked); });
+      }
+    }
+
+    function buildAdvancedOncologyTriage() {
+      const section = document.createElement('details');
+      section.className = 'advanced-triage';
+      section.id = 'advanced-oncology-triage';
+      section.innerHTML =
+        '<summary><span>Advanced Oncology Triage</span></summary>' +
+        '<div class="microcopy"><b>Purpose:</b> This module does not change the NEWS2 number. It catches oncology emergencies where early physiology may look deceptively stable. Use it as Screen → Trigger → Action.</div>' +
+        '<div class="triage-meta-grid"><label class="triage-meta-field">Case No. <input type="text" id="adv-case-no" placeholder="e.g., 18F2026/000123"></label><label class="triage-meta-field">Created timestamp <span class="timestamp-preview" id="adv-timestamp-preview"></span></label></div>' +
+        '<div class="triage-result" id="adv-triage-result"><b>GREEN — no advanced oncology trigger selected</b><span>Continue NEWS2-guided monitoring and clinical review according to symptoms and local policy.</span></div>' +
+        '<div class="copy-row"><button type="button" class="copy-button" id="copy-adv-triage">Copy TXT summary</button><button type="button" class="copy-button" id="clear-adv-triage">Clear advanced triage</button></div>' +
+        '<div class="triage-stage"><h3>Step 1 — RED / ORANGE / YELLOW trigger screen</h3><div class="triage-grid" id="adv-trigger-grid"></div></div>' +
+        '<div class="triage-stage"><h3>Minimum emergency panel for a sick oncology patient</h3><div class="lab-panel-wrap"><div class="lab-panel-lead"><b>!</b><span>Select tests ordered / required. These selections are included in the copied TXT output. Cultures should not delay time-critical antibiotics or resuscitation.</span></div><div class="lab-tools"><button type="button" class="copy-button" id="select-all-adv-labs">Select full emergency panel</button><button type="button" class="copy-button" id="clear-adv-labs">Clear panel</button></div><div class="lab-panel" id="adv-lab-panel"></div></div></div>' +
+        '<div class="triage-stage"><h3>Disposition rule</h3><div class="microcopy"><b>RED:</b> immediate resuscitation + ICU/oncology/hematology-capable response. <b>ORANGE:</b> same-day emergency oncology/ED assessment. <b>YELLOW:</b> expedited review within 24–48 h with repeat observations/labs. <b>GREEN:</b> routine pathway only if NEWS2, symptoms, and clinical concern remain low.</div></div>' +
+        '<div class="reference"><b>Reference logic:</b> Categories reflect common oncologic emergencies: febrile neutropenia/sepsis, tumour lysis syndrome, hypercalcemia, MSCC, SVCS, raised ICP, leukostasis/hyperviscosity, DIC/bleeding, pericardial tamponade, airway obstruction/hemoptysis, VTE/PE, immune-checkpoint toxicity, CRS/ICANS, extravasation/anaphylaxis, bowel obstruction/typhlitis, and obstructive uropathy/cholangitis. This is a bedside synthesis aid, not an externally validated score.</div>';
+
+      container.appendChild(section);
+
+      const grid = document.getElementById('adv-trigger-grid');
+      advancedTriageItems.forEach(function(item) {
+        const label = document.createElement('label');
+        label.className = 'triage-item';
+        label.innerHTML = '<input type="checkbox" id="adv-' + item.id + '" data-level="' + item.level + '"> <span>' + item.label + '</span>';
+        grid.appendChild(label);
+        document.getElementById('adv-' + item.id).addEventListener('change', updateAdvancedOncologyTriage);
+      });
+
+      const labs = document.getElementById('adv-lab-panel');
+      advancedLabItems.forEach(function(item, index) {
+        const chip = document.createElement('label');
+        chip.className = 'lab-chip';
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.id = 'adv-lab-' + index;
+        const textWrap = document.createElement('span');
+        const group = document.createElement('b');
+        const detail = document.createElement('span');
+        group.textContent = item.group;
+        detail.textContent = item.detail;
+        textWrap.appendChild(group);
+        textWrap.appendChild(detail);
+        chip.appendChild(cb);
+        chip.appendChild(textWrap);
+        labs.appendChild(chip);
+      });
+
+      const selectLabsButton = document.getElementById('select-all-adv-labs');
+      if (selectLabsButton) {
+        selectLabsButton.addEventListener('click', function() {
+          advancedLabItems.forEach(function(item, index) {
+            const el = document.getElementById('adv-lab-' + index);
+            if (el) el.checked = true;
+          });
+        });
+      }
+
+      const clearLabsButton = document.getElementById('clear-adv-labs');
+      if (clearLabsButton) {
+        clearLabsButton.addEventListener('click', function() {
+          advancedLabItems.forEach(function(item, index) {
+            const el = document.getElementById('adv-lab-' + index);
+            if (el) el.checked = false;
+          });
+        });
+      }
+
+      updateTimestampPreview();
+      window.setInterval(updateTimestampPreview, 30000);
+
+      const copyButton = document.getElementById('copy-adv-triage');
+      if (copyButton) {
+        copyButton.addEventListener('click', function() {
+          const summary = getAdvancedTriageSummaryText();
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(summary).then(function() {
+              copyButton.textContent = 'Copied';
+              window.setTimeout(function() { copyButton.textContent = 'Copy TXT summary'; }, 1200);
+            }).catch(function() { fallbackCopyText(summary); });
+          } else {
+            fallbackCopyText(summary);
+          }
+        });
+      }
+
+      const clearButton = document.getElementById('clear-adv-triage');
+      if (clearButton) {
+        clearButton.addEventListener('click', function() {
+          advancedTriageItems.forEach(function(item) {
+            const el = document.getElementById('adv-' + item.id);
+            if (el) el.checked = false;
+          });
+          advancedLabItems.forEach(function(item, index) {
+            const el = document.getElementById('adv-lab-' + index);
+            if (el) el.checked = false;
+          });
+          updateAdvancedOncologyTriage();
+          updateTimestampPreview();
+        });
+      }
+
+      updateAdvancedOncologyTriage();
+    }
+
+    function selectedAdvancedTriageItems() {
+      return advancedTriageItems.filter(function(item) {
+        const el = document.getElementById('adv-' + item.id);
+        return el && el.checked;
+      });
+    }
+
+    function selectedAdvancedLabItems() {
+      return advancedLabItems.filter(function(item, index) {
+        const el = document.getElementById('adv-lab-' + index);
+        return el && el.checked;
+      });
+    }
+
+    function advancedTriageBand(items) {
+      if (items.some(function(item) { return item.level === 'red'; })) {
+        return { label: 'RED — immediate ICU/ED resuscitation trigger', color: 'var(--score-3)', disposition: 'Resuscitate now. Inform senior clinician, oncology/hematology and ICU-capable team. Use ABCDE, oxygen/ventilation, IV access, lactate/urgent labs, cultures if infection suspected, ECG, POCUS/imaging as indicated. Do not delay time-critical treatment.' };
+      }
+      if (items.some(function(item) { return item.level === 'orange'; })) {
+        return { label: 'ORANGE — urgent same-day oncology emergency assessment', color: 'var(--score-2)', disposition: 'Same-day ED/oncology/hematology review. Repeat observations, obtain focused labs/imaging, and admit if symptoms, NEWS2 trend, organ dysfunction, frailty, or treatment toxicity risk is significant.' };
+      }
+      if (items.some(function(item) { return item.level === 'yellow'; })) {
+        return { label: 'YELLOW — expedited review / repeat testing', color: 'var(--score-1)', disposition: 'Repeat observations and relevant labs early. Arrange review within 24–48 hours or sooner if NEWS2 rises, symptoms progress, caregiver concern persists, or laboratory trajectory worsens.' };
+      }
+      return { label: 'GREEN — no advanced oncology trigger selected', color: 'var(--score-0)', disposition: 'Continue NEWS2-guided monitoring and routine oncology pathway unless clinical concern exists.' };
+    }
+
+    function pad2(n) { return String(n).padStart(2, '0'); }
+
+    function formatDateTimeStamp(date) {
+      const d = date || new Date();
+      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      return pad2(d.getDate()) + '-' + months[d.getMonth()] + '-' + d.getFullYear() + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds());
+    }
+
+    function updateTimestampPreview() {
+      const target = document.getElementById('adv-timestamp-preview');
+      if (target) target.textContent = formatDateTimeStamp(new Date());
+    }
+
+    function getCaseNumberText() {
+      const el = document.getElementById('adv-case-no');
+      const value = el ? el.value.trim() : '';
+      return value || 'not entered';
+    }
+
+
+    function getNews2EnteredParametersText() {
+      const lines = [];
+      parameters.forEach(function(p) {
+        const rawVal = getValue(p.id);
+        if (rawVal === '') return;
+        const displayValue = p.display ? p.display(p.type === 'slider' ? parseFloat(rawVal) : rawVal) : String(rawVal);
+        if (p.hiddenScore) {
+          lines.push('- ' + p.label + ': ' + displayValue);
+        } else {
+          const scoreValue = p.scorer(p.type === 'slider' ? parseFloat(rawVal) : rawVal);
+          lines.push('- ' + p.label + ': ' + displayValue + ' (NEWS2 component score ' + scoreValue + ')');
+        }
+      });
+      return lines;
+    }
+
+    function getAdvancedTriageSummaryText() {
+      const items = selectedAdvancedTriageItems();
+      const labs = selectedAdvancedLabItems();
+      const band = advancedTriageBand(items);
+      const total = totalScoreDisplay ? totalScoreDisplay.textContent : 'not calculated';
+      const contexts = selectedContext().map(function(x) { return x.label; });
+      let text = 'NEWS2OncoTriage Advanced Oncology Triage\n';
+      text += 'Institution: MPMMCC & HBCH, Tata Memorial Centre, Varanasi\n';
+      text += 'Case No.: ' + getCaseNumberText() + '\n';
+      text += 'Created: ' + formatDateTimeStamp(new Date()) + '\n';
+      text += 'NEWS2 score: ' + total + '\n';
+      const news2ParameterLines = getNews2EnteredParametersText();
+      text += 'NEWS2 entered parameters:\n';
+      text += news2ParameterLines.length ? news2ParameterLines.join('\n') + '\n' : '- not available\n';
+      text += 'Oncology context: ' + (contexts.length ? contexts.join('; ') : 'none selected') + '\n';
+      text += 'Advanced triage: ' + band.label + '\n';
+      text += 'Disposition: ' + band.disposition + '\n';
+      if (items.length) {
+        text += 'Selected triggers:\n';
+        items.forEach(function(item) { text += '- ' + item.label + ' -> ' + item.action + '\n'; });
+      } else {
+        text += 'Selected triggers: none\n';
+      }
+      if (labs.length) {
+        text += 'Minimum emergency panel selected:\n';
+        labs.forEach(function(item) { text += '- ' + item.group + ': ' + item.detail + '\n'; });
+      } else {
+        text += 'Minimum emergency panel selected: none selected\n';
+      }
+      return text;
+    }
+
+    function fallbackCopyText(text) {
+      const area = document.createElement('textarea');
+      area.value = text;
+      area.setAttribute('readonly', '');
+      area.style.position = 'absolute';
+      area.style.left = '-9999px';
+      document.body.appendChild(area);
+      area.select();
+      try { document.execCommand('copy'); } catch(e) {}
+      document.body.removeChild(area);
+    }
+
+    function updateAdvancedOncologyTriage() {
+      const box = document.getElementById('adv-triage-result');
+      if (!box) return;
+      const items = selectedAdvancedTriageItems();
+      const band = advancedTriageBand(items);
+      box.style.borderColor = band.color;
+      box.style.background = 'linear-gradient(0deg, rgba(255,255,255,0.90), rgba(255,255,255,0.90)), ' + band.color;
+      box.innerHTML = '';
+      const title = document.createElement('b');
+      title.textContent = band.label;
+      const dispo = document.createElement('span');
+      dispo.textContent = band.disposition;
+      box.appendChild(title);
+      box.appendChild(dispo);
+      if (items.length) {
+        const ul = document.createElement('ul');
+        ul.className = 'triage-list';
+        items.slice(0, 6).forEach(function(item) {
+          const li = document.createElement('li');
+          li.textContent = item.action;
+          ul.appendChild(li);
+        });
+        if (items.length > 6) {
+          const li = document.createElement('li');
+          li.textContent = 'Multiple concurrent oncology emergency triggers selected: escalate as the highest-risk condition and prioritize airway, breathing, circulation, neurological rescue, and reversible metabolic causes.';
+          ul.appendChild(li);
+        }
+        box.appendChild(ul);
+      }
+    }
+
+
+    function addAttributionFooter() {
+      const footer = document.createElement('div');
+      footer.className = 'footer-note';
+      footer.innerHTML = '<b>NEWS2OncoTriage</b><br>' +
+        'Built by Professor (Dr.) Jyotirmay Kirtania, Professor &amp; HoD, Department of Anaesthesiology, Critical Care &amp; Pain, MPMMCC &amp; HBCH, Tata Memorial Centre, Varanasi. © 2026.<br>' +
+        'License: GNU General Public License v3.0 (GNU GPL v3). This offline educational and cognitive-assist tool implements NEWS2 scoring and oncology context prompts; it does not replace clinical judgment. | Reference for NEWS2: Welch J, Dean J, Hartin J. Using NEWS2: an essential component of reliable clinical assessment. Clin Med (Lond). 2022;22(6):509-513.'
+		
+      container.appendChild(footer);
+    }
+
+    buildControls();
+    buildAdvancedOncologyTriage();
+    initScreenModeToggle();
+    addAttributionFooter();
+    updateDashboard();
+  </script>
+</body>
+</html>
