@@ -8,6 +8,7 @@ These are a set of Software Tools created and maintained by Prof. Jyotirmay Kirt
 | :--- | :--- | :--- |
 | **ICU Help & Support** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/ICU-Help-Support-v2.4.html) | [📖 About & Help](./docs/ICU-help-support-v2.4-Help.md) |
 | **BEAT-C Antibiotics** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/BEAT-C-v1.0.html) | [📖 About & Help](./docs/BEAT-C-Help.md) |
+| **NEWS2OncoTriage** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/NEWS2OncoTriage.html) | [📖 About & Help](./docs/About-Help-NEWS2OncoTriage.md) |
 | **NEWS2 Triage** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/NEWS2.html) | [📖 About & Help](./docs/NEWS2-Help.md) |
 | **MPM0-III Calculator** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/MPM0-III-Calculator.html) | [📖 About & Help](./docs/MPM0-III-Calculator-Help.md) |
 | **PIM3-Calculator** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/PIM3-Calculator.html) | [📖 About & Help](./docs/PIM3-Calculator-Help.md) |
