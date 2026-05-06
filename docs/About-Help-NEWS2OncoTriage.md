@@ -795,8 +795,7 @@ A: Technically possible (iframe embed or custom integration) but requires:
 - **Current Version:** 1.0
 - **Release Date:** May 2026
 - **Changelog:** See [Version History](#version-history)
-- **Source Code:** Available on request (GNU GPL v3)
-- **DOI:** Zenodo deposit planned for PRANA platform (pending)
+
 
 ---
 
@@ -971,7 +970,7 @@ This software is free and open-source under GNU General Public License v3.0. You
 
 **7. Attribution Requirement**  
 If redistributing or modifying this software, you must:
-- Retain original authorship attribution
+- Retain original authorship attribution to Prof. (Dr.) Jyotirmay Kirtania
 - Clearly document any modifications
 - Distribute modified versions under the same GPL v3 license (copyleft)
 - Provide access to source code
@@ -1068,7 +1067,7 @@ When user clicks "Copy TXT summary":
 - QR code generator for tool distribution
 
 **Version 2.0 (Target: 2027)**
-- Multi-language support (Hindi, Spanish, French)
+- Multi-language support (Hindi, Bengali, Tamil, Spanish, French)
 - Offline PWA (Progressive Web App) with installability
 - Optional encrypted cloud sync (FHIR-compliant, opt-in only)
 - Integration API for EMR systems
@@ -1093,8 +1092,6 @@ Tata Memorial Centre, Varanasi, India
 Affiliated: Homi Bhabha National Institute (HBNI)
 
 **ORCID:** 0000-0002-4426-6877  
-**GitHub:** hodanesthtmcvns-stack (pseudonymous account)  
-**Zenodo DOI:** 10.5281/zenodo.19631781 (PRANA platform)
 
 ### **Feedback & Bug Reports**
 
@@ -1157,7 +1154,7 @@ Affiliated: Homi Bhabha National Institute (HBNI)
 
 **If using this tool in research or publications, please cite:**
 
-Kirtania J. NEWS2OncoTriage: Oncology-Enhanced Early Warning Score and Emergency Triage Tool. Version 1.0. Varanasi: PRANA Platform (Platform for Resuscitation & Acute-care Networked Applications); 2026. Available from: [URL]. GNU GPL v3 license.
+Kirtania J. NEWS2OncoTriage: Oncology-Enhanced Early Warning Score and Emergency Triage Tool. Version 1.0. Varanasi: PRANA Platform (Platform for Resuscitation & Acute-care Networked Applications); 2026. Available from: https://tinyurl.com/prana-q. GNU GPL v3 license.
 
 **BibTeX:**
 ```bibtex
