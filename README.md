@@ -29,6 +29,7 @@ This repository hosts a suite of portable, offline-ready HTML applications desig
 |**PAC-assistant** | PAC Assistant for Anesthesia Residents | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/PAC-assistant-v1.15.html) |
 |**AIR** | Anesthesia Intraoperative Record | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/AIR-v2.0.html) |
 |**TRACHY-score** | Assess need of postoperative tracheostomy after H&N surgeries | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/TRACHY-score-v1.0.html) |
+|**CAO-CDSS-2026** | Assess need of postoperative tracheostomy after H&N surgeries | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/CAO-CDSS-2026.html) |
 |**IBIDA** | Inpatient Basal Insulin Dosing Assistant | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/IBIDA-v1.4.html) | 
 |**IVAA-PK-PD-Sim** | IV Anesthetic Agents Pharmacokinetics Pharmacodynamics Simulator | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/IVAA-PK-PD-Simulator-v3.0.html) |
 |**AA-PKPD** | Inhaled Anaesthetic Agent Pharmacokinetics–Pharmacodynamics Simulator | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/AA-PKPD-v1.2.html) |
