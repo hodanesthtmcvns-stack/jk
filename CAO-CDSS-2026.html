@@ -1,0 +1,2557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CAO-CDSS · Central Airway Obstruction Decision Support</title>
+<!-- Offline-safe typography: no external font dependency. -->
+<style>
+/* ============================================================
+   DESIGN SYSTEM — LIGHT MODE CLINICAL EDITORIAL
+   Palette: parchment / deep navy / amber / clinical-red / forest-green
+============================================================ */
+:root {
+  /* Surface */
+  --bg:          #f5f2ec;
+  --bg2:         #ede9e0;
+  --surface:     #ffffff;
+  --surface2:    #f8f6f1;
+  --surface3:    #eee9df;
+
+  /* Ink */
+  --ink:         #1a1f2e;
+  --ink-2:       #2e3650;
+  --ink-dim:     #6b7490;
+  --ink-faint:   #9ba3bb;
+  --ink-xfaint:  #c8cdd8;
+
+  /* Accent — amber/saffron: the reward colour */
+  --amber:       #c47a1e;
+  --amber-lt:    #f0c87a;
+  --amber-bg:    #fdf3e0;
+  --amber-border:#e8b84b;
+
+  /* Semantic */
+  --danger:      #b83232;
+  --danger-bg:   #fdf0f0;
+  --danger-border:#e8a0a0;
+  --warn:        #b06520;
+  --warn-bg:     #fef5ec;
+  --warn-border: #e8c090;
+  --ok:          #2a7a52;
+  --ok-bg:       #eef8f3;
+  --ok-border:   #90d4b0;
+  --info:        #1e5a96;
+  --info-bg:     #eef4fc;
+  --info-border: #90bce8;
+
+  /* Navy accent for headers */
+  --navy:        #1a2a4a;
+  --navy-lt:     #2e4070;
+
+  /* Type */
+  --serif:       Georgia, 'Times New Roman', serif;
+  --body-serif:  Georgia, 'Times New Roman', serif;
+  --mono:        Consolas, 'Lucida Console', 'Courier New', monospace;
+
+  /* Layout */
+  --radius:      8px;
+  --radius-sm:   5px;
+  --shadow-sm:   0 1px 3px rgba(26,31,46,0.07), 0 1px 2px rgba(26,31,46,0.05);
+  --shadow:      0 4px 12px rgba(26,31,46,0.09), 0 2px 4px rgba(26,31,46,0.06);
+  --shadow-lg:   0 8px 24px rgba(26,31,46,0.11), 0 3px 8px rgba(26,31,46,0.07);
+
+  /* Layout mode */
+  --content-max: 560px;   /* mobile default */
+  --col-gap:     0px;
+}
+
+/* PC MODE overrides */
+body.pc-mode {
+  --content-max: 1180px;
+  --col-gap:     20px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: var(--body-serif);
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+  font-size: 15px;
+  line-height: 1.65;
+  transition: background 0.3s;
+}
+
+/* ── HEADER ─────────────────────────────────────────────── */
+header {
+  background: var(--navy);
+  color: #fff;
+  padding: 0;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  box-shadow: 0 2px 12px rgba(26,31,46,0.25);
+}
+
+.header-band {
+  background: var(--amber);
+  height: 3px;
+}
+
+.header-inner {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 14px 16px 12px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  transition: max-width 0.35s cubic-bezier(.4,0,.2,1),
+              padding  0.35s cubic-bezier(.4,0,.2,1);
+}
+
+.header-left {}
+
+.logo-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 3px;
+}
+
+.logo-chip {
+  background: var(--amber);
+  color: var(--navy);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 3px;
+  letter-spacing: 0.1em;
+  flex-shrink: 0;
+}
+
+.header-title-text {
+  font-family: var(--serif);
+  font-size: 17px;
+  font-weight: 600;
+  color: #fff;
+  line-height: 1.2;
+}
+
+.header-sub {
+  font-size: 10px;
+  color: rgba(255,255,255,0.55);
+  font-family: var(--mono);
+  margin-top: 2px;
+}
+
+.header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* Layout toggle */
+.layout-toggle {
+  display: flex;
+  background: rgba(255,255,255,0.1);
+  border-radius: 20px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.layout-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border: none;
+  border-radius: 16px;
+  background: transparent;
+  color: rgba(255,255,255,0.6);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.04em;
+}
+
+.layout-btn.active {
+  background: var(--amber);
+  color: var(--navy);
+  font-weight: 600;
+}
+
+.layout-btn svg {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+.header-attribution {
+  font-size: 9.5px;
+  font-family: var(--mono);
+  color: rgba(255,255,255,0.4);
+  text-align: right;
+  line-height: 1.6;
+}
+
+.header-attribution a { color: var(--amber-lt); text-decoration: none; }
+
+/* ── TAB BAR ─────────────────────────────────────────────── */
+.tab-bar-wrap {
+  background: var(--surface);
+  border-bottom: 2px solid var(--bg2);
+  position: sticky;
+  top: 0; /* stacks under header via z-index */
+  z-index: 100;
+}
+
+/* The tab bar is the EXTERNAL TRIGGER — always visible, labelled with verbs */
+.tab-bar {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  display: flex;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 0 4px;
+  transition: max-width 0.35s cubic-bezier(.4,0,.2,1);
+}
+
+.tab-bar::-webkit-scrollbar { display: none; }
+
+.tab-btn {
+  flex-shrink: 0;
+  padding: 11px 14px;
+  border: none;
+  background: transparent;
+  color: var(--ink-dim);
+  font-family: var(--body-serif);
+  font-size: 13px;
+  font-weight: 400;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.18s;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  letter-spacing: 0.01em;
+}
+
+.tab-btn:hover { color: var(--navy); background: var(--surface2); }
+
+.tab-btn.active {
+  color: var(--navy);
+  border-bottom-color: var(--amber);
+  font-weight: 600;
+}
+
+.tab-icon { font-size: 13px; }
+
+/* ── MAIN ────────────────────────────────────────────────── */
+main {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 22px 14px 72px;
+  transition: max-width 0.35s cubic-bezier(.4,0,.2,1),
+              padding  0.35s cubic-bezier(.4,0,.2,1);
+}
+
+body.pc-mode main { padding: 28px 24px 80px; }
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; animation: fadeUp 0.25s ease; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── SECTION TITLES ──────────────────────────────────────── */
+.section-eyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin-bottom: 4px;
+}
+
+.section-title {
+  font-family: var(--serif);
+  font-size: 22px;
+  color: var(--navy);
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 4px;
+}
+
+.section-sub {
+  color: var(--ink-dim);
+  font-size: 12.5px;
+  margin-bottom: 22px;
+  font-family: var(--mono);
+}
+
+/*  */
+/* Internal trigger = clinical uncertainty visualised */
+.trigger-banner {
+  background: var(--amber-bg);
+  border: 1px solid var(--amber-border);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+
+.trigger-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.trigger-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--amber);
+  font-weight: 600;
+  margin-bottom: 3px;
+}
+
+/* ── CARDS ───────────────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--ink-xfaint);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.card:hover { box-shadow: var(--shadow); }
+
+.card-title {
+  font-family: var(--serif);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1.3;
+}
+
+/* PC mode: two-column card grids */
+.pc-grid-2 { display: grid; grid-template-columns: 1fr; gap: 14px; }
+body.pc-mode .pc-grid-2 { grid-template-columns: 1fr 1fr; }
+
+.pc-grid-3 { display: grid; grid-template-columns: 1fr; gap: 14px; }
+body.pc-mode .pc-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+/* ── BADGES ──────────────────────────────────────────────── */
+.badge {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 3px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.badge-amber  { background: var(--amber-bg);  color: var(--amber);  border: 1px solid var(--amber-border); }
+.badge-danger { background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger-border); }
+.badge-warn   { background: var(--warn-bg);   color: var(--warn);   border: 1px solid var(--warn-border); }
+.badge-ok     { background: var(--ok-bg);     color: var(--ok);     border: 1px solid var(--ok-border); }
+.badge-info   { background: var(--info-bg);   color: var(--info);   border: 1px solid var(--info-border); }
+.badge-navy   { background: var(--navy);      color: #fff;          border: 1px solid var(--navy-lt); }
+
+/* ── ALERT BOXES ─────────────────────────────────────────── */
+.alert {
+  border-radius: var(--radius-sm);
+  padding: 11px 14px;
+  font-size: 12.5px;
+  margin-bottom: 14px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  line-height: 1.65;
+}
+.alert-icon { flex-shrink: 0; font-size: 15px; margin-top: 1px; }
+.alert.danger { background: var(--danger-bg); border: 1px solid var(--danger-border); color: var(--danger); }
+.alert.warn   { background: var(--warn-bg);   border: 1px solid var(--warn-border);   color: var(--warn); }
+.alert.ok     { background: var(--ok-bg);     border: 1px solid var(--ok-border);     color: var(--ok); }
+.alert.info   { background: var(--info-bg);   border: 1px solid var(--info-border);   color: var(--info); }
+.alert.amber  { background: var(--amber-bg);  border: 1px solid var(--amber-border);  color: var(--amber); }
+
+/* ── DIVIDER ─────────────────────────────────────────────── */
+.divider { height: 1px; background: var(--ink-xfaint); margin: 18px 0; }
+
+/* ============================================================
+   TAB 1 — PATHWAY NAVIGATOR
+============================================================ */
+.etiology-toggle {
+  display: flex;
+  border: 2px solid var(--ink-xfaint);
+  border-radius: 40px;
+  overflow: hidden;
+  margin-bottom: 20px;
+  background: var(--surface2);
+  box-shadow: var(--shadow-sm);
+}
+
+.etio-btn {
+  flex: 1;
+  padding: 10px 12px;
+  border: none;
+  background: transparent;
+  font-family: var(--body-serif);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(.4,0,.2,1);
+  text-align: center;
+  color: var(--ink-dim);
+}
+
+.etio-btn.active-mal {
+  background: var(--danger);
+  color: #fff;
+  border-radius: 36px;
+  box-shadow: 0 2px 8px rgba(184,50,50,0.3);
+}
+
+.etio-btn.active-non {
+  background: var(--ok);
+  color: #fff;
+  border-radius: 36px;
+  box-shadow: 0 2px 8px rgba(42,122,82,0.3);
+}
+
+/* Decision tree */
+.decision-tree { display: flex; flex-direction: column; }
+
+.step-node { display: flex; gap: 0; }
+
+.step-connector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  width: 36px;
+}
+
+.step-dot {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+  border: 2px solid;
+  box-shadow: var(--shadow-sm);
+}
+
+.step-line {
+  width: 2px;
+  min-height: 20px;
+  flex: 1;
+  background: var(--ink-xfaint);
+}
+
+.step-content {
+  flex: 1;
+  padding: 0 0 20px 12px;
+  padding-top: 3px;
+}
+
+.step-q {
+  font-family: var(--serif);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 5px;
+}
+
+.step-sub {
+  font-size: 11.5px;
+  color: var(--ink-dim);
+  margin-bottom: 10px;
+  font-family: var(--mono);
+}
+
+/* Minimal-friction tap targets */
+.step-options { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 0; }
+
+.step-opt-btn {
+  padding: 7px 13px;
+  border-radius: 20px;
+  border: 1.5px solid var(--ink-xfaint);
+  background: var(--surface);
+  color: var(--ink-dim);
+  font-size: 12px;
+  font-family: var(--body-serif);
+  cursor: pointer;
+  transition: all 0.18s;
+  font-weight: 400;
+  box-shadow: var(--shadow-sm);
+}
+
+.step-opt-btn:hover { border-color: var(--amber); color: var(--amber); }
+.step-opt-btn.selected { border-color: var(--amber); background: var(--amber-bg); color: var(--amber); font-weight: 600; }
+
+/* VARIABLE REWARD: the insight panel — revealed only on tap */
+.step-insight {
+  display: none;
+  margin-top: 10px;
+  background: var(--surface2);
+  border-left: 3px solid var(--amber);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: 10px 14px;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--ink-2);
+  animation: revealInsight 0.22s ease;
+}
+
+@keyframes revealInsight {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.rec-box {
+  background: var(--surface);
+  border: 1px solid var(--ink-xfaint);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  margin-top: 10px;
+  box-shadow: var(--shadow-sm);
+}
+
+.rec-box.amber { border-left: 4px solid var(--amber); }
+.rec-box.danger { border-left: 4px solid var(--danger); }
+.rec-box.ok    { border-left: 4px solid var(--ok); }
+.rec-box.info  { border-left: 4px solid var(--info); }
+.rec-box.warn  { border-left: 4px solid var(--warn); }
+
+.rec-label {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 5px;
+}
+
+.rec-text {
+  font-size: 13px;
+  color: var(--ink-2);
+  line-height: 1.7;
+}
+
+.rec-stat {
+  margin-top: 7px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-dim);
+  padding-top: 7px;
+  border-top: 1px solid var(--ink-xfaint);
+}
+
+/* ============================================================
+   TAB 2 — AIRWAY ASSESSMENT
+   INVESTMENT: user builds a risk profile; score accumulates
+============================================================ */
+.assess-field {
+  background: var(--surface);
+  border: 1.5px solid var(--ink-xfaint);
+  border-radius: var(--radius);
+  padding: 13px 14px;
+  margin-bottom: 10px;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+
+.assess-field:focus-within {
+  border-color: var(--amber);
+  box-shadow: 0 0 0 3px rgba(196,122,30,0.1), var(--shadow-sm);
+}
+
+.assess-label {
+  font-size: 10.5px;
+  font-family: var(--mono);
+  color: var(--ink-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 7px;
+  display: block;
+}
+
+.assess-input {
+  width: 100%;
+  background: var(--surface2);
+  border: 1.5px solid var(--ink-xfaint);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 14px;
+  padding: 8px 10px;
+  outline: none;
+  transition: border-color 0.18s;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.assess-input:focus { border-color: var(--amber); }
+
+.assess-normal {
+  font-size: 11px;
+  color: var(--ink-dim);
+  margin-top: 5px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--mono);
+}
+
+.assess-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ink-xfaint);
+  flex-shrink: 0;
+  transition: background 0.25s;
+}
+
+.assess-indicator.ok       { background: var(--ok); }
+.assess-indicator.abnormal { background: var(--danger); }
+.assess-indicator.warn     { background: var(--warn); }
+
+/* Mallampati & ULBT button grid */
+.mp-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+body.pc-mode .mp-grid { grid-template-columns: repeat(4, 1fr); }
+
+.mp-btn {
+  padding: 10px 8px;
+  border: 1.5px solid var(--ink-xfaint);
+  border-radius: var(--radius-sm);
+  background: var(--surface2);
+  color: var(--ink-dim);
+  font-family: var(--body-serif);
+  font-size: 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.18s;
+  line-height: 1.4;
+  box-shadow: var(--shadow-sm);
+}
+
+.mp-btn strong { display: block; font-size: 13px; margin-bottom: 3px; }
+.mp-btn small  { font-size: 10.5px; color: var(--ink-dim); font-family: var(--mono); }
+.mp-btn:hover  { border-color: var(--amber); color: var(--navy); box-shadow: var(--shadow); }
+.mp-btn.selected { background: var(--amber-bg); border-color: var(--amber); color: var(--navy); box-shadow: 0 0 0 3px rgba(196,122,30,0.12); }
+.mp-btn.selected strong { color: var(--amber); }
+
+/* Risk summary — INVESTMENT payoff */
+.risk-summary {
+  background: var(--surface);
+  border: 1.5px solid var(--ink-xfaint);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-top: 4px;
+  box-shadow: var(--shadow);
+}
+
+.risk-bar-track {
+  height: 10px;
+  background: var(--bg2);
+  border-radius: 5px;
+  overflow: hidden;
+  margin: 10px 0 4px;
+}
+
+.risk-bar-fill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.7s cubic-bezier(.4,0,.2,1), background 0.5s;
+}
+
+.risk-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+/* ULBT result panel */
+.ulbt-result {
+  display: none;
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 12.5px;
+  line-height: 1.65;
+  animation: revealInsight 0.22s ease;
+}
+
+/* ============================================================
+   TAB 3 — ANAESTHESIA & VENTILATION
+============================================================ */
+.compare-wrap {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+body.pc-mode .compare-wrap { grid-template-columns: 1fr 1fr; }
+
+.compare-col {
+  background: var(--surface2);
+  border: 1.5px solid var(--ink-xfaint);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.compare-col-head {
+  padding: 10px 14px;
+  font-family: var(--serif);
+  font-size: 13px;
+  font-weight: 700;
+  border-bottom: 1px solid var(--ink-xfaint);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.compare-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--ink-xfaint);
+  gap: 8px;
+  font-size: 12px;
+}
+
+.compare-row:last-child { border-bottom: none; }
+.compare-key { color: var(--ink-dim); flex: 1; }
+.compare-val { font-family: var(--mono); color: var(--ink); font-size: 11px; text-align: right; max-width: 55%; }
+
+/* Checklist — INVESTMENT */
+.checklist-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--ink-xfaint);
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+  border-radius: 4px;
+}
+
+.checklist-item:last-child { border-bottom: none; }
+.checklist-item:hover { background: var(--surface2); padding-left: 4px; }
+
+.check-box {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--ink-xfaint);
+  border-radius: 5px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.18s;
+  margin-top: 1px;
+}
+
+.checklist-item.checked .check-box {
+  background: var(--ok);
+  border-color: var(--ok);
+}
+
+.checklist-item.checked .check-box::after {
+  content: '✓';
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.check-label { flex: 1; font-size: 13px; line-height: 1.5; }
+.check-label em { display: block; font-size: 11px; color: var(--ink-dim); font-style: normal; margin-top: 2px; font-family: var(--mono); }
+.checklist-item.checked .check-label { color: var(--ink-dim); text-decoration: line-through; }
+
+/* Progress bar for checklist */
+.checklist-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  font-size: 11.5px;
+  font-family: var(--mono);
+  color: var(--ink-dim);
+}
+
+.cl-progress-track {
+  flex: 1;
+  height: 5px;
+  background: var(--bg2);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.cl-progress-fill {
+  height: 100%;
+  background: var(--ok);
+  border-radius: 3px;
+  transition: width 0.4s cubic-bezier(.4,0,.2,1);
+}
+
+/* ============================================================
+   TAB 4 — STENT DECISION
+============================================================ */
+.stent-q { font-family: var(--serif); font-size: 14px; font-weight: 700; color: var(--navy); margin-bottom: 10px; }
+
+.stent-radio-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+
+.stent-radio {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 13px;
+  border: 1.5px solid var(--ink-xfaint);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.18s;
+  font-size: 13px;
+  background: var(--surface2);
+  line-height: 1.5;
+}
+
+.stent-radio:hover { border-color: var(--amber); background: var(--amber-bg); }
+.stent-radio.selected { border-color: var(--amber); background: var(--amber-bg); }
+.stent-radio input { accent-color: var(--amber); flex-shrink: 0; margin-top: 2px; }
+
+/* Stent complication table */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.data-table th {
+  padding: 9px 12px;
+  text-align: left;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-dim);
+  background: var(--surface3);
+  border-bottom: 2px solid var(--ink-xfaint);
+}
+
+.data-table td {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--ink-xfaint);
+  vertical-align: top;
+  line-height: 1.55;
+  font-size: 12px;
+}
+
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: var(--surface2); }
+
+/* ============================================================
+   TAB 5 — EVIDENCE ATLAS
+============================================================ */
+.evidence-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+.certainty-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 9.5px;
+  font-family: var(--mono);
+  font-weight: 600;
+  background: var(--warn-bg);
+  color: var(--warn);
+  border: 1px solid var(--warn-border);
+  white-space: nowrap;
+}
+
+/* ============================================================
+   TAB 6 — RESIDENT QUIZ
+  VARIABLE REWARD: correct/incorrect revealed only after commitment
+============================================================ */
+.quiz-card {
+  background: var(--surface);
+  border: 1.5px solid var(--ink-xfaint);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+
+.quiz-progress-row {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 18px;
+}
+
+.quiz-pip {
+  height: 4px;
+  flex: 1;
+  border-radius: 2px;
+  background: var(--ink-xfaint);
+  transition: background 0.3s;
+}
+
+.quiz-pip.done    { background: var(--ok); }
+.quiz-pip.current { background: var(--amber); }
+
+.quiz-qnum {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--ink-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 8px;
+}
+
+.quiz-qtext {
+  font-family: var(--serif);
+  font-size: 16px;
+  color: var(--navy);
+  font-weight: 600;
+  line-height: 1.5;
+  margin-bottom: 18px;
+}
+
+.quiz-opts { display: flex; flex-direction: column; gap: 9px; margin-bottom: 16px; }
+
+.quiz-opt {
+  padding: 12px 15px;
+  border: 1.5px solid var(--ink-xfaint);
+  border-radius: var(--radius-sm);
+  background: var(--surface2);
+  color: var(--ink);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.18s;
+  text-align: left;
+  font-family: var(--body-serif);
+  line-height: 1.45;
+  box-shadow: var(--shadow-sm);
+}
+
+.quiz-opt:hover:not(:disabled) { border-color: var(--amber); background: var(--amber-bg); color: var(--navy); box-shadow: var(--shadow); }
+.quiz-opt.correct  { border-color: var(--ok);     background: var(--ok-bg);     color: var(--ok);     font-weight: 600; }
+.quiz-opt.incorrect{ border-color: var(--danger);  background: var(--danger-bg); color: var(--danger); }
+.quiz-opt:disabled { cursor: not-allowed; }
+
+/* VARIABLE REWARD: explanation revealed post-commitment */
+.quiz-explanation {
+  background: var(--info-bg);
+  border-left: 3px solid var(--info);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: 11px 14px;
+  font-size: 12.5px;
+  line-height: 1.7;
+  display: none;
+  margin-bottom: 14px;
+  color: var(--ink-2);
+  animation: revealInsight 0.22s ease;
+}
+
+.quiz-explanation.show { display: block; }
+
+.quiz-nav { display: flex; gap: 10px; justify-content: flex-end; }
+
+.btn {
+  padding: 10px 20px;
+  border-radius: 20px;
+  border: none;
+  font-family: var(--body-serif);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s;
+  letter-spacing: 0.01em;
+}
+
+.btn-primary { background: var(--amber); color: #fff; box-shadow: 0 2px 8px rgba(196,122,30,0.3); }
+.btn-primary:hover { filter: brightness(1.08); box-shadow: 0 4px 12px rgba(196,122,30,0.35); }
+.btn-ghost { background: transparent; border: 1.5px solid var(--ink-xfaint); color: var(--ink-dim); }
+.btn-ghost:hover { border-color: var(--amber); color: var(--amber); }
+.btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.quiz-score-panel { text-align: center; padding: 36px 16px; display: none; }
+
+.score-num {
+  font-family: var(--serif);
+  font-size: 72px;
+  color: var(--navy);
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.score-sub { font-size: 15px; color: var(--ink-dim); margin-bottom: 20px; }
+.score-feedback { font-size: 13px; color: var(--ink-dim); max-width: 480px; margin: 0 auto 24px; line-height: 1.75; }
+
+/* ── INFO TABLE ──────────────────────────────────────────── */
+.info-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12.5px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--ink-xfaint);
+}
+
+.info-row:last-child { border-bottom: none; }
+.info-key { min-width: 160px; color: var(--ink-dim); font-family: var(--mono); font-size: 11px; flex-shrink: 0; padding-top: 1px; }
+.info-val { color: var(--ink); line-height: 1.55; }
+
+/* ── FOOTER ──────────────────────────────────────────────── */
+footer {
+  background: var(--navy);
+  color: rgba(255,255,255,0.5);
+  text-align: center;
+  padding: 20px 16px;
+  font-size: 10.5px;
+  font-family: var(--mono);
+  line-height: 1.9;
+}
+
+footer a { color: var(--amber-lt); text-decoration: none; }
+footer strong { color: rgba(255,255,255,0.75); }
+
+/* ── FIRE BANNER ─────────────────────────────────────────── */
+.fire-banner {
+  background: var(--danger-bg);
+  border: 2px solid var(--danger);
+  border-radius: var(--radius);
+  padding: 13px 16px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 13px;
+  line-height: 1.65;
+  box-shadow: 0 2px 8px rgba(184,50,50,0.12);
+}
+
+.fire-banner-icon { font-size: 22px; flex-shrink: 0; }
+
+/* scrollable table on mobile */
+.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* ── EMERGENCY + BOTTOM DOCUMENTATION FRAME ───────────────── */
+.clinical-strip {
+  margin-bottom: 16px;
+}
+
+.bottom-documentation-frame {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 2px solid var(--bg2);
+}
+
+body.pc-mode .bottom-documentation-frame {
+  margin-top: 36px;
+}
+
+.emergency-banner {
+  background: var(--danger-bg);
+  border: 2px solid var(--danger);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  color: var(--danger);
+  font-size: 13px;
+  line-height: 1.6;
+  box-shadow: 0 2px 8px rgba(184,50,50,0.12);
+}
+
+.emergency-banner strong { color: var(--danger); }
+
+.context-panel {
+  background: var(--surface);
+  border: 1px solid var(--ink-xfaint);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+.context-panel summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 12px 16px;
+  font-family: var(--serif);
+  color: var(--navy);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.context-panel summary::-webkit-details-marker { display: none; }
+.context-panel summary::after {
+  content: '▾';
+  font-family: var(--mono);
+  color: var(--ink-dim);
+  transition: transform 0.2s;
+}
+.context-panel[open] summary::after { transform: rotate(180deg); }
+
+.context-body {
+  padding: 0 16px 16px;
+  border-top: 1px solid var(--ink-xfaint);
+}
+
+.context-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-top: 14px;
+}
+body.pc-mode .context-grid { grid-template-columns: repeat(4, 1fr); }
+
+.context-field label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  margin-bottom: 5px;
+}
+
+.context-field input,
+.context-field select,
+.context-field textarea {
+  width: 100%;
+  background: var(--surface2);
+  border: 1.5px solid var(--ink-xfaint);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 8px 10px;
+  outline: none;
+}
+
+.context-field textarea { min-height: 34px; resize: vertical; }
+.context-field input:focus,
+.context-field select:focus,
+.context-field textarea:focus { border-color: var(--amber); }
+
+.context-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.summary-output {
+  display: none;
+  margin-top: 12px;
+  background: var(--surface2);
+  border: 1px solid var(--ink-xfaint);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  white-space: pre-wrap;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+
+.certainty-mini {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 10px;
+  background: var(--warn-bg);
+  color: var(--warn);
+  border: 1px solid var(--warn-border);
+  margin-left: 6px;
+  white-space: nowrap;
+}
+
+.heuristic-note {
+  margin-top: 10px;
+  background: var(--info-bg);
+  border: 1px solid var(--info-border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--info);
+}
+
+@media print {
+  header, .tab-bar-wrap, .layout-toggle, .context-actions, .trigger-banner, footer { display: none !important; }
+  body { background: #fff; color: #000; }
+  main { max-width: 100%; padding: 0; }
+  .tab-panel { display: block !important; page-break-before: auto; }
+  .card, .rec-box, .context-panel, .emergency-banner { box-shadow: none; break-inside: avoid; }
+  .summary-output { display: block !important; }
+}
+
+</style>
+</head>
+<body>
+
+<!-- ╔══════════════════════════════════════════════════════╗
+     ║  HEADER                                              ║
+     ╚══════════════════════════════════════════════════════╝ -->
+<header>
+  <div class="header-band"></div>
+  <div class="header-inner">
+    <div class="header-left">
+      <div class="logo-row">
+        <span class="logo-chip">CAO-CDSS</span>
+        <span class="header-title-text">Central Airway Obstruction</span>
+      </div>
+      <div class="header-sub">Decision Support · ACCP CHEST 2025;167(1):283–295</div>
+    </div>
+    <div class="header-right">
+      <!-- Layout toggle -->
+      <div class="layout-toggle" role="group" aria-label="Layout mode">
+        <button class="layout-btn active" id="btnMobile" onclick="setLayout('mobile',this)" aria-pressed="true">
+          <svg viewBox="0 0 12 12" fill="currentColor"><rect x="2" y="0" width="8" height="12" rx="1.5"/></svg>
+          Mobile
+        </button>
+        <button class="layout-btn" id="btnPC" onclick="setLayout('pc',this)" aria-pressed="false">
+          <svg viewBox="0 0 14 12" fill="currentColor"><rect x="0" y="0" width="14" height="9" rx="1.5"/><rect x="4" y="10" width="6" height="2" rx="0.5"/></svg>
+          PC
+        </button>
+      </div>
+      <div class="header-attribution">
+        Prof. (Dr.) Jyotirmay Kirtania<br>
+        MPMMCC &amp; HBCH · TMC Varanasi<br>
+        <a href="https://orcid.org/0000-0002-4426-6877" target="_blank">ORCID 0000-0002-4426-6877</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ╔══════════════════════════════════════════════════════╗
+     ║  TAB BAR  (External Trigger)            ║
+     ╚══════════════════════════════════════════════════════╝ -->
+<div class="tab-bar-wrap">
+  <nav class="tab-bar" role="tablist" id="tabBar" aria-label="CAO-CDSS sections">
+    <button class="tab-btn active" id="tabbtn-pathway" role="tab" aria-selected="true" aria-controls="tab-pathway" tabindex="0" onclick="showTab('pathway',this)"><span class="tab-icon">🔀</span>Navigate</button>
+    <button class="tab-btn" id="tabbtn-assess" role="tab" aria-selected="false" aria-controls="tab-assess" tabindex="-1" onclick="showTab('assess',this)"><span class="tab-icon">🫁</span>Assess</button>
+    <button class="tab-btn" id="tabbtn-anesthesia" role="tab" aria-selected="false" aria-controls="tab-anesthesia" tabindex="-1" onclick="showTab('anesthesia',this)"><span class="tab-icon">💨</span>Anaesthesia</button>
+    <button class="tab-btn" id="tabbtn-stent" role="tab" aria-selected="false" aria-controls="tab-stent" tabindex="-1" onclick="showTab('stent',this)"><span class="tab-icon">🔩</span>Stent</button>
+    <button class="tab-btn" id="tabbtn-evidence" role="tab" aria-selected="false" aria-controls="tab-evidence" tabindex="-1" onclick="showTab('evidence',this)"><span class="tab-icon">📊</span>Evidence</button>
+    <button class="tab-btn" id="tabbtn-quiz" role="tab" aria-selected="false" aria-controls="tab-quiz" tabindex="-1" onclick="showTab('quiz',this)"><span class="tab-icon">🎯</span>Quiz</button>
+  </nav>
+</div>
+
+<main>
+
+
+  <section class="clinical-strip" aria-label="Emergency warning">
+    <div class="emergency-banner" role="alert">
+      <div class="fire-banner-icon">🚨</div>
+      <div><strong>Critical CAO:</strong> Critical CAO with stridor, severe hypoxemia, impending airway loss, or inability to lie supine requires immediate senior airway/interventional pulmonology/thoracic/anesthesia activation.</div>
+    </div>
+  </section>
+
+<!-- ════════════════════════════════════════════════════════
+     TAB 1 · PATHWAY NAVIGATOR
+     Trigger → Action (tap) → Variable Reward (insight)
+════════════════════════════════════════════════════════════ -->
+<div class="tab-panel active" id="tab-pathway" role="tabpanel" aria-labelledby="tabbtn-pathway" tabindex="0">
+
+  <div class="section-eyebrow">Clinical Decision</div>
+  <h1 class="section-title">Pathway Navigator</h1>
+  <p class="section-sub">Select etiology → tap decision node → retrieve guideline recommendation</p>
+
+  <!-- Internal trigger: clinical uncertainty prompt -->
+  <div class="trigger-banner">
+    <div class="trigger-icon">💡</div>
+    <div>
+      <div class="trigger-label">Internal Trigger</div>
+      <em>Facing CAO in the list today?</em> — Select the etiology, then step through each node. The evidence surfaces only after your clinical commitment.
+    </div>
+  </div>
+
+  <!-- Etiology toggle -->
+  <div class="etiology-toggle">
+    <button class="etio-btn active-mal" id="btnMal" onclick="selectPathway('malignant')">🔴 Malignant CAO</button>
+    <button class="etio-btn" id="btnNon" onclick="selectPathway('nonmalignant')">🟢 Nonmalignant CAO</button>
+  </div>
+
+  <div style="text-align:right; margin-bottom:14px;">
+    <button class="btn btn-ghost" onclick="resetPathway()" style="font-size:11.5px; padding:6px 14px; border-radius:14px;">↺ Reset</button>
+  </div>
+
+  <!-- ── MALIGNANT PATHWAY ── -->
+  <div id="pathway-malignant">
+    <div class="decision-tree">
+
+      <!-- NODE 1 -->
+      <div class="step-node">
+        <div class="step-connector">
+          <div class="step-dot" style="background:var(--danger-bg);border-color:var(--danger);color:var(--danger);">1</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-content">
+          <div class="step-q">Initial Evaluation Complete?</div>
+          <div class="step-sub">Comprehensive H&P · CT chest+neck · Labs · Airway parameters</div>
+          <div class="rec-box amber">
+            <div class="rec-label">Good Practice Statement — Rec 1</div>
+            <div class="rec-text">Comprehensive H&P (symptoms, comorbidities, medications, prior thoracic surgery/chemoradiation). Airway parameters: mouth opening (&gt;3 FB), Mallampati, ULBT, thyromental distance (&gt;3 FB), neck mobility (&gt;90°), dentition, cervical spine. CT chest+neck = imaging of choice.</div>
+            <div class="rec-stat">Evidence: Good Practice Statement · No comparator studies · CT preferred over plain radiograph (radiographic CAO diagnosis often missed or delayed)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NODE 2 -->
+      <div class="step-node">
+        <div class="step-connector">
+          <div class="step-dot" style="background:var(--danger-bg);border-color:var(--danger);color:var(--danger);">2</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-content">
+          <div class="step-q">Therapeutic bronchoscopy indicated?</div>
+          <div class="step-options">
+            <button class="step-opt-btn" onclick="toggleInsight(this,'i-m2a')">Yes — symptomatic obstruction</button>
+            <button class="step-opt-btn" onclick="toggleInsight(this,'i-m2b')">Uncertain — borderline</button>
+          </div>
+          <div class="step-insight" id="i-m2a">
+            <span class="badge badge-amber">Rec 2 · Conditional · Very Low</span><br><br>
+            Therapeutic bronchoscopy as <strong>adjunct</strong> to systemic therapy ± local radiation. In malignant CAO, relieves obstruction enabling chemo-immunotherapy, targeted therapy, and radiation delivery.<br><br>
+            <strong>Key evidence:</strong> Survival HR 2.1 (95% CI 1.1–4.8; p=0.003) favouring bronchoscopy + chemoradiation vs chemoradiation alone (n=100 retrospective). Prospective study (n=46): mean survival 10±9 months (bronchoscopy) vs 4±3 months (no bronchoscopy). Dyspnea reduction and QoL improvement at 6 months. Atelectasis and rehospitalisations decreased.
+          </div>
+          <div class="step-insight" id="i-m2b">
+            Use spirometry (FEV1/FVC) and flow-volume loop to quantify functional limitation. CT % lumen occlusion: ≥50% = CAO by definition. Track symptom trajectory and rate of progression to gauge urgency.
+          </div>
+        </div>
+      </div>
+
+      <!-- NODE 3 -->
+      <div class="step-node">
+        <div class="step-connector">
+          <div class="step-dot" style="background:var(--danger-bg);border-color:var(--danger);color:var(--danger);">3</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-content">
+          <div class="step-q">Rigid or Flexible Bronchoscopy?</div>
+          <div class="step-options">
+            <button class="step-opt-btn" onclick="toggleInsight(this,'i-m3a')">Proximal / bulky / critical</button>
+            <button class="step-opt-btn" onclick="toggleInsight(this,'i-m3b')">Distal / accessible</button>
+          </div>
+          <div class="step-insight" id="i-m3a">
+            <span class="badge badge-danger">Rec 3 · Conditional · Very Low</span><br><br>
+            <strong>Prefer rigid bronchoscopy</strong> <span class="certainty-mini">Evidence certainty: very low</span> for proximal/critical obstruction. Advantages: ventilation conduit, "core-through" for bulky tumours, superior tamponade for airway haemorrhage, platform for rigid forceps and silicone stents. Flexible bronchoscope used as adjunct for distal airway interventions.<br><br>
+            <strong>AQuIRE registry</strong> (n=947): success 93.5% (rigid) vs 92.7% (flexible); P=0.62 — not significant. Fewer sessions with rigid (1 vs 2; P&lt;0.001). More bleeding-related deaths with flexible bronchoscopy in retrospective data.
+          </div>
+          <div class="step-insight" id="i-m3b">
+            Flexible bronchoscopy may suffice for distal, accessible lesions. Similar success rates in registry data. Consider rigid scope with flexible adjunct as hybrid approach — particularly if haemorrhage risk is elevated.
+          </div>
+        </div>
+      </div>
+
+      <!-- NODE 4 -->
+      <div class="step-node">
+        <div class="step-connector">
+          <div class="step-dot" style="background:var(--danger-bg);border-color:var(--danger);color:var(--danger);">4</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-content">
+          <div class="step-q">Endobronchial (intrinsic) tumour?</div>
+          <div class="step-options">
+            <button class="step-opt-btn" onclick="toggleInsight(this,'i-m4a')">Yes — endobronchial disease</button>
+            <button class="step-opt-btn" onclick="toggleInsight(this,'i-m4b')">No — extrinsic compression</button>
+          </div>
+          <div class="step-insight" id="i-m4a">
+            <span class="badge badge-danger">Rec 6 · Conditional · Very Low</span><br><br>
+            Perform tumour excision + ablation. Techniques: manual debridement (rigid/flexible forceps), rigid coring, cryodebridement, microdebridement — combined with heat ablation (laser, electrocautery, APC) for haemostasis.<br><br>
+            <div class="alert danger" style="margin-top:8px; font-size:12px;">
+              <span class="alert-icon">🔥</span>
+              <span><strong>Fire safety:</strong> reduce FiO₂ to <strong>≤0.4</strong> before any heat ablative device activation. Keep catheters away from flammable materials.</span>
+            </div>
+          </div>
+          <div class="step-insight" id="i-m4b">
+            Extrinsic compression without debridable endobronchial tissue. Consider early stent placement if oncologic response will be delayed. Radiation planning must account for metallic stent scatter and anatomic distortion.
+          </div>
+        </div>
+      </div>
+
+      <!-- NODE 5 -->
+      <div class="step-node">
+        <div class="step-connector">
+          <div class="step-dot" style="background:var(--danger-bg);border-color:var(--danger);color:var(--danger);">5</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-content">
+          <div class="step-q">Stent placement indicated?</div>
+          <div class="step-options">
+            <button class="step-opt-btn" onclick="toggleInsight(this,'i-m5a')">Failed / extrinsic</button>
+            <button class="step-opt-btn" onclick="toggleInsight(this,'i-m5b')">Patency by debridement</button>
+            <button class="step-opt-btn" onclick="toggleInsight(this,'i-m5c')">Post-stent surveillance</button>
+          </div>
+          <div class="step-insight" id="i-m5a">
+            <span class="badge badge-danger">Rec 8 · Conditional · Very Low</span><br><br>
+            Stent is indicated if other modalities failed or extrinsic compression predominates <span class="certainty-mini">conditional · very low certainty</span>. <strong>Benefit highest in:</strong> failed first-line chemotherapy, receiving radiation/palliation (SPOC trial: HR 0.21; 95% CI 0.06–0.74; p=0.007 for local recurrence). AQuIRE: stent = technical success OR 11.9 (95% CI 5.1–27.8). More durable dyspnoea relief; fewer repeat bronchoscopies.
+          </div>
+          <div class="step-insight" id="i-m5b">
+            Avoid stent if debridement alone achieves adequate patency. Stent complications (mucus plugging, granulation tissue, migration, fracture, infection) add significant procedural burden. Reserve for failure of other modalities.
+          </div>
+          <div class="step-insight" id="i-m5c">
+            <span class="badge badge-amber">Rec 9 · Conditional · Very Low</span><br><br>
+            Either routine surveillance or <strong>symptom-driven</strong> bronchoscopy is acceptable <span class="certainty-mini">Evidence certainty: very low</span>. Evidence: routine surveillance detected stent complications in 41% — but 84% of symptomatic patients had complications anyway. Adjuncts: hypertonic saline nebulisation (mucociliary clearance), CT for non-invasive stent/patency assessment.
+          </div>
+        </div>
+      </div>
+
+      <!-- NODE 6 -->
+      <div class="step-node">
+        <div class="step-connector">
+          <div class="step-dot" style="background:var(--danger-bg);border-color:var(--danger);color:var(--danger);">6</div>
+          <div class="step-line" style="background:transparent;min-height:0;"></div>
+        </div>
+        <div class="step-content">
+          <div class="step-q">Carcinoid or localised cancer — surgery?</div>
+          <div class="step-options">
+            <button class="step-opt-btn" onclick="toggleInsight(this,'i-m6a')">Carcinoid + surgical candidate</button>
+            <button class="step-opt-btn" onclick="toggleInsight(this,'i-m6b')">Non-carcinoid malignancy</button>
+            <button class="step-opt-btn" onclick="toggleInsight(this,'i-m6c')">Localised primary lung/airway</button>
+          </div>
+          <div class="step-insight" id="i-m6a">
+            <span class="badge badge-info">Rec 12 · Conditional · Very Low</span><br><br>
+            Surgery with curative intent is treatment of choice for carcinoid tumours. Therapeutic bronchoscopy bridges to surgery or serves as primary therapy if non-surgical. 5-year survival: bronchoscopic 94.4% vs surgical 94.5% (p=0.9) — comparable in one retrospective series.
+          </div>
+          <div class="step-insight" id="i-m6b">
+            Limited evidence supporting surgery for non-carcinoid malignant CAO due to advanced locoregional/metastatic disease. Therapeutic bronchoscopy is primary modality. Systemic chemo-immunotherapy ± local radiation remain cornerstones.
+          </div>
+          <div class="step-insight" id="i-m6c">
+            Surgical resection may be considered if curative and patient is a surgical candidate. Therapeutic bronchoscopy can serve as bridge to definitive surgical resection for localised disease.
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div><!-- /malignant -->
+
+  <!-- ── NONMALIGNANT PATHWAY ── -->
+  <div id="pathway-nonmalignant" style="display:none;">
+    <div class="decision-tree">
+
+      <!-- NODE 1 -->
+      <div class="step-node">
+        <div class="step-connector">
+          <div class="step-dot" style="background:var(--ok-bg);border-color:var(--ok);color:var(--ok);">1</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-content">
+          <div class="step-q">Establish Aetiology</div>
+          <div class="step-sub">Systemic therapy often concurrent — vasculitis → immunosuppression; TB → anti-TB; fungal → antifungals</div>
+          <div class="rec-box ok">
+            <div class="rec-label">Good Practice Statement + Rec 1</div>
+            <div class="rec-text">CT chest+neck + serology (ANCA, ANA, connective tissue markers, precipitins). Categories: post-intubation/tracheostomy stenosis · idiopathic · inflammatory (GPA, relapsing polychondritis, sarcoid, IBD) · infections (TB, fungal, RRP, rhinoscleroma) · lung transplant-related · tracheobronchomalacia / EDAC · Mounier-Kuhn · benign tumours (hamartoma, amyloidosis, TBO) · extrinsic compression (goitre, aortic aneurysm).</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NODE 2 -->
+      <div class="step-node">
+        <div class="step-connector">
+          <div class="step-dot" style="background:var(--ok-bg);border-color:var(--ok);color:var(--ok);">2</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-content">
+          <div class="step-q">Primary lesion type?</div>
+          <div class="step-options">
+            <button class="step-opt-btn" onclick="toggleInsight(this,'i-n2a')">Stenosis / fibrous</button>
+            <button class="step-opt-btn" onclick="toggleInsight(this,'i-n2b')">Endobronchial tissue</button>
+            <button class="step-opt-btn" onclick="toggleInsight(this,'i-n2c')">Tracheobronchomalacia</button>
+          </div>
+          <div class="step-insight" id="i-n2a">
+            <span class="badge badge-ok">Rec 7 · Conditional · Very Low</span><br><br>
+            <strong>Dilation is first-line</strong> — alone or combined with laser/electrocautery incisions ± steroid/mitomycin C injection. 5-year recurrence rates: dilation 50%, ERMT (CO₂ laser + adjuvant medical therapy) 30%, surgical resection 5%.<br><br>
+            Consider ERMT for recurrent cases (propensity-matched HR 3.16; 95% CI 1.82–5.51 fewer recurrences vs dilation at 3 years). Multimodality approach (dilation + ablation + local therapy) achieves optimal outcomes.
+          </div>
+          <div class="step-insight" id="i-n2b">
+            <span class="badge badge-ok">Rec 6 · Conditional · Very Low</span><br><br>
+            Tissue excision ± ablation. Note: lung transplant-related stenosis may not require excision/ablation. GPA/vasculitis: systemic immunosuppression mandatory concurrently. TB/fungal: appropriate systemic therapy essential.
+          </div>
+          <div class="step-insight" id="i-n2c">
+            <span class="certainty-mini">Evidence certainty: very low</span> Primary intervention: non-invasive ventilation (BiPAP). Severe refractory disease: stent trial → assess response → consider tracheobronchoplasty. Evidence limited; multidisciplinary assessment essential.
+          </div>
+        </div>
+      </div>
+
+      <!-- NODE 3 -->
+      <div class="step-node">
+        <div class="step-connector">
+          <div class="step-dot" style="background:var(--ok-bg);border-color:var(--ok);color:var(--ok);">3</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-content">
+          <div class="step-q">Surgical candidacy?</div>
+          <div class="step-options">
+            <button class="step-opt-btn" onclick="toggleInsight(this,'i-n3a')">Surgical candidate</button>
+            <button class="step-opt-btn" onclick="toggleInsight(this,'i-n3b')">Non-surgical / complex</button>
+            <button class="step-opt-btn" onclick="toggleInsight(this,'i-n3c')">Simple / subglottic</button>
+          </div>
+          <div class="step-insight" id="i-n3a">
+            <span class="badge badge-ok">Rec 11 · Conditional · Very Low</span><br><br>
+            Either surgical resection or therapeutic bronchoscopy — both appropriate. Surgical resection: lowest long-term recurrence (5-year: 5% vs 30% ERMT vs 50% dilation). Better QoL and breathing scores. Voice scores worse after surgery. Shared decision-making essential.
+          </div>
+          <div class="step-insight" id="i-n3b">
+            <span class="certainty-mini">Evidence certainty: very low</span> Repeat recurrence → surgical approach suggested. Tracheostomy or stent may be considered in non-surgical candidates. FDA 2005 warning on metallic stents in benign disease remains relevant; fully covered metal stents may offer safer profile.
+          </div>
+          <div class="step-insight" id="i-n3c">
+            Start with dilation as primary. Recurrence → mitomycin C application (75% 4-month success vs 18.2% steroid injection vs 15% dilation alone — retrospective, n=20). Close collaboration with thoracic surgery or ENT recommended.
+          </div>
+        </div>
+      </div>
+
+      <!-- NODE 4 -->
+      <div class="step-node">
+        <div class="step-connector">
+          <div class="step-dot" style="background:var(--ok-bg);border-color:var(--ok);color:var(--ok);">4</div>
+          <div class="step-line" style="background:transparent;min-height:0;"></div>
+        </div>
+        <div class="step-content">
+          <div class="step-q">Local bronchoscopic therapy?</div>
+          <div class="step-options">
+            <button class="step-opt-btn" onclick="toggleInsight(this,'i-n4a')">Recurrent stenosis</button>
+            <button class="step-opt-btn" onclick="toggleInsight(this,'i-n4b')">First presentation</button>
+          </div>
+          <div class="step-insight" id="i-n4a">
+            <span class="badge badge-ok">Rec 10 · Conditional · Very Low</span><br><br>
+            Local non-ablative bronchoscopic therapy to reduce recurrence: mitomycin C application (strongest data), steroid injection, brachytherapy (malignant). Personalised risk-benefit assessment — PDT causes post-procedure airway stenosis and photosensitivity.
+          </div>
+          <div class="step-insight" id="i-n4b">
+            Either use or hold — conditional, very low certainty. Evidence favours use for prolonged time to reintervention without significant additional complications. Clinical judgement and patient preference guide decision.
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div><!-- /nonmalignant -->
+
+</div><!-- /tab-pathway -->
+
+<!-- ════════════════════════════════════════════════════════
+     TAB 2 · AIRWAY ASSESSMENT
+     Investment — score accumulates as user adds data
+════════════════════════════════════════════════════════════ -->
+<div class="tab-panel" id="tab-assess" role="tabpanel" aria-labelledby="tabbtn-assess" tabindex="0">
+
+  <div class="section-eyebrow">Pre-procedural Evaluation</div>
+  <h1 class="section-title">Airway Assessment</h1>
+  <p class="section-sub">Rigid bronchoscopy / endotracheal intubation risk stratification</p>
+
+  <div class="trigger-banner">
+    <div class="trigger-icon">📋</div>
+    <div>
+      <div class="trigger-label">Investment</div>
+      Complete each parameter — your risk profile builds and flags compound hazards automatically.
+    </div>
+  </div>
+
+  <div class="pc-grid-2">
+
+    <div class="assess-field">
+      <label class="assess-label" for="mouthOpening">Mouth Opening (finger-breadths)</label>
+      <input type="number" class="assess-input" id="mouthOpening" min="0" max="6" step="0.5" placeholder="e.g. 3" oninput="updateAssessment()">
+      <div class="assess-normal">
+        <div class="assess-indicator" id="ind-mouth"></div>
+        <span id="txt-mouth">Normal: &gt;3 finger-breadths</span>
+      </div>
+    </div>
+
+    <div class="assess-field">
+      <label class="assess-label" for="thyromental">Thyromental Distance (finger-breadths)</label>
+      <input type="number" class="assess-input" id="thyromental" min="0" max="8" step="0.5" placeholder="e.g. 4" oninput="updateAssessment()">
+      <div class="assess-normal">
+        <div class="assess-indicator" id="ind-thyro"></div>
+        <span id="txt-thyro">Normal: &gt;3 finger-breadths</span>
+      </div>
+    </div>
+
+    <div class="assess-field">
+      <label class="assess-label" for="neckMobility">Neck Mobility (degrees)</label>
+      <input type="number" class="assess-input" id="neckMobility" min="0" max="180" step="5" placeholder="e.g. 90" oninput="updateAssessment()">
+      <div class="assess-normal">
+        <div class="assess-indicator" id="ind-neck"></div>
+        <span id="txt-neck">Normal: &gt;90°</span>
+      </div>
+    </div>
+
+    <div class="assess-field">
+      <label class="assess-label" for="teethStatus">Teeth Status</label>
+      <select class="assess-input" id="teethStatus" onchange="updateAssessment()">
+        <option value="">Select</option>
+        <option value="normal">Normal</option>
+        <option value="prominent">Prominent</option>
+        <option value="missing">Missing</option>
+        <option value="loose">Loose</option>
+      </select>
+      <div class="assess-normal">
+        <div class="assess-indicator" id="ind-teeth"></div>
+        <span id="txt-teeth">Prominent, missing, or loose = rigid scope risk</span>
+      </div>
+    </div>
+
+    <div class="assess-field">
+      <label class="assess-label" for="cervicalSpine">Cervical Spine Disorder</label>
+      <select class="assess-input" id="cervicalSpine" onchange="updateAssessment()">
+        <option value="">Select</option>
+        <option value="none">None</option>
+        <option value="yes">Present</option>
+      </select>
+      <div class="assess-normal">
+        <div class="assess-indicator" id="ind-cervical"></div>
+        <span id="txt-cervical">Impacts rigid bronchoscopy positioning</span>
+      </div>
+    </div>
+
+    <div class="assess-field">
+      <label class="assess-label" for="anticoag">Anticoagulant / Antiplatelet</label>
+      <select class="assess-input" id="anticoag" onchange="updateAssessment()">
+        <option value="">Select</option>
+        <option value="none">None</option>
+        <option value="antiplatelet">Antiplatelet</option>
+        <option value="anticoagulant">Anticoagulant</option>
+        <option value="both">Both</option>
+      </select>
+      <div class="assess-normal">
+        <div class="assess-indicator" id="ind-anticoag"></div>
+        <span id="txt-anticoag">Affects haemorrhage risk with ablation</span>
+      </div>
+    </div>
+
+  </div><!-- /pc-grid-2 -->
+
+  <!-- MALLAMPATI -->
+  <div class="card">
+    <div class="card-title">Modified Mallampati Score</div>
+    <div class="mp-grid" id="mpGrid">
+      <button class="mp-btn" onclick="setMallampati(1,this)"><strong>Class I</strong><small>Soft palate, uvula, fauces, pillars visible</small></button>
+      <button class="mp-btn" onclick="setMallampati(2,this)"><strong>Class II</strong><small>Soft palate, uvula, fauces visible</small></button>
+      <button class="mp-btn" onclick="setMallampati(3,this)"><strong>Class III</strong><small>Soft palate, base of uvula only</small></button>
+      <button class="mp-btn" onclick="setMallampati(4,this)"><strong>Class IV</strong><small>Hard palate only visible</small></button>
+    </div>
+  </div>
+
+  <!-- ULBT -->
+  <div class="card">
+    <div class="card-title">
+      Upper Lip Bite Test (ULBT) &amp; Lower Jaw Slide
+      <span class="badge badge-info" style="font-size:9px;">Mandibular prognathism proxy</span>
+    </div>
+    <p style="font-size:12.5px; color:var(--ink-dim); margin-bottom:12px; line-height:1.7;">
+      Assesses lower incisor ability to bite the upper lip — a proxy for mandibular protrusion capacity and TMJ mobility. Complements Mallampati; ULBT Class III independently predicts difficult laryngoscopy (specificity ~96%, LR+ ≈11).<br>
+      <strong style="color:var(--navy);">Instruction:</strong> <em>"Slide your lower jaw forward as far as possible and bite your upper lip."</em>
+    </p>
+    <div class="mp-grid" id="ulbtGrid">
+      <button class="mp-btn" onclick="setULBT(1,this)">
+        <strong style="color:var(--ok);">Class I</strong>
+        <small>Lower incisors bite <em>above</em> the vermilion border. Full mucosal coverage. Normal protrusion.</small>
+      </button>
+      <button class="mp-btn" onclick="setULBT(2,this)">
+        <strong style="color:var(--warn);">Class II</strong>
+        <small>Lower incisors bite the upper lip but cannot reach above the vermilion border. Partial coverage.</small>
+      </button>
+      <button class="mp-btn" onclick="setULBT(3,this)">
+        <strong style="color:var(--danger);">Class III</strong>
+        <small>Lower incisors cannot bite the upper lip at all — no protrusion possible.</small>
+      </button>
+      <button class="mp-btn" onclick="setULBT(0,this)">
+        <strong style="color:var(--ink-dim);">Not tested</strong>
+        <small>Edentulous / unable to cooperate — assess jaw slide by TMJ palpation.</small>
+      </button>
+    </div>
+    <div class="ulbt-result" id="ulbtResult"></div>
+    <div class="divider"></div>
+    <div style="font-size:11.5px; color:var(--ink-dim); line-height:1.9; font-family:var(--mono);">
+      Class I → normal; favourable for rigid bronchoscope passage<br>
+      Class II → intermediate; have video laryngoscopy immediately available<br>
+      Class III → high-risk (LR+ ≈11; spec ~96%); plan advanced airway strategy<br>
+      Edentulous → ULBT not possible; use palpatory TMJ assessment
+    </div>
+  </div>
+
+  <!-- RISK SUMMARY — Payoff -->
+  <div class="risk-summary" id="riskSummary">
+    <div style="font-family:var(--mono); font-size:10px; text-transform:uppercase; letter-spacing:0.1em; color:var(--ink-dim); margin-bottom:8px;">Airway Risk Profile</div>
+    <div class="risk-bar-track"><div class="risk-bar-fill" id="riskBar" style="width:0%;background:var(--ok);"></div></div>
+    <div id="riskText" style="font-size:13px; color:var(--ink-dim); margin-top:8px; line-height:1.6;">Complete fields above — risk profile builds automatically.</div>
+    <div class="heuristic-note"><strong>Note:</strong> This is a local heuristic for airway-access planning. It is not a validated predictor of CAO procedural outcome, mortality, or bronchoscopy complications.</div>
+    <div class="risk-flags" id="riskFlags"></div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Functional assessment -->
+  <div class="card">
+    <div class="card-title">🫁 Functional Assessment</div>
+    <div class="info-row"><span class="info-key">Flow-volume loop</span><span class="info-val">Fixed obstruction: plateau on <em>both</em> inspiratory and expiratory limbs</span></div>
+    <div class="info-row"><span class="info-key"></span><span class="info-val">Variable extrathoracic: inspiratory plateau only</span></div>
+    <div class="info-row"><span class="info-key"></span><span class="info-val">Variable intrathoracic: expiratory plateau only</span></div>
+    <div class="info-row"><span class="info-key">Spirometry</span><span class="info-val">Baseline FEV1/FVC; monitor post-intervention response</span></div>
+    <div class="info-row"><span class="info-key">CT % occlusion</span><span class="info-val">≥50% = CAO by definition; procedural success threshold = &gt;50% reopening</span></div>
+  </div>
+
+</div><!-- /tab-assess -->
+
+<!-- ════════════════════════════════════════════════════════
+     TAB 3 · ANAESTHESIA & VENTILATION
+════════════════════════════════════════════════════════════ -->
+<div class="tab-panel" id="tab-anesthesia" role="tabpanel" aria-labelledby="tabbtn-anesthesia" tabindex="0">
+
+  <div class="section-eyebrow">Peri-procedural Management</div>
+  <h1 class="section-title">Anaesthesia &amp; Ventilation</h1>
+  <p class="section-sub">Evidence-based selection of anaesthetic depth and ventilation mode</p>
+
+  <div class="fire-banner">
+    <div class="fire-banner-icon">🔥</div>
+    <div>
+      <strong style="color:var(--danger);">AIRWAY FIRE PREVENTION — NON-NEGOTIABLE:</strong> Reduce FiO₂ to <strong>≤0.4</strong> before activating any heat ablative device (laser, electrocautery, APC). Keep ablation catheters away from all flammable materials. This checkpoint must be confirmed aloud before each energy device use.
+    </div>
+  </div>
+
+  <!-- GA vs Moderate Sedation -->
+  <div class="card">
+    <div class="card-title">Depth of Anaesthesia — Evidence Comparison <span class="badge badge-amber">Rec 4</span> <span class="certainty-mini">Evidence certainty: very low</span></div>
+    <div class="compare-wrap">
+      <div class="compare-col" style="border-top:3px solid var(--ok);">
+        <div class="compare-col-head" style="color:var(--ok);">GA / Deep Sedation <span class="badge badge-ok">Preferred</span></div>
+        <div class="compare-row"><span class="compare-key">Complication risk</span><span class="compare-val">Lower · OR 0.42 (0.21–0.83; P=.013)</span></div>
+        <div class="compare-row"><span class="compare-key">With paralytics</span><span class="compare-val">3% complications vs 6.7% (P=.006)</span></div>
+        <div class="compare-row"><span class="compare-key">Procedure sessions</span><span class="compare-val">Fewer (patient tolerates longer procedures)</span></div>
+        <div class="compare-row"><span class="compare-key">Desaturation events</span><span class="compare-val">Fewer with paralytics (RCT: Okamoto 2020)</span></div>
+        <div class="compare-row"><span class="compare-key">Technical success</span><span class="compare-val">No significant difference vs moderate</span></div>
+        <div class="compare-row"><span class="compare-key">Bleeding deaths</span><span class="compare-val">Lower</span></div>
+      </div>
+      <div class="compare-col" style="border-top:3px solid var(--warn);">
+        <div class="compare-col-head" style="color:var(--warn);">Moderate Sedation <span class="badge badge-warn">Conditional</span></div>
+        <div class="compare-row"><span class="compare-key">Complication risk</span><span class="compare-val">Higher (reference comparator)</span></div>
+        <div class="compare-row"><span class="compare-key">Without paralytics</span><span class="compare-val">6.7% complications</span></div>
+        <div class="compare-row"><span class="compare-key">Procedure sessions</span><span class="compare-val">More required</span></div>
+        <div class="compare-row"><span class="compare-key">Desaturation events</span><span class="compare-val">More events</span></div>
+        <div class="compare-row"><span class="compare-key">Technical success</span><span class="compare-val">No significant difference vs GA</span></div>
+        <div class="compare-row"><span class="compare-key">Bleeding deaths</span><span class="compare-val">Higher in retrospective data</span></div>
+      </div>
+    </div>
+    <div style="margin-top:10px; font-size:11px; font-family:var(--mono); color:var(--ink-dim);">Source: AQuIRE registry (n=1,115 procedures) · RCT Okamoto et al. Anesth Analg 2020;131:893–900 · Conditional, Very Low Certainty</div>
+  </div>
+
+  <!-- Ventilation mode -->
+  <div class="card">
+    <div class="card-title">Ventilation Mode During Rigid Bronchoscopy <span class="badge badge-amber">Rec 5</span></div>
+    <div class="compare-wrap">
+      <div class="compare-col" style="border-top:3px solid var(--info);">
+        <div class="compare-col-head" style="color:var(--info);">Jet Ventilation</div>
+        <div class="compare-row"><span class="compare-key">Technique</span><span class="compare-val">High-pressure O₂ bursts via open rigid scope</span></div>
+        <div class="compare-row"><span class="compare-key">Rate</span><span class="compare-val">Manual 10–14/min (Sanders) or HFJV 60–300/min</span></div>
+        <div class="compare-row"><span class="compare-key">AQuIRE success</span><span class="compare-val">96.1%</span></div>
+        <div class="compare-row"><span class="compare-key">Complication rate</span><span class="compare-val">Lower vs controlled</span></div>
+        <div class="compare-row"><span class="compare-key">Hypercapnia</span><span class="compare-val">Less than controlled ventilation</span></div>
+      </div>
+      <div class="compare-col" style="border-top:3px solid var(--ink-dim);">
+        <div class="compare-col-head" style="color:var(--ink-2);">Controlled / Spontaneous Assisted</div>
+        <div class="compare-row"><span class="compare-key">Technique</span><span class="compare-val">Sealed scope + anaesthesia circuit + PPV</span></div>
+        <div class="compare-row"><span class="compare-key">Paralytic benefit</span><span class="compare-val">Significantly fewer intraop respiratory complications</span></div>
+        <div class="compare-row"><span class="compare-key">AQuIRE success</span><span class="compare-val">92.9%</span></div>
+        <div class="compare-row"><span class="compare-key">Hypercapnia</span><span class="compare-val">More significant vs jet (Duckett 1985)</span></div>
+        <div class="compare-row"><span class="compare-key">Note</span><span class="compare-val">Controlled preferred over spontaneous assisted</span></div>
+      </div>
+    </div>
+    <div class="alert info" style="margin-top:12px;">
+      <span class="alert-icon">ℹ</span>
+      <span>Either mode is acceptable — no significant difference in success, dyspnoea improvement, or complication-related mortality (AQuIRE). ECMO may be considered for critical bilateral mainstem or tracheal obstruction — patient selection criteria poorly defined; multidisciplinary decision required.</span>
+    </div>
+  </div>
+
+  <!-- Checklist -->
+  <div class="card">
+    <div class="card-title">✅ Pre-procedure Safety Checklist</div>
+    <div id="checklistContainer">
+      <div class="checklist-item" onclick="toggleCheck(this)"><div class="check-box"></div><div class="check-label">Airway assessment completed: Mallampati, ULBT, mouth opening, TMD, neck mobility<em>Cervical spine, dentition, previous surgery/radiation noted in chart</em></div></div>
+      <div class="checklist-item" onclick="toggleCheck(this)"><div class="check-box"></div><div class="check-label">CT chest+neck reviewed — anatomy, % occlusion, lesion type documented<em>Intrinsic / extrinsic / mixed classification established</em></div></div>
+      <div class="checklist-item" onclick="toggleCheck(this)"><div class="check-box"></div><div class="check-label">Anaesthesiology team briefed — multidisciplinary plan agreed<em>GA/deep sedation preferred; paralytics only if appropriate after individualized induction/ventilation planning</em></div></div>
+      <div class="checklist-item" onclick="toggleCheck(this)"><div class="check-box"></div><div class="check-label">Anticoagulant/antiplatelet medications reviewed and managed<em>Bleeding risk stratification complete; reversal/bridging plan in place</em></div></div>
+      <div class="checklist-item" onclick="toggleCheck(this)"><div class="check-box"></div><div class="check-label">Ventilation mode selected — equipment verified and tested<em>Sanders injector / HFJV machine available if jet chosen; seal tested if controlled</em></div></div>
+      <div class="checklist-item" onclick="toggleCheck(this)"><div class="check-box"></div><div class="check-label">FiO₂ ≤0.4 protocol confirmed before ablation — stated aloud to team<em>CRITICAL: airway fire prevention checkpoint</em></div></div>
+      <div class="checklist-item" onclick="toggleCheck(this)"><div class="check-box"></div><div class="check-label">Haemorrhage control plan in place: rigid scope tamponade, vasoconstrictors, suction<em>Particularly critical with heat ablation + endobronchial disease</em></div></div>
+      <div class="checklist-item" onclick="toggleCheck(this)"><div class="check-box"></div><div class="check-label">Shared decision-making with patient/family documented<em>Goals of care, QoL priorities, stent risks, realistic outcomes discussed</em></div></div>
+    </div>
+    <div class="checklist-progress">
+      <div class="cl-progress-track"><div class="cl-progress-fill" id="clProgressFill" style="width:0%;"></div></div>
+      <span id="clProgressText">0 / 8</span>
+    </div>
+  </div>
+
+</div><!-- /tab-anesthesia -->
+
+<!-- ════════════════════════════════════════════════════════
+     TAB 4 · STENT DECISION
+════════════════════════════════════════════════════════════ -->
+<div class="tab-panel" id="tab-stent" role="tabpanel" aria-labelledby="tabbtn-stent" tabindex="0">
+
+  <div class="section-eyebrow">Airway Stenting</div>
+  <h1 class="section-title">Stent Decision</h1>
+  <p class="section-sub">Structured assessment of indications, patient context, and complication profile</p>
+
+  <div class="trigger-banner">
+    <div class="trigger-icon">🔩</div>
+    <div>
+      <div class="trigger-label">Action</div>
+      Answer three questions in sequence — a context-specific recommendation with the evidence statistic will be generated for you.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="stent-q">Step 1 — Can airway patency be achieved by debridement alone?</div>
+    <div class="stent-radio-group" id="sq1">
+      <label class="stent-radio"><input type="radio" name="sq1" value="yes" onchange="updateStentLogic()"> Yes — debridement alone achieves &gt;50% lumen reopening</label>
+      <label class="stent-radio"><input type="radio" name="sq1" value="no" onchange="updateStentLogic()"> No — patency not achievable or maintainable without stent</label>
+    </div>
+
+    <div id="stent-step2" style="display:none;">
+      <div class="divider" style="margin:14px 0;"></div>
+      <div class="stent-q">Step 2 — Disease context</div>
+      <div class="stent-radio-group" id="sq2">
+        <label class="stent-radio"><input type="radio" name="sq2" value="naive" onchange="updateStentLogic()"> Chemotherapy-naïve / treatment-responsive malignancy</label>
+        <label class="stent-radio"><input type="radio" name="sq2" value="failed" onchange="updateStentLogic()"> Failed first-line chemotherapy</label>
+        <label class="stent-radio"><input type="radio" name="sq2" value="radiation" onchange="updateStentLogic()"> Receiving radiation or palliation-only</label>
+        <label class="stent-radio"><input type="radio" name="sq2" value="nonmal" onchange="updateStentLogic()"> Nonmalignant CAO — repeated dilations failed</label>
+      </div>
+    </div>
+
+    <div id="stent-step3" style="display:none;">
+      <div class="divider" style="margin:14px 0;"></div>
+      <div class="stent-q">Step 3 — Location</div>
+      <div class="stent-radio-group" id="sq3">
+        <label class="stent-radio"><input type="radio" name="sq3" value="trachea" onchange="updateStentLogic()"> Subglottic / trachea</label>
+        <label class="stent-radio"><input type="radio" name="sq3" value="mainstem" onchange="updateStentLogic()"> Mainstem bronchi / bronchus intermedius</label>
+      </div>
+    </div>
+
+    <div id="stentResult" style="display:none; margin-top:16px;"></div>
+  </div>
+
+  <!-- Complication matrix -->
+  <div class="card">
+    <div class="card-title">⚠️ Stent Complication Profile</div>
+    <div class="table-scroll">
+    <table class="data-table">
+      <thead><tr><th>Complication</th><th>Notes</th><th>Prevention / Management</th></tr></thead>
+      <tbody>
+        <tr><td>Mucus plugging</td><td>Most common; commoner with silicone stents</td><td>Hypertonic saline nebulisation, mucolytics, surveillance bronchoscopy</td></tr>
+        <tr><td>Granulation tissue</td><td>At stent ends; respiratory infections increase risk</td><td>Local ablation, stent repositioning</td></tr>
+        <tr><td>Stent migration</td><td>Subglottic/tracheal location; silicone &gt; covered metal</td><td>Correct sizing; anatomical anchoring; special shapes</td></tr>
+        <tr><td>Stent fracture</td><td>Metal stents; long-term use</td><td>Surveillance CT/bronchoscopy</td></tr>
+        <tr><td>Infection / biofilm</td><td>Increases granulation tissue risk</td><td>Surveillance bronchoscopy; targeted antibiotics</td></tr>
+        <tr><td>Radiation scatter</td><td>Metal stents in radiotherapy field</td><td>Careful radiation planning; anatomic distortion documentation</td></tr>
+        <tr><td>FDA 2005 warning</td><td>Metallic stents in benign disease</td><td>Use fully covered metal or silicone; prefer bronchoscopic alternatives</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <!-- Post-stent surveillance -->
+  <div class="card">
+    <div class="card-title">📅 Post-Stent Surveillance <span class="badge badge-amber">Rec 9</span> <span class="certainty-mini">Evidence certainty: very low</span></div>
+    <div class="rec-box amber">
+      <div class="rec-label">Conditional · Very Low Certainty</div>
+      <div class="rec-text">Either routine surveillance or symptom-driven bronchoscopy is acceptable. Key data (Matsuo &amp; Colt, Chest 2000): routine surveillance found complications in 41% — nearly all symptomatic. Symptom-driven group: 84% were symptomatic at time of complication detection. A symptom-driven approach may reduce procedural burden when supported by patient education and reliable follow-up.</div>
+      <div class="rec-stat">Adjuncts: hypertonic saline nebulisation (mucociliary clearance) · CT chest for non-invasive stent/patency assessment · Patient education on warning symptoms (dyspnoea ↑, purulent sputum, fever, haemoptysis)</div>
+    </div>
+  </div>
+
+</div><!-- /tab-stent -->
+
+<!-- ════════════════════════════════════════════════════════
+     TAB 5 · EVIDENCE ATLAS
+════════════════════════════════════════════════════════════ -->
+<div class="tab-panel" id="tab-evidence" role="tabpanel" aria-labelledby="tabbtn-evidence" tabindex="0">
+
+  <div class="section-eyebrow">Guideline Summary</div>
+  <h1 class="section-title">Evidence Atlas</h1>
+  <p class="section-sub">CHEST 2025 CAO recommendations — strength, certainty, key statistics</p>
+
+  <div class="alert info">
+    <span class="alert-icon">ℹ</span>
+    <span>The guideline includes one Good Practice Statement and graded conditional recommendations, with overall <strong>Very Low</strong> certainty of evidence. Evidence base: 31 studies identified from 9,688 screened abstracts. 150 full-text articles assessed.</span>
+  </div>
+
+  <div class="evidence-scroll">
+  <table class="data-table" style="min-width:700px;">
+    <thead>
+      <tr>
+        <th>Rec</th>
+        <th>Domain</th>
+        <th>Recommendation (summary)</th>
+        <th>Strength</th>
+        <th>Certainty</th>
+        <th>Key statistic</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>1</strong></td><td>Evaluation</td><td>Comprehensive H&P + CT chest+neck + labs</td><td><span class="badge badge-navy">Good Practice</span></td><td>—</td><td>CT = imaging of choice; Mallampati, ULBT, TMD, mouth opening, neck mobility</td></tr>
+      <tr><td><strong>2</strong></td><td>Bronchoscopy</td><td>Therapeutic bronchoscopy as adjunct to systemic therapy ± radiation</td><td><span class="badge badge-amber">Conditional</span></td><td><span class="certainty-pill">Very Low</span></td><td>Survival HR 2.1 (95% CI 1.1–4.8; p=0.003) favoring bronchoscopy + CRT vs CRT alone</td></tr>
+      <tr><td><strong>3</strong></td><td>Rigid vs flexible</td><td>Prefer rigid bronchoscopy for therapeutic interventions</td><td><span class="badge badge-amber">Conditional</span></td><td><span class="certainty-pill">Very Low</span></td><td>AQuIRE: 93.5% vs 92.7% success (P=.62); fewer sessions rigid (1 vs 2; P&lt;0.001)</td></tr>
+      <tr><td><strong>4</strong></td><td>Anaesthesia depth</td><td>GA/deep sedation preferred over moderate sedation; paralytics individualized</td><td><span class="badge badge-amber">Conditional</span></td><td><span class="certainty-pill">Very Low</span></td><td>OR 0.42 (0.21–0.83) complications; paralytics 3% vs 6.7% (P=.006)</td></tr>
+      <tr><td><strong>5</strong></td><td>Ventilation mode</td><td>Either jet ventilation or controlled/spontaneous assisted</td><td><span class="badge badge-amber">Conditional</span></td><td><span class="certainty-pill">Very Low</span></td><td>AQuIRE: 96.1% (jet) vs 92.9% (controlled); no significant difference in complications</td></tr>
+      <tr><td><strong>6</strong></td><td>Excision/ablation</td><td>Tumour/tissue excision ± ablation for endobronchial disease</td><td><span class="badge badge-amber">Conditional</span></td><td><span class="certainty-pill">Very Low</span></td><td>ERMT vs dilation at 5yr: 30% vs 50% recurrence (idiopathic subglottic stenosis)</td></tr>
+      <tr><td><strong>7</strong></td><td>Dilation</td><td>Airway dilation alone or combined for nonmalignant stenosis</td><td><span class="badge badge-amber">Conditional</span></td><td><span class="certainty-pill">Very Low</span></td><td>Dilation 50% recurrence at 5yr; ERMT HR 3.16 (1.82–5.51) fewer recurrences vs dilation</td></tr>
+      <tr><td><strong>8</strong></td><td>Stent</td><td>Stent indicated if other treatments failed and when feasible</td><td><span class="badge badge-amber">Conditional</span></td><td><span class="certainty-pill">Very Low</span></td><td>SPOC trial: HR 0.21 (0.06–0.74; p=0.007) in failed-chemo/palliative group; AQuIRE OR 11.9 technical success</td></tr>
+      <tr><td><strong>9</strong></td><td>Stent surveillance</td><td>Routine or symptom-driven surveillance bronchoscopy</td><td><span class="badge badge-amber">Conditional</span></td><td><span class="certainty-pill">Very Low</span></td><td>Routine: 41% complications detected; 84% of symptomatic patients had complications regardless</td></tr>
+      <tr><td><strong>10</strong></td><td>Local therapy</td><td>Either use or hold local (non-ablative) bronchoscopic therapy</td><td><span class="badge badge-amber">Conditional</span></td><td><span class="certainty-pill">Very Low</span></td><td>Mitomycin C: 75% 4-month success vs 18.2% steroid vs 15% dilation alone</td></tr>
+      <tr><td><strong>11</strong></td><td>Surgery (nonmal)</td><td>Either surgical resection or therapeutic bronchoscopy</td><td><span class="badge badge-amber">Conditional</span></td><td><span class="certainty-pill">Very Low</span></td><td>5-year recurrence: surgery 5%, ERMT 30%, dilation 50% (idiopathic subglottic stenosis; n=487)</td></tr>
+      <tr><td><strong>12</strong></td><td>Surgery (mal)</td><td>Either surgery or bronchoscopy; curative intent surgery for carcinoid</td><td><span class="badge badge-amber">Conditional</span></td><td><span class="certainty-pill">Very Low</span></td><td>Carcinoid 5-yr survival: bronchoscopic 94.4% vs surgical 94.5% (P=0.9)</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="card">
+    <div class="card-title">🔬 Research Gaps — Teaching Priorities</div>
+    <div style="font-size:12.5px; color:var(--ink-2); line-height:1.9;">
+      1. RCTs comparing therapeutic bronchoscopy vs radiation/combined modalities — ethical challenge given existing evidence<br>
+      2. Flexible vs rigid bronchoscopy for proximal vs distal CAO — prospective safety/efficacy data<br>
+      3. GA/deep sedation vs moderate sedation — formal comparative trial<br>
+      4. ECMO indications for critical bilateral mainstem/tracheal obstruction — patient selection criteria<br>
+      5. Comparative effectiveness of ablative modalities: laser vs electrocautery vs APC vs cryo<br>
+      6. New-generation fully covered metal stents in benign disease (post-FDA 2005 warning)<br>
+      7. Drug-coated and 3D-printed stents — clinical evaluation<br>
+      8. Optimal local bronchoscopic therapy agents and schedules<br>
+      9. Surgery vs bronchoscopy in CAO — patient-centric outcomes (QoL, voice, breathing, survival)
+    </div>
+  </div>
+
+</div><!-- /tab-evidence -->
+
+<!-- ════════════════════════════════════════════════════════
+     TAB 6 · RESIDENT QUIZ
+     Variable Reward — answer committed before evidence revealed
+════════════════════════════════════════════════════════════ -->
+<div class="tab-panel" id="tab-quiz" role="tabpanel" aria-labelledby="tabbtn-quiz" tabindex="0">
+
+  <div class="section-eyebrow">Formative Assessment</div>
+  <h1 class="section-title">Resident Quiz</h1>
+  <p class="section-sub">10 high-yield questions from ACCP CAO 2025 guideline</p>
+
+  <div class="trigger-banner">
+    <div class="trigger-icon">🎯</div>
+    <div>
+      <div class="trigger-label">Variable Reward</div>
+      Commit your answer first — explanation and evidence surface only after. Each question tests a different statistical pivot.
+    </div>
+  </div>
+
+  <div class="quiz-card">
+    <div class="quiz-progress-row" id="quizProgress"></div>
+    <div id="quizMain">
+      <div class="quiz-qnum" id="quizNum"></div>
+      <div class="quiz-qtext" id="quizText"></div>
+      <div class="quiz-opts" id="quizOpts"></div>
+      <div class="quiz-explanation" id="quizExplanation"></div>
+      <div class="quiz-nav">
+        <button class="btn btn-ghost" id="btnPrev" onclick="prevQ()" disabled>← Prev</button>
+        <button class="btn btn-primary" id="btnNext" onclick="nextQ()" disabled>Next →</button>
+      </div>
+    </div>
+    <div class="quiz-score-panel" id="quizScore">
+      <div class="score-num" id="scoreNum"></div>
+      <div class="score-sub" id="scoreSub"></div>
+      <div class="score-feedback" id="scoreFeedback"></div>
+      <button class="btn btn-primary" onclick="restartQuiz()">Restart Quiz</button>
+    </div>
+  </div>
+
+</div><!-- /tab-quiz -->
+
+
+<!-- ════════════════════════════════════════════════════════
+     BOTTOM DOCUMENTATION FRAME · CASE CONTEXT + OUTPUT
+     Kept after decision tabs to avoid hiding active tab content
+════════════════════════════════════════════════════════════ -->
+<section class="bottom-documentation-frame" aria-label="Case context and automated output">
+  <div class="section-eyebrow">Documentation</div>
+  <h1 class="section-title">Case Context &amp; Automated Output</h1>
+  <p class="section-sub">Complete after using the decision tabs. Timestamp is generated automatically in Copy / Save TXT / Print outputs.</p>
+
+  <details class="context-panel" open>
+    <summary>Case Context &amp; Output <span class="badge badge-info">Bottom frame</span></summary>
+    <div class="context-body">
+      <div class="context-grid">
+        <div class="context-field"><label for="ctxEtiology">Etiology</label><select id="ctxEtiology"><option value="">Select</option><option>Malignant</option><option>Nonmalignant</option><option>Uncertain</option></select></div>
+        <div class="context-field"><label for="ctxType">Anatomy</label><select id="ctxType"><option value="">Select</option><option>Intrinsic/endoluminal</option><option>Extrinsic/extraluminal</option><option>Mixed</option><option>Dynamic collapse</option></select></div>
+        <div class="context-field"><label for="ctxSite">Lesion site</label><input id="ctxSite" type="text" placeholder="Trachea / LMSB / RMSB"></div>
+        <div class="context-field"><label for="ctxOcclusion">% occlusion</label><input id="ctxOcclusion" type="number" min="0" max="100" placeholder="e.g. 70"></div>
+        <div class="context-field"><label for="ctxSymptoms">Symptoms</label><textarea id="ctxSymptoms" placeholder="Stridor, dyspnoea, haemoptysis..."></textarea></div>
+        <div class="context-field"><label for="ctxOxygen">Oxygen requirement</label><input id="ctxOxygen" type="text" placeholder="Room air / NC / NRBM / NIV"></div>
+        <div class="context-field"><label for="ctxPlan">Planned intervention</label><textarea id="ctxPlan" placeholder="Rigid bronchoscopy, ablation, dilation, stent..."></textarea></div>
+        <div class="context-field"><label for="ctxCaseNo">Case no. / identifier</label><input id="ctxCaseNo" type="text" placeholder="Optional"></div>
+      </div>
+      <div class="context-actions">
+        <button class="btn btn-primary" onclick="copyCaseSummary()">Copy Summary</button>
+        <button class="btn btn-ghost" onclick="saveCaseSummaryTxt()">Save TXT</button>
+        <button class="btn btn-ghost" onclick="printCaseSummary()">Print</button>
+      </div>
+      <pre class="summary-output" id="caseSummaryOutput" aria-live="polite"></pre>
+    </div>
+  </details>
+</section>
+
+
+</main>
+
+<footer>
+  <strong>CAO-CDSS v2.1</strong> &nbsp;·&nbsp; Copyright © 2025 Prof. (Dr.) Jyotirmay Kirtania &nbsp;·&nbsp;
+  <a href="https://orcid.org/0000-0002-4426-6877" target="_blank">ORCID: 0000-0002-4426-6877</a><br>
+  Dept. of Anaesthesiology, Critical Care &amp; Pain · MPMMCC &amp; HBCH · Tata Memorial Centre · Varanasi · HBNI<br>
+  Licensed under <a href="https://www.gnu.org/licenses/gpl-3.0.en.html" target="_blank">GNU General Public License v3.0</a> &nbsp;·&nbsp;
+  Based on: Mahmood K et al. CHEST 2025;167(1):283–295. DOI: 10.1016/j.chest.2024.06.3804<br>
+  <span style="color:rgba(255,255,255,0.35);">FOR EDUCATIONAL USE ONLY · NOT A SUBSTITUTE FOR CLINICAL JUDGEMENT · VALIDATE ALL DECISIONS AGAINST CURRENT GUIDELINES</span>
+</footer>
+
+<script>
+'use strict';
+
+/* ══════════════════════════════════════════════════════════
+   LAYOUT TOGGLE
+══════════════════════════════════════════════════════════ */
+function setLayout(mode, btn) {
+  document.querySelectorAll('.layout-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (mode === 'pc') {
+    document.body.classList.add('pc-mode');
+  } else {
+    document.body.classList.remove('pc-mode');
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   TAB SWITCHING
+══════════════════════════════════════════════════════════ */
+function showTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.remove('active');
+    b.setAttribute('aria-selected','false');
+    b.setAttribute('tabindex','-1');
+  });
+  const panel = document.getElementById('tab-' + id);
+  if (panel) panel.classList.add('active');
+  btn.classList.add('active');
+  btn.setAttribute('aria-selected','true');
+  btn.setAttribute('tabindex','0');
+  btn.focus({ preventScroll: true });
+  // Scroll tab into view on mobile
+  btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+}
+
+/* ══════════════════════════════════════════════════════════
+   PATHWAY NAVIGATOR
+══════════════════════════════════════════════════════════ */
+function selectPathway(type) {
+  const btnMal = document.getElementById('btnMal');
+  const btnNon = document.getElementById('btnNon');
+  document.getElementById('pathway-malignant').style.display  = type === 'malignant'    ? 'block' : 'none';
+  document.getElementById('pathway-nonmalignant').style.display = type === 'nonmalignant' ? 'block' : 'none';
+  btnMal.className = 'etio-btn' + (type === 'malignant'    ? ' active-mal' : '');
+  btnNon.className = 'etio-btn' + (type === 'nonmalignant' ? ' active-non' : '');
+}
+
+function toggleInsight(btn, id) {
+  const parent = btn.closest('.step-content');
+  parent.querySelectorAll('.step-opt-btn').forEach(b => b.classList.remove('selected'));
+  parent.querySelectorAll('.step-insight').forEach(i => i.style.display = 'none');
+  btn.classList.add('selected');
+  const el = document.getElementById(id);
+  if (el) el.style.display = 'block';
+}
+
+function resetPathway() {
+  document.querySelectorAll('.step-opt-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.step-insight').forEach(i => i.style.display = 'none');
+}
+
+/* ══════════════════════════════════════════════════════════
+   AIRWAY ASSESSMENT
+══════════════════════════════════════════════════════════ */
+let mallampatiScore = 0;
+let ulbtClass = null;
+
+function setMallampati(score, btn) {
+  mallampatiScore = score;
+  document.querySelectorAll('#mpGrid .mp-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  updateAssessment();
+}
+
+function setULBT(cls, btn) {
+  ulbtClass = cls;
+  document.querySelectorAll('#ulbtGrid .mp-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  const res = document.getElementById('ulbtResult');
+  res.style.display = 'block';
+
+  const configs = {
+    1: { bg: 'var(--ok-bg)',     border: 'var(--ok-border)',     color: 'var(--ok)',
+         html: '<strong>ULBT Class I</strong> — Lower incisors reach above the vermilion border. Adequate mandibular protrusion. No additional airway concern from this parameter; favourable for laryngoscopy and rigid bronchoscope insertion.' },
+    2: { bg: 'var(--warn-bg)',   border: 'var(--warn-border)',   color: 'var(--warn)',
+         html: '<strong>ULBT Class II</strong> — Partial upper lip coverage. Intermediate mandibular protrusion. Moderate risk for difficult direct laryngoscopy. Combine with Mallampati, TMD, and mouth opening for overall stratification. Have video laryngoscopy immediately available.' },
+    3: { bg: 'var(--danger-bg)', border: 'var(--danger-border)', color: 'var(--danger)',
+         html: '<strong>ULBT Class III</strong> — No protrusion possible. Strong predictor of difficult direct laryngoscopy (LR+ ≈11; specificity ~96%). Plan advanced airway strategy: video laryngoscopy as primary, fibreoptic standby, surgeon aware. Risk compounded if Mallampati III–IV co-present.' },
+    0: { bg: 'var(--surface2)',  border: 'var(--ink-xfaint)',    color: 'var(--ink-dim)',
+         html: '<strong>Not tested / Edentulous</strong> — Assess jaw slide by palpation of TMJ mobility and interincisor gap estimate. ULBT contribution excluded from risk score.' },
+  };
+  const c = configs[cls] || configs[0];
+  res.style.background = c.bg;
+  res.style.border = '1px solid ' + c.border;
+  res.style.color = c.color;
+  res.innerHTML = c.html;
+  updateAssessment();
+}
+
+function setIndicator(id, status) {
+  const el = document.getElementById(id);
+  if (el) el.className = 'assess-indicator' + (status ? ' ' + status : '');
+}
+
+function updateAssessment() {
+  let flags = [];
+  let riskScore = 0;
+
+  const mouth = parseFloat(document.getElementById('mouthOpening').value);
+  if (!isNaN(mouth)) {
+    if (mouth <= 2)      { setIndicator('ind-mouth','abnormal'); flags.push({t:'Severely reduced mouth opening (≤2 FB)',s:'danger'}); riskScore += 2; }
+    else if (mouth <= 3) { setIndicator('ind-mouth','warn');     flags.push({t:'Borderline mouth opening (≤3 FB)',s:'warn'}); riskScore += 1; }
+    else                   setIndicator('ind-mouth','ok');
+  } else setIndicator('ind-mouth','');
+
+  const thyro = parseFloat(document.getElementById('thyromental').value);
+  if (!isNaN(thyro)) {
+    if (thyro <= 2)       { setIndicator('ind-thyro','abnormal'); flags.push({t:'Short thyromental distance (≤2 FB)',s:'danger'}); riskScore += 2; }
+    else if (thyro <= 3)  { setIndicator('ind-thyro','warn');     flags.push({t:'Borderline TMD (≤3 FB)',s:'warn'}); riskScore += 1; }
+    else                    setIndicator('ind-thyro','ok');
+  } else setIndicator('ind-thyro','');
+
+  const neck = parseFloat(document.getElementById('neckMobility').value);
+  if (!isNaN(neck)) {
+    if (neck < 60)        { setIndicator('ind-neck','abnormal'); flags.push({t:'Severely restricted neck mobility (<60°)',s:'danger'}); riskScore += 2; }
+    else if (neck < 90)   { setIndicator('ind-neck','warn');     flags.push({t:'Reduced neck mobility (<90°)',s:'warn'}); riskScore += 1; }
+    else                    setIndicator('ind-neck','ok');
+  } else setIndicator('ind-neck','');
+
+  const teeth = document.getElementById('teethStatus').value;
+  if (teeth === 'normal') setIndicator('ind-teeth','ok');
+  else if (['prominent','missing','loose'].includes(teeth)) {
+    setIndicator('ind-teeth','warn');
+    flags.push({t:'Abnormal dentition (' + teeth + ') — rigid scope protection needed',s:'warn'});
+    riskScore += 1;
+  } else setIndicator('ind-teeth','');
+
+  const cervical = document.getElementById('cervicalSpine').value;
+  if (cervical === 'none') setIndicator('ind-cervical','ok');
+  else if (cervical === 'yes') {
+    setIndicator('ind-cervical','abnormal');
+    flags.push({t:'Cervical spine disorder — impacts rigid bronchoscopy positioning',s:'danger'});
+    riskScore += 2;
+  } else setIndicator('ind-cervical','');
+
+  const anticoag = document.getElementById('anticoag').value;
+  if (anticoag === 'none') setIndicator('ind-anticoag','ok');
+  else if (anticoag === 'antiplatelet') {
+    setIndicator('ind-anticoag','warn');
+    flags.push({t:'Antiplatelet use — review before ablation',s:'warn'});
+    riskScore += 1;
+  } else if (['anticoagulant','both'].includes(anticoag)) {
+    setIndicator('ind-anticoag','abnormal');
+    flags.push({t:'Anticoagulant — formal bridging/reversal plan required',s:'danger'});
+    riskScore += 2;
+  } else setIndicator('ind-anticoag','');
+
+  if (mallampatiScore === 3) { flags.push({t:'Mallampati III — anticipate difficult airway',s:'warn'}); riskScore += 1; }
+  if (mallampatiScore === 4) { flags.push({t:'Mallampati IV — high difficult airway risk',s:'danger'}); riskScore += 2; }
+
+  if (ulbtClass === 2) {
+    flags.push({t:'ULBT Class II — intermediate jaw protrusion; video laryngoscopy backup advisable',s:'warn'});
+    riskScore += 1;
+  } else if (ulbtClass === 3) {
+    flags.push({t:'ULBT Class III — no jaw protrusion; difficult laryngoscopy predicted (LR+ ≈11)',s:'danger'});
+    riskScore += 2;
+    if (mallampatiScore >= 3) {
+      flags.push({t:'COMPOUND: ULBT III + Mallampati III/IV — advanced airway strategy mandatory',s:'danger'});
+      riskScore += 1;
+    }
+  }
+
+  const maxScore = 16;
+  window.caoRiskScore = riskScore;
+  window.caoRiskFlags = flags.map(f => f.t);
+  const pct = Math.min(100, Math.round((riskScore / maxScore) * 100));
+  const bar = document.getElementById('riskBar');
+  bar.style.width = pct + '%';
+  bar.style.background = riskScore <= 2 ? 'var(--ok)' : riskScore <= 6 ? 'var(--warn)' : 'var(--danger)';
+
+  const riskText = document.getElementById('riskText');
+  if (riskScore === 0 && mallampatiScore === 0 && ulbtClass === null) {
+    riskText.textContent = 'Complete fields above — risk profile builds automatically.';
+    riskText.style.color = 'var(--ink-dim)';
+  } else {
+    const level = riskScore <= 2 ? 'Low risk' : riskScore <= 6 ? 'Moderate risk' : 'High risk';
+    const advice = riskScore > 6
+      ? 'Expert anaesthesia consultation and multidisciplinary planning before rigid bronchoscopy.'
+      : riskScore > 2
+      ? 'Address modifiable factors. Ensure anaesthesia team is fully briefed on risk profile.'
+      : 'Proceed with standard peri-procedural monitoring.';
+    riskText.innerHTML = `<strong>${level}</strong> — Risk score: ${riskScore}/${maxScore}. ${advice}`;
+    riskText.style.color = 'var(--ink)';
+  }
+
+  const flagDiv = document.getElementById('riskFlags');
+  flagDiv.innerHTML = '';
+  flags.forEach(f => {
+    const cls = f.s === 'danger' ? 'badge-danger' : 'badge-warn';
+    const span = document.createElement('span');
+    span.className = 'badge ' + cls;
+    span.textContent = f.t;
+    flagDiv.appendChild(span);
+  });
+}
+
+/* ══════════════════════════════════════════════════════════
+   CHECKLIST
+══════════════════════════════════════════════════════════ */
+function toggleCheck(item) {
+  item.classList.toggle('checked');
+  const total = document.querySelectorAll('.checklist-item').length;
+  const done  = document.querySelectorAll('.checklist-item.checked').length;
+  document.getElementById('clProgressFill').style.width = (done / total * 100) + '%';
+  document.getElementById('clProgressText').textContent = done + ' / ' + total;
+}
+
+/* ══════════════════════════════════════════════════════════
+   STENT DECISION LOGIC
+══════════════════════════════════════════════════════════ */
+function updateStentLogic() {
+  const sq1 = document.querySelector('input[name="sq1"]:checked');
+  if (!sq1) return;
+
+  document.querySelectorAll('#sq1 .stent-radio').forEach(r => r.classList.remove('selected'));
+  sq1.closest('.stent-radio').classList.add('selected');
+
+  const step2 = document.getElementById('stent-step2');
+  const step3 = document.getElementById('stent-step3');
+  const result = document.getElementById('stentResult');
+
+  if (sq1.value === 'yes') {
+    step2.style.display = 'none';
+    step3.style.display = 'none';
+    result.style.display = 'block';
+    result.innerHTML = `<div class="rec-box ok"><div class="rec-label">Recommendation — Rec 8, Conditional, Very Low Certainty</div><div class="rec-text">Debridement achieves patency → <strong>Avoid stent.</strong> Stent complications (mucus plugging, granulation tissue, migration, fracture, infection) impose significant procedural burden. Reserve stenting for failure of other modalities or inability to maintain patency without a stent.</div></div>`;
+    return;
+  }
+
+  step2.style.display = 'block';
+  const sq2 = document.querySelector('input[name="sq2"]:checked');
+  document.querySelectorAll('#sq2 .stent-radio').forEach(r => r.classList.remove('selected'));
+  if (sq2) sq2.closest('.stent-radio').classList.add('selected');
+  if (!sq2) { result.style.display = 'none'; step3.style.display = 'none'; return; }
+
+  step3.style.display = 'block';
+  const sq3 = document.querySelector('input[name="sq3"]:checked');
+  document.querySelectorAll('#sq3 .stent-radio').forEach(r => r.classList.remove('selected'));
+  if (sq3) sq3.closest('.stent-radio').classList.add('selected');
+  if (!sq3) { result.style.display = 'none'; return; }
+
+  result.style.display = 'block';
+
+  const locNote = sq3.value === 'trachea'
+    ? '<br><br>⚠ <strong>Subglottic/tracheal location:</strong> highest migration risk, anatomical constraints. Silicone T-tube or custom-shaped stents may be preferred. FDA 2005 metallic stent warning is especially relevant here.'
+    : sq2.value === 'nonmal'
+      ? ' Lung transplant-related stenosis: stent vs dilation associated with greater FEV1 improvement (Shofer et al.).'
+      : '';
+
+  let html = '';
+  if (sq2.value === 'naive') {
+    html = `<div class="rec-box warn"><div class="rec-label">Stent May Be Indicated — Rec 8, Conditional, Very Low Certainty</div><div class="rec-text">Treatment-naïve patients: stent may be indicated, but benefit is less established. SPOC trial showed no survival difference vs no stent in this subgroup. Consider stent only if extrinsic compression dominates and oncologic response is expected to be delayed. AQuIRE OR 11.9 for technical success applies across contexts, but durability benefit is context-dependent.${locNote}</div></div>`;
+  } else if (sq2.value === 'failed' || sq2.value === 'radiation') {
+    html = `<div class="rec-box danger"><div class="rec-label">Stent Indicated — Rec 8, Conditional, Very Low Certainty</div><div class="rec-text">Failed first-line chemotherapy or receiving radiation/palliation: stent is indicated when other therapeutic bronchoscopic/systemic treatments have failed and when feasible. SPOC trial: HR 0.21 (95% CI 0.06–0.74; p=0.007) for local recurrence vs no stent. More durable dyspnoea relief; fewer repeat bronchoscopies.${locNote}</div></div>`;
+  } else if (sq2.value === 'nonmal') {
+    html = `<div class="rec-box amber"><div class="rec-label">Stent Trial — Rec 8, Conditional, Very Low Certainty</div><div class="rec-text">Repeated dilations and local bronchoscopic therapy exhausted → stent trial is reasonable. Fully covered metal stents may offer safer profile than uncovered metallic stents in benign disease.${locNote}</div></div>`;
+  }
+  result.innerHTML = html;
+}
+
+/* ══════════════════════════════════════════════════════════
+   QUIZ
+══════════════════════════════════════════════════════════ */
+const quizData = [
+  { q: "According to ACCP 2025, central airway obstruction (CAO) is defined as occlusion of what percentage or greater of the central airways?",
+    opts: ["25%","50%","75%","Any detectable obstruction"], ans: 1,
+    exp: "CAO is defined as ≥50% occlusion of the trachea, mainstem bronchi, bronchus intermedius, or lobar bronchi. This threshold governs both diagnosis and the procedural success benchmark (>50% lumen reopening)." },
+
+  { q: "The ACCP 2025 guideline designates which modality as the imaging investigation of choice for evaluating CAO?",
+    opts: ["MRI chest","Chest X-ray with fluoroscopy","CT scan of the chest and neck","PET-CT"], ans: 2,
+    exp: "CT of the chest and neck is the imaging of choice for establishing diagnosis, severity, lesion type, and planning therapeutic approaches. The guideline notes that radiographic (plain film) diagnosis of CAO is often missed or delayed." },
+
+  { q: "In the AQuIRE registry, general anaesthesia/deep sedation compared to moderate sedation was associated with which specific complication outcome?",
+    opts: ["Higher technical success rate","Complication OR 0.42 (95% CI 0.21–0.83; P=.013)","Increased number of procedure sessions","No significant difference in any outcome"], ans: 1,
+    exp: "GA/deep sedation was associated with significantly lower complication risk (OR 0.42; 95% CI 0.21–0.83; P=.013). Technical success rates did not differ significantly. Additionally, use of paralytics reduced complications further (3% vs 6.7%; P=.006)." },
+
+  { q: "The mandatory FiO₂ threshold to prevent airway fire during heat ablative bronchoscopy (laser, electrocautery, APC) is:",
+    opts: ["≤0.6","≤0.5","≤0.4","≤0.3"], ans: 2,
+    exp: "FiO₂ must be reduced to ≤0.4 before activating any heat ablative device. This should be treated as a mandatory local team-safety checkpoint: reduce FiO₂ to ≤0.4 and keep heat-ablation catheters away from flammable devices." },
+
+  { q: "In the SPOC trial, for patients with malignant CAO who had failed first-line chemotherapy or were receiving palliation, stent placement after tumour debridement was associated with:",
+    opts: ["No benefit over debridement alone","HR 0.21 (95% CI 0.06–0.74; p=0.007) for local recurrence","Worse survival than no stent","No difference in dyspnoea outcomes"], ans: 1,
+    exp: "The SPOC trial demonstrated HR 0.21 (95% CI 0.06–0.74; p=0.007) for local recurrence in patients receiving palliation or who had failed first-line chemotherapy. This benefit was not seen in treatment-naïve patients, establishing disease context as the key stent-indication driver." },
+
+  { q: "Post-stent surveillance: which statement best represents the ACCP 2025 evidence?",
+    opts: ["Routine 3-monthly bronchoscopy significantly reduces stent complications","Symptom-driven bronchoscopy misses 60% of stent complications","Either routine surveillance or symptom-driven bronchoscopy is acceptable","CT scan is superior to bronchoscopy for post-stent monitoring"], ans: 2,
+    exp: "CHEST 2025 supports either routine surveillance bronchoscopy or bronchoscopy when patients are symptomatic. Available evidence is very low certainty; patient education and reliable follow-up remain essential." },
+
+  { q: "For idiopathic subglottic stenosis, what is the approximate 5-year recurrence rate following surgical resection (cricotracheal resection)?",
+    opts: ["50%","30%","15%","5%"], ans: 3,
+    exp: "5-year recurrence (n=487, multicenter): dilation 50%, ERMT 30%, surgical resection 5%. Surgery has the lowest long-term recurrence but voice scores are worse compared to bronchoscopic modalities. Shared decision-making must account for this quality-of-life trade-off." },
+
+  { q: "In the AQuIRE registry comparing rigid vs flexible bronchoscopy (947 patients), which statement is most accurate?",
+    opts: ["Rigid bronchoscopy achieved 99% success vs 85% flexible","Success rates similar (93.5% vs 92.7%), but rigid required fewer sessions (1 vs 2; P<0.001)","Flexible bronchoscopy had significantly lower bleeding-related death rates","Rigid bronchoscopy caused significantly higher complication rates"], ans: 1,
+    exp: "AQuIRE showed similar procedural success (rigid 93.5% vs flexible 92.7%; P=.62). Rigid bronchoscopy required significantly fewer sessions (1 vs 2; P<0.001). Retrospective data also suggest more bleeding-related deaths with flexible bronchoscopy, supporting rigid bronchoscopy preference for proximal, critical, and bulky disease." },
+
+  { q: "Mitomycin C application for tracheal stenosis showed what 4-month success rate compared to steroid injection and dilation alone?",
+    opts: ["Similar to steroid injection (~20%)","75% vs 18.2% (steroid) vs 15% (dilation); P<.05","45% — superior only to dilation","Same as dilation (15%)"], ans: 1,
+    exp: "A retrospective study (n=20) of idiopathic and post-intubation/tracheostomy tracheal stenosis: mitomycin C 75% success, steroid injection 18.2%, airway dilation 15% (P<.05) at 4 months. This informs the Rec 10 suggestion for local bronchoscopic therapy — specifically mitomycin C — in recurrent nonmalignant stenosis." },
+
+  { q: "The overall certainty of evidence across the ACCP 2025 CAO guideline graded recommendations is best described as:",
+    opts: ["High for surgical recommendations, Moderate for bronchoscopic","Moderate throughout","Low to Very Low depending on intervention","One Good Practice Statement + graded conditional recommendations; overall very low certainty"], ans: 3,
+    exp: "The guideline includes one Good Practice Statement and graded conditional recommendations, with overall very low certainty of evidence. This reflects significant heterogeneity, small retrospective cohorts, and near-absence of randomised trial data in this field." },
+];
+
+let currentQ = 0;
+let answers  = new Array(quizData.length).fill(null);
+
+function renderQuiz() {
+  const q = quizData[currentQ];
+  document.getElementById('quizNum').textContent = `Question ${currentQ + 1} of ${quizData.length}`;
+  document.getElementById('quizText').textContent = q.q;
+
+  const opts = document.getElementById('quizOpts');
+  opts.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'quiz-opt';
+    btn.textContent = opt;
+    btn.onclick = () => selectAnswer(i);
+    if (answers[currentQ] !== null) {
+      btn.disabled = true;
+      if (i === q.ans)               btn.classList.add('correct');
+      else if (i === answers[currentQ]) btn.classList.add('incorrect');
+    }
+    opts.appendChild(btn);
+  });
+
+  const exp = document.getElementById('quizExplanation');
+  if (answers[currentQ] !== null) {
+    exp.innerHTML = '<strong>Explanation:</strong> ' + q.exp;
+    exp.classList.add('show');
+  } else {
+    exp.classList.remove('show');
+  }
+
+  // Progress pips
+  const prog = document.getElementById('quizProgress');
+  prog.innerHTML = '';
+  quizData.forEach((_, i) => {
+    const pip = document.createElement('div');
+    pip.className = 'quiz-pip' + (i < currentQ ? ' done' : i === currentQ ? ' current' : '');
+    prog.appendChild(pip);
+  });
+
+  document.getElementById('btnPrev').disabled = currentQ === 0;
+  const nextBtn = document.getElementById('btnNext');
+  nextBtn.disabled = answers[currentQ] === null;
+  nextBtn.textContent = currentQ === quizData.length - 1 ? 'Show Results' : 'Next →';
+}
+
+function selectAnswer(idx) {
+  if (answers[currentQ] !== null) return;
+  answers[currentQ] = idx;
+  renderQuiz();
+}
+
+function nextQ() {
+  if (currentQ < quizData.length - 1) { currentQ++; renderQuiz(); }
+  else showScore();
+}
+
+function prevQ() {
+  if (currentQ > 0) { currentQ--; renderQuiz(); }
+}
+
+function showScore() {
+  const correct = answers.filter((a, i) => a === quizData[i].ans).length;
+  const pct = Math.round(correct / quizData.length * 100);
+  document.getElementById('quizMain').style.display  = 'none';
+  document.getElementById('quizScore').style.display = 'block';
+  document.getElementById('scoreNum').textContent = `${correct}/${quizData.length}`;
+  document.getElementById('scoreSub').textContent = `${pct}% · ${pct >= 80 ? 'Excellent' : pct >= 60 ? 'Good — review missed items' : 'Needs review'}`;
+  document.getElementById('scoreFeedback').textContent = pct >= 80
+    ? 'Strong command of the ACCP 2025 CAO guideline. Pay particular attention to numerical thresholds and evidence statistics for oral and written examinations.'
+    : pct >= 60
+    ? 'Good foundation. Focus on the key statistics: complication ORs, FiO₂ threshold, recurrence rates, and the SPOC trial findings.'
+    : 'Review the Pathway Navigator and Evidence Atlas tabs. Priority topics: GA vs moderate sedation data, fire safety FiO₂ threshold, stent indication hierarchy, and 5-year recurrence rates across modalities.';
+}
+
+function restartQuiz() {
+  currentQ = 0;
+  answers  = new Array(quizData.length).fill(null);
+  document.getElementById('quizMain').style.display  = 'block';
+  document.getElementById('quizScore').style.display = 'none';
+  renderQuiz();
+}
+
+
+
+/* ══════════════════════════════════════════════════════════
+   CASE CONTEXT OUTPUT
+══════════════════════════════════════════════════════════ */
+function valOrDash(id) {
+  const el = document.getElementById(id);
+  return el && el.value && el.value.trim() ? el.value.trim() : '—';
+}
+
+function selectedText(selector) {
+  const el = document.querySelector(selector);
+  return el ? el.textContent.replace(/\s+/g, ' ').trim() : '—';
+}
+
+function checkedChecklistText() {
+  const items = Array.from(document.querySelectorAll('.checklist-item.checked .check-label'));
+  if (!items.length) return '—';
+  return items.map(i => '• ' + i.childNodes[0].textContent.trim()).join('\n');
+}
+
+function buildCaseSummary() {
+  updateAssessment();
+  const now = new Date();
+  const dt = now.toLocaleString('en-IN', { hour12: false });
+  const activePath = document.getElementById('pathway-malignant').style.display === 'none' ? 'Nonmalignant pathway' : 'Malignant pathway';
+  const stentResult = document.getElementById('stentResult');
+  const stentText = stentResult && stentResult.style.display !== 'none' ? stentResult.textContent.replace(/\s+/g,' ').trim() : '—';
+  const risk = typeof window.caoRiskScore === 'number' ? window.caoRiskScore + '/16' : '—';
+  const flags = window.caoRiskFlags && window.caoRiskFlags.length ? window.caoRiskFlags.map(f => '• ' + f).join('\n') : '—';
+  return `CAO-CDSS CASE SUMMARY\nCreated: ${dt}\nCase no./identifier: ${valOrDash('ctxCaseNo')}\n\nCASE CONTEXT\nEtiology: ${valOrDash('ctxEtiology')}\nAnatomy: ${valOrDash('ctxType')}\nLesion site: ${valOrDash('ctxSite')}\nPercent occlusion: ${valOrDash('ctxOcclusion')}\nSymptoms: ${valOrDash('ctxSymptoms')}\nOxygen requirement: ${valOrDash('ctxOxygen')}\nPlanned intervention: ${valOrDash('ctxPlan')}\n\nAPP STATE\nSelected pathway: ${activePath}\nAirway-access heuristic score: ${risk}\nRisk flags:\n${flags}\n\nStent decision output:\n${stentText}\n\nCompleted peri-procedural checklist items:\n${checkedChecklistText()}\n\nGuideline framing: CHEST 2025 CAO guideline. Recommendations are conditional unless labelled Good Practice Statement; overall certainty of evidence is very low. This output supports clinician review and does not replace specialist judgment or institutional protocol.`;
+}
+
+function showCaseSummary() {
+  const out = document.getElementById('caseSummaryOutput');
+  const text = buildCaseSummary();
+  out.textContent = text;
+  out.style.display = 'block';
+  return text;
+}
+
+async function copyCaseSummary() {
+  const text = showCaseSummary();
+  try {
+    await navigator.clipboard.writeText(text);
+    alert('CAO-CDSS summary copied to clipboard.');
+  } catch (err) {
+    const out = document.getElementById('caseSummaryOutput');
+    out.focus();
+    alert('Clipboard access blocked. Summary is displayed below for manual copying.');
+  }
+}
+
+function saveCaseSummaryTxt() {
+  const text = showCaseSummary();
+  const caseNo = valOrDash('ctxCaseNo').replace(/[^a-zA-Z0-9_-]/g,'').toLowerCase() || 'cao';
+  const now = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const stamp = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}${pad(now.getHours())}${pad(now.getMinutes())}`;
+  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${caseNo}_cao_cdss_${stamp}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  URL.revokeObjectURL(a.href);
+  a.remove();
+}
+
+function printCaseSummary() {
+  showCaseSummary();
+  window.print();
+}
+
+function initTabKeyboard() {
+  const tabs = Array.from(document.querySelectorAll('.tab-btn'));
+  tabs.forEach((tab, idx) => {
+    tab.addEventListener('keydown', (e) => {
+      let nextIdx = null;
+      if (e.key === 'ArrowRight') nextIdx = (idx + 1) % tabs.length;
+      if (e.key === 'ArrowLeft') nextIdx = (idx - 1 + tabs.length) % tabs.length;
+      if (e.key === 'Home') nextIdx = 0;
+      if (e.key === 'End') nextIdx = tabs.length - 1;
+      if (nextIdx !== null) {
+        e.preventDefault();
+        tabs[nextIdx].click();
+      }
+    });
+  });
+}
+
+// Init
+window.caoRiskScore = null;
+window.caoRiskFlags = [];
+initTabKeyboard();
+renderQuiz();
+</script>
+</body>
+</html>
