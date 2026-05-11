@@ -25,6 +25,7 @@ These are a set of Software Tools created and maintained by Prof. Jyotirmay Kirt
 | **PAC-assistant** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/PAC-assistant-v1.15.html) | [📖 About & Help](./docs/About-Help-PAC-assistant-v1.15.md) |
 | **AIR** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/AIR-v2.0.html) | [📖 About & Help](./docs/AIR-Help.md) |
 |**TRACHY-score** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/TRACHY-score-v1.0.html) | [📖 About & Help](./docs/TRACHY-score-v1.0-Help.md) |
+|**CAO-CDSS-2026** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/CAO-CDSS-2026.html) | [📖 About & Help](./docs/About-Help-CAO-CDSS2026.md) |
 |**IBIDA** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/IBIDA-v1.4.html) | [📖 About & Help](./docs/IBIDA-v1.4-About-Help.md) |
 |**IVAA-PK-PD-Simulator** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/IVAA-PK-PD-Simulator-v3.0.html) | [📖 About & Help](./docs/About-Help-IVAA-PK-PD-Sim-v3.0.md) |
 |**AA-PKPD** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/AA-PKPD-v1.2.html) | [📖 About & Help](./docs/AA-PKPD-v1.2-Help.md) |
