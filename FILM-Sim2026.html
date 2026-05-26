@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FILM - Flow Instability & Lung Mechanics Simulator</title>
+<style>
+:root{--bg:#f6f8fb;--card:#fff;--ink:#152033;--muted:#64748b;--line:#d7e0eb;--blue:#2563eb;--teal:#0f766e;--red:#b91c1c;--amber:#b45309;--green:#15803d;--shadow:0 10px 28px rgba(15,23,42,.10)}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(#f9fbff,#eef4fb);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--ink)}
+header,.app{max-width:1180px;margin:auto;padding:14px}h1{font-size:1.35rem;margin:0 0 6px}.sub{margin:0;color:var(--muted);font-size:.94rem;max-width:980px}.tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 12px}.tab{border:1px solid var(--line);background:#fff;border-radius:14px;padding:12px;font-weight:800;cursor:pointer}.tab.active{background:var(--blue);color:#fff;border-color:var(--blue)}.grid{display:grid;grid-template-columns:1fr;gap:12px}.panel{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);overflow:hidden}.head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line);background:#fbfdff}.head h2{margin:0;font-size:1.02rem}.body{padding:12px 14px}.pill{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:4px 9px;font-size:.78rem;font-weight:800;color:#334155;background:#fff;white-space:nowrap}.canvasBox{background:radial-gradient(circle at 50% 0,#fff,#eef6ff 65%,#e1ebf6);border:1px solid #d5e2f0;border-radius:16px;overflow:hidden}canvas{display:block;width:100%;height:auto}.readout{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}.tile{border:1px solid var(--line);border-radius:14px;padding:9px;background:#fbfdff}.label{font-size:.74rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;font-weight:800}.value{font-size:1.02rem;font-weight:900;margin-top:3px}.small{font-size:.87rem}.controls{display:grid;grid-template-columns:1fr;gap:9px}.control{border:1px solid var(--line);border-radius:14px;padding:10px;background:#fbfdff}.control label{display:flex;justify-content:space-between;gap:8px;font-weight:800;font-size:.86rem}.hint{font-size:.78rem;color:var(--muted);margin-top:4px}input[type=range],select{width:100%;margin-top:8px}select{padding:9px;border:1px solid var(--line);border-radius:10px;background:#fff}.btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.btns.three{grid-template-columns:1fr 1fr 1fr}button.action{border:0;border-radius:13px;padding:11px 8px;font-weight:900;color:#fff;background:var(--blue);cursor:pointer}.secondary{background:#e2e8f0!important;color:#0f172a!important}.teal{background:var(--teal)!important}.amber{background:#f59e0b!important;color:#111827!important}.note{padding:10px 12px;background:#fff8e7;border:1px solid #fde68a;border-radius:14px;color:#713f12;font-size:.88rem;margin-top:10px}.explain{padding:10px 12px;background:#f8fafc;border:1px solid var(--line);border-radius:14px;color:#334155;font-size:.88rem;margin-top:10px}table{width:100%;border-collapse:collapse;font-size:.84rem}th,td{border-bottom:1px solid var(--line);padding:8px;text-align:left;vertical-align:top}th{background:#f1f5f9;color:#334155;font-size:.76rem;text-transform:uppercase;letter-spacing:.04em}.hidden{display:none}.ok{color:var(--green)}.bad{color:var(--red)}.warn{color:var(--amber)}.accent{color:var(--blue)}.wide{grid-column:1/-1}.formula{font-family:Consolas,monospace;background:#0f172a;color:#e2e8f0;border-radius:12px;padding:10px;overflow:auto;font-size:.82rem;margin-top:8px}details{border:1px solid var(--line);border-radius:14px;padding:10px 12px;background:#fbfdff;margin-top:10px}summary{font-weight:900;cursor:pointer}.brand-title{display:block;font-size:2.1rem;letter-spacing:.08em;font-weight:950;line-height:1.05}.brand-expanded{display:block;font-size:1.08rem;font-weight:850;letter-spacing:-.01em;line-height:1.25;margin-top:2px}.credit{margin:7px 0 0;color:#334155;font-size:.86rem;font-weight:700}.mode-toggle{display:flex;gap:4px;margin:8px 0 4px}.mode-btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 18px;font-weight:800;font-size:.84rem;cursor:pointer}.mode-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+
+.quick-guide{max-width:1180px;margin:8px auto 0;padding:0 14px}.quick-guide details{margin:0;background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}.quick-guide summary{list-style:none;padding:12px 14px;font-weight:950;cursor:pointer;background:linear-gradient(180deg,#ffffff,#f8fafc);display:flex;align-items:center;justify-content:space-between;gap:10px}.quick-guide summary::-webkit-details-marker{display:none}.quick-guide summary .qtitle{font-size:1rem;color:#0f172a}.quick-guide summary .qhint{font-size:.78rem;color:var(--muted);font-weight:800}.quick-body{padding:12px 14px;border-top:1px solid var(--line)}.qgrid{display:grid;grid-template-columns:1fr;gap:10px}.qcard{border:1px solid var(--line);border-radius:14px;padding:10px;background:#fbfdff}.qcard h3{margin:0 0 8px;font-size:.96rem}.qrow{margin:6px 0;font-size:.88rem;color:#334155}.qrow b{color:#0f172a}.eq{font-family:Consolas,monospace;background:#0f172a;color:#e2e8f0;border-radius:8px;padding:2px 6px;white-space:nowrap}.tip{margin-top:10px;padding:10px 12px;border:1px solid #bfdbfe;background:#eff6ff;border-radius:14px;color:#1e3a8a;font-size:.88rem;font-weight:700}.qmini{font-size:.8rem;color:var(--muted)}
+body.mobile header,body.mobile .app{padding:8px}body.mobile h1{font-size:1.08rem}body.mobile .brand-title{font-size:1.55rem}.brand-expanded{}body.mobile .brand-expanded{font-size:.86rem;line-height:1.2}body.mobile .sub{font-size:.8rem}body.mobile .credit{font-size:.74rem;margin-top:5px}body.mobile .mode-toggle{margin:6px 0 2px}body.mobile .tabs{gap:4px;margin:6px 0 8px}body.mobile .tab{padding:10px 6px;font-size:.82rem}body.mobile .grid{grid-template-columns:1fr!important;gap:8px}body.mobile .panel{border-radius:12px}body.mobile .head{padding:8px 10px}body.mobile .head h2{font-size:.88rem}body.mobile .body{padding:8px 10px}body.mobile .readout{grid-template-columns:repeat(2,1fr)!important;gap:6px}body.mobile .tile{padding:6px;border-radius:10px}body.mobile .label{font-size:.68rem}body.mobile .value{font-size:.86rem}body.mobile .small{font-size:.76rem}body.mobile .controls{grid-template-columns:1fr!important;gap:6px}body.mobile .control{padding:8px;border-radius:10px}body.mobile .control label{font-size:.82rem}body.mobile button.action{padding:14px 8px;font-size:.84rem;border-radius:10px}body.mobile .btns{gap:6px}body.mobile .btns.three{grid-template-columns:1fr 1fr 1fr}body.mobile .note,body.mobile .explain{font-size:.8rem;padding:8px 10px;border-radius:10px}body.mobile .formula{font-size:.72rem;padding:8px;border-radius:8px}body.mobile table{font-size:.76rem}body.mobile th,body.mobile td{padding:5px}body.mobile .pill{font-size:.68rem;padding:3px 7px}body.mobile .hint{font-size:.7rem}body.mobile .canvasBox{border-radius:10px;width:100%;max-width:100%;overflow:hidden}body.mobile canvas{width:100%;max-width:100%;height:auto}body.mobile input[type=range]{margin-top:6px}body.mobile select{padding:8px;font-size:.82rem;border-radius:8px}body.mobile details{padding:8px 10px;border-radius:10px}body.mobile summary{font-size:.86rem}
+body.mobile .quick-guide{padding:0 8px;margin-top:6px}body.mobile .quick-guide summary{padding:9px 10px}body.mobile .quick-guide summary .qtitle{font-size:.88rem}body.mobile .quick-guide summary .qhint{font-size:.68rem}body.mobile .quick-body{padding:8px 10px}body.mobile .qcard{padding:8px;border-radius:10px}body.mobile .qcard h3{font-size:.86rem;margin-bottom:6px}body.mobile .qrow{font-size:.78rem;margin:5px 0}body.mobile .eq{font-size:.72rem;padding:1px 5px}body.mobile .tip{font-size:.78rem;padding:8px 10px;border-radius:10px}
+@media(min-width:900px){h1{font-size:1.65rem}.grid{grid-template-columns:minmax(0,1.35fr) minmax(320px,.75fr)}.readout{grid-template-columns:repeat(6,1fr)}.controls{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<header>
+<h1><span class="brand-title">FILM</span><span class="brand-expanded">Flow Instability &amp; Lung Mechanics Simulator</span></h1>
+<p class="sub">A Young–Laplace and Poiseuille equation based simulator for soap films, airway resistance, and adult alveolar mechanics.</p>
+<p class="credit">Author: Prof. Jyotirmay Kirtania (2026) &nbsp;|&nbsp; License: CC BY-NC 4.0</p>
+<div class="mode-toggle"><button id="modePC" class="mode-btn active">Desktop</button><button id="modeMob" class="mode-btn">Mobile</button></div>
+</header>
+
+<section class="quick-guide" aria-label="Quick Start Guide">
+<details id="quickGuideDetails">
+<summary><span class="qtitle">FILM (Flow-Instability Lung-Mechanics) Simulator: Quick Start Guide</span><span class="qhint">Expand/Collapse</span></summary>
+<div class="quick-body">
+  <div class="qgrid">
+    <div class="qcard">
+      <h3>Phase 1: The Physics — Soap Bubbles</h3>
+      <p class="qrow"><b>Action:</b> Open the <b>Soap bubbles</b> tab and click <b>Play</b>.</p>
+      <p class="qrow"><b>Observe:</b> The 3.5 cm bubble empties into the 10 cm bubble.</p>
+      <p class="qrow"><b>Principle:</b> Young–Laplace: <span class="eq">ΔP = 4γ/r</span>. A smaller radius creates higher excess internal pressure, driving gas into the larger unit.</p>
+      <p class="qrow"><b>Experiment:</b> Halve the <b>Tube internal diameter</b> to 2.5 mm. Collapse time rises sharply because Poiseuille flow depends on <span class="eq">r⁴</span>.</p>
+    </div>
+    <div class="qcard">
+      <h3>Phase 2: The Clinical Model - Adult Alveolar Units</h3>
+      <p class="qrow"><b>Action:</b> Switch to the <b>Adult alveolar units</b> tab to see how surfactant and tissue tethering prevent simple soap-bubble collapse.</p>
+      <p class="qrow"><b>ARDS &amp; VILI:</b> Select <b>ARDS-like</b>. Watch dependent-unit collapse and the stress multiplier on the adjacent open unit. This demonstrates Mead-type interdependence and stress concentration at derecruited/open-unit margins.</p>
+      <p class="qrow"><b>Dynamic hyperinflation:</b> Select <b>Emphysema-like</b> and increase <b>Respiratory rate</b> to 24/min. Units fail to empty before the next breath, causing progressive air trapping.</p>
+      <p class="qrow"><b>Airway crisis:</b> Select <b>Asthma/COPD-like</b>. Reduce <b>Airway diameter</b>. The expiratory time constant <span class="eq">τ = R × C</span> prolongs, showing why small mucosal edema or bronchospasm can become dangerous.</p>
+    </div>
+  </div>
+  <div class="tip">Learning tip: run the default soap-bubble collapse first, then switch to the lung tab. Simple physics makes the complex clinical mechanics easier to understand.</div>
+</div>
+</details>
+</section>
+
+<main class="app">
+<div class="tabs"><button id="tabSoap" class="tab active">Soap bubbles</button><button id="tabAlv" class="tab">Adult alveolar units</button></div>
+
+<section id="soapSec" class="grid">
+<div class="panel"><div class="head"><h2>Double soap-bubble experiment</h2><span id="soapClock" class="pill">t = 0.0 s</span></div><div class="body">
+<div class="canvasBox"><canvas id="soapCanvas" width="900" height="520"></canvas></div>
+<div class="readout">
+<div class="tile"><div class="label">Small radius</div><div id="sR" class="value">3.50 cm</div></div>
+<div class="tile"><div class="label">Large radius</div><div id="lR" class="value">10.00 cm</div></div>
+<div class="tile"><div class="label">Pressure gradient</div><div id="soapDP" class="value">0 Pa</div></div>
+<div class="tile"><div class="label">Flow rate</div><div id="flowRate" class="value small">0 mL/s</div></div>
+<div class="tile"><div class="label">Tube resistance</div><div id="tubeRes" class="value small">1.0×</div></div>
+<div class="tile"><div class="label">Estimated collapse</div><div id="collapseEst" class="value small">~15 s</div></div>
+</div>
+<div id="radiusGuard" class="note hidden"><b>Geometry warning:</b> the value labelled “small bubble” must be smaller than the value labelled “large bubble”. If the two are equal or reversed, the pressure gradient is zero or reversed, so the preset collapse demonstration is not valid.</div>
+</div></div>
+
+<aside class="panel"><div class="head"><h2>Controls</h2><span class="pill">Young-Laplace + Poiseuille</span></div><div class="body">
+<div class="controls">
+<div class="control"><label>Small bubble radius <span id="sInitLab">3.5 cm</span></label><input id="sInit" type="range" min="0.8" max="6" step="0.1" value="3.5"></div>
+<div class="control"><label>Large bubble radius <span id="lInitLab">10.0 cm</span></label><input id="lInit" type="range" min="4" max="20" step="0.5" value="10"></div>
+<div class="control"><label>Tube internal diameter <span id="boreLab">5.0 mm</span></label><input id="bore" type="range" min="1" max="8" step="0.1" value="5"></div>
+<div class="control"><label>Tube length <span id="tubeLenLab">20 cm</span></label><input id="tubeLen" type="range" min="5" max="150" step="1" value="20"></div>
+<div class="control"><label>Surface tension <span id="gammaLab">25 mN/m</span></label><input id="gamma" type="range" min="15" max="40" step="1" value="25"></div>
+<div class="control"><label>Model speed <span id="speedLab">1.0×</span></label><input id="speed" type="range" min="0.25" max="6" step="0.25" value="1"><div class="hint">Compresses model time relative to wall time. All displayed values and the clock are in model seconds.</div></div>
+</div>
+<div class="btns"><button id="soapPlay" class="action">Play</button><button id="soapReset" class="action secondary">Reset</button></div>
+<div class="btns"><button id="preset15" class="action amber">calibrated straw preset</button><button id="preset6mm" class="action secondary">6 mm straw preset</button></div>
+<div class="note"><b>Default:</b> small R ≈ 3.5 cm, large R ≈ 10 cm, 5 mm ID × 20 cm tube. This is a physically plausible tabletop setup and gives visible collapse to tube-radius scale in about 15 seconds. Use Play/Pause and the live readouts rather than fixed time-jump buttons.</div>
+</div></aside>
+
+<div class="panel wide"><div class="head"><h2>Bubble and tube geometry and collapse timeline</h2><span class="pill">Young-Laplace + Poiseuille</span></div><div class="body">
+<table><thead><tr><th>Predicted observation</th><th>Mechanism</th></tr></thead><tbody id="soapTable"></tbody></table>
+<details open><summary>Origin of ΔP and factors that control collapse</summary>
+<div class="explain"><b>Pressure correction:</b> for a soap bubble, ΔP means the excess internal pressure over the surrounding external pressure: ΔP = P<sub>inside</sub> − P<sub>outside</sub>. Between two connected bubbles, the driving pressure is the difference between their internal pressures.</div>
+<div class="formula">Soap bubble excess pressure: ΔPbubble = Pinside − Poutside = 4γ/R<br>Driving pressure between connected bubbles: ΔPdrive = 4γ(1/Rsmall − 1/Rlarge)<br>Poiseuille flow through the connecting tube: Q = πa⁴ΔPdrive / (8ηL)<br>Single-bubble limit to atmosphere: T = 2ηLR₀⁴ / (a⁴γ)</div>
+<table><thead><tr><th>Connecting tube</th><th>Bore</th><th>Length</th><th>Predicted single-bubble collapse for R₀ = 1 cm</th></tr></thead><tbody id="tubeTable"></tbody></table>
+</details>
+</div></div>
+</section>
+
+<section id="alvSec" class="grid hidden">
+<div class="panel"><div class="head"><h2>Adult alveolar units: resistance, compliance and time constants</h2><span id="alvClock" class="pill">t = 0.0 s</span></div><div class="body">
+<div class="canvasBox"><canvas id="alvCanvas" width="900" height="540"></canvas></div>
+<div class="readout">
+<div class="tile"><div class="label">Unit A</div><div id="aStatus" class="value small">Open</div></div>
+<div class="tile"><div class="label">Unit B</div><div id="bStatus" class="value small">Open</div></div>
+<div class="tile"><div class="label">Airway pressure</div><div id="pawOut" class="value">5.0</div></div>
+<div class="tile"><div class="label">Dynamic / branch R</div><div id="airwayRes" class="value small">1.0×</div></div>
+<div class="tile"><div class="label">Dynamic τ = R × C</div><div id="tauOut" class="value small">0.35 s</div></div>
+<div class="tile"><div class="label">Teaching point</div><div id="teachOut" class="value small">Stabilized</div></div>
+</div>
+</div></div>
+
+<aside class="panel"><div class="head"><h2>Controls</h2><span class="pill">clinical parallel</span></div><div class="body">
+<div class="controls">
+<div class="control wide"><label>Scenario</label><select id="scenario"><option value="normal">Normal adult surfactant + normal airway resistance</option><option value="bronchospasm">Asthma/COPD-like: bronchospasm, edema or secretions</option><option value="ards">ARDS-like: stiff heterogeneous units</option><option value="peep">ARDS-like with higher PEEP recruitment</option><option value="emphysema">Emphysema-like: high compliance + slow emptying</option><option value="absent">Absent surfactant: soap-bubble-like tendency</option></select></div>
+<div class="control"><label>PEEP <span id="peepLab">5 cmH2O</span></label><input id="peep" type="range" min="0" max="18" step="1" value="5"></div>
+<div class="control"><label>Driving pressure <span id="driveLab">8 cmH2O</span></label><input id="drive" type="range" min="2" max="20" step="1" value="8"></div>
+<div class="control"><label>Respiratory rate <span id="rrLab">12/min</span></label><input id="rr" type="range" min="6" max="30" step="1" value="12"></div>
+<div class="control wide"><label>Airway segment / generation zone <span id="segLab">medium conducting</span></label><select id="airSeg"><option value="proximal">Proximal large airway (G0–2)</option><option value="medium" selected>Medium conducting airway (G3–7; highest resistance zone)</option><option value="distal">Distal bronchiole zone (G8–16; parallelized)</option></select><div class="hint">Weibel-inspired weighting: the same local narrowing has different total impact depending on branching generation and parallel cross-sectional area.</div></div>
+<div class="control"><label>Airway diameter <span id="airDiaLab">2.0 mm</span></label><input id="airDia" type="range" min="0.5" max="4" step="0.1" value="2"></div>
+<div class="control"><label>Airway length <span id="airLenLab">20 mm</span></label><input id="airLen" type="range" min="5" max="80" step="1" value="20"></div>
+<div class="control"><label>Compliance index <span id="compLab">1.0×</span></label><input id="compIdx" type="range" min="0.3" max="3" step="0.1" value="1"></div>
+<div class="control"><label>Tissue tethering <span id="tetherLab">60%</span></label><input id="tether" type="range" min="0" max="100" step="5" value="60"></div>
+</div>
+<div class="btns"><button id="alvPlay" class="action">Play</button><button id="alvReset" class="action secondary">Reset</button></div>
+<div class="explain"><b>Clinical parallel:</b> halving airway diameter raises local Poiseuille resistance 16-fold. Total airway resistance also depends on airway generation: medium conducting airways contribute disproportionately, whereas very distal narrowing is partly buffered by parallel branching. During expiration in asthma/COPD/emphysema, dynamic airway compression can further increase resistance and prolong τ.</div>
+</div></aside>
+
+<div class="panel wide"><div class="head"><h2>Physiology interpretation</h2><span class="pill">adult lung</span></div><div class="body">
+<table><thead><tr><th>Condition</th><th>Dominant mechanical change</th><th>Interpretation in this simulator</th></tr></thead><tbody>
+<tr><td><b>Normal surfactant</b></td><td>Low resistance, normal elastance, normal surfactant.</td><td>Units cycle smoothly; surfactant, recoil and interdependence stabilize unit size.</td></tr>
+<tr><td><b>Emphysema</b></td><td>Loss of lung elastance and elastic recoil; high compliance; small-airway collapse during expiration.</td><td>Units inflate easily but empty slowly. Low recoil reduces the pressure available for expiration, favoring air trapping, dynamic hyperinflation and auto-PEEP.</td></tr>
+<tr><td><b>Lung fibrosis</b></td><td>High elastance, low compliance, small stiff lung units.</td><td>Higher pressure is required to generate the same volume change. Rapid shallow breathing is mechanically favored; excessive driving pressure increases regional stress.</td></tr>
+<tr><td><b>Pulmonary edema</b></td><td>Increased fluid in interstitium/alveoli; reduced compliance; impaired surfactant function; airway narrowing may coexist.</td><td>Units become stiff and unstable. Opening pressure rises; fluid-filled or foam-narrowed airways increase resistance and worsen time-constant heterogeneity.</td></tr>
+<tr><td><b>ARDS-like injury</b></td><td>Compliance is often sigmoidal rather than uniformly low: low at low volumes due to atelectasis/derecruitment, relatively better in the recruited baby-lung range, and low again at high volumes due to overdistension. Surfactant dysfunction, edema, regional collapse, and heterogeneous opening pressures coexist.</td><td>Some units open late and close early. PEEP may move lung units from the lower flat part of the pressure-volume curve into the recruited middle range, but excessive pressure shifts already-open units toward the upper flat overdistended range.</td></tr>
+<tr><td><b>Pneumoperitoneum</b></td><td>Diaphragm pushed cephalad; chest-wall elastance rises; FRC falls.</td><td>The same airway pressure produces less lung expansion. Dependent units approach closing volume earlier, increasing atelectasis risk and ventilation heterogeneity.</td></tr>
+<tr><td><b>Steep Trendelenburg</b></td><td>Abdominal contents load the diaphragm; dependent lung compression increases.</td><td>FRC falls further and dependent units derecruit. Higher airway pressure may be needed for ventilation, but the risk of overdistending non-dependent units remains.</td></tr>
+<tr><td><b>Abdominal compartment syndrome</b></td><td>Markedly increased intra-abdominal pressure; severe diaphragm displacement; high chest-wall elastance.</td><td>Airway pressures may rise even when transpulmonary distending pressure is inadequate. Ventilation becomes difficult because the respiratory system is stiff from outside the lung.</td></tr>
+<tr><td><b>Morbid obesity</b></td><td>Low FRC, increased chest-wall load, airway closure in dependent regions.</td><td>Small reductions in lung volume cause airway closure and atelectasis. Recruitment and PEEP may improve mechanics, but time constants vary across regions.</td></tr>
+</tbody></table>
+
+<details open><summary>Separate airway and fluid-overload interpretations</summary>
+<table><thead><tr><th>Condition</th><th>Primary variable affected</th><th>Physiology interpretation</th></tr></thead><tbody>
+<tr><td><b>Bronchospasm</b></td><td>Airway radius falls acutely.</td><td>Poiseuille resistance rises with 1/r⁴. Even mild narrowing can sharply prolong expiratory time constant and create incomplete emptying before the next breath.</td></tr>
+<tr><td><b>Asthma</b></td><td>Reversible bronchoconstriction plus mucosal edema and secretions.</td><td>Severe expiratory flow limitation creates long, uneven time constants. Slow units remain inflated during expiration, causing gas trapping, auto-PEEP and high work of breathing.</td></tr>
+<tr><td><b>COPD</b></td><td>Fixed small-airway disease plus emphysema-related loss of recoil.</td><td>Resistance is high and expiratory driving pressure is low. This combination strongly favors dynamic hyperinflation, especially when respiratory rate is high.</td></tr>
+<tr><td><b>Pulmonary edema</b></td><td>Compliance falls; small airways may narrow from peribronchial cuffing and fluid/foam.</td><td>This is not pure bronchospasm. The dominant problem is stiff, wet lung units with impaired gas exchange; added airway narrowing increases resistance and heterogeneity.</td></tr>
+</tbody></table>
+</details>
+
+<details><summary>Model used</summary><div class="formula">Alveolar teaching equation: P = 2T/R<br>Mead model stress concentration: stress multiplier ≈ max(Vopen/Vsmall, 1)^(2/3)<br>Weibel model branch-weighted resistance: Rbranch ≈ Wgeneration × (2 mm / d)^4 × (L / 20 mm)<br>Starling-resistor expiratory compression: Rdynamic = Rbranch × compression factor during expiration<br>Dynamic expiratory time constant: τdynamic = Rdynamic × C<br>Elastance = 1 / compliance. Loss of elastance means weak recoil and high compliance; high elastance means stiff, low-compliance lung.<br>Baseline heterogeneity: Unit B is intentionally initialized about 35% larger than Unit A to represent normal inter-unit size variation and to make regional stress/emptying differences visible.</div></details>
+
+</div></div>
+</section>
+</main>
+
+<script>
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const fmt=(x,n=1)=>Number.isFinite(x)?x.toFixed(n):'--';
+const ETA_AIR=1.90e-5; // Pa.s, approximate viscosity of fully humidified air at 37°C
+const DEFAULT_GAMMA=0.025; // N/m, default soap solution guard
+const volFromR=m=>4*Math.PI*m*m*m/3;
+const rFromVol=v=>Math.cbrt(Math.max(v,0)*3/(4*Math.PI));
+let last=performance.now();
+let active='soap';
+let debounceTimer=null;
+let soapEstimateCache=null;
+const soap={t:0,playing:false,v1:volFromR(0.035),v2:volFromR(0.10),dead:false,lastQ:0,lastDP:0};
+const alv={t:0,playing:false,a:1.0,b:1.35,deadA:false,deadB:false};
+let isMobile=window.innerWidth<768;
+
+function setMode(mob){isMobile=mob;document.body.classList.toggle('mobile',mob);$('modePC').classList.toggle('active',!mob);$('modeMob').classList.toggle('active',mob);const q=$('quickGuideDetails');if(q)q.open=!mob;resizeCanvases();drawAll();}
+function setupHiDPICanvas(id, logicalW, logicalH){
+  const c=$(id);
+  const dpr=clamp(window.devicePixelRatio||1,1,3);
+  c.width=Math.round(logicalW*dpr);
+  c.height=Math.round(logicalH*dpr);
+  c.style.width='100%';
+  c.style.height='auto';
+  c.dataset.logicalW=logicalW;
+  c.dataset.logicalH=logicalH;
+  c.dataset.dpr=dpr;
+}
+function resizeCanvases(){
+  // Keep the full 900-coordinate drawing space in both Desktop and Mobile modes.
+  // CSS scales the canvas to the available screen width; the high-DPI backing store
+  // preserves text sharpness without cropping the right/bottom parts of the scene.
+  setupHiDPICanvas('soapCanvas',900,520);
+  setupHiDPICanvas('alvCanvas',900,540);
+}
+function show(tab){active=tab;$('tabSoap').classList.toggle('active',tab==='soap');$('tabAlv').classList.toggle('active',tab==='alv');$('soapSec').classList.toggle('hidden',tab!=='soap');$('alvSec').classList.toggle('hidden',tab!=='alv');drawAll();}
+$('tabSoap').onclick=()=>show('soap');$('tabAlv').onclick=()=>show('alv');
+
+function soapInputs(){const gamma=(+$('gamma').value/1000)||DEFAULT_GAMMA;return{r1cm:+$('sInit').value,r2cm:+$('lInit').value,boremm:+$('bore').value,Lcm:+$('tubeLen').value,gamma,speed:+$('speed').value};}
+function soapGeometryValid(p=soapInputs()){return p.r1cm>0 && p.r2cm>0 && p.r1cm<p.r2cm;}
+function updateSoapLabels(){const p=soapInputs();$('sInitLab').textContent=p.r1cm.toFixed(1)+' cm';$('lInitLab').textContent=p.r2cm.toFixed(1)+' cm';$('boreLab').textContent=p.boremm.toFixed(1)+' mm';$('tubeLenLab').textContent=p.Lcm.toFixed(0)+' cm';$('gammaLab').textContent=$('gamma').value+' mN/m';$('speedLab').textContent=p.speed.toFixed(2)+'×';}
+function resetSoap(){invalidateSoapEstimate();const p=soapInputs();soap.t=0;soap.playing=false;soap.v1=volFromR(p.r1cm/100);soap.v2=volFromR(p.r2cm/100);soap.dead=false;soap.lastQ=0;soap.lastDP=0;$('soapPlay').textContent='Play';drawSoap();soapReadout();soapTable();tubeTable();}
+function poiseuilleQ(dP,p){const a=(p.boremm/2)/1000;const L=p.Lcm/100;return Math.PI*Math.pow(a,4)*Math.max(0,dP)/(8*ETA_AIR*L);}
+function collapseThresholdM(p){const tubeRadiusM=(p.boremm/2)/1000;return Math.max(tubeRadiusM,0.0015);}
+function soapStep(dt){const p=soapInputs();if(!soapGeometryValid(p)){soap.lastQ=0;soap.lastDP=0;return;}if(soap.dead){soap.t+=dt;return;}let r1=rFromVol(soap.v1),r2=rFromVol(soap.v2);if(r1>=r2){soap.lastQ=0;soap.lastDP=0;return;}if(r1<=collapseThresholdM(p)||soap.v1<1e-10){soap.v2+=soap.v1;soap.v1=0;soap.dead=true;soap.t+=dt;soap.lastQ=0;soap.lastDP=0;return;}const P1=4*p.gamma/r1;const P2=4*p.gamma/r2;const dP=P1-P2;const Q=poiseuilleQ(dP,p);let dV=Q*dt;if(dV>soap.v1)dV=soap.v1;soap.v1-=dV;soap.v2+=dV;soap.t+=dt;soap.lastQ=Q;soap.lastDP=Math.max(0,dP);}
+function collapseEstimate(){const p=soapInputs();if(!soapGeometryValid(p))return{t:0,dead:false,r1:p.r1cm/100,r2:p.r2cm/100,lastDP:0,invalid:true};let v1=volFromR(p.r1cm/100),v2=volFromR(p.r2cm/100);let t=0,dead=false,lastDP=0;const threshold=collapseThresholdM(p);while(t<300){const r1=rFromVol(v1),r2=rFromVol(v2);if(r1<=threshold||v1<1e-10){dead=true;break;}const dP=Math.max(0,4*p.gamma*(1/r1-1/r2));lastDP=dP;if(dP<=0)break;const Q=poiseuilleQ(dP,p);const dt=0.005;const dV=Math.min(Q*dt,v1);v1-=dV;v2+=dV;t+=dt;}return{t,dead,r1:rFromVol(v1),r2:rFromVol(v2),lastDP};}
+function getCollapseEstimate(){if(!soapEstimateCache)soapEstimateCache=collapseEstimate();return soapEstimateCache;}
+function invalidateSoapEstimate(){soapEstimateCache=null;}
+function soapSnapshot(T){const save={...soap};const p=soapInputs();if(!soapGeometryValid(p))return{r1:p.r1cm,r2:p.r2cm,dead:false,invalid:true};try{soap.t=0;soap.v1=volFromR(p.r1cm/100);soap.v2=volFromR(p.r2cm/100);soap.dead=false;soap.lastQ=0;soap.lastDP=0;soap.playing=false;while(soap.t<T)soapStep(Math.min(.01,T-soap.t));return{r1:rFromVol(soap.v1)*100,r2:rFromVol(soap.v2)*100,dead:soap.dead};}finally{Object.assign(soap,save);}}
+function singleBubbleTimeForR0(r0cm,boremm,Lcm,gamma){const R0=r0cm/100;const a=(boremm/2)/1000;const L=Lcm/100;return 2*ETA_AIR*L*Math.pow(R0,4)/(Math.pow(a,4)*gamma);}
+function tubeResistanceIndex(){const p=soapInputs();return (p.Lcm/20)*Math.pow(5/p.boremm,4);}
+function soapTable(){const p=soapInputs();if(!soapGeometryValid(p)){const html=`<tr><td>The current bubble labels are reversed or equal, so the standard “smaller bubble empties into larger bubble” demonstration is not valid.</td><td>Young-Laplace pressure is higher in the smaller bubble. Set the labelled small bubble radius below the labelled large bubble radius. If Rsmall = Rlarge, ΔPdrive = 0; if Rsmall > Rlarge, the pressure gradient reverses.</td></tr>`;$('soapTable').innerHTML=html;return;}const est=getCollapseEstimate();const initialDP=4*p.gamma*(1/(p.r1cm/100)-1/(p.r2cm/100));const finalDP=est.lastDP||initialDP;const volRatio=Math.pow(p.r2cm/p.r1cm,3);let collapseText=est.dead?'The current bubble-and-tube geometry predicts collapse to tube-radius scale in about '+fmt(est.t,1)+' s.':'The current geometry predicts slow or incomplete collapse within the 300 s calculation window.';let html='';html+=`<tr><td>${collapseText} Gas moves from the smaller bubble into the larger bubble.</td><td>The smaller bubble has higher excess internal pressure because soap-film Laplace pressure varies inversely with radius: ΔPbubble = Pinside − Poutside = 4γ/R.</td></tr>`;html+=`<tr><td>As the smaller bubble becomes smaller, gas transfer accelerates until the small bubble collapses to tube-radius scale.</td><td>As Rsmall falls, 1/Rsmall rises; therefore ΔPdrive = 4γ(1/Rsmall − 1/Rlarge) becomes progressively larger. With the same tube geometry, Poiseuille flow Q rises in proportion to this driving pressure.</td></tr>`;html+=`<tr><td>The larger bubble usually shows little obvious change in size, even though it receives the gas.</td><td>Volume scales with radius cubed. With the current starting radii, the large bubble volume is about ${fmt(volRatio,1)}× the small bubble volume, so the added gas causes only a small visible radius increase.</td></tr>`;html+=`<tr><td>The tube geometry controls how quickly the visible collapse occurs.</td><td>Poiseuille resistance rises with tube length and falls with the fourth power of tube radius. A small reduction in bore can greatly delay collapse, even when the pressure gradient is large.</td></tr>`;html+=`<tr><td>Current pressure range during collapse: initial driving ΔP ≈ ${fmt(initialDP,1)} Pa; late-stage driving ΔP approaches ≈ ${fmt(finalDP,1)} Pa before collapse threshold.</td><td>The driving pressure depends mainly on surface tension γ and the two bubble radii. Higher γ, smaller Rsmall, and a larger separation between Rsmall and Rlarge increase ΔPdrive.</td></tr>`;$('soapTable').innerHTML=html;}
+function tubeTable(){const rows=[['Drinking straw',6,20],['Drinking straw',5,20],['Thin tubing',4,50],['Thin tubing',2,100]];let html='';const p=soapInputs();rows.forEach(r=>{const T=singleBubbleTimeForR0(1,r[1],r[2],p.gamma);html+=`<tr><td>${r[0]}</td><td>${r[1]} mm</td><td>${r[2]} cm</td><td>${T<1?fmt(T,3):fmt(T,1)} s</td></tr>`;});$('tubeTable').innerHTML=html;}
+function soapReadout(){const p=soapInputs();const valid=soapGeometryValid(p);$('radiusGuard').classList.toggle('hidden',valid);const r1=rFromVol(soap.v1),r2=rFromVol(soap.v2);const est=getCollapseEstimate();$('soapClock').textContent='t = '+fmt(soap.t,1)+' s';$('sR').textContent=soap.dead?'collapsed':fmt(r1*100,2)+' cm';$('lR').textContent=fmt(r2*100,2)+' cm';if(!valid){$('soapDP').textContent='invalid';$('flowRate').textContent='0 mL/s';$('tubeRes').textContent=fmt(tubeResistanceIndex(),1)+'×';$('collapseEst').textContent='check radii';$('sR').className='value warn';return;}const liveDP=soap.lastDP||Math.max(0,4*p.gamma*(1/Math.max(r1,1e-9)-1/Math.max(r2,1e-9)));$('soapDP').textContent=fmt(liveDP,1)+' Pa';$('flowRate').textContent=fmt((soap.lastQ||0)*1e6,2)+' mL/s';$('tubeRes').textContent=fmt(tubeResistanceIndex(),1)+'×';$('collapseEst').textContent=est.dead?'~'+fmt(est.t,1)+' s':'>300 s';$('sR').className='value '+(soap.dead?'bad':'');}
+
+
+function canvasScale(ctx,c){
+  const logicalW=Number(c.dataset.logicalW)||c.width;
+  ctx.setTransform(c.width/logicalW,0,0,c.width/logicalW,0,0);
+  ctx.imageSmoothingEnabled=true;
+  return logicalW/900;
+}
+function textBox(ctx,text,x,y,opt={}){
+  const font=opt.font||'900 15px system-ui';
+  const fill=opt.fill||'#0f172a';
+  const bg=opt.bg||'rgba(255,255,255,.86)';
+  const stroke=opt.stroke||'rgba(203,213,225,.95)';
+  const pad=opt.pad??6;
+  const r=opt.r??8;
+  ctx.save();
+  ctx.font=font;
+  ctx.textBaseline='alphabetic';
+  const m=ctx.measureText(text);
+  const h=(m.actualBoundingBoxAscent||12)+(m.actualBoundingBoxDescent||4);
+  const w=m.width;
+  round(ctx,x-pad,y-h-pad,w+2*pad,h+2*pad,r);
+  ctx.fillStyle=bg; ctx.fill();
+  ctx.strokeStyle=stroke; ctx.lineWidth=1; ctx.stroke();
+  ctx.fillStyle=fill; ctx.fillText(text,x,y);
+  ctx.restore();
+}
+function textBoxLines(ctx,lines,x,y,opt={}){
+  const font=opt.font||'800 13px system-ui';
+  const lh=opt.lineHeight||18;
+  const fill=opt.fill||'#334155';
+  const bg=opt.bg||'rgba(255,255,255,.88)';
+  const stroke=opt.stroke||'rgba(203,213,225,.95)';
+  const pad=opt.pad??7;
+  const r=opt.r??8;
+  ctx.save();
+  ctx.font=font;
+  const widths=lines.map(t=>ctx.measureText(t).width);
+  const w=Math.max(...widths);
+  const h=lines.length*lh;
+  round(ctx,x-pad,y-lh+4-pad,w+2*pad,h+2*pad,r);
+  ctx.fillStyle=bg; ctx.fill();
+  ctx.strokeStyle=stroke; ctx.lineWidth=1; ctx.stroke();
+  ctx.fillStyle=fill;
+  lines.forEach((t,i)=>ctx.fillText(t,x,y+i*lh));
+  ctx.restore();
+}
+function drawSoap(){
+  const c=$('soapCanvas'),ctx=c.getContext('2d');
+  ctx.clearRect(0,0,c.width,c.height);
+  ctx.save();
+  canvasScale(ctx,c);
+  const p=soapInputs();
+  const validGeom=soapGeometryValid(p);
+  const r1=rFromVol(soap.v1)*100,r2=rFromVol(soap.v2)*100;
+  ctx.fillStyle='rgba(255,255,255,.72)';round(ctx,35,35,830,430,24);ctx.fill();
+  ctx.strokeStyle='#b8cbe0';ctx.lineWidth=3;ctx.stroke();
+  textBox(ctx,'Draft-protected enclosure',58,70,{font:'900 16px system-ui',fill:'#334155'});
+  if(!validGeom)textBox(ctx,'Set small bubble radius below large bubble radius',245,112,{font:'900 16px system-ui',fill:'#b45309',bg:'rgba(255,248,231,.95)',stroke:'rgba(245,158,11,.65)'});
+  const y=250,x1=250,x2=645;
+  ctx.lineCap='round';
+  const tubePx=clamp(p.boremm*3.2,6,34);
+  ctx.strokeStyle='#cbd5e1';ctx.lineWidth=tubePx+12;ctx.beginPath();ctx.moveTo(x1,y);ctx.lineTo(x2,y);ctx.stroke();
+  ctx.strokeStyle='#f8fafc';ctx.lineWidth=tubePx;ctx.beginPath();ctx.moveTo(x1,y);ctx.lineTo(x2,y);ctx.stroke();
+  if(!soap.dead){
+    arrow(ctx,x1+78,y-48,x2-78,y-48,'#2563eb');
+    textBox(ctx,'Poiseuille-limited gas flow',356,y-65,{font:'900 15px system-ui',fill:'#2563eb',bg:'rgba(239,246,255,.92)'});
+    const particles=8;
+    const speed=Math.max(.25,0.7*$('speed').value);
+    for(let i=0;i<particles;i++){
+      let f=(soap.t*speed+i/particles)%1;
+      let px=x1+(x2-x1)*f;
+      let py=y+(tubePx/4)*Math.sin(soap.t*4+i);
+      ctx.fillStyle='rgba(37,99,235,.90)';ctx.beginPath();ctx.arc(px,py,4.5,0,Math.PI*2);ctx.fill();
+    }
+  }
+  // Scale is deliberately capped so bubbles do not collide with labels or canvas borders.
+  const scale=clamp(150/Math.max(r2,6),7.5,18);
+  drawBubble(ctx,x1,y,soap.dead?0:r1*scale,soap.dead);
+  drawBubble(ctx,x2,y,r2*scale,false);
+  textBox(ctx,'Small R '+(soap.dead?'collapsed':fmt(r1,2)+' cm'),68,424,{font:'900 17px system-ui'});
+  textBox(ctx,'Large R '+fmt(r2,2)+' cm',585,424,{font:'900 17px system-ui'});
+  textBox(ctx,'ΔP by Young–Laplace; rate by Poiseuille: Q ∝ bore⁴ / length',55,486,{font:'800 14px system-ui',fill:'#475569'});
+  ctx.restore();
+}
+function drawBubble(ctx,x,y,r,dead){
+  if(dead){
+    ctx.strokeStyle='#b91c1c';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(x-24,y-24);ctx.lineTo(x+24,y+24);ctx.moveTo(x+24,y-24);ctx.lineTo(x-24,y+24);ctx.stroke();
+    textBox(ctx,'collapsed',x-38,y+48,{font:'900 15px system-ui',fill:'#b91c1c',bg:'rgba(255,245,245,.94)',stroke:'rgba(248,113,113,.5)'});
+    return;
+  }
+  r=Math.max(r,6);
+  const g=ctx.createRadialGradient(x-r*.3,y-r*.35,3,x,y,r);
+  g.addColorStop(0,'rgba(255,255,255,.96)');g.addColorStop(.35,'rgba(186,230,253,.43)');g.addColorStop(.75,'rgba(196,181,253,.25)');g.addColorStop(1,'rgba(37,99,235,.16)');
+  ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='rgba(37,99,235,.65)';ctx.lineWidth=3;ctx.stroke();
+  ctx.strokeStyle='rgba(255,255,255,.9)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x-r*.25,y-r*.25,Math.max(8,r*.22),0,Math.PI*1.35);ctx.stroke();
+}
+
+
+function alvInputs(){return{sc:$('scenario').value,peep:+$('peep').value,drive:+$('drive').value,rr:+$('rr').value,seg:$('airSeg').value,dia:+$('airDia').value,len:+$('airLen').value,comp:+$('compIdx').value,tether:+$('tether').value/100};}
+function setVals(peep,drive,rr,seg,dia,len,comp,tether){$('peep').value=peep;$('drive').value=drive;$('rr').value=rr;$('airSeg').value=seg;$('airDia').value=dia;$('airLen').value=len;$('compIdx').value=comp;$('tether').value=tether;}
+function applyScenarioDefaults(){const sc=$('scenario').value;if(sc==='normal')setVals(5,8,12,'medium',2.0,20,1.0,60);if(sc==='bronchospasm')setVals(5,10,22,'medium',1.0,35,1.8,35);if(sc==='ards')setVals(5,10,18,'distal',1.5,28,0.6,45);if(sc==='peep')setVals(12,10,18,'distal',1.5,28,0.6,45);if(sc==='emphysema')setVals(3,6,14,'distal',1.2,40,2.3,25);if(sc==='absent')setVals(5,8,12,'medium',2.0,20,1.0,25);resetAlv();}
+function segmentMeta(seg){
+  if(seg==='proximal')return{label:'proximal G0–2',weight:.55,refD:8,refL:80,note:'large airway'};
+  if(seg==='distal')return{label:'distal G8–16',weight:.35,refD:1.5,refL:12,note:'parallelized bronchioles'};
+  return{label:'medium G3–7',weight:1.35,refD:2,refL:20,note:'highest-resistance zone'};
+}
+function updateAlvLabels(){const p=alvInputs(),m=segmentMeta(p.seg);$('peepLab').textContent=p.peep+' cmH2O';$('driveLab').textContent=p.drive+' cmH2O';$('rrLab').textContent=p.rr+'/min';$('segLab').textContent=m.label;$('airDiaLab').textContent=p.dia.toFixed(1)+' mm';$('airLenLab').textContent=p.len.toFixed(0)+' mm';$('compLab').textContent=p.comp.toFixed(1)+'×';$('tetherLab').textContent=Math.round(p.tether*100)+'%';}
+function branchWeightedResistance(p){const m=segmentMeta(p.seg);const local=Math.pow(2/Math.max(p.dia,.1),4)*(p.len/20);return clamp(m.weight*local,.03,80);}
+function breathPhase(p,t){const phase=(p.rr/60*t)%1;const theta=2*Math.PI*phase;return{phase,theta,insp:phase<.5,exp:phase>=.5};}
+function dynamicResistance(p,P,volMean){
+  let Rb=branchWeightedResistance(p);const ph=breathPhase(p,alv.t);let compression=1;
+  if(ph.exp && (p.sc==='bronchospasm'||p.sc==='emphysema')){
+    const volumeExcess=clamp((volMean-1.05)/1.6,0,1.8);
+    const lowRecoil=p.sc==='emphysema'?1.25:.45;
+    const obstructed=clamp(Rb/8,0,2);
+    const lateExp=clamp((ph.phase-.50)/.50,0,1);
+    compression=1+lateExp*(lowRecoil+obstructed)*Math.pow(volumeExcess+.20,2);
+  }
+  return clamp(Rb*compression,.03,120);
+}
+function tauBase(p){let base=.35;if(p.sc==='ards'||p.sc==='peep')base=.45;if(p.sc==='emphysema')base=.55;if(p.sc==='bronchospasm')base=.55;if(p.sc==='absent')base=.35;return clamp(base*branchWeightedResistance(p)*p.comp,.05,18);}
+function dynamicTau(p,P,volMean){let base=.35;if(p.sc==='ards'||p.sc==='peep')base=.45;if(p.sc==='emphysema')base=.55;if(p.sc==='bronchospasm')base=.55;if(p.sc==='absent')base=.35;return clamp(base*dynamicResistance(p,P,volMean)*p.comp,.05,24);}
+function meadStressMultiplier(openVol,smallVol){return clamp(Math.pow(Math.max(openVol/Math.max(smallVol,.12),1),2/3),1,6);}
+function resetAlv(){updateAlvLabels();const p=alvInputs();alv.t=0;alv.playing=false;alv.deadA=false;alv.deadB=false;alv.a=p.sc==='emphysema'?1.7:1.0;alv.b=p.sc==='emphysema'?2.4:1.35;alv.stress=1;alv.dynR=branchWeightedResistance(p);alv.flow=0;$('alvPlay').textContent='Play';drawAlv();alvReadout();}
+function surf(sc,r){if(sc==='normal'||sc==='bronchospasm'||sc==='emphysema')return 2+24*Math.pow(clamp((r-.35)/1.2,0,1),1.8);if(sc==='absent')return 50;if(sc==='ards'||sc==='peep')return 25+20*Math.pow(clamp((r-.4)/1.2,0,1),1.2);return 20;}
+function paw(p,t){return p.peep+p.drive*(1-Math.cos(2*Math.PI*(p.rr/60)*t))/2;}
+function alvStep(dt){
+  const p=alvInputs();const P=paw(p,alv.t);let stiffness=p.sc==='ards'||p.sc==='peep'?5:p.sc==='emphysema'?0.65:2.2;let open=p.sc==='ards'||p.sc==='peep'?10:1.5;
+  let targetA=Math.max(.16,(P-open)/stiffness+1.0);let targetB=Math.max(.22,(P-open*.7)/stiffness+1.25);
+  if(p.sc==='normal'||p.sc==='bronchospasm'){targetA=1.0+(P-5)*0.045;targetB=1.25+(P-5)*0.04;}
+  if(p.sc==='absent'){targetA=0.18+(P/12)*0.55;targetB=1.1+(P/14)*0.35;}
+  if(p.sc==='emphysema'){targetA=1.55+(P-3)*0.08;targetB=2.15+(P-3)*0.08;}
+  const preA=targetA, preB=targetB;
+  const stressA=meadStressMultiplier(preB,preA);const stressB=meadStressMultiplier(preA,preB);const stressGain=Math.max(stressA,stressB);
+  targetA += p.tether*(preB-preA)*0.12*stressA;
+  targetB -= p.tether*(preB-preA)*0.05*stressB;
+  const volMean=(alv.a+alv.b)/2;const dynTau=dynamicTau(p,P,volMean);const ph=breathPhase(p,alv.t);
+  const tauA=(p.sc==='bronchospasm'||p.sc==='emphysema')?dynTau*1.8:dynTau*1.15;
+  const tauB=(p.sc==='bronchospasm'||p.sc==='emphysema')?dynTau*.75:dynTau*.8;
+  const oldMean=volMean;
+  alv.a += (targetA-alv.a)*clamp(dt/tauA,0,1);
+  alv.b += (targetB-alv.b)*clamp(dt/tauB,0,1);
+  alv.a=clamp(alv.a,.08,3.0);alv.b=clamp(alv.b,.12,3.4);
+  alv.deadA=(p.sc==='absent'||p.sc==='ards')&&alv.a<.35&&P<open+2;alv.deadB=(p.sc==='ards')&&alv.b<.35&&P<open+2;
+  alv.stress=stressGain;alv.dynR=dynamicResistance(p,P,(alv.a+alv.b)/2);alv.flow=((alv.a+alv.b)/2-oldMean)/Math.max(dt,.001);alv.phase=ph.exp?'expiration':'inspiration';
+  alv.t+=dt;
+}
+function alvReadout(){const p=alvInputs();const P=paw(p,alv.t);const tau=dynamicTau(p,P,(alv.a+alv.b)/2);const dynR=dynamicResistance(p,P,(alv.a+alv.b)/2);$('alvClock').textContent='t = '+fmt(alv.t,1)+' s';$('pawOut').textContent=fmt(P,1);$('airwayRes').textContent=fmt(dynR,1)+'×';$('tauOut').textContent=fmt(tau,2)+' s';let A=alv.deadA||alv.a<.45?'Derecruited / closing':alv.a>2.4?'Overdistending':((p.sc==='bronchospasm'||p.sc==='emphysema')&&alv.a>1.35&&breathPhase(p,alv.t).exp?'Slow emptying':'Open');let B=alv.deadB||alv.b<.45?'Derecruited / closing':alv.b>2.8?'Overdistending':'Open';$('aStatus').textContent=A;$('bStatus').textContent=B;$('aStatus').className='value small '+(A==='Open'?'ok':A[0]==='O'||A[0]==='S'?'warn':'bad');$('bStatus').className='value small '+(B==='Open'?'ok':B[0]==='O'?'warn':'bad');$('teachOut').textContent=(p.sc==='bronchospasm'||p.sc==='emphysema')&&breathPhase(p,alv.t).exp?'Starling compression':p.sc==='bronchospasm'?'Auto-PEEP risk':p.sc==='normal'?'Stabilized':p.sc==='absent'?'Soap-bubble tendency':p.sc==='ards'?'Mead stress concentration':p.sc==='peep'?'Recruitment vs strain':'Air trapping';}
+function drawAlv(){
+  const c=$('alvCanvas'),ctx=c.getContext('2d');
+  ctx.clearRect(0,0,c.width,c.height);
+  ctx.save();
+  canvasScale(ctx,c);
+  const p=alvInputs(),P=paw(p,alv.t),relR=dynamicResistance(p,P,(alv.a+alv.b)/2);
+  ctx.fillStyle='rgba(255,255,255,.74)';round(ctx,35,30,830,460,24);ctx.fill();
+  ctx.strokeStyle='#bfdbfe';ctx.lineWidth=3;ctx.stroke();
+  textBox(ctx,'Adult lung unit: branch-weighted R, dynamic τ, and Mead model stress concentration',58,65,{font:'900 16px system-ui',fill:'#475569'});
+  const ductY=292;
+  ctx.lineCap='round';
+  ctx.strokeStyle='#cbd5e1';ctx.lineWidth=38;ctx.beginPath();ctx.moveTo(100,ductY);ctx.lineTo(800,ductY);ctx.stroke();
+  const inner=clamp(p.dia*6,5,30);
+  ctx.strokeStyle='#eff6ff';ctx.lineWidth=inner;ctx.beginPath();ctx.moveTo(100,ductY);ctx.lineTo(800,ductY);ctx.stroke();
+  if(relR>4){
+    ctx.strokeStyle='rgba(180,83,9,.7)';ctx.lineWidth=inner+6;ctx.setLineDash([8,10]);ctx.beginPath();ctx.moveTo(100,ductY);ctx.lineTo(800,ductY);ctx.stroke();ctx.setLineDash([]);
+  }
+  textBox(ctx,'Airway pressure '+fmt(P,1)+' cmH₂O | dynamic R '+fmt(relR,1)+'× | stress ×'+fmt(alv.stress||1,1),242,ductY-48,{font:'900 15px system-ui',fill:'#0f172a',bg:'rgba(255,255,255,.90)'});
+  const ax=300,ay=188,bx=585,by=188;
+  ctx.strokeStyle='rgba(100,116,139,'+(0.12+0.45*p.tether)+')';ctx.lineWidth=2+4*p.tether;
+  for(let i=0;i<9;i++){ctx.beginPath();ctx.moveTo(ax+50,ay-58+i*15);ctx.lineTo(bx-55,by-55+i*14);ctx.stroke();}
+  ctx.strokeStyle='#dbeafe';ctx.lineWidth=28;ctx.beginPath();ctx.moveTo(ax,ductY);ctx.lineTo(ax,ay+72);ctx.moveTo(bx,ductY);ctx.lineTo(bx,by+77);ctx.stroke();
+  drawAlvUnit(ctx,ax,ay,alv.a*58,alv.deadA,surf(p.sc,alv.a),'Unit A');
+  drawAlvUnit(ctx,bx,by,alv.b*58,alv.deadB,surf(p.sc,alv.b),'Unit B');
+  bar(ctx,80,452,210,20,'Unit A size',alv.a,0,3);
+  bar(ctx,345,452,210,20,'Airway pressure',P,0,25);
+  bar(ctx,610,452,210,20,'Unit B size',alv.b,0,3.4);
+  textBox(ctx,'Branch-weighted Poiseuille R; Starling-resistor expiration raises R dynamically; τdynamic = Rdynamic × C.',55,512,{font:'800 14px system-ui',fill:'#475569'});
+  ctx.restore();
+}
+function drawAlvUnit(ctx,x,y,r,dead,T,label){
+  r=clamp(r,18,132);
+  const g=ctx.createRadialGradient(x-r*.3,y-r*.35,3,x,y,r);
+  g.addColorStop(0,'rgba(255,255,255,.95)');g.addColorStop(1,dead?'rgba(251,146,60,.35)':'rgba(14,165,233,.18)');
+  ctx.fillStyle=g;ctx.beginPath();
+  for(let i=0;i<16;i++){
+    const a=i/16*Math.PI*2;const wob=1+.06*Math.sin(i*2.1);
+    const px=x+Math.cos(a)*r*wob;const py=y+Math.sin(a)*r*.86*wob;
+    if(i===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
+  }
+  ctx.closePath();ctx.fill();
+  ctx.strokeStyle=dead?'#ea580c':'#0284c7';ctx.lineWidth=3;ctx.stroke();
+  ctx.fillStyle=dead?'rgba(194,65,12,.82)':'rgba(15,118,110,.75)';
+  for(let i=0;i<18;i++){const a=i/18*Math.PI*2;ctx.beginPath();ctx.arc(x+Math.cos(a)*r*.92,y+Math.sin(a)*r*.8,3,0,Math.PI*2);ctx.fill();}
+  const labelY=clamp(y+r+26,285,392);
+  textBox(ctx,label,x-r*.45,labelY,{font:'900 15px system-ui'});
+  textBox(ctx,'T ≈ '+fmt(T,1)+' mN/m',x-r*.45,labelY+24,{font:'800 12px system-ui',fill:'#475569'});
+  if(dead){textBox(ctx,'closing',x-28,y+4,{font:'900 13px system-ui',fill:'#b91c1c',bg:'rgba(255,245,245,.94)',stroke:'rgba(248,113,113,.5)'});}
+}
+function bar(ctx,x,y,w,h,label,val,min,max){
+  ctx.fillStyle='#f1f5f9';round(ctx,x,y,w,h,9);ctx.fill();
+  ctx.fillStyle=val>max*.8?'#f59e0b':'#2563eb';round(ctx,x,y,w*clamp((val-min)/(max-min),0,1),h,9);ctx.fill();
+  ctx.strokeStyle='#cbd5e1';ctx.lineWidth=1;round(ctx,x,y,w,h,9);ctx.stroke();
+  textBox(ctx,label,x,y-8,{font:'800 12px system-ui',fill:'#334155',pad:4,r:6});
+  textBox(ctx,fmt(val,1),x+w-34,y+h+17,{font:'900 12px system-ui',fill:'#0f172a',pad:3,r:5});
+}
+function round(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+function arrow(ctx,x1,y1,x2,y2,col){const a=Math.atan2(y2-y1,x2-x1);ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();ctx.beginPath();ctx.moveTo(x2,y2);ctx.lineTo(x2-14*Math.cos(a-.5),y2-14*Math.sin(a-.5));ctx.lineTo(x2-14*Math.cos(a+.5),y2-14*Math.sin(a+.5));ctx.closePath();ctx.fill();}
+function drawAll(){drawSoap();soapReadout();drawAlv();alvReadout();}
+function tick(now){let dt=clamp((now-last)/1000,0,.05);last=now;if(soap.playing){soapStep(dt*soapInputs().speed);drawSoap();soapReadout();}if(alv.playing){alvStep(dt*1.5);drawAlv();alvReadout();}requestAnimationFrame(tick);}
+
+function debouncedSoapReset(){clearTimeout(debounceTimer);debounceTimer=setTimeout(()=>{updateSoapLabels();resetSoap();},15);}
+['sInit','lInit','bore','tubeLen','gamma','speed'].forEach(id=>$(id).oninput=debouncedSoapReset);
+function toggleSoapPlay(){soap.playing=!soap.playing;$('soapPlay').textContent=soap.playing?'Pause':'Play';}
+function toggleAlvPlay(){alv.playing=!alv.playing;$('alvPlay').textContent=alv.playing?'Pause':'Play';}
+$('soapPlay').onclick=toggleSoapPlay;
+$('soapReset').onclick=resetSoap;
+$('preset15').onclick=()=>{$('sInit').value=3.5;$('lInit').value=10;$('bore').value=5;$('tubeLen').value=20;$('gamma').value=25;$('speed').value=1;updateSoapLabels();resetSoap();};
+$('preset6mm').onclick=()=>{$('sInit').value=4.3;$('lInit').value=18;$('bore').value=6;$('tubeLen').value=20;$('gamma').value=25;$('speed').value=1;updateSoapLabels();resetSoap();};
+
+['peep','drive','rr','airDia','airLen','compIdx','tether','airSeg'].forEach(id=>$(id).oninput=()=>{updateAlvLabels();drawAlv();alvReadout();});
+$('scenario').onchange=applyScenarioDefaults;
+$('alvPlay').onclick=toggleAlvPlay;
+$('alvReset').onclick=resetAlv;
+document.addEventListener('keydown',e=>{if(e.code!=='Space')return;const tag=(e.target&&e.target.tagName||'').toLowerCase();if(['input','select','textarea','button'].includes(tag)||(e.target&&e.target.isContentEditable))return;e.preventDefault();if(active==='soap')toggleSoapPlay();else toggleAlvPlay();});
+$('modePC').onclick=()=>setMode(false);$('modeMob').onclick=()=>setMode(true);
+window.addEventListener('resize',()=>{const shouldMobile=window.innerWidth<768;if(shouldMobile!==isMobile)setMode(shouldMobile);else{resizeCanvases();drawAll();}});
+setMode(isMobile);updateSoapLabels();resetSoap();resetAlv();requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
