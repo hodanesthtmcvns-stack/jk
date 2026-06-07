@@ -15,6 +15,7 @@ These are a set of Software Tools created and maintained by Prof. Jyotirmay Kirt
 | **ABG Interpreter** |🚀 [Launch](https://hodanesthtmcvns-stack.github.io/jk/ABG-Interpreter-v2.0.html) | [📖 About & Help](./docs/ABG-Interpreter-v2.0-Help.md) |
 | **Shock** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/Shock-v1.0.html) | [📖 About & Help](./docs/Shock-v1.0-Help.md) |
 | **SPA (Septic Shock Perfusion Analyzer)** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/SPA-v2.1.html) | [📖 About & Help](./docs/SPA-v2.1-Help.md) |
+| **ACDC (Acute Case Decision Coach)** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/ACDC-v1.8.html) | [📖 About & Help are inbuilt in this app] |
 | **PEEP Titrator** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/PEEP-titration-v1.4.html) | [📖 About & Help](./docs/PEEP-titration-v1.4-Help.md) |
 | **Agitation Manager** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/acute-agitation-v1.0.html) | [📖 About & Help](./docs/Agitation-Manager-Help.md) |
 | **Lab Trends & Alerts** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/ICU-lab-trends-alerts-v2.0.html) | [📖 About & Help](./docs/Lab-Trends-Help.md) |
