@@ -143,15 +143,6 @@
   }
   @media (max-width: 900px){ .ocr-panel{grid-template-columns:1fr 1fr} }
   @media (max-width: 720px){ .ocr-panel{grid-template-columns:1fr} }
-  .camera-panel{
-    display:none; margin-top:10px; padding:10px; border:1px solid var(--line);
-    border-radius:12px; background:#081022;
-  }
-  .camera-video{
-    width:100%; max-height:56vh; border:1px solid var(--line); border-radius:10px;
-    background:#000; object-fit:contain;
-  }
-  .camera-actions{display:flex; flex-wrap:wrap; gap:8px; margin-top:8px}
   .ocr-help{font-size:11px; color:var(--muted); line-height:1.35}
   .ocr-status{
     margin-top:8px; padding:9px 10px; border-radius:10px;
@@ -210,33 +201,22 @@
     <div class="sectionTitle" style="margin-top:0">Local OCR Auto-Fill</div>
     <div class="ocr-panel">
       <div>
-        <label>Upload from gallery / WhatsApp media / PDF</label>
-        <input id="ocrImage" type="file" accept="image/*,application/pdf" />
-        <input id="ocrCameraFile" type="file" accept="image/*" capture="environment" style="display:none" />
-        <div class="ocr-help">Use this for saved photos, WhatsApp media, or a PDF printout. Live camera capture below asks browser camera permission. OCR runs locally in this browser; the image/PDF is not uploaded by this app. First use may need internet to load OCR/PDF libraries from CDN.</div>
+        <label>Upload ABG image or PDF from device storage</label>
+        <input id="ocrImage" type="file" accept="image/*,application/pdf,.pdf,.jpg,.jpeg,.png,.webp,.bmp,.gif,.tif,.tiff,.heic,.heif,.avif" />
+        <div class="ocr-help">Use this for local files from File Explorer, image/photo/media gallery, WhatsApp media, Adobe Scanner or other scanner apps. OCR runs locally in this browser; the image/PDF is not uploaded by this app. First use may need internet to load OCR/PDF libraries from CDN. HEIC/HEIF support depends on the browser/OS image decoder.</div>
       </div>
       <div>
         <label>OCR accuracy mode</label>
         <select id="ocrAccuracyMode">
-          <option value="high" selected>High accuracy / slower</option>
-          <option value="balanced">Balanced / faster</option>
+          <option value="balanced" selected>Balanced / faster</option>
+          <option value="high">High accuracy / slower</option>
         </select>
-        <div class="ocr-help">High accuracy runs extra header, date/time, ID, table, and measured-value-column crops. Use for Radiometer thermal paper.</div>
+        <div id="ocrModeHelp" class="ocr-help">Mobile mode defaults to Balanced / faster. Desktop mode defaults to High accuracy / slower. High accuracy runs extra header, date/time, ID, table, and measured-value-column crops.</div>
       </div>
-      <button id="btnOpenCamera">Open Camera</button>
       <button class="primary" id="btnOCR">Auto-Fill Selected</button>
       <button id="btnOcrClear" title="Clear only OCR image and OCR text">Clear OCR</button>
     </div>
-    <div id="cameraPanel" class="camera-panel">
-      <video id="ocrVideo" class="camera-video" autoplay playsinline muted></video>
-      <canvas id="ocrCaptureCanvas" style="display:none"></canvas>
-      <div class="camera-actions">
-        <button class="primary" id="btnCaptureOcr" disabled>Capture Photo & Auto-Fill</button>
-        <button id="btnStopCamera">Stop Camera</button>
-      </div>
-      <div class="ocr-help" style="margin-top:6px">Keep the ABG printout flat, fill the frame with the printed value table, avoid glare/shadows, and hold still for focus. Capture uses the highest still-photo resolution available, then runs local OCR.</div>
-    </div>
-    <div id="ocrStatus" class="ocr-status">Select a saved photo/PDF or open the camera, then run OCR auto-fill.</div>
+    <div id="ocrStatus" class="ocr-status">Select an ABG image/PDF from local storage, then run OCR auto-fill.</div>
     <img id="ocrPreview" class="ocr-preview" alt="Selected ABG image preview" />
     <details style="margin-top:8px">
       <summary>Raw OCR text and parsing notes</summary>
@@ -601,11 +581,34 @@
     return unit==="mg/dL" ? v*0.4114 : v;
   }
 
+  function effectiveViewMode(mode){
+    if(mode === "desktop") return "desktop";
+    if(mode === "auto") return (window.matchMedia && window.matchMedia("(min-width: 980px)").matches) ? "desktop" : "mobile";
+    return "mobile";
+  }
+
+  function defaultOcrModeForView(mode){
+    return effectiveViewMode(mode) === "desktop" ? "high" : "balanced";
+  }
+
+  function applyOcrModeDefaultForView(mode){
+    const ocrMode = $("ocrAccuracyMode");
+    if(ocrMode) ocrMode.value = defaultOcrModeForView(mode);
+    const help = $("ocrModeHelp");
+    if(help){
+      const eff = effectiveViewMode(mode);
+      help.innerHTML = eff === "desktop"
+        ? "Desktop mode defaults to <b>High accuracy / slower</b>. Mobile mode defaults to Balanced / faster. High accuracy runs extra header, date/time, ID, table, and measured-value-column crops."
+        : "Mobile mode defaults to <b>Balanced / faster</b>. Switch to Desktop view for the High accuracy / slower default, or manually choose High accuracy when needed.";
+    }
+  }
+
   function applyViewMode(mode){
     document.body.classList.remove("force-mobile","force-desktop");
     if(mode==="mobile") document.body.classList.add("force-mobile");
     if(mode==="desktop") document.body.classList.add("force-desktop");
-    localStorage.setItem("abg_view_mode_v2", mode);
+    localStorage.setItem("abg_view_mode_v3", mode);
+    applyOcrModeDefaultForView(mode);
   }
 
   function classifyPH(ph){
@@ -1261,7 +1264,6 @@
   const OCR_META_FIELDS = ["patientId","abgDateTime"];
   const RADIOMETER_ROW_FIELDS = ["ph","paco2","pao2","hb","sao2","k","na","caion","cl","glu","lac","hco3st","baseecf"];
   let __ocrWorker = null;
-  let __ocrCameraStream = null;
   let __ocrCurrentSource = null;
   let __pdfjsModule = null;
 
@@ -2355,7 +2357,7 @@
       const url = URL.createObjectURL(blob);
       const img = new Image();
       img.onload = ()=>{ URL.revokeObjectURL(url); resolve(img); };
-      img.onerror = ()=>{ URL.revokeObjectURL(url); reject(new Error("Could not read the selected image.")); };
+      img.onerror = ()=>{ URL.revokeObjectURL(url); reject(new Error("Could not read the selected image. If this is HEIC/HEIF or another device-specific image type, use a browser/OS that can decode it or export/share it as JPEG, PNG, WebP, or PDF from the gallery/scanner app.")); };
       img.src = url;
     });
   }
@@ -2408,7 +2410,7 @@
     return new Promise((resolve, reject)=>{
       canvas.toBlob(blob=>{
         if(blob) resolve(blob);
-        else reject(new Error("Could not capture camera frame."));
+        else reject(new Error("Could not convert the image canvas."));
       }, type, quality);
     });
   }
@@ -2834,7 +2836,7 @@
 
   function describeOcrSource(source){
     if(!source) return "selected source";
-    const name = source.name ? String(source.name) : "captured camera photo";
+    const name = source.name ? String(source.name) : "selected local file";
     const type = isPdfSource(source) ? "PDF" : "image";
     return `${type}: ${name}`;
   }
@@ -2868,29 +2870,20 @@
     }
   }
 
-  function handleNativeCameraFileSelected(){
-    const camInput = $("ocrCameraFile");
-    const file = camInput && camInput.files && camInput.files[0];
-    if(!file) return;
-    setCurrentOcrSource(file, true);
-    runOcrAutoFill(file);
-  }
 
   async function runOcrAutoFill(sourceOverride=null){
     const btn = $("btnOCR");
-    const capBtn = $("btnCaptureOcr");
     const rawBox = $("ocrRawText");
     const preview = $("ocrPreview");
     const source = sourceOverride || getOcrInputSource();
     if(!source){
-      alert("Please select an ABG image/PDF, or open the camera and capture a photo first.");
+      alert("Please select an ABG image or PDF from local storage first.");
       return;
     }
 
     try{
       if(btn) btn.disabled = true;
-      if(capBtn) capBtn.disabled = true;
-      setOcrStatus("busy", `<b>Analyzing ${escapeHtml(describeOcrSource(source))} locally...</b><div class="ocr-help">Preparing high-resolution OCR views. High-accuracy mode may take longer on mobile.</div>`);
+      setOcrStatus("busy", `<b>Analyzing ${escapeHtml(describeOcrSource(source))} locally...</b><div class="ocr-help">Preparing OCR views. Balanced mode is faster on mobile; High accuracy mode runs extra passes.</div>`);
       const variants = await preprocessImageForOcrVariants(source);
       if(preview && variants.length){
         preview.src = variants[0].dataUrl;
@@ -2977,137 +2970,18 @@
       alert("OCR failed or confidence was too low. Please enter ABG values manually.");
     }finally{
       if(btn) btn.disabled = false;
-      if(capBtn) capBtn.disabled = !!__ocrCameraStream ? false : true;
     }
-  }
-
-  async function openOcrCamera(){
-    const panel = $("cameraPanel");
-    const video = $("ocrVideo");
-    const capBtn = $("btnCaptureOcr");
-    const nativeCamInput = $("ocrCameraFile");
-
-    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
-      setOcrStatus("warn", `<b>Live camera API unavailable.</b><div class="ocr-help">Opening the device camera/file picker fallback.</div>`);
-      if(nativeCamInput) nativeCamInput.click();
-      return;
-    }
-
-    try{
-      setOcrStatus("busy", `<b>Requesting camera permission...</b><div class="ocr-help">Allow camera access when the browser asks. No image is sent outside this page.</div>`);
-      stopOcrCamera(false);
-      __ocrCameraStream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: { ideal: "environment" },
-          width: { ideal: 3840 },
-          height: { ideal: 2160 },
-          frameRate: { ideal: 15, max: 30 }
-        },
-        audio: false
-      });
-      try{
-        const track = __ocrCameraStream.getVideoTracks()[0];
-        if(track && track.applyConstraints){
-          await track.applyConstraints({ advanced:[
-            { focusMode:"continuous" },
-            { exposureMode:"continuous" },
-            { whiteBalanceMode:"continuous" }
-          ] });
-        }
-      }catch(_){
-        // Browser/camera may not expose focus/exposure constraints; ignore safely.
-      }
-      if(video){
-        video.srcObject = __ocrCameraStream;
-        await video.play();
-      }
-      if(panel) panel.style.display = "block";
-      if(capBtn) capBtn.disabled = false;
-      setOcrStatus("ok", `<b>Camera ready.</b><div class="ocr-help">Frame the printed Radiometer ABG value table, then press <b>Capture Photo & Auto-Fill</b>.</div>`);
-    }catch(e){
-      const msg = e && e.message ? e.message : String(e);
-      setOcrStatus("warn", `<b>Camera permission failed or was blocked.</b><div class="ocr-help">${escapeHtml(msg)} Opening native camera/file picker fallback if available.</div>`);
-      if(nativeCamInput) nativeCamInput.click();
-    }
-  }
-
-  function stopOcrCamera(updateStatus=true){
-    if(__ocrCameraStream){
-      for(const track of __ocrCameraStream.getTracks()) track.stop();
-      __ocrCameraStream = null;
-    }
-    const video = $("ocrVideo");
-    if(video) video.srcObject = null;
-    const panel = $("cameraPanel");
-    if(panel) panel.style.display = "none";
-    const capBtn = $("btnCaptureOcr");
-    if(capBtn) capBtn.disabled = true;
-    if(updateStatus) setOcrStatus("", `Camera stopped. Select a saved photo/PDF or open the camera again.`);
-  }
-
-  async function captureHighResolutionCameraBlob(video, canvas){
-    const track = __ocrCameraStream && __ocrCameraStream.getVideoTracks ? __ocrCameraStream.getVideoTracks()[0] : null;
-
-    // Prefer ImageCapture.takePhoto(): on many phones this captures a full-resolution still,
-    // whereas drawing the video stream to a canvas may only capture a low-resolution preview.
-    if(track && window.ImageCapture){
-      try{
-        const imageCapture = new ImageCapture(track);
-        let photoSettings = {};
-        if(imageCapture.getPhotoCapabilities){
-          const caps = await imageCapture.getPhotoCapabilities();
-          if(caps && caps.imageWidth && caps.imageWidth.max) photoSettings.imageWidth = caps.imageWidth.max;
-          if(caps && caps.imageHeight && caps.imageHeight.max) photoSettings.imageHeight = caps.imageHeight.max;
-        }
-        const blob = await imageCapture.takePhoto(photoSettings);
-        if(blob && blob.size) return blob;
-      }catch(_){
-        // Fall back to video-frame canvas capture below.
-      }
-    }
-
-    const w = video.videoWidth || 1920;
-    const h = video.videoHeight || 1080;
-    canvas.width = w;
-    canvas.height = h;
-    const ctx = canvas.getContext("2d");
-    ctx.drawImage(video, 0, 0, w, h);
-    return canvasToBlob(canvas, "image/jpeg", 0.98);
-  }
-
-  async function captureCameraAndRunOcr(){
-    const video = $("ocrVideo");
-    const canvas = $("ocrCaptureCanvas");
-    const preview = $("ocrPreview");
-    if(!video || !canvas || !__ocrCameraStream){
-      alert("Camera is not open.");
-      return;
-    }
-    setOcrStatus("busy", `<b>Capturing high-resolution still...</b><div class="ocr-help">Hold the phone steady. The app will use full still-photo resolution when the browser exposes it.</div>`);
-    const blob = await captureHighResolutionCameraBlob(video, canvas);
-    blob.name = `ABG-camera-${Date.now()}.jpg`;
-    setCurrentOcrSource(blob, true);
-    if(preview){
-      const url = URL.createObjectURL(blob);
-      preview.onload = ()=>URL.revokeObjectURL(url);
-      preview.src = url;
-      preview.style.display = "block";
-    }
-    await runOcrAutoFill(blob);
   }
 
   function clearOcrOnly(){
     const fileInput = $("ocrImage");
-    const camInput = $("ocrCameraFile");
     const rawBox = $("ocrRawText");
     const preview = $("ocrPreview");
-    stopOcrCamera(false);
     __ocrCurrentSource = null;
     if(fileInput) fileInput.value = "";
-    if(camInput) camInput.value = "";
     if(rawBox) rawBox.textContent = "—";
     if(preview){ preview.removeAttribute("src"); preview.style.display = "none"; }
-    setOcrStatus("", `Select a saved photo/PDF or open the camera, then run OCR auto-fill.`);
+    setOcrStatus("", `Select an ABG image/PDF from local storage, then run OCR auto-fill.`);
   }
 
   function clearAll(){
@@ -3128,8 +3002,8 @@
   }
 
   function init(){
-    // View mode persistence
-    const vm = localStorage.getItem("abg_view_mode_v2") || "auto";
+    // Default launch is mobile mode. A user's explicit v3 view choice is then persisted.
+    const vm = localStorage.getItem("abg_view_mode_v3") || "mobile";
     $("viewMode").value = vm;
     applyViewMode(vm);
 
@@ -3142,11 +3016,6 @@
     $("btnOCR").addEventListener('click', ()=>runOcrAutoFill());
     $("btnOcrClear").addEventListener('click', clearOcrOnly);
     $("ocrImage").addEventListener('change', handleOcrFileSelected);
-    $("ocrCameraFile").addEventListener('change', handleNativeCameraFileSelected);
-    $("btnOpenCamera").addEventListener('click', openOcrCamera);
-    $("btnCaptureOcr").addEventListener('click', captureCameraAndRunOcr);
-    $("btnStopCamera").addEventListener('click', ()=>stopOcrCamera(true));
-    const capBtn = $("btnCaptureOcr");
     if(capBtn) capBtn.disabled = true;
 
     $("btnCopy").addEventListener('click', async ()=>{
