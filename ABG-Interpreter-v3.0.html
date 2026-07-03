@@ -1,0 +1,3172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>ABG Interpreter v3.0</title>
+<style>
+  :root{
+    --bg:#0b1220; --card:#121a2b; --ink:#e7eefb; --muted:#9fb3d9;
+    --ok:#2e7d32; --warn:#f9a825; --bad:#c62828; --brand:#4f8cff; --line:#23304e;
+    --field:#0f1728; --shadow: 0 10px 25px rgba(0,0,0,.25);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial;
+    background:var(--bg); color:var(--ink);
+  }
+  .wrap{max-width:1280px; margin:0 auto; padding:14px}
+  header{
+    display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;
+    margin-bottom:10px;
+  }
+  h1{font-size:16px; margin:0; font-weight:750; letter-spacing:.2px}
+  .sub{font-size:12px; color:var(--muted); margin-top:2px}
+  .topbar{
+    display:flex; gap:8px; flex-wrap:wrap; align-items:center; justify-content:flex-end;
+  }
+  .pill{
+    display:inline-flex; align-items:center; gap:8px;
+    border:1px solid var(--line); background:var(--field);
+    padding:7px 10px; border-radius:999px; font-size:12px; color:var(--muted);
+  }
+  .pill b{color:var(--ink)}
+  .grid{display:grid; gap:12px}
+  @media (min-width: 980px){
+    .grid{grid-template-columns: 1.05fr 1.35fr}
+  }
+  .card{
+    background:var(--card); border:1px solid var(--line);
+    border-radius:14px; padding:12px; box-shadow:var(--shadow);
+  }
+  .sectionTitle{font-size:13px; color:var(--muted); margin:14px 0 8px; font-weight:700}
+  .row{display:grid; grid-template-columns: 1fr 1fr; gap:10px}
+  @media (max-width: 720px){
+    .row{grid-template-columns:1fr}
+  }
+  label{display:block; font-size:12px; color:var(--muted); margin:0 0 6px}
+  input,select,textarea{
+    width:100%;
+    background:var(--field);
+    border:1px solid var(--line);
+    color:var(--ink);
+    padding:10px 10px;
+    border-radius:10px;
+    font-size:14px;
+    outline:none;
+  }
+  input::placeholder{color:#4a5875; opacity:1}
+  input:focus,select:focus,textarea:focus{border-color:#3a61b4}
+  textarea{min-height:92px; resize:vertical}
+  .btns{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px}
+  button{
+    border:1px solid var(--line);
+    background:var(--field);
+    color:var(--ink);
+    padding:10px 12px;
+    border-radius:10px;
+    cursor:pointer;
+    font-weight:700;
+    font-size:13px;
+  }
+  button.primary{background:var(--brand); color:#061126; border-color:transparent}
+  button.danger{background:#2a1020; border-color:#4b203a}
+  .kpis{display:flex; flex-wrap:wrap; gap:8px}
+  .status{
+    margin-top:10px;
+    padding:10px;
+    border-radius:12px;
+    border:1px solid var(--line);
+    background:var(--field);
+  }
+  .status.ok{border-color:#1f3a25}
+  .status.warn{border-color:#4a3b12}
+  .status.bad{border-color:#4a1b1b}
+  .out{
+    white-space:pre-wrap;
+    background:#081022;
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:10px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    font-size:12.5px;
+    line-height:1.45;
+    overflow:auto;
+    max-height:72vh;
+  }
+  details summary{cursor:pointer; color:var(--muted); font-size:12px}
+  .tiny{font-size:11px; color:var(--muted); line-height:1.35}
+  .hr{height:1px; background:var(--line); margin:10px 0}
+  .two{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+  @media (max-width: 720px){ .two{grid-template-columns:1fr} }
+  .ddx-section{
+    margin-top:12px;
+    padding:10px;
+    background:#0a1528;
+    border:1px solid var(--line);
+    border-radius:10px;
+  }
+  .ddx-title{
+    font-size:12px;
+    font-weight:700;
+    color:var(--brand);
+    margin-bottom:8px;
+  }
+  .ddx-list{
+    font-size:11px;
+    line-height:1.5;
+    color:var(--muted);
+  }
+  .ddx-item{
+    margin-bottom:4px;
+  }
+  body.force-mobile .grid{grid-template-columns:1fr !important}
+  body.force-mobile .row{grid-template-columns:1fr !important}
+  body.force-mobile .wrap{max-width:860px}
+  body.force-desktop .grid{grid-template-columns: 1.05fr 1.35fr !important}
+  body.force-desktop .row{grid-template-columns: 1fr 1fr !important}
+  body.force-desktop .wrap{max-width:1280px}
+  @media print{
+    body{background:white; color:black}
+    .wrap{max-width:none; padding:0}
+    .card{box-shadow:none; border-color:#bbb}
+    button,.btns,details,header .topbar{display:none !important}
+    .out{max-height:none}
+  }
+  button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+
+  .ocr-card{margin-bottom:12px}
+  .ocr-panel{
+    display:grid; gap:10px; grid-template-columns:minmax(240px,1.3fr) auto auto auto; align-items:end;
+  }
+  @media (max-width: 900px){ .ocr-panel{grid-template-columns:1fr 1fr} }
+  @media (max-width: 720px){ .ocr-panel{grid-template-columns:1fr} }
+  .camera-panel{
+    display:none; margin-top:10px; padding:10px; border:1px solid var(--line);
+    border-radius:12px; background:#081022;
+  }
+  .camera-video{
+    width:100%; max-height:56vh; border:1px solid var(--line); border-radius:10px;
+    background:#000; object-fit:contain;
+  }
+  .camera-actions{display:flex; flex-wrap:wrap; gap:8px; margin-top:8px}
+  .ocr-help{font-size:11px; color:var(--muted); line-height:1.35}
+  .ocr-status{
+    margin-top:8px; padding:9px 10px; border-radius:10px;
+    background:var(--field); border:1px solid var(--line);
+    font-size:12px; color:var(--muted); min-height:36px;
+  }
+  .ocr-status.busy{border-color:#3a61b4; color:var(--ink)}
+  .ocr-status.ok{border-color:#1f3a25; color:var(--ink)}
+  .ocr-status.warn{border-color:#4a3b12; color:var(--ink)}
+  .ocr-preview{
+    max-height:180px; max-width:100%; border:1px solid var(--line);
+    border-radius:10px; margin-top:8px; display:none; background:#081022;
+  }
+  .ocr-raw{
+    white-space:pre-wrap; max-height:220px; overflow:auto;
+    background:#081022; border:1px solid var(--line); border-radius:10px;
+    padding:8px; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+    font-size:11.5px; line-height:1.35; color:var(--ink);
+  }
+  button[disabled]{opacity:.55; cursor:not-allowed}
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>ABG Interpreter v3.0</h1>
+      <div class="sub">Software License: GNU GPL v3. Copyright (C) [2026] [Prof. Jyotirmay Kirtania]</div>
+    </div>
+    <div class="topbar">
+      <div class="pill" title="Force layout">
+        <span>View</span>
+        <select id="viewMode" style="padding:6px 8px;border-radius:10px;font-size:12px">
+          <option value="auto" selected>Auto</option>
+          <option value="mobile">Mobile</option>
+          <option value="desktop">Desktop</option>
+        </select>
+      </div>
+      <div class="pill">
+        <span>Units</span>
+        <select id="pUnit" style="padding:6px 8px;border-radius:10px;font-size:12px">
+          <option value="mmHg" selected>mmHg</option>
+          <option value="kPa">kPa</option>
+        </select>
+      </div>
+      <div class="pill">
+        <button id="btnSave" style="padding:6px 10px;border-radius:999px;font-size:12px">Save</button>
+        <button id="btnLoad" style="padding:6px 10px;border-radius:999px;font-size:12px">Load</button>
+      </div>
+    </div>
+  </header>
+
+
+  <div class="card ocr-card">
+    <div class="sectionTitle" style="margin-top:0">Local OCR Auto-Fill</div>
+    <div class="ocr-panel">
+      <div>
+        <label>Upload from gallery / WhatsApp media / PDF</label>
+        <input id="ocrImage" type="file" accept="image/*,application/pdf" />
+        <input id="ocrCameraFile" type="file" accept="image/*" capture="environment" style="display:none" />
+        <div class="ocr-help">Use this for saved photos, WhatsApp media, or a PDF printout. Live camera capture below asks browser camera permission. OCR runs locally in this browser; the image/PDF is not uploaded by this app. First use may need internet to load OCR/PDF libraries from CDN.</div>
+      </div>
+      <div>
+        <label>OCR accuracy mode</label>
+        <select id="ocrAccuracyMode">
+          <option value="high" selected>High accuracy / slower</option>
+          <option value="balanced">Balanced / faster</option>
+        </select>
+        <div class="ocr-help">High accuracy runs extra header, date/time, ID, table, and measured-value-column crops. Use for Radiometer thermal paper.</div>
+      </div>
+      <button id="btnOpenCamera">Open Camera</button>
+      <button class="primary" id="btnOCR">Auto-Fill Selected</button>
+      <button id="btnOcrClear" title="Clear only OCR image and OCR text">Clear OCR</button>
+    </div>
+    <div id="cameraPanel" class="camera-panel">
+      <video id="ocrVideo" class="camera-video" autoplay playsinline muted></video>
+      <canvas id="ocrCaptureCanvas" style="display:none"></canvas>
+      <div class="camera-actions">
+        <button class="primary" id="btnCaptureOcr" disabled>Capture Photo & Auto-Fill</button>
+        <button id="btnStopCamera">Stop Camera</button>
+      </div>
+      <div class="ocr-help" style="margin-top:6px">Keep the ABG printout flat, fill the frame with the printed value table, avoid glare/shadows, and hold still for focus. Capture uses the highest still-photo resolution available, then runs local OCR.</div>
+    </div>
+    <div id="ocrStatus" class="ocr-status">Select a saved photo/PDF or open the camera, then run OCR auto-fill.</div>
+    <img id="ocrPreview" class="ocr-preview" alt="Selected ABG image preview" />
+    <details style="margin-top:8px">
+      <summary>Raw OCR text and parsing notes</summary>
+      <pre id="ocrRawText" class="ocr-raw">—</pre>
+    </details>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <div class="row">
+        <div>
+          <label>Patient ID from ABG printout</label>
+          <input id="patientId" placeholder="e.g., 16F2026/1284" autocomplete="off" />
+        </div>
+        <div>
+          <label>ABG report date/time from printout</label>
+          <input id="abgDateTime" placeholder="e.g., 7/3/2026 11:08 AM" autocomplete="off" />
+        </div>
+        <div>
+          <label>Case ID (for filename)</label>
+          <input id="caseNo" placeholder="e.g., 16F2026001234" autocomplete="off" />
+        </div>
+        <div>
+          <label>Age (years)</label>
+          <input id="age" type="number" step="1" placeholder="45" inputmode="numeric" />
+        </div>
+      </div>
+
+      <div class="sectionTitle">Core ABG Parameters</div>
+      <div class="row">
+        <div>
+          <label>pH</label>
+          <input id="ph" type="number" step="0.001" min="6.800" max="7.800" placeholder="7.400" inputmode="decimal" />
+        </div>
+        <div>
+          <label>pCO₂</label>
+          <input id="paco2" type="number" step="0.1" placeholder="40.0" inputmode="decimal" />
+        </div>
+        <div>
+          <label>pO₂</label>
+          <input id="pao2" type="number" step="0.1" placeholder="90.0" inputmode="decimal" />
+        </div>
+        <div>
+          <label>HCO₃⁻ (std, mmol/L)</label>
+          <input id="hco3st" type="number" step="0.1" placeholder="24.0" inputmode="decimal" />
+        </div>
+        <div>
+          <label>cBase(Ecf,ox) (mmol/L, optional)</label>
+          <input id="baseecf" type="number" step="0.1" placeholder="0.0" inputmode="decimal" />
+        </div>
+        <div>
+          <label>sO₂ (%)</label>
+          <input id="sao2" type="number" step="0.1" min="0" max="100" placeholder="97.0" inputmode="decimal" />
+        </div>
+        <div>
+          <label>Hemoglobin (g/dL)</label>
+          <input id="hb" type="number" step="0.1" placeholder="14.0" inputmode="decimal" />
+        </div>
+        <div>
+          <label>Calcium (total, mg/dL) (optional)</label>
+          <input id="ca" type="number" step="0.01" placeholder="e.g., 8.5" inputmode="decimal" />
+        </div>
+      </div>
+
+      <div class="sectionTitle">Electrolytes & Metabolites</div>
+      <div class="row">
+        <div><label>Sodium (Na⁺, mmol/L)</label><input id="na" type="number" step="0.1" placeholder="140.0" inputmode="decimal" /></div>
+        <div><label>Chloride (Cl⁻, mmol/L)</label><input id="cl" type="number" step="0.1" placeholder="102.0" inputmode="decimal" /></div>
+        <div><label>Potassium (K⁺, mmol/L)</label><input id="k" type="number" step="0.1" placeholder="4.0" inputmode="decimal" /></div>
+        <div><label>Calcium ionized (Ca²⁺, mmol/L)</label><input id="caion" type="number" step="0.01" placeholder="1.17" inputmode="decimal" /></div>
+        <div>
+          <label>Glucose</label>
+          <div class="two">
+            <input id="glu" type="number" step="0.1" placeholder="99" inputmode="decimal" />
+            <select id="gluUnit">
+              <option value="mg/dL" selected>mg/dL</option>
+              <option value="mmol/L">mmol/L</option>
+            </select>
+          </div>
+        </div>
+        <div><label>Lactate (mmol/L)</label><input id="lac" type="number" step="0.1" placeholder="1.0" inputmode="decimal" /></div>
+        <div>
+          <label>Magnesium (Mg²⁺)</label>
+          <div class="two">
+            <input id="mg" type="number" step="0.01" placeholder="2.0" inputmode="decimal" />
+            <select id="mgUnit">
+              <option value="mg/dL" selected>mg/dL</option>
+              <option value="mmol/L">mmol/L</option>
+            </select>
+          </div>
+        </div>
+        <div style="visibility:hidden"><input /></div>
+      </div>
+
+      <div class="sectionTitle">Stewart Weak Acids</div>
+      <div class="row">
+        <div>
+          <label>Albumin</label>
+          <div class="two">
+            <input id="alb" type="number" step="0.01" placeholder="4.0" inputmode="decimal" />
+            <select id="albUnit">
+              <option value="g/dL" selected>g/dL</option>
+              <option value="g/L">g/L</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label>Phosphorus (serum)</label>
+          <div class="two">
+            <input id="phos" type="number" step="0.01" placeholder="3.5" inputmode="decimal" />
+            <select id="phosUnit">
+              <option value="mg/dL" selected>mg/dL</option>
+              <option value="mmol/L">mmol/L</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="sectionTitle">Oxygenation Context</div>
+      <div class="row">
+        <div>
+          <label>FiO₂</label>
+          <div class="two">
+            <input id="fio2" type="number" step="0.1" placeholder="21.0" inputmode="decimal" />
+            <select id="fio2Unit">
+              <option value="percent" selected>%</option>
+              <option value="fraction">fraction</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label>PEEP/CPAP (cmH₂O)</label>
+          <input id="peep" type="number" step="0.5" placeholder="5.0" inputmode="decimal" />
+        </div>
+        <div>
+          <label>Barometric Pressure</label>
+          <div class="two">
+            <input id="patm" type="number" step="1" placeholder="760" inputmode="numeric" />
+            <select id="patmUnit">
+              <option value="mmHg" selected>mmHg</option>
+              <option value="kPa">kPa</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label>PH₂O at 37°C</label>
+          <input id="ph2o" type="number" step="0.1" placeholder="47.0" inputmode="decimal" />
+        </div>
+        <div>
+          <label>Respiratory Quotient (RQ)</label>
+          <input id="rq" type="number" step="0.01" placeholder="0.80" inputmode="decimal" />
+        </div>
+        <div>
+          <label>Mixed Venous sO₂ (%, optional)</label>
+          <input id="svo2" type="number" step="0.1" placeholder="75.0" inputmode="decimal" />
+        </div>
+        <div>
+          <label>Mixed Venous pO₂ (optional)</label>
+          <input id="pvo2" type="number" step="0.1" placeholder="40.0" inputmode="decimal" />
+        </div>
+        <div>
+          <label>Assume ScO₂ = 100%?</label>
+          <select id="scAssume">
+            <option value="yes" selected>Yes</option>
+            <option value="no">No</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="sectionTitle">Clinical Notes</div>
+      <textarea id="note" placeholder="Clinical context, medications, recent interventions..."></textarea>
+
+      <div class="btns">
+        <button class="primary" id="btnInterpret">Interpret ABG</button>
+        <button id="btnCopy">Copy Report</button>
+        <button id="btnTXT">Download TXT</button>
+        <button class="danger" id="btnClear">Clear All</button>
+      </div>
+
+      <details style="margin-top:10px">
+        <summary>Software License and Clinical Disclaimer</summary>
+        <div class="tiny" style="margin-top:8px">
+          This tool provides decision support only. Always verify sampling technique, analyzer calibration, and clinical context. Repeat ABG if results are internally inconsistent or clinically implausible. Not a substitute for clinical judgment.
+		  GNU GPL v3. Copyright (C) [2026] [Prof. Jyotirmay Kirtania]. This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. Medical Disclaimer (Cognitive Assist & Record Keeping). IMPORTANT: PLEASE READ CAREFULLY BEFORE USE. NOT A MEDICAL DEVICE: This tool is a Clinical Decision Support System (CDSS) intended for educational and cognitive assistance purposes only. It has not been cleared or approved by the FDA, EMA, or any other regulatory body for use as a primary medical device. NO SUBSTITUTE FOR CLINICAL JUDGMENT: This tool is designed to assist, not replace, the clinical judgment of qualified healthcare professionals. All calculations and logic must be independently verified against institutional standards before clinical application. DATA PRIVACY: This tool is designed to run locally on the user's device. No data is transmitted to external servers by the software. The user is solely responsible for ensuring that the use of this tool complies with local patient data privacy laws (e.g., HIPAA, GDPR) and institutional IT policies. LIMITATION OF LIABILITY: In no event shall the authors or copyright holders be liable for any claim, damages, or other liability, whether in an action of contract, tort, or otherwise, arising from, out of, or in connection with the software or the use or other dealings in the software.
+        </div>
+      </details>
+    </div>
+
+    <div class="card">
+      <div class="kpis" id="kpis"></div>
+      <div class="status" id="statusBox">
+        <div class="tiny">Enter ABG values and press <b>Interpret ABG</b> to generate comprehensive acid-base analysis with differential diagnosis.</div>
+      </div>
+      <div id="ddxContainer"></div>
+      <div class="sectionTitle">Detailed Interpretation Report</div>
+      <div class="out" id="txtOut">—</div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@6/dist/tesseract.min.js"></script>
+<script>
+
+(function(){
+  const MMHG_PER_KPA = 7.50062;
+  const $ = (id)=>document.getElementById(id);
+
+  // Differential diagnosis database
+  const DDX_DATABASE = {
+    metabolic_acidosis_high_ag: {
+      title: "High Anion Gap Metabolic Acidosis (GOLDMARK)",
+      causes: [
+        "Diabetic ketoacidosis (DKA) — most common",
+        "Lactic acidosis (type A: shock, sepsis, hypoxemia; type B: medications, malignancy)",
+        "Renal failure / uremia",
+        "Toxic ingestions: methanol, ethylene glycol, propylene glycol, salicylates",
+        "Starvation ketoacidosis",
+        "Alcoholic ketoacidosis",
+        "Pyroglutamic acidosis (acetaminophen + renal dysfunction)",
+        "5-oxoproline acidosis"
+      ]
+    },
+    metabolic_acidosis_normal_ag: {
+      title: "Normal Anion Gap Metabolic Acidosis (Non-AG / Hyperchloremic)",
+      causes: [
+        "Diarrhea / GI losses — most common",
+        "Renal tubular acidosis (RTA types 1, 2, 4)",
+        "Ureterosigmoidostomy or ureteral diversions",
+        "Carbonic anhydrase inhibitors (acetazolamide, topiramate)",
+        "Early renal failure (before uremia develops)",
+        "Recovery phase of DKA (as ketones clear)",
+        "Rapid saline administration (dilutional acidosis)",
+        "Hyperalimentation",
+        "Toluene toxicity (late phase)"
+      ]
+    },
+    metabolic_alkalosis: {
+      title: "Metabolic Alkalosis",
+      causes: [
+        "Vomiting / nasogastric suction — most common",
+        "Diuretic therapy (loop or thiazide)",
+        "Hypokalemia / hypomagnesemia",
+        "Hyperaldosteronism (primary or secondary)",
+        "Cushing syndrome or exogenous steroids",
+        "Bartter or Gitelman syndrome",
+        "Massive blood transfusion (citrate metabolism)",
+        "Milk-alkali syndrome",
+        "Post-hypercapnia (correction of chronic respiratory acidosis)",
+        "Contraction alkalosis (volume depletion)"
+      ]
+    },
+    respiratory_acidosis_acute: {
+      title: "Acute Respiratory Acidosis",
+      causes: [
+        "Airway obstruction (foreign body, laryngospasm, severe bronchospasm)",
+        "Pneumonia with respiratory failure",
+        "Pulmonary edema (cardiogenic or non-cardiogenic)",
+        "Pneumothorax / hemothorax",
+        "CNS depression (opioids, sedatives, anesthesia)",
+        "Neuromuscular blockade or weakness (myasthenia crisis, Guillain-Barré)",
+        "Chest wall trauma / flail chest",
+        "Status asthmaticus",
+        "Severe acute exacerbation of COPD"
+      ]
+    },
+    respiratory_acidosis_chronic: {
+      title: "Chronic Respiratory Acidosis",
+      causes: [
+        "COPD (chronic bronchitis, emphysema) — most common",
+        "Obesity hypoventilation syndrome (OHS)",
+        "Obstructive sleep apnea (severe, untreated)",
+        "Neuromuscular disorders (ALS, muscular dystrophy, post-polio)",
+        "Severe kyphoscoliosis or chest wall deformity",
+        "Chronic interstitial lung disease (end-stage)",
+        "Myxedema (severe hypothyroidism)",
+        "Central alveolar hypoventilation syndromes"
+      ]
+    },
+    respiratory_alkalosis_acute: {
+      title: "Acute Respiratory Alkalosis",
+      causes: [
+        "Anxiety / panic attack / hyperventilation syndrome — most common",
+        "Pain (acute)",
+        "Hypoxemia (pneumonia, PE, high altitude, pulmonary edema)",
+        "Early sepsis or systemic inflammatory response",
+        "Iatrogenic hyperventilation (mechanical ventilation)",
+        "CNS lesions (stroke, tumor, trauma, infection)",
+        "Salicylate toxicity (early phase)",
+        "Pregnancy (progesterone effect)",
+        "Fever / hyperthermia",
+        "Hepatic encephalopathy"
+      ]
+    },
+    respiratory_alkalosis_chronic: {
+      title: "Chronic Respiratory Alkalosis",
+      causes: [
+        "Chronic hypoxemia (interstitial lung disease, chronic heart failure, cyanotic heart disease)",
+        "Chronic liver disease / cirrhosis",
+        "Pregnancy (sustained progesterone effect)",
+        "Chronic anxiety disorder",
+        "CNS lesions (brainstem tumors)",
+        "High altitude residence",
+        "Chronic salicylate use",
+        "Hyperthyroidism",
+        "Chronic mechanical ventilation (over-ventilation)"
+      ]
+    },
+    mixed_disorders: {
+      title: "Mixed Acid-Base Disorders",
+      causes: [
+        "DKA + vomiting (high AG acidosis + metabolic alkalosis)",
+        "COPD exacerbation + diuretics (respiratory acidosis + metabolic alkalosis)",
+        "Septic shock (lactic acidosis + respiratory alkalosis)",
+        "Renal failure + respiratory failure (metabolic acidosis + respiratory acidosis)",
+        "Liver failure with ascites on diuretics (respiratory alkalosis + metabolic alkalosis)",
+        "Post-cardiac arrest (lactic acidosis + respiratory acidosis)",
+        "Aspirin overdose (respiratory alkalosis + high AG metabolic acidosis)",
+        "Multi-organ dysfunction syndrome (variable combinations)"
+      ]
+    }
+  };
+
+  function num(v){
+    const s = String(v ?? "").trim();
+    if(!s) return null;
+    const x = Number(s);
+    return Number.isFinite(x) ? x : null;
+  }
+  function pad2(x){ return String(x).padStart(2,"0"); }
+  function mon3(m){ return ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][m]; }
+  function tsStamp(d){ return `${pad2(d.getDate())}${mon3(d.getMonth())}${d.getFullYear()}${pad2(d.getHours())}${pad2(d.getMinutes())}`; }
+  function safeCaseNo(raw){
+  const s = (raw || "")
+    .toUpperCase()          // enforce uppercase (16F2026...)
+    .replace(/\s+/g, "")   // remove spaces
+    .replace(/[^A-Z0-9]/g, ""); // allow only A–Z and digits
+
+  return s || "CASE";
+}
+
+  function fio2Fraction(v, unit){
+    if(v===null) return null;
+    return unit==="fraction" ? v : (v/100);
+  }
+  function toMMHG(p, unit){ return (p===null) ? null : (unit==="kPa" ? p*MMHG_PER_KPA : p); }
+  function fmt(x, dp){ return (x===null || !Number.isFinite(x)) ? "—" : x.toFixed(dp); }
+  function sign(x, dp){
+    if(x===null || !Number.isFinite(x)) return "—";
+    return (x>=0?"+":"") + x.toFixed(dp);
+  }
+  function albToGdL(v, unit){ if(v===null) return null; return unit==="g/L" ? v/10 : v; }
+  function phosToMmolL(v, unit){
+    if(v===null) return null;
+    return unit==="mg/dL" ? v*0.3229 : v;
+  }
+  function gluToMmolL(v, unit){
+    if(v===null) return null;
+    return unit==="mg/dL" ? v*0.0555 : v;
+  }
+  function mgToMmolL(v, unit){
+    if(v===null) return null;
+    return unit==="mg/dL" ? v*0.4114 : v;
+  }
+
+  function applyViewMode(mode){
+    document.body.classList.remove("force-mobile","force-desktop");
+    if(mode==="mobile") document.body.classList.add("force-mobile");
+    if(mode==="desktop") document.body.classList.add("force-desktop");
+    localStorage.setItem("abg_view_mode_v2", mode);
+  }
+
+  function classifyPH(ph){
+    if(ph===null) return {state:"Unknown", note:"pH not provided."};
+    if(ph < 7.35) return {state:"Acidemia", note:"pH indicates acidosis as primary or dominant disorder."};
+    if(ph > 7.45) return {state:"Alkalemia", note:"pH indicates alkalosis as primary or dominant disorder."};
+    return {state:"Normal pH", note:"pH within normal range; may represent compensation or mixed disorder."};
+  }
+
+  function primaryProcess(ph, paco2, hco3st){
+    if(ph===null || paco2===null || hco3st===null) return {text: "Insufficient data for primary process determination.", ddx: []};
+
+    const phDir = ph>7.40 ? 1 : (ph<7.40 ? -1 : 0);
+    const co2Dir = paco2>40 ? 1 : (paco2<40 ? -1 : 0);
+    const hco3Dir = hco3st>24 ? 1 : (hco3st<24 ? -1 : 0);
+
+    const resp = (phDir!==0 && co2Dir!==0 && phDir===-co2Dir);
+    const met  = (phDir!==0 && hco3Dir!==0 && phDir===hco3Dir);
+
+    let ddxKeys = [];
+    let text = "";
+
+    if(resp && !met){
+      if(phDir<0){
+        text = "Primary respiratory acidosis.";
+        ddxKeys = ["respiratory_acidosis_acute", "respiratory_acidosis_chronic"];
+      } else {
+        text = "Primary respiratory alkalosis.";
+        ddxKeys = ["respiratory_alkalosis_acute", "respiratory_alkalosis_chronic"];
+      }
+    } else if(met && !resp){
+      if(phDir<0){
+        text = "Primary metabolic acidosis.";
+        ddxKeys = ["metabolic_acidosis_high_ag", "metabolic_acidosis_normal_ag"];
+      } else {
+        text = "Primary metabolic alkalosis.";
+        ddxKeys = ["metabolic_alkalosis"];
+      }
+    } else if(resp && met){
+      text = "Mixed disorder (respiratory + metabolic components detected).";
+      ddxKeys = ["mixed_disorders"];
+    } else {
+      text = "Indeterminate pattern; evaluate compensation and anion gap.";
+      ddxKeys = ["mixed_disorders"];
+    }
+
+    return {text, ddx: ddxKeys};
+  }
+
+  function expectedCompensation(ph, paco2, hco3st){
+    if(ph===null || paco2===null || hco3st===null) return {text:"Insufficient data for compensation analysis.", flags:[]};
+    const flags = [];
+    const isAcid = ph < 7.35;
+    const isAlk  = ph > 7.45;
+    const dCO2 = paco2 - 40;
+    const dHCO3 = hco3st - 24;
+
+    let primary = "unknown";
+    if(isAcid){
+      primary = (dHCO3 < -2) ? "met_acid" : "resp_acid";
+    }else if(isAlk){
+      primary = (dHCO3 > 2) ? "met_alk" : "resp_alk";
+    }else{
+      primary = (Math.abs(dHCO3) >= (Math.abs(dCO2)/4)) ? (dHCO3<0?"met_acid":"met_alk") : (dCO2>0?"resp_acid":"resp_alk");
+    }
+
+    function outside(x, lo, hi){ return x<lo || x>hi; }
+
+    if(primary==="met_acid"){
+      const exp = 1.5*hco3st + 8;
+      const lo = exp-2, hi = exp+2;
+      let t = `Metabolic acidosis: expected pCO₂ ≈ 1.5×HCO₃⁻ + 8 (±2) → ${fmt(exp,1)} mmHg (range ${fmt(lo,1)}–${fmt(hi,1)}).`;
+      if(outside(paco2, lo, hi)) flags.push("pCO₂ outside Winter's formula range → consider additional respiratory disorder.");
+      return {text:t, flags};
+    }
+    if(primary==="met_alk"){
+      const exp = 40 + 0.7*(hco3st-24);
+      const lo = exp-5, hi = exp+5;
+      let t = `Metabolic alkalosis: expected pCO₂ rise ≈ 0.7 mmHg per 1 mmol/L HCO₃⁻ increase → ~${fmt(exp,1)} mmHg (range ${fmt(lo,1)}–${fmt(hi,1)}).`;
+      if(outside(paco2, lo, hi)) flags.push("pCO₂ not in expected range → possible mixed disorder or ventilatory limitation.");
+      return {text:t, flags};
+    }
+    if(primary==="resp_acid"){
+      const expAc = 24 + 1*(dCO2/10);
+      const expCh = 24 + 3.5*(dCO2/10);
+      const lo = Math.min(expAc, expCh)-2, hi = Math.max(expAc, expCh)+2;
+      let t = `Respiratory acidosis: expected HCO₃⁻ — acute ≈ ${fmt(expAc,1)} mmol/L; chronic ≈ ${fmt(expCh,1)} mmol/L.`;
+      if(outside(hco3st, lo, hi)) flags.push("HCO₃⁻ outside acute/chronic range → likely mixed metabolic component.");
+      return {text:t, flags};
+    }
+    if(primary==="resp_alk"){
+      const d = Math.abs(dCO2);
+      const expAc = 24 - 2*(d/10);
+      const expCh = 24 - 5*(d/10);
+      const lo = Math.min(expAc, expCh)-2, hi = Math.max(expAc, expCh)+2;
+      let t = `Respiratory alkalosis: expected HCO₃⁻ — acute ≈ ${fmt(expAc,1)} mmol/L; chronic ≈ ${fmt(expCh,1)} mmol/L.`;
+      if(outside(hco3st, lo, hi)) flags.push("HCO₃⁻ outside acute/chronic range → likely mixed metabolic component.");
+      return {text:t, flags};
+    }
+    return {text:"Unable to determine expected compensation.", flags:["Indeterminate primary process."]};
+  }
+
+  function calcHCO3_HH(ph, paco2_mmhg){
+    if(ph===null || paco2_mmhg===null) return null;
+    return 0.03 * paco2_mmhg * Math.pow(10, (ph - 6.1));
+  }
+
+  function calcSBE(ph, hco3){
+    if(ph===null || hco3===null) return null;
+    return 0.9287 * (hco3 - 24.4 + 14.83*(ph - 7.4));
+  }
+
+  function anionGap(na, k, cl, hco3st){
+    if(na===null || cl===null || hco3st===null) return null;
+    return (na + (k||0)) - (cl + hco3st);
+  }
+
+  function sida(na,k,ca_mgdl,mg,cl,lac){
+  if(na===null || cl===null) return null;
+
+  // Convert total calcium from mg/dL → mmol/L
+  // Ca (mmol/L) = Ca (mg/dL) × 0.2495
+  const ca = (ca_mgdl===null) ? 0 : ca_mgdl * 0.2495;
+
+  return (na + (k||0) + ca + (mg||0)) - (cl + (lac||0));
+}
+
+
+  function weakAcidsCharge(ph, alb_gdL, phos_mmolL){
+    if(ph===null) return null;
+    const albTerm = (alb_gdL===null) ? 0 : (10*alb_gdL) * (0.123*ph - 0.631);
+    const phosTerm = (phos_mmolL===null) ? 0 : phos_mmolL * (0.309*ph - 0.469);
+    if((alb_gdL===null) && (phos_mmolL===null)) return null;
+    return albTerm + phosTerm;
+  }
+
+  function sig(sidaVal, weakA, hco3st){
+    if(sidaVal===null || hco3st===null) return null;
+    return sidaVal - (weakA||0) - hco3st;
+  }
+
+  function calcPAO2(patm_mmhg, ph2o_mmhg, fio2, paco2_mmhg, rq){
+    if(patm_mmhg===null || ph2o_mmhg===null || fio2===null || paco2_mmhg===null || rq===null) return null;
+    return (patm_mmhg - ph2o_mmhg) * fio2 - (paco2_mmhg / rq);
+  }
+
+  function calcPF(pao2_mmhg, fio2){
+    if(pao2_mmhg===null || fio2===null || fio2===0) return null;
+    return pao2_mmhg / fio2;
+  }
+
+  function expectedAA(age){
+    if(age===null) return null;
+    return (age + 10) / 4;
+  }
+
+  function berlinBin(pf, peep){
+    if(pf===null) return "P/F ratio not computed.";
+    if(peep===null) return "PEEP/CPAP not provided (Berlin criteria require ≥5 cmH₂O).";
+    if(peep < 5) return "PEEP/CPAP <5 cmH₂O (Berlin ARDS criteria not applicable).";
+    if(pf > 300) return "P/F >300 (does not meet ARDS oxygenation threshold).";
+    if(pf > 200) return "Berlin ARDS: Mild (P/F 200–300) with PEEP ≥5 cmH₂O.";
+    if(pf > 100) return "Berlin ARDS: Moderate (P/F 100–200) with PEEP ≥5 cmH₂O.";
+    return "Berlin ARDS: Severe (P/F ≤100) with PEEP ≥5 cmH₂O.";
+  }
+
+  function CaO2(hb, sO2pct, pao2){
+    if(hb===null || sO2pct===null || pao2===null) return null;
+    const s = sO2pct/100;
+    return 1.34*hb*s + 0.003*pao2;
+  }
+
+  function CvO2(hb, svO2pct, pvo2){
+    if(hb===null || svO2pct===null || pvo2===null) return null;
+    const s = svO2pct/100;
+    return 1.34*hb*s + 0.003*pvo2;
+  }
+
+  function CcO2(hb, pao2_alv){
+    if(hb===null || pao2_alv===null) return null;
+    return 1.34*hb*1.0 + 0.003*pao2_alv;
+  }
+
+  function shuntFrac(cc, ca, cv){
+    if(cc===null || ca===null || cv===null) return null;
+    const denom = (cc - cv);
+    if(denom===0) return null;
+    return (cc - ca) / denom;
+  }
+
+  function renderDDX(ddxKeys, ag){
+    const container = $("ddxContainer");
+    container.innerHTML = "";
+
+    if(!ddxKeys || ddxKeys.length === 0) return;
+
+    let relevantDDX = [];
+    for(const key of ddxKeys){
+      if(key === "metabolic_acidosis_high_ag" && ag !== null && ag <= 16) continue;
+      if(key === "metabolic_acidosis_normal_ag" && ag !== null && ag > 16) continue;
+      if(DDX_DATABASE[key]) relevantDDX.push(DDX_DATABASE[key]);
+    }
+
+    if(relevantDDX.length === 0) return;
+
+    for(const ddx of relevantDDX){
+      const div = document.createElement("div");
+      div.className = "ddx-section";
+      let html = `<div class="ddx-title">${ddx.title}</div><div class="ddx-list">`;
+      ddx.causes.forEach((cause, idx) => {
+        html += `<div class="ddx-item">${idx+1}. ${cause}</div>`;
+      });
+      html += `</div>`;
+      div.innerHTML = html;
+      container.appendChild(div);
+    }
+  }
+
+  function setKPIs(items){
+    const wrap = $("kpis");
+    wrap.innerHTML = "";
+    for(const it of items){
+      const d = document.createElement("div");
+      d.className = "pill";
+      d.innerHTML = `<span>${it.label}</span> <b>${it.value}</b>`;
+      wrap.appendChild(d);
+    }
+  }
+
+  function setStatus(kind, html){
+    const box = $("statusBox");
+    box.className = "status " + (kind||"");
+    box.innerHTML = html;
+  }
+
+  function getFormState(){
+    const ids = [
+      "patientId","abgDateTime","caseNo","age","pUnit","viewMode",
+      "ph","paco2","pao2","hco3st","baseecf","sao2","hb","ca",
+      "na","cl","k","caion","glu","gluUnit","lac","mg","mgUnit",
+      "alb","albUnit","phos","phosUnit",
+      "fio2","fio2Unit","peep","patm","patmUnit","ph2o","rq",
+      "svo2","pvo2","scAssume","note"
+    ];
+    const st = {};
+    for(const id of ids){
+      const el = $(id);
+      if(el) st[id] = el.value;
+    }
+    return st;
+  }
+
+  function setFormState(st){
+    if(!st) return;
+    for(const id of Object.keys(st)){
+      const el = $(id);
+      if(el) el.value = st[id];
+    }
+  }
+
+  function saveLocal(){
+    localStorage.setItem("abg_stewart_v2", JSON.stringify(getFormState()));
+    setStatus("ok", `<div><b>Saved locally.</b></div><div class="tiny">Data stored in browser localStorage.</div>`);
+  }
+
+  function loadLocal(){
+    const raw = localStorage.getItem("abg_stewart_v2");
+    if(!raw){
+      setStatus("warn", `<div><b>No saved data found.</b></div>`);
+      return;
+    }
+    try{
+      setFormState(JSON.parse(raw));
+      applyViewMode($("viewMode").value);
+      setStatus("ok", `<div><b>Data loaded successfully.</b></div>`);
+    }catch(e){
+      setStatus("bad", `<div><b>Load failed.</b></div><div class="tiny">${String(e)}</div>`);
+    }
+  }
+
+  function downloadText(filename, content){
+    const blob = new Blob([content], {type:"text/plain;charset=utf-8"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  async function copyToClipboard(text){
+    try{
+      await navigator.clipboard.writeText(text);
+      return true;
+    }catch(_){
+      // fallback
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position='fixed';
+      ta.style.left='-9999px';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      let ok=false;
+      try{ ok = document.execCommand('copy'); }catch(__){ ok=false; }
+      ta.remove();
+      return ok;
+    }
+  }
+
+  function interpret(){
+    const pUnit = $("pUnit").value;
+    const patientId = ($("patientId") && $("patientId").value || "").trim();
+    const abgDateTime = ($("abgDateTime") && $("abgDateTime").value || "").trim();
+    const caseNoRaw = $("caseNo").value;
+    const age = num($("age").value);
+
+    const ph = num($("ph").value);
+    const paco2_in = num($("paco2").value);
+    const pao2_in  = num($("pao2").value);
+    const hco3st = num($("hco3st").value);
+    const baseecf = num($("baseecf").value);
+    const sao2 = num($("sao2").value);
+    const hb = num($("hb").value);
+    const caTot = num($("ca").value);
+
+    const na = num($("na").value);
+    const cl = num($("cl").value);
+    const k  = num($("k").value);
+    const caion = num($("caion").value);
+    const glu = num($("glu").value);
+    const gluUnit = $("gluUnit").value;
+    const lac = num($("lac").value);
+    const mg = num($("mg").value);
+    const mgUnit = $("mgUnit").value;
+
+    const alb = num($("alb").value);
+    const albUnit = $("albUnit").value;
+    const phos = num($("phos").value);
+    const phosUnit = $("phosUnit").value;
+
+    const fio2v = num($("fio2").value);
+    const fio2Unit = $("fio2Unit").value;
+    const peep = num($("peep").value);
+
+    const patm = num($("patm").value);
+    const patmUnit = $("patmUnit").value;
+    const ph2o = num($("ph2o").value);
+    const rq = num($("rq").value);
+
+    const svo2 = num($("svo2").value);
+    const pvo2_in = num($("pvo2").value);
+    const scAssume = $("scAssume").value;
+    const note = ($("note").value||"").trim();
+
+    const paco2 = toMMHG(paco2_in, pUnit);
+    const pao2  = toMMHG(pao2_in,  pUnit);
+    const pvo2  = (pvo2_in===null) ? 40 : toMMHG(pvo2_in, pUnit);
+
+    const patm_mmhg = toMMHG(patm ?? 760, patmUnit);
+    const ph2o_mmhg = toMMHG(ph2o ?? 47, patmUnit);
+    const fio2 = fio2Fraction(fio2v, fio2Unit);
+    const rqv = rq ?? 0.80;
+
+    const alb_gdL = albToGdL(alb, albUnit);
+    const phos_mmolL = phosToMmolL(phos, phosUnit);
+    const glu_mmolL = gluToMmolL(glu, gluUnit);
+    const mg_mmolL = mgToMmolL(mg, mgUnit);
+
+    const phClass = classifyPH(ph);
+    const primary = primaryProcess(ph, paco2, hco3st);
+    const comp = expectedCompensation(ph, paco2, hco3st);
+
+    const hco3_hh = calcHCO3_HH(ph, paco2);
+    const sbe_calc = calcSBE(ph, hco3st);
+
+    const ag = anionGap(na, k, cl, hco3st);
+    const dAG = (ag===null) ? null : (ag - 12);
+    const dHCO3 = (hco3st===null) ? null : (24 - hco3st);
+    const dRatio = (dAG===null || dHCO3===null || dHCO3===0) ? null : (dAG/dHCO3);
+
+    const sidaVal = sida(na,k,caion,mg_mmolL,cl,lac);
+    const weakA = weakAcidsCharge(ph, alb_gdL, phos_mmolL);
+    const sigVal = sig(sidaVal, weakA, hco3st);
+
+    const pao2_alv = calcPAO2(patm_mmhg, ph2o_mmhg, fio2, paco2, rqv);
+    const aa = (pao2_alv===null || pao2===null) ? null : (pao2_alv - pao2);
+    const aaExp = expectedAA(age);
+    const aaExcess = (aa===null || aaExp===null) ? null : (aa - aaExp);
+    const pf = calcPF(pao2, fio2);
+    const berlin = berlinBin(pf, peep);
+
+    let shunt = null;
+    if(scAssume==="yes" && hb!==null && sao2!==null && pao2!==null && pao2_alv!==null && svo2!==null){
+      const caO2 = CaO2(hb, sao2, pao2);
+      const cvO2 = CvO2(hb, svo2, pvo2);
+      const ccO2 = CcO2(hb, pao2_alv);
+      shunt = shuntFrac(ccO2, caO2, cvO2);
+    }
+
+    setKPIs([
+      {label:"pH", value: ph===null ? "—" : ph.toFixed(3)},
+      {label:`pCO₂ (${pUnit})`, value: paco2_in===null ? "—" : paco2_in.toFixed(1)},
+      {label:`pO₂ (${pUnit})`, value: pao2_in===null ? "—" : pao2_in.toFixed(1)},
+      {label:"HCO₃⁻ (std)", value: hco3st===null ? "—" : hco3st.toFixed(1)},
+      {label:"cBase(Ecf,ox)", value: baseecf===null ? "—" : sign(baseecf,1)},
+      {label:"SBE (calc)", value: sbe_calc===null ? "—" : sign(sbe_calc,1)},
+      {label:"AG", value: ag===null ? "—" : ag.toFixed(1)},
+      {label:"SIG", value: sigVal===null ? "—" : sign(sigVal,1)},
+      {label:"P/F", value: pf===null ? "—" : pf.toFixed(0)},
+      {label:"A–a", value: aa===null ? "—" : aa.toFixed(1)}
+    ]);
+
+    const flags=[];
+    if(ph!==null && (ph < 7.20 || ph > 7.60)) flags.push("Extreme pH (critical)");
+    if(hco3st!==null && hco3_hh!==null && Math.abs(hco3st - hco3_hh) > 4) flags.push("HCO₃⁻ discrepancy >4 mmol/L");
+    if(ag!==null && ag > 20) flags.push("Very high AG (>20)");
+    else if(ag!==null && ag > 16) flags.push("Elevated AG");
+    if(sigVal!==null && Math.abs(sigVal) > 10) flags.push("Abnormal SIG");
+    if(aaExcess!==null && aaExcess > 15) flags.push("A–a gradient significantly elevated");
+
+    const kind = flags.length >= 2 ? "bad" : (flags.length === 1 ? "warn" : "ok");
+
+    setStatus(kind, `
+      <div style="font-weight:800;margin-bottom:6px">${phClass.state}</div>
+      <div class="tiny" style="margin-bottom:8px">${phClass.note}</div>
+      <div class="tiny"><b>Primary Process:</b> ${primary.text}</div>
+      <div class="tiny" style="margin-top:6px"><b>Compensation:</b> ${comp.text}</div>
+      ${comp.flags.length ? `<div class="tiny" style="margin-top:6px">${comp.flags.map(x=>"⚠ "+x).join("<br>")}</div>` : ""}
+      ${flags.length ? `<div class="hr"></div><div class="tiny"><b>Clinical Flags:</b> ${flags.join(" | ")}</div>` : ""}
+      <div class="hr"></div>
+      <div class="tiny"><b>Oxygenation:</b> ${berlin}</div>
+    `);
+
+    renderDDX(primary.ddx, ag);
+
+    const dt = new Date();
+    const stamp = tsStamp(dt);
+
+    const lines = [];
+    lines.push("═══════════════════════════════════════════════════════════════");
+    lines.push("ABG INTERPRETATION REPORT (Enhanced v3.0)");
+    lines.push("Acid-Base Analysis + Stewart/Strong-Ion + Oxygenation Assessment");
+    lines.push("═══════════════════════════════════════════════════════════════");
+    lines.push(`Patient ID: ${patientId || "—"}`);
+    lines.push(`ABG report date/time: ${abgDateTime || "—"}`);
+    lines.push(`Case ID: ${caseNoRaw || "—"}`);
+    lines.push(`Timestamp: ${stamp}`);
+    lines.push(`Units: Pressure=${pUnit} (calculations in mmHg); Electrolytes=mmol/L`);
+    lines.push("");
+
+    lines.push("───────────────────────────────────────────────────────────────");
+    lines.push("SECTION 1: ABG & LABORATORY INPUTS");
+    lines.push("───────────────────────────────────────────────────────────────");
+    lines.push(`• pH = ${ph===null?"—":ph.toFixed(3)}`);
+    lines.push(`• pCO₂ = ${paco2_in===null?"—":paco2_in.toFixed(1)} ${pUnit}`);
+    lines.push(`• pO₂ = ${pao2_in===null?"—":pao2_in.toFixed(1)} ${pUnit}`);
+    lines.push(`• HCO₃⁻ (standard) = ${hco3st===null?"—":hco3st.toFixed(1)} mmol/L`);
+    lines.push(`• cBase(Ecf,ox) (reported) = ${baseecf===null?"—":sign(baseecf,1)} mmol/L`);
+    lines.push(`• sO₂ = ${sao2===null?"—":sao2.toFixed(1)}%`);
+    lines.push(`• Hemoglobin = ${hb===null?"—":hb.toFixed(1)} g/dL`);
+    if(caTot!==null) lines.push(`• Ca (total) = ${caTot.toFixed(2)} mmol/L`);
+    lines.push("");
+
+    lines.push("Electrolytes & metabolites:");
+    lines.push(`• Na⁺ = ${na===null?"—":na.toFixed(1)} mmol/L`);
+    lines.push(`• Cl⁻ = ${cl===null?"—":cl.toFixed(1)} mmol/L`);
+    lines.push(`• K⁺ = ${k===null?"—":k.toFixed(1)} mmol/L`);
+    if(caion!==null) lines.push(`• Ca²⁺ (ionized) = ${caion.toFixed(2)} mmol/L`);
+    if(lac!==null) lines.push(`• Lactate = ${lac.toFixed(1)} mmol/L`);
+    if(glu!==null) lines.push(`• Glucose = ${glu.toFixed(gluUnit==='mg/dL'?0:1)} ${gluUnit} (≈${glu_mmolL===null?'—':glu_mmolL.toFixed(1)} mmol/L)`);
+    if(mg!==null) lines.push(`• Magnesium = ${mg.toFixed(2)} ${mgUnit} (≈${mg_mmolL===null?'—':mg_mmolL.toFixed(2)} mmol/L)`);
+    if(alb!==null) lines.push(`• Albumin = ${alb.toFixed(2)} ${albUnit} (≈${alb_gdL===null?'—':alb_gdL.toFixed(2)} g/dL)`);
+    if(phos!==null) lines.push(`• Phosphate = ${phos.toFixed(2)} ${phosUnit} (≈${phos_mmolL===null?'—':phos_mmolL.toFixed(2)} mmol/L)`);
+    lines.push("");
+
+    lines.push("───────────────────────────────────────────────────────────────");
+    lines.push("SECTION 2: INTERNAL CONSISTENCY CHECK");
+    lines.push("───────────────────────────────────────────────────────────────");
+    if(hco3st!==null && hco3_hh!==null){
+      const diff = hco3st - hco3_hh;
+      lines.push(`• HCO₃⁻ (reported) = ${hco3st.toFixed(1)} mmol/L`);
+      lines.push(`• HCO₃⁻ (calculated from pH + pCO₂) = ${hco3_hh.toFixed(1)} mmol/L`);
+      lines.push(`• Difference (reported − calculated) = ${sign(diff,1)} mmol/L`);
+      if(Math.abs(diff)>4){
+        lines.push("  ⚠ ALERT: Large discrepancy (>4 mmol/L) detected → consider sampling/handling/analyzer issue; repeat ABG.");
+      } else if(Math.abs(diff)>2){
+        lines.push("  ⓘ NOTE: Moderate discrepancy (2–4 mmol/L). Clinical correlation advised.");
+      } else {
+        lines.push("  ✓ Internal consistency acceptable (Δ <2 mmol/L).");
+      }
+    }else{
+      lines.push("• Internal consistency check: Insufficient data (need pH + pCO₂ + HCO₃⁻).");
+    }
+    lines.push("");
+
+    lines.push("───────────────────────────────────────────────────────────────");
+    lines.push("SECTION 3: pH STATUS & ACID-BASE STATE");
+    lines.push("───────────────────────────────────────────────────────────────");
+    lines.push(`• ${phClass.state}`);
+    lines.push(`• ${phClass.note}`);
+    lines.push("");
+
+    lines.push("───────────────────────────────────────────────────────────────");
+    lines.push("SECTION 4: PRIMARY DISTURBANCE");
+    lines.push("───────────────────────────────────────────────────────────────");
+    lines.push(`• ${primary.text}`);
+    lines.push("");
+
+    lines.push("───────────────────────────────────────────────────────────────");
+    lines.push("SECTION 5: COMPENSATION ANALYSIS (Mixed Disorder Screening)");
+    lines.push("───────────────────────────────────────────────────────────────");
+    lines.push(`• ${comp.text}`);
+    if(comp.flags.length > 0){
+      lines.push("");
+      comp.flags.forEach(f=>lines.push(`  ⚠ ${f}`));
+    }
+    lines.push("");
+
+    lines.push("───────────────────────────────────────────────────────────────");
+    lines.push("SECTION 6: ANION GAP & DELTA ANALYSIS");
+    lines.push("───────────────────────────────────────────────────────────────");
+    if(ag===null){
+      lines.push("• Anion Gap: Insufficient data (requires Na⁺, Cl⁻, HCO₃⁻).");
+    }else{
+      lines.push(`• Anion Gap = (Na⁺${k===null?"":" + K⁺"}) − (Cl⁻ + HCO₃⁻) = ${ag.toFixed(1)} mmol/L`);
+      lines.push("  Reference range: 8–12 (without K⁺) or 12–16 (with K⁺), method-dependent.");
+      if(ag > 20) lines.push("  ⚠ Marked elevation → high AG metabolic acidosis component likely.");
+      else if(ag > 16) lines.push("  ⚠ Elevated AG → high AG metabolic acidosis component possible.");
+      else if(ag < 8) lines.push("  ⓘ Low AG → consider hypoalbuminemia/paraproteinemia or lab issue.");
+      else lines.push("  ✓ AG within conventional range.");
+
+      lines.push("");
+      lines.push(`• ΔAG = AG − 12 = ${dAG===null?"—":dAG.toFixed(1)} mmol/L`);
+      lines.push(`• ΔHCO₃⁻ = 24 − HCO₃⁻ = ${dHCO3===null?"—":dHCO3.toFixed(1)} mmol/L`);
+      if(dRatio!==null){
+        lines.push(`• ΔAG/ΔHCO₃⁻ = ${dRatio.toFixed(2)}`);
+        if(dRatio < 0.4) lines.push("  → <0.4: predominant normal AG metabolic acidosis.");
+        else if(dRatio < 1) lines.push("  → 0.4–1.0: mixed high AG + normal AG metabolic acidosis.");
+        else if(dRatio <= 2) lines.push("  → 1.0–2.0: predominant high AG metabolic acidosis.");
+        else lines.push("  → >2.0: high AG metabolic acidosis + concurrent metabolic alkalosis.");
+      }
+    }
+    lines.push("");
+
+    lines.push("───────────────────────────────────────────────────────────────");
+    lines.push("SECTION 7: BASE EXCESS ANALYSIS");
+    lines.push("───────────────────────────────────────────────────────────────");
+    if(baseecf!==null){
+      lines.push(`• cBase(Ecf,ox) (reported) = ${sign(baseecf,1)} mmol/L`);
+      lines.push("  Reference: −2 to +2 mmol/L (method dependent)."
+      );
+      if(baseecf < -2) lines.push("  → Negative BE suggests metabolic acidosis component.");
+      else if(baseecf > 2) lines.push("  → Positive BE suggests metabolic alkalosis component.");
+      else lines.push("  ✓ BE within conventional range.");
+    } else {
+      lines.push("• cBase(Ecf,ox): Not provided.");
+    }
+    if(sbe_calc!==null){
+      lines.push(`• SBE (calculated from pH + HCO₃⁻) = ${sign(sbe_calc,1)} mmol/L`);
+      if(baseecf!==null){
+        const dd = baseecf - sbe_calc;
+        lines.push(`• (Reported BE − calculated SBE) = ${sign(dd,1)} mmol/L`);
+        if(Math.abs(dd) < 2) lines.push("  ✓ Good agreement." );
+        else lines.push("  ⓘ Differences can occur due to analyzer-specific algorithms." );
+      }
+    }
+    lines.push("");
+
+    lines.push("───────────────────────────────────────────────────────────────");
+    lines.push("SECTION 8: STEWART / STRONG ION APPROACH");
+    lines.push("───────────────────────────────────────────────────────────────");
+    if(sidaVal!==null){
+      lines.push(`• SIDa = ${sidaVal.toFixed(1)} mEq/L`);
+      if(sidaVal < 38) lines.push("  → Low SIDa suggests strong ion acidosis (often hyperchloremia)." );
+      else if(sidaVal > 44) lines.push("  → High SIDa suggests strong ion alkalosis." );
+    } else {
+      lines.push("• SIDa: Insufficient data (need at least Na⁺ and Cl⁻)." );
+    }
+    if(weakA!==null){
+      lines.push(`• A⁻ (albumin+phosphate charge) ≈ ${weakA.toFixed(1)} mEq/L`);
+    } else {
+      lines.push("• Weak acids: Insufficient data (need pH + albumin/phosphate)." );
+    }
+    if(sigVal!==null){
+      lines.push(`• SIG (unmeasured ions) = ${sigVal.toFixed(1)} mEq/L`);
+      if(sigVal > 5) lines.push("  ⚠ Elevated SIG → unmeasured anions possible (ketones/toxins/etc.)." );
+      else if(sigVal < -5) lines.push("  ⓘ Negative SIG → unmeasured cations or measurement issues." );
+      else lines.push("  ✓ SIG within conventional range." );
+    } else {
+      lines.push("• SIG: cannot be computed (need SIDa + HCO₃⁻)." );
+    }
+    lines.push("");
+
+    lines.push("───────────────────────────────────────────────────────────────");
+    lines.push("SECTION 9: OXYGENATION & GAS EXCHANGE");
+    lines.push("───────────────────────────────────────────────────────────────");
+    if(fio2===null){
+      lines.push("• FiO₂ not provided → P/F, PAO₂, and A–a not computed.");
+    } else {
+      lines.push(`• FiO₂ = ${fio2.toFixed(3)} (fraction) = ${(fio2*100).toFixed(1)}%`);
+      lines.push(`• PEEP/CPAP = ${peep===null?"—":peep.toFixed(1)} cmH₂O`);
+      if(pf!==null){
+        lines.push(`• P/F ratio = ${pf.toFixed(0)} mmHg`);
+        lines.push(`• ${berlin}`);
+      } else {
+        lines.push("• P/F ratio: cannot compute (need PaO₂ and FiO₂)." );
+      }
+      if(pao2_alv!==null){
+        lines.push(`• PAO₂ (alveolar gas equation) ≈ ${pao2_alv.toFixed(1)} mmHg`);
+      }
+      if(aa!==null){
+        lines.push(`• A–a gradient = PAO₂ − PaO₂ ≈ ${aa.toFixed(1)} mmHg`);
+        if(aaExp!==null){
+          lines.push(`• Expected A–a (age-adjusted) ≈ ${(aaExp).toFixed(1)} mmHg`);
+          if(aaExcess!==null) lines.push(`• Excess above expected ≈ ${aaExcess.toFixed(1)} mmHg`);
+        }
+      } else {
+        lines.push("• A–a gradient: insufficient inputs (need PaO₂, PaCO₂, FiO₂; Patm/PH₂O/RQ assumed if blank)." );
+      }
+      if(shunt!==null){
+        lines.push(`• Shunt fraction (Qs/Qt) ≈ ${(shunt*100).toFixed(1)}% (requires Hb, SaO₂, SvO₂, assumes ScO₂=100%)`);
+      }
+    }
+    lines.push("");
+
+    if(note){
+      lines.push("───────────────────────────────────────────────────────────────");
+      lines.push("CLINICAL NOTES");
+      lines.push("───────────────────────────────────────────────────────────────");
+      lines.push(note);
+      lines.push("");
+    }
+
+    const report = lines.join("\n");
+    $("txtOut").textContent = report;
+
+    // store latest report for copy/txt
+    window.__abg_latest_report = report;
+    window.__abg_latest_stamp = stamp;
+  }
+
+
+  // -------------------------------------------------------------------------
+  // Local OCR auto-fill for photographed ABG thermal printouts.
+  // Privacy model: image pixels are passed only to Tesseract.js running in this
+  // browser. CDN assets may be fetched, but the patient image/text is not sent
+  // by this app.
+  // -------------------------------------------------------------------------
+  const OCR_TARGET_FIELDS = ["ph","paco2","pao2","hco3st","baseecf","sao2","hb","na","k","caion","cl","lac","glu"];
+  const OCR_META_FIELDS = ["patientId","abgDateTime"];
+  const RADIOMETER_ROW_FIELDS = ["ph","paco2","pao2","hb","sao2","k","na","caion","cl","glu","lac","hco3st","baseecf"];
+  let __ocrWorker = null;
+  let __ocrCameraStream = null;
+  let __ocrCurrentSource = null;
+  let __pdfjsModule = null;
+
+  function setOcrStatus(kind, html){
+    const box = $("ocrStatus");
+    if(!box) return;
+    box.className = "ocr-status " + (kind || "");
+    box.innerHTML = html;
+  }
+
+  function escapeHtml(s){
+    return String(s ?? "")
+      .replace(/&/g,"&amp;")
+      .replace(/</g,"&lt;")
+      .replace(/>/g,"&gt;")
+      .replace(/"/g,"&quot;")
+      .replace(/'/g,"&#039;");
+  }
+
+  function normalizeOcrText(raw){
+    return String(raw || "")
+      .replace(/\r/g,"\n")
+      .replace(/[\u2080]/g,"0").replace(/[\u2081]/g,"1").replace(/[\u2082²]/g,"2")
+      .replace(/[\u2083³]/g,"3").replace(/[\u2084]/g,"4").replace(/[\u2085]/g,"5")
+      .replace(/[\u2086]/g,"6").replace(/[\u2087]/g,"7").replace(/[\u2088]/g,"8").replace(/[\u2089]/g,"9")
+      .replace(/[↑↥⇧↓↧⇩]/g," ")
+      .replace(/[−–—]/g,"-")
+      .replace(/([0-9]),([0-9])/g,"$1.$2")
+      .replace(/[·•]/g,".")
+      .replace(/[|¦]/g," ")
+      .replace(/[：;]/g,":")
+      .replace(/[=]/g," ")
+      .replace(/\bP\s*H\b/gi,"pH")
+      .replace(/[ \t]+/g," ")
+      .replace(/\n[ \t]+/g,"\n")
+      .replace(/\n{3,}/g,"\n\n")
+      .trim();
+  }
+
+
+  function fixOcrDigits(s){
+    return String(s || "")
+      .replace(/[OoQ]/g,"0")
+      .replace(/[Il|]/g,"1")
+      .replace(/[Ss]/g,"5")
+      .replace(/[Bb]/g,"8");
+  }
+
+  function normalizePatientIdToken(raw){
+    let s = String(raw || "")
+      .toUpperCase()
+      .replace(/[\\|]/g,"/")
+      .replace(/[–—]/g,"-")
+      .replace(/\s+/g,"")
+      .replace(/[^A-Z0-9\/-]/g,"");
+
+    // Common TMC/Radiometer form: 16F2026/1284, 18F2025/15795.
+    const m = s.match(/([0-9OIL|]{1,3})([A-Z])([0-9OIL|]{4})\/?([0-9OIL|]{3,6})/i);
+    if(m){
+      const a = fixOcrDigits(m[1]);
+      const letter = String(m[2]).toUpperCase();
+      const y = fixOcrDigits(m[3]);
+      const n = fixOcrDigits(m[4]);
+      return `${a}${letter}${y}/${n}`;
+    }
+
+    // Fallback for other hospital IDs: keep only a compact alphanumeric/slash token.
+    s = s.replace(/\/{2,}/g,"/").replace(/^\/+|\/+$/g,"");
+    return s.length >= 4 && s.length <= 28 ? s : "";
+  }
+
+  function extractPatientIdFromText(text){
+    const normalized = String(text || "");
+    const lines = normalized.split(/\n+/).map(x=>x.trim()).filter(Boolean);
+
+    // First: line labelled Patient ID.
+    for(let i=0;i<lines.length;i++){
+      const line = lines[i];
+      if(!/patient\s*(?:id|1d|ld)\b/i.test(line)) continue;
+      let tail = line.replace(/^.*?patient\s*(?:id|1d|ld)\b\s*[:\-]?\s*/i, "");
+      if(!tail || tail.length < 4){
+        tail = lines[i+1] || "";
+      }
+      tail = tail.split(/patient\s*last|sample\s*type|arterial|venous|male|female|sex\b|fo2|fio2|department/i)[0];
+      const explicit = tail.match(/[0-9OIL|]{1,3}\s*[A-Z]\s*[0-9OIL|]{4}\s*[\/\\|\-]?\s*[0-9OIL|]{3,6}/i);
+      const candidate = normalizePatientIdToken(explicit ? explicit[0] : tail.split(/\s{2,}|\s-\s|\|/)[0]);
+      if(candidate) return { value:candidate, source:`line ${i+1}: ${line}` };
+    }
+
+    // Second: Radiometer-style ID pattern anywhere in the identification/header area.
+    const top = lines.slice(0, Math.min(lines.length, 24)).join(" ");
+    const m = top.match(/\b[0-9OIL|]{1,3}\s*[A-Z]\s*[0-9OIL|]{4}\s*[\/\\|\-]\s*[0-9OIL|]{3,6}\b/i);
+    if(m){
+      const candidate = normalizePatientIdToken(m[0]);
+      if(candidate) return { value:candidate, source:"Radiometer-style ID pattern" };
+    }
+    return null;
+  }
+
+  function normalizeOcrDateToken(raw){
+    let s = String(raw || "")
+      .toUpperCase()
+      .replace(/[\\|]/g,"/")
+      .replace(/[.\-–—]/g,"/")
+      .replace(/\s+/g,"")
+      .replace(/[^0-9OIL|\/]/g,"");
+    s = fixOcrDigits(s).replace(/\/{2,}/g,"/");
+
+    // Standard Radiometer header: m/dd/yyyy or m/d/yyyy.
+    let m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+    if(!m){
+      // Common OCR loss of one slash: 732026 -> 7/3/2026; 7122026 -> 7/2/2026.
+      const compact = s.replace(/\//g,"");
+      if(/^\d{6,8}$/.test(compact)){
+        const y4 = compact.slice(-4);
+        const left = compact.slice(0, -4);
+        if(/^20\d{2}$/.test(y4) && left.length >= 2 && left.length <= 4){
+          let mo = left[0], da = left.slice(1);
+          // Prefer m/d/yyyy or m/dd/yyyy for Radiometer printouts in this setting.
+          if(Number(mo) >= 1 && Number(mo) <= 12 && Number(da) >= 1 && Number(da) <= 31){
+            m = [compact, mo, da, y4];
+          }else if(left.length >= 3){
+            mo = left.slice(0,2); da = left.slice(2);
+            if(Number(mo) >= 1 && Number(mo) <= 12 && Number(da) >= 1 && Number(da) <= 31){
+              m = [compact, mo, da, y4];
+            }
+          }
+        }
+      }
+    }
+    if(!m) return "";
+
+    const month = Number(m[1]);
+    const day = Number(m[2]);
+    if(!(month >= 1 && month <= 12 && day >= 1 && day <= 31)) return "";
+
+    let y = String(m[3]);
+    const currentYear = new Date().getFullYear();
+    const currentYearStr = String(currentYear);
+    if(y.length === 2){
+      y = "20" + y;
+    }else if(y.length === 3){
+      // Header-edge crops commonly lose the final year digit: 7/3/202.
+      // Use current-year repair only when the visible prefix matches the current year prefix.
+      y = currentYearStr.startsWith(y) ? currentYearStr : "";
+    }
+    if(!/^20\d{2}$/.test(y)) return "";
+
+    // Thermal paper OCR often reads final-year 6 as 0/8 at the top-right edge.
+    // If the year is implausibly far from the current operating year but shares the same
+    // first 3 digits, use the current year and let the raw OCR notes expose the correction.
+    let year = Number(y);
+    if((year < currentYear - 1 || year > currentYear + 1) && y.slice(0,3) === currentYearStr.slice(0,3)){
+      year = currentYear;
+      y = currentYearStr;
+    }
+    if(year < 2000 || year > 2099) return "";
+    return `${month}/${day}/${y}`;
+  }
+
+  function normalizeOcrTimeToken(raw, requireAmPm=true){
+    let s = String(raw || "").toUpperCase()
+      .replace(/[.]/g,":")
+      .replace(/\s+/g," ")
+      .replace(/A\s*M/g,"AM")
+      .replace(/P\s*M/g,"PM")
+      .replace(/A\s*N/g,"AM")
+      .replace(/P\s*N/g,"PM")
+      .replace(/A\s*IVI/g,"AM")
+      .replace(/P\s*IVI/g,"PM")
+      .replace(/\b[O0]\s*M\b/g,"PM")
+      .trim();
+
+    // Do NOT allow pH-like decimal numbers such as 7.554 to become 7:55.
+    // Radiometer ABL800 header/printed times in this format carry AM/PM.
+    s = fixOcrDigits(s).replace(/([AP])1V1/g,"$1M").replace(/([AP])N/g,"$1M");
+
+    let m = s.match(/\b(\d{1,2})\s*:\s*(\d{2})(?:\s*:\s*(\d{2}))?\s*([AP]M)\b/i);
+    if(!m){
+      // OCR often drops the colon: 0623AM or 08 15 PM.
+      m = s.match(/\b(\d{1,2})\s+(\d{2})\s*([AP]M)\b/i);
+      if(!m) m = s.match(/\b(\d{1,2})(\d{2})\s*([AP]M)\b/i);
+      if(m){
+        const hh = Number(m[1]);
+        const mm = m[2];
+        if(hh < 1 || hh > 12 || Number(mm) > 59) return "";
+        return `${hh}:${mm} ${m[3].toUpperCase()}`;
+      }
+      if(requireAmPm) return "";
+
+      // Non-Radiometer fallback only when explicitly allowed.
+      m = s.match(/\b(\d{1,2})\s*:\s*(\d{2})(?:\s*:\s*(\d{2}))?\b/i);
+      if(!m) return "";
+    }
+    const hh = Number(m[1]);
+    const mm = m[2];
+    const ss = m[3];
+    const ap = m[4] ? m[4].toUpperCase() : "";
+    if(requireAmPm && !ap) return "";
+    if(ap && (hh < 1 || hh > 12)) return "";
+    if(!ap && hh > 23) return "";
+    if(Number(mm) > 59 || (ss && Number(ss) > 59)) return "";
+    return `${hh}:${mm}${ss ? ":" + ss : ""}${ap ? " " + ap : ""}`;
+  }
+
+  function extractFirstDate(line){
+    const s = String(line || "");
+    const patterns = [
+      /\b[0-3OIL|]?\d\s*[\/\\|\-.]\s*[0-3OIL|]?\d\s*[\/\\|\-.]\s*(?:20)?[0-9OIL|]{2,4}\b/i,
+      /\b[0-1OIL|]?\d[0-3OIL|]?\d20[0-9OIL|]{2}\b/i
+    ];
+    for(const re of patterns){
+      const m = s.match(re);
+      if(m){
+        const d = normalizeOcrDateToken(m[0]);
+        if(d) return d;
+      }
+    }
+    return "";
+  }
+
+  function extractFirstTime(line){
+    const s = String(line || "");
+    const patterns = [
+      /\b(?:[01OIL|]?\d|2[0-3])\s*[:.]\s*[0-5OIL|][0-9OIL|](?:\s*[:.]\s*[0-5OIL|][0-9OIL|])?\s*[AP]\s*M\b/i,
+      /\b(?:[01OIL|]?\d|2[0-3])\s+[0-5OIL|][0-9OIL|]\s*[AP]\s*M\b/i,
+      /\b(?:[01OIL|]?\d|2[0-3])[0-5OIL|]\d\s*[AP]\s*M\b/i
+    ];
+    for(const re of patterns){
+      const m = s.match(re);
+      if(m){
+        const t = normalizeOcrTimeToken(m[0], true);
+        if(t) return t;
+      }
+    }
+    return "";
+  }
+
+  function extractAllDates(line){
+    const out = [];
+    const s = String(line || "");
+    const patterns = [
+      // Require month/day/year. Do not accept two-part fragments that can come from pH/reference ranges.
+      /[0-3OIL|]?\d\s*[\/\\|\-.]\s*[0-3OIL|]?\d\s*[\/\\|\-.]\s*(?:20)?[0-9OIL|]{2,4}/ig,
+      // Compact Radiometer date: 732026, 722026, 07032026.
+      /\b[0-1OIL|]?\d[0-3OIL|]?\d20[0-9OIL|]{2}\b/ig
+    ];
+    for(const re of patterns){
+      let m;
+      while((m = re.exec(s)) !== null){
+        const d = normalizeOcrDateToken(m[0]);
+        if(d && !out.includes(d)) out.push(d);
+      }
+    }
+    return out;
+  }
+
+  function extractAllTimes(line){
+    const out = [];
+    const s = String(line || "");
+    const patterns = [
+      /(?:[01OIL|]?\d|2[0-3])\s*[:.]\s*[0-5OIL|][0-9OIL|](?:\s*[:.]\s*[0-5OIL|][0-9OIL|])?\s*[AP]\s*M/ig,
+      /(?:[01OIL|]?\d|2[0-3])\s+[0-5OIL|][0-9OIL|]\s*[AP]\s*M/ig,
+      /(?:[01OIL|]?\d|2[0-3])[0-5OIL|]\d\s*[AP]\s*M/ig
+    ];
+    for(const re of patterns){
+      let m;
+      while((m = re.exec(s)) !== null){
+        const t = normalizeOcrTimeToken(m[0], true);
+        if(t && !out.includes(t)) out.push(t);
+      }
+    }
+    return out;
+  }
+
+  function extractDateTimeFromRegion(regionText){
+    const lines = String(regionText || "").split(/\n+/).map(x=>x.trim()).filter(Boolean);
+
+    // Radiometer ABL800 header target: first row on the right side immediately below
+    // the title, usually "06:35 AM   7/3/2026", with "Sample #" below it.
+    // Accept only AM/PM times and full dates to prevent pH/reference values from becoming metadata.
+    const headerFlat = lines.slice(0, Math.min(lines.length, 8)).join(" ");
+    const headerTimes = extractAllTimes(headerFlat);
+    const headerDates = extractAllDates(headerFlat);
+    if(headerTimes.length && headerDates.length){
+      return { date:headerDates[0], time:headerTimes[0], source:`top-right first row: ${headerFlat}` };
+    }
+
+    // 1) Same OCR line: "06:35 AM 7/3/2026".
+    for(const line of lines){
+      const dates = extractAllDates(line);
+      const times = extractAllTimes(line);
+      if(dates.length && times.length) return { date:dates[0], time:times[0], source:line };
+    }
+
+    // 2) Radiometer header geometry after OCR: time appears immediately above "Sample #";
+    // date appears in the neighbouring right column above the numeric sample number.
+    for(let i=0;i<lines.length;i++){
+      if(!/sample\s*#/i.test(lines[i])) continue;
+      const windowLines = lines.slice(Math.max(0, i-3), Math.min(lines.length, i+4));
+      const time = windowLines.flatMap(extractAllTimes)[0] || "";
+      const date = windowLines.flatMap(extractAllDates)[0] || "";
+      if(date && time) return { date, time, source:`Sample # header window: ${windowLines.join(" | ")}` };
+    }
+
+    // 3) Adjacent-line pairing: top-right crops often return time and date on separate lines.
+    for(let i=0;i<lines.length;i++){
+      const times = extractAllTimes(lines[i]);
+      if(!times.length) continue;
+      for(let j=Math.max(0,i-3); j<Math.min(lines.length,i+4); j++){
+        const dates = extractAllDates(lines[j]);
+        if(dates.length) return { date:dates[0], time:times[0], source:`nearby lines: ${lines[i]} | ${lines[j]}` };
+      }
+    }
+
+    // 4) Last fallback: flattened header region.
+    const flat = lines.join(" | ");
+    const dates = extractAllDates(flat);
+    const times = extractAllTimes(flat);
+    if(dates.length && times.length) return { date:dates[0], time:times[0], source:"region" };
+    return null;
+  }
+
+  function parseRadiometerMetadata(normalized){
+    const lines = String(normalized || "").split(/\n+/).map(x=>x.trim()).filter(Boolean);
+    const values = {};
+    const notes = [];
+    const rejected = [];
+    const pid = extractPatientIdFromText(normalized);
+    if(pid){
+      values.patientId = pid.value;
+      notes.push(`patientId: ${pid.value} (${pid.source})`);
+    }else{
+      notes.push("patientId: not found");
+    }
+
+    const firstTableIdx = lines.findIndex(l => /identifications|blood\s*gas|gas\s*values/i.test(l));
+    const topEnd = firstTableIdx > 0 ? Math.max(firstTableIdx, 8) : Math.min(lines.length, 14);
+    const topRegion = lines.slice(0, topEnd).join("\n");
+    const nonPrintedRegion = lines.filter(l => !/^\s*printed\b/i.test(l)).slice(0, Math.min(lines.length, 24)).join("\n");
+    const printedRegion = lines.filter(l => /printed/i.test(l)).join("\n");
+
+    let dt = extractDateTimeFromRegion(topRegion) || extractDateTimeFromRegion(nonPrintedRegion);
+    let sourceType = "report-header";
+    if(!dt && printedRegion){
+      dt = extractDateTimeFromRegion(printedRegion);
+      sourceType = "printed-line fallback";
+    }
+
+    if(dt){
+      values.abgDateTime = `${dt.date} ${dt.time}`.trim();
+      notes.push(`abgDateTime: ${values.abgDateTime} (${sourceType}: ${dt.source})`);
+    }else{
+      notes.push("abgDateTime: not found");
+    }
+
+    return { values, notes, rejected };
+  }
+
+  function cleanNumericToken(token, fieldId){
+    let s = String(token || "").trim();
+    s = s
+      .replace(/[OoQ]/g,"0")
+      .replace(/[Il!]/g,"1")
+      .replace(/[−–—]/g,"-")
+      .replace(/,/g,".")
+      .replace(/[^0-9+\-.]/g,"");
+
+    // Keep only the first sign and first decimal point.
+    s = s.replace(/(?!^)[+\-]/g,"");
+    const firstDot = s.indexOf(".");
+    if(firstDot !== -1){
+      s = s.slice(0, firstDot + 1) + s.slice(firstDot + 1).replace(/\./g,"");
+    }
+    if(!s || s === "." || s === "-" || s === "+") return null;
+
+    // Conservative correction for pH when OCR drops the decimal point: 735 -> 7.35, 7350 -> 7.350.
+    if(fieldId === "ph" && /^[-+]?\d{3,4}$/.test(s)){
+      const signChar = s.startsWith("-") || s.startsWith("+") ? s[0] : "";
+      const body = signChar ? s.slice(1) : s;
+      if((body.length === 3 || body.length === 4) && (body[0] === "6" || body[0] === "7")){
+        s = signChar + body[0] + "." + body.slice(1);
+      }
+    }
+
+    const x = Number(s);
+    return Number.isFinite(x) ? x : null;
+  }
+
+  function plausibleRangeForField(fieldId){
+    const ranges = {
+      ph:[6.8,7.8],
+      paco2:[5,200],
+      pao2:[15,600],
+      hco3st:[2,60],
+      baseecf:[-40,40],
+      sao2:[0,100],
+      hb:[2,25],
+      na:[90,200],
+      k:[1,10],
+      caion:[0.3,3.0],
+      cl:[60,140],
+      lac:[0,30],
+      glu:[$("gluUnit") && $("gluUnit").value === "mmol/L" ? 0.5 : 10, $("gluUnit") && $("gluUnit").value === "mmol/L" ? 60 : 1000]
+    };
+    return ranges[fieldId] || [-Infinity, Infinity];
+  }
+
+  function valueInGenericRange(fieldId, v){
+    const r = plausibleRangeForField(fieldId);
+    return Number.isFinite(v) && v >= r[0] && v <= r[1];
+  }
+
+  function coerceOcrValue(fieldId, value, token, context){
+    if(value === null || !Number.isFinite(value)) return value;
+    let v = value;
+    const rawToken = String(token || "");
+    const body = rawToken.replace(/[^0-9]/g,"");
+    const hasDecimal = /[.,]/.test(rawToken);
+
+    // cLac 0.8 is commonly OCR-read as 08 when the decimal point is lost.
+    if(fieldId === "lac" && !hasDecimal && /^0\d$/.test(body)){
+      const c = Number("0." + body.slice(1));
+      if(valueInGenericRange(fieldId, c)) return c;
+    }
+
+    // Oxygen saturation is often read as 978% instead of 97.8%.
+    if(fieldId === "sao2" && v > 100 && body.length >= 3){
+      const c = v / 10;
+      if(c >= 50 && c <= 100) return c;
+    }
+
+    // Common Radiometer rows have one decimal place. Thermal-paper OCR often drops it.
+    const twoDecimalFields = ["caion"];
+    if(!hasDecimal && twoDecimalFields.includes(fieldId)){
+      if(!valueInGenericRange(fieldId, v)){
+        const c2 = v / 100;
+        if(valueInGenericRange(fieldId, c2)) return c2;
+        const c1 = v / 10;
+        if(valueInGenericRange(fieldId, c1)) return c1;
+      }
+      if(fieldId === "caion" && v >= 30 && v <= 300){
+        const c = v / 100;
+        if(valueInGenericRange(fieldId, c)) return c;
+      }
+    }
+
+    const oneDecimalFields = ["paco2","pao2","hco3st","hb","k","lac","baseecf"];
+    if(!hasDecimal && oneDecimalFields.includes(fieldId)){
+      if(!valueInGenericRange(fieldId, v)){
+        const c1 = v / 10;
+        if(valueInGenericRange(fieldId, c1)) return c1;
+        const c2 = v / 100;
+        if(valueInGenericRange(fieldId, c2)) return c2;
+      }
+      // Even if just inside range, two-digit K/Lac/Base values in Radiometer printouts usually mean x.y.
+      if((fieldId === "k" || fieldId === "lac" || fieldId === "baseecf") && v >= 10 && v <= 99){
+        const c = v / 10;
+        if(valueInGenericRange(fieldId, c)) return c;
+      }
+      if(fieldId === "hb" && v >= 30 && v <= 250){
+        const c = v / 10;
+        if(valueInGenericRange(fieldId, c)) return c;
+      }
+      if(fieldId === "hco3st" && v >= 100 && v <= 600){
+        const c = v / 10;
+        if(valueInGenericRange(fieldId, c)) return c;
+      }
+      if((fieldId === "paco2" || fieldId === "pao2") && v >= 100 && v <= 999){
+        const c = v / 10;
+        if(valueInGenericRange(fieldId, c)) return c;
+      }
+    }
+
+    // cNa+ is sometimes read as 431 when the leading 1 is contaminated by an arrow/mark.
+    // Only apply this to physiologically impossible three-digit Na values.
+    if(fieldId === "na" && !valueInGenericRange(fieldId, v) && /^\d{3}$/.test(body)){
+      const c = 100 + Number(body.slice(1));
+      if(valueInGenericRange(fieldId, c)) return c;
+    }
+
+    // Chloride occasionally loses the decimal from analyzer formatting, although integer Cl is more common.
+    if(fieldId === "cl" && !valueInGenericRange(fieldId, v) && v >= 600 && v <= 1400){
+      const c = v / 10;
+      if(valueInGenericRange(fieldId, c)) return c;
+    }
+
+    return v;
+  }
+
+  function firstNumberAfter(text, fieldId){
+    const re = /[+\-]?\s*(?:\d{1,4}(?:[.,]\d{1,4})?|[.,]\d{1,4})/g;
+    let m;
+    while((m = re.exec(text)) !== null){
+      const tokenOffset = Math.max(0, m[0].search(/[+\-0-9.,]/));
+      const actualIndex = m.index + tokenOffset;
+      const immediateBefore = text[actualIndex - 1] || "";
+      const immediateAfter = text[actualIndex + m[0].trim().length] || "";
+      // Avoid picking the 2/3 embedded in labels such as O2, CO2, HCO3.
+      if(/[A-Za-z]/.test(immediateBefore) || /[A-Za-z]/.test(immediateAfter)) continue;
+      let val = cleanNumericToken(m[0], fieldId);
+      if(val !== null){
+        val = coerceOcrValue(fieldId, val, m[0], text);
+        return { value: val, token: m[0], context: text.slice(0, 120) };
+      }
+    }
+    return null;
+  }
+
+  function detectUnitAround(context, kind){
+    const c = String(context || "").toLowerCase();
+    if(kind === "pressure"){
+      if(/\bk\s*pa\b/.test(c)) return "kPa";
+      if(/\bmm\s*hg\b|\bmmhg\b|\bmmh\b/.test(c)) return "mmHg";
+    }
+    if(kind === "glucose"){
+      if(/\bmmol\s*\/?\s*l\b|\bmmoll\b/.test(c)) return "mmol/L";
+      if(/\bmg\s*\/?\s*dl\b|\bmgdl\b|\bmgt\b|\bmgd\b/.test(c)) return "mg/dL";
+    }
+    if(kind === "hb"){
+      if(/\bg\s*\/?\s*l\b|\bgl\b/.test(c) && !/\bg\s*\/?\s*dl\b|\bgdl\b|\bgid\b/.test(c)) return "g/L";
+      if(/\bg\s*\/?\s*dl\b|\bgdl\b|\bgid\b|\bgidl\b/.test(c)) return "g/dL";
+    }
+    return null;
+  }
+
+  function pressureRange(fieldId){
+    const unit = $("pUnit").value;
+    if(fieldId === "paco2") return unit === "kPa" ? [0.7, 27] : [5, 200];
+    if(fieldId === "pao2") return unit === "kPa" ? [2, 80] : [15, 600];
+    return [-Infinity, Infinity];
+  }
+
+  function convertOcrUnit(value, fieldId, context){
+    let v = value;
+    if(fieldId === "paco2" || fieldId === "pao2"){
+      const seen = detectUnitAround(context, "pressure");
+      const target = $("pUnit").value;
+      if(seen === "kPa" && target === "mmHg") v = v * MMHG_PER_KPA;
+      if(seen === "mmHg" && target === "kPa") v = v / MMHG_PER_KPA;
+    }
+    if(fieldId === "glu"){
+      const seen = detectUnitAround(context, "glucose");
+      const target = $("gluUnit").value;
+      if(seen === "mmol/L" && target === "mg/dL") v = v / 0.0555;
+      if(seen === "mg/dL" && target === "mmol/L") v = v * 0.0555;
+    }
+    if(fieldId === "hb"){
+      const seen = detectUnitAround(context, "hb");
+      if(seen === "g/L") v = v / 10;
+    }
+    if(fieldId === "sao2" && v > 0 && v <= 1.05) v = v * 100;
+    return v;
+  }
+
+  function isPlausibleOcrValue(fieldId, value){
+    if(fieldId === "paco2" || fieldId === "pao2"){
+      const [lo,hi] = pressureRange(fieldId);
+      return value >= lo && value <= hi;
+    }
+    const r = plausibleRangeForField(fieldId);
+    return value >= r[0] && value <= r[1];
+  }
+
+  function ocrDecimals(fieldId){
+    if(fieldId === "ph") return 3;
+    if(fieldId === "baseecf") return 1;
+    if(fieldId === "sao2") return 1;
+    if(fieldId === "hb") return 1;
+    if(fieldId === "caion") return 2;
+    if(["paco2","pao2","hco3st","na","k","cl","lac","glu"].includes(fieldId)) return 1;
+    return 2;
+  }
+
+  function fieldLabelRegex(fieldId){
+    const patterns = {
+      ph: "(?:^|[^a-z0-9])(?:p\\s*h|ph|th)(?:$|[^a-z0-9])",
+      paco2: "(?:^|[^a-z0-9])(?:p\\s*a?\\s*c\\s*[o0]?\\s*(?:2|[,])|paco2|pco2|pco[, ]|pc02)(?:$|[^a-z0-9])",
+      pao2: "(?:^|[^a-z0-9])(?:p\\s*a?\\s*[o0]\\s*(?:2|[,])|pao2|po2|po[, ]|p0[, ]|p02|pos|p0s)(?:$|[^a-z0-9])",
+      hco3st: "(?:^|[^a-z0-9])(?:c?\\s*h\\s*c\\s*[o0]?\\s*(?:3|[, ])|bicarbonate|hco3|hco[, ])(?:$|[^a-z0-9])",
+      // Prefer extracellular-fluid base excess; generic BE is handled only if no ECF-specific row exists.
+      baseecf: "(?:^|[^a-z0-9])(?:(?:c?\\s*base|be|base\\s*excess).*ecf|ecf.*(?:base|be))(?:$|[^a-z0-9])",
+      sao2: "(?:^|[^a-z0-9])(?:s\\s*a?\\s*[o0]\\s*2|so2|80[, ]|o2\\s*sat|sat\\s*[o0]\\s*2|oxygen\\s*saturation)(?:$|[^a-z0-9])",
+      hb: "(?:^|[^a-z0-9])(?:ct\\s*hb|t\\s*hb|cth?b|h\\s*b|hemoglobin|haemoglobin|ott|otb|(?:^|\\s)ct(?:$|\\s))(?:$|[^a-z0-9])",
+      na: "(?:^|[^a-z0-9])(?:c?\\s*na\\s*\\+?|cnae|cnat|cner|sodium)(?:$|[^a-z0-9])",
+      k: "(?:^|[^a-z0-9])(?:c?\\s*k\\s*\\+?|ck\\+?|ok|potassium)(?:$|[^a-z0-9])",
+      caion: "(?:^|[^a-z0-9])(?:c\\s*ca\\s*(?:2|\\+|\\+\\+)?|cca|oca|oce|cce|ca\\s*(?:2|\\+|\\+\\+)|ionized\\s*ca|ionised\\s*ca)(?:$|[^a-z0-9])",
+      cl: "(?:^|[^a-z0-9])(?:c?\\s*cl\\s*-?|ccl|ecl|ecr|ccr|chloride)(?:$|[^a-z0-9])",
+      lac: "(?:^|[^a-z0-9])(?:c?\\s*lac|clac|lactate|lactic)(?:$|[^a-z0-9])",
+      glu: "(?:^|[^a-z0-9])(?:c?\\s*glu|cgiu|eglu|glucose)(?:$|[^a-z0-9])"
+    };
+    return new RegExp(patterns[fieldId], "i");
+  }
+
+  function looksLikeSectionHeading(line){
+    return /blood\s*gas|gas\s*values|oximetry|ximetry|electrolyte|lectrolyte|ctrolyte|metabolite|acid\s*base|notes|printed/i.test(line || "");
+  }
+
+  function stripReferenceTail(line){
+    let s = String(line || "");
+    s = s.split(/[\[\{]/)[0];
+    // Retain the measured value but remove unit/reference material that follows it.
+    s = s.replace(/\b(?:mm\s*hg|mmhg|mmh|mmol\s*\/?\s*l|mmo\w*|mg\s*\/?\s*dl|mgd\w*|g\s*\/?\s*dl|gid\w*)\b.*$/i, " ");
+    return s;
+  }
+
+  function extractMeasuredNumber(line, fieldId){
+    if(!line || looksLikeSectionHeading(line)) return null;
+
+    // If a usable label is present, take the first number after the label.
+    // This prevents arrow/bullet OCR artifacts before the label (e.g. "4 ctHb 6.6")
+    // from being mistaken for the measured value.
+    if(fieldId && RADIOMETER_ROW_FIELDS.includes(fieldId)){
+      const labelRe = fieldLabelRegex(fieldId);
+      const match = labelRe.exec(line);
+      if(match){
+        const after = line.slice(match.index + match[0].length);
+        const foundAfterLabel = firstNumberAfter(after, fieldId);
+        if(foundAfterLabel){
+          return { ...foundAfterLabel, context: line, location: "radiometer-row" };
+        }
+      }
+    }
+
+    let s = stripReferenceTail(line);
+    const re = /[+\-]?\s*(?:\d{1,4}(?:[.,]\d{1,4})?|[.,]\d{1,4})/g;
+    let m;
+    const candidates = [];
+    while((m = re.exec(s)) !== null){
+      const tokenOffset = Math.max(0, m[0].search(/[+\-0-9.,]/));
+      const actualIndex = m.index + tokenOffset;
+      const before = s[actualIndex - 1] || "";
+      const after = s[actualIndex + m[0].trim().length] || "";
+      // Skip numbers embedded in chemical labels: O2, CO2, HCO3.
+      if(/[A-Za-z]/.test(before) || /[A-Za-z]/.test(after)) continue;
+      let v = cleanNumericToken(m[0], fieldId);
+      if(v === null) continue;
+      v = coerceOcrValue(fieldId, v, m[0], line);
+      candidates.push({ value:v, token:m[0], context:line, location:"radiometer-row", index:actualIndex });
+    }
+    if(!candidates.length) return null;
+
+    if(fieldId === "sao2"){
+      // Radiometer "sO2" is frequently OCR-read as "80,". In that case the first
+      // number is a damaged label, and the measured saturation is the later number,
+      // often printed with a percent sign (e.g. "80, 978%" -> 97.8%).
+      const pctCandidate = candidates.find(c => {
+        const tokenLen = String(c.token).trim().length;
+        return /%/.test(s.slice(c.index + tokenLen, c.index + tokenLen + 4)) && c.value >= 0 && c.value <= 100;
+      });
+      if(pctCandidate) return pctCandidate;
+      const laterGood = candidates.slice(1).find(c => c.value >= 50 && c.value <= 100);
+      if(candidates.length > 1 && candidates[0].value === 80 && laterGood) return laterGood;
+      const anyGood = candidates.find(c => c.value >= 0 && c.value <= 100);
+      if(anyGood) return anyGood;
+    }
+
+    return candidates[0];
+  }
+
+  function findByLabel(text, fieldId){
+    const labelRe = fieldLabelRegex(fieldId);
+    const lines = text.split(/\n+/).map(x => x.trim()).filter(Boolean);
+
+    // For Radiometer output, cBase(B,ox)c and cBase(Ecf,ox)c coexist. Take ECF first.
+    const orderedLines = fieldId === "baseecf"
+      ? lines.filter(l=>/ecf/i.test(l)).concat(lines.filter(l=>!/ecf/i.test(l)))
+      : lines;
+
+    // First pass: same-line extraction, best for analyzer printouts.
+    for(const line of orderedLines){
+      const match = labelRe.exec(line);
+      if(!match) continue;
+      const after = line.slice(match.index + match[0].length);
+      const before = line.slice(0, match.index);
+      const found = firstNumberAfter(after, fieldId) || extractMeasuredNumber(line, fieldId);
+      if(found){
+        return { ...found, context: line, location: found.location || "same-line" };
+      }
+      // Some OCR layouts put the value just before the label.
+      const beforeNums = before.match(/[+\-]?\s*(?:\d{1,4}(?:[.,]\d{1,4})?|[.,]\d{1,4})/g);
+      if(beforeNums && beforeNums.length){
+        const token = beforeNums[beforeNums.length-1];
+        let val = cleanNumericToken(token, fieldId);
+        if(val !== null){
+          val = coerceOcrValue(fieldId, val, token, line);
+          return { value: val, token, context: line, location: "same-line-before" };
+        }
+      }
+    }
+
+    // Second pass: flattened extraction for multi-column/misaligned OCR.
+    const flat = " " + lines.join(" | ") + " ";
+    const globalLabel = new RegExp(labelRe.source, "ig");
+    let m;
+    while((m = globalLabel.exec(flat)) !== null){
+      const after = flat.slice(m.index + m[0].length, m.index + m[0].length + 100);
+      const limited = after.split(/\|/)[0] || after;
+      const found = firstNumberAfter(limited, fieldId);
+      if(found){
+        return { ...found, context: flat.slice(Math.max(0, m.index - 24), m.index + 120), location: "flat" };
+      }
+    }
+    return null;
+  }
+
+  function findSectionBounds(lines){
+    const specs = [
+      ["blood", /blood\s*gas|gas\s*values/i],
+      ["oximetry", /oximetry|ximetry/i],
+      ["electrolyte", /electrolyte|lectrolyte|ctrolyte/i],
+      ["metabolite", /metabolite|metabo/i],
+      ["acidbase", /acid\s*base/i],
+      ["notes", /notes|printed/i]
+    ];
+    const hits = [];
+    for(let i=0;i<lines.length;i++){
+      const line = lines[i];
+      for(const [key,re] of specs){
+        if(re.test(line)){ hits.push({key, index:i}); break; }
+      }
+    }
+    hits.sort((a,b)=>a.index-b.index);
+    return hits;
+  }
+
+  function sectionLines(lines, hits, key){
+    const start = hits.find(h => h.key === key);
+    if(!start) return [];
+    const next = hits.find(h => h.index > start.index && h.key !== key);
+    const end = next ? next.index : lines.length;
+    return lines.slice(start.index + 1, end).map(x=>x.trim()).filter(Boolean);
+  }
+
+  function isCandidateRow(line){
+    if(!line) return false;
+    if(looksLikeSectionHeading(line)) return false;
+    if(/value\(s\)|reference\s*range|calculated\s*value|department|patient|sample|sex\b|fo2|fio2|syringe|hospital|report/i.test(line)) return false;
+    if(!/[A-Za-z]/.test(line) && !/(?:^|\s)80[, ]|%/.test(line)) return false;
+    return /\d/.test(line);
+  }
+
+  function likelyRadiometerRowType(line){
+    const l = String(line || "").toLowerCase()
+      .replace(/[₀]/g,"0").replace(/[₁]/g,"1").replace(/[₂²]/g,"2").replace(/[³₃]/g,"3")
+      .replace(/[＋]/g,"+").replace(/[−–—]/g,"-");
+
+    // Order matters: specific rows before broad fallbacks.
+    if(/base.*ecf|ecf.*base/.test(l)) return "baseecf";
+    if(/base.*\b(b|box|b,ox)|base\s*\(\s*b/.test(l)) return "baseb";
+    if(/h\s*c\s*[o0]?\s*3|hco3|hco[, ]|bicarbonate/.test(l)) return "hco3st";
+
+    if(/p\s*a?\s*c\s*[o0]?\s*(2|[,])|paco2|pco2|pc[o0,]/.test(l)) return "paco2";
+    if(/p\s*a?\s*[o0]\s*(2|[,])|pao2|po2|p[o0][, ]|p0[, ]|p02|pos|p0s/.test(l)) return "pao2";
+    if(/(?:^|\s)(p\s*h|ph|th)(?:\s|$)/.test(l)) return "ph";
+
+    if(/ct\s*hb|cth?b|t\s*hb|hemoglobin|haemoglobin|(?:^|\s)ct(?:\s|$)|ott|otb/.test(l)) return "hb";
+    if(/s\s*a?\s*[o0]\s*2|so2|s0\s*2|80[, ]|oxygen\s*saturation|sat\s*[o0]\s*2/.test(l)) return "sao2";
+
+    if(/c\s*glu|cglu|cgiu|eglu|glucose/.test(l)) return "glu";
+    if(/c\s*lac|clac|lactate|lactic/.test(l)) return "lac";
+
+    if(/c\s*ca\s*(2|\+)?|cca|oca|oce|cce|ca\s*(2|\+)|ionized\s*ca|ionised\s*ca/.test(l)) return "caion";
+    if(/[ceo]?\s*n\s*a|cna|cnat|cnae|cner|cne|ena|enat|enam|sodium/.test(l)) return "na";
+    if(/c\s*cl|ccl|ecl|ecr|ccr|ocr|chloride/.test(l)) return "cl";
+    if(/c\s*k|ck|(?:^|\s)ok(?:\s|$)|potassium/.test(l)) return "k";
+
+    return null;
+  }
+
+  function radiometerRowValue(line, fieldId){
+    const found = extractMeasuredNumber(line, fieldId);
+    if(!found) return null;
+    // Do not let ionized-calcium rows become sodium merely because 1.22 becomes 122.
+    const kind = likelyRadiometerRowType(line);
+    if(kind && kind !== fieldId) return null;
+    return found;
+  }
+
+  function radiometerPositionalAllowed(sectionKey, fieldId, row, rowIndex){
+    const kind = row.kind;
+    if(kind === fieldId) return true;
+    if(kind) return false;
+
+    // Blood-gas and oximetry rows are usually stable; OCR may damage pO2/sO2 labels.
+    if(sectionKey === "blood") return ["ph","paco2","pao2"].includes(fieldId);
+    if(sectionKey === "oximetry") return ["hb","sao2"].includes(fieldId);
+    if(sectionKey === "metabolite") return ["glu","lac"].includes(fieldId);
+    if(sectionKey === "acidbase") return ["hco3st","baseecf"].includes(fieldId);
+
+    // Electrolytes are unsafe for blind positional Na assignment because cCa2+ 1.22
+    // is commonly OCR-read as 122 and can masquerade as Na. Require a Na row identity.
+    // K/Ca/Cl can still use conservative row-position fallback with physiology ranges.
+    if(sectionKey === "electrolyte"){
+      if(fieldId === "na") return false;
+      if(fieldId === "k") return rowIndex <= 1;
+      if(fieldId === "caion") return rowIndex >= 1 && rowIndex <= 3;
+      if(fieldId === "cl") return rowIndex >= 2;
+      return false;
+    }
+
+    return false;
+  }
+
+  function parseRadiometerSections(normalized){
+    const lines = normalized.split(/\n+/).map(x=>x.trim()).filter(Boolean);
+    const hits = findSectionBounds(lines);
+    const values = {};
+    const sourceIndex = {};
+    const notes = [];
+    const candidates = [];
+
+    const sections = {
+      blood: ["ph","paco2","pao2"],
+      oximetry: ["hb","sao2"],
+      electrolyte: ["k","na","caion","cl"],
+      metabolite: ["glu","lac"],
+      acidbase: ["hco3st","baseb","baseecf"]
+    };
+
+    function addValue(sectionKey, fieldId, found, rowIndex, reason){
+      if(!fieldId || fieldId === "baseb") return false;
+      if(values[fieldId] !== undefined) return false;
+      if(!found) return false;
+      const converted = convertOcrUnit(found.value, fieldId, found.context || found.line || "");
+      if(!isPlausibleOcrValue(fieldId, converted)) return false;
+      values[fieldId] = { ...found, value: converted, location: reason };
+      sourceIndex[fieldId] = rowIndex;
+      notes.push(`${fieldId}: ${Number(converted.toFixed(ocrDecimals(fieldId)))} (${sectionKey} ${reason})`);
+      return true;
+    }
+
+    for(const [sectionKey, fieldOrder] of Object.entries(sections)){
+      const block = sectionLines(lines, hits, sectionKey);
+      if(!block.length) continue;
+
+      const rows = block
+        .map((line, idx)=>({ line, idx, kind: likelyRadiometerRowType(line) }))
+        .filter(r => isCandidateRow(r.line));
+
+      // 1) Exact row-identity pass. This is the safest pass for Radiometer tables.
+      for(const row of rows){
+        const kind = row.kind;
+        if(!kind || kind === "baseb") continue;
+        if(!fieldOrder.includes(kind)) continue;
+
+        // Positional guard for electrolyte block: do not accept a Na-looking label in the
+        // Ca row position. This prevents cCa2+ 1.22 / 122 becoming Na.
+        if(sectionKey === "electrolyte"){
+          if(kind === "k" && row.idx > 1) continue;
+          // Accept an explicit Na-like row label wherever it appears inside the electrolyte block.
+          // Extra OCR noise rows can shift row.idx; the safer rule is: never infer Na positionally,
+          // but do accept cNa+/cNer/cNat/cNae/sodium labels.
+          if(kind === "caion" && row.idx < 1) continue;
+          if(kind === "cl" && row.idx < 2) continue;
+        }
+        if(sectionKey === "acidbase" && kind === "baseecf" && !/ecf/i.test(row.line)) continue;
+
+        const found = extractMeasuredNumber(row.line, kind);
+        addValue(sectionKey, kind, found, row.idx, "label-row");
+      }
+
+      // 2) Label-aware pass for damaged lines not classified above.
+      for(const fieldId of fieldOrder){
+        if(!fieldId || fieldId === "baseb" || values[fieldId] !== undefined) continue;
+        const labelRe = fieldLabelRegex(fieldId);
+        for(const row of rows){
+          if(values[fieldId] !== undefined) break;
+          if(row.kind && row.kind !== fieldId) continue;
+          if(sectionKey === "electrolyte"){
+            // Do not reject explicit Na labels merely because OCR inserted noise rows above them.
+            if(fieldId === "cl" && row.idx < 2) continue;
+            if(fieldId === "caion" && row.idx < 1) continue;
+          }
+          if(fieldId === "baseecf" && !/ecf/i.test(row.line)) continue;
+          const match = labelRe.exec(row.line);
+          if(!match) continue;
+          const after = row.line.slice(match.index + match[0].length);
+          const found = firstNumberAfter(after, fieldId) || extractMeasuredNumber(row.line, fieldId);
+          addValue(sectionKey, fieldId, found, row.idx, "label-row");
+        }
+      }
+
+      // 3) Conservative positional pass. Useful for pO2/Cl when OCR mangles the label,
+      // but it refuses blind Na assignment from the electrolyte section.
+      let cursor = 0;
+      for(let expectedIndex=0; expectedIndex<fieldOrder.length; expectedIndex++){
+        const fieldId = fieldOrder[expectedIndex];
+        if(!fieldId || fieldId === "baseb"){
+          // Skip the non-target Radiometer rows only if their identity is clear.
+          while(cursor < rows.length && rows[cursor].kind && rows[cursor].kind !== fieldOrder[expectedIndex+1]){
+            if(rows[cursor].kind === "caion" || rows[cursor].kind === "baseb") { cursor++; break; }
+            break;
+          }
+          continue;
+        }
+        if(values[fieldId] !== undefined){
+          cursor = Math.max(cursor, (sourceIndex[fieldId] ?? cursor) + 1);
+          continue;
+        }
+
+        while(cursor < rows.length){
+          const row = rows[cursor];
+          if(!radiometerPositionalAllowed(sectionKey, fieldId, row, row.idx)){
+            // Do not consume a later recognized target row; this preserves alignment.
+            if(row.kind && fieldOrder.indexOf(row.kind) > expectedIndex) break;
+            cursor++;
+            continue;
+          }
+          const found = extractMeasuredNumber(row.line, fieldId);
+          if(addValue(sectionKey, fieldId, found, row.idx, `row-${row.idx+1}`)){
+            cursor++;
+            break;
+          }
+          cursor++;
+        }
+      }
+
+      // 4) Sodium sandwich rescue. On Radiometer ABL800, electrolyte order is K → Na → iCa → Cl.
+      // If K and iCa are already identified but Na label is damaged/missed, accept a plausible
+      // 3-digit value between those rows as Na. This keeps the previous protection against
+      // iCa 1.22/122 being misfilled as Na, because the iCa row must be separately identified.
+      if(sectionKey === "electrolyte" && values.na === undefined && sourceIndex.k !== undefined && sourceIndex.caion !== undefined){
+        const lo = Math.min(sourceIndex.k, sourceIndex.caion);
+        const hi = Math.max(sourceIndex.k, sourceIndex.caion);
+        for(const row of rows){
+          if(row.idx <= lo || row.idx >= hi) continue;
+          if(row.kind && row.kind !== "na") continue;
+          const found = extractMeasuredNumber(row.line, "na");
+          if(!found) continue;
+          const converted = convertOcrUnit(found.value, "na", found.context || row.line || "");
+          if(converted >= 120 && converted <= 160){
+            addValue(sectionKey, "na", { ...found, value: converted, context: row.line }, row.idx, "k-na-ca-sandwich");
+            break;
+          }
+        }
+      }
+    }
+
+    for(const [fieldId, found] of Object.entries(values)){
+      candidates.push({ fieldId, ...found });
+    }
+    return { candidates, notes };
+  }
+
+  function parseRadiometerValueColumn(normalized){
+    // OCR on a tightly cropped Radiometer measured-value column often reads digits
+    // better than full-page OCR. The column has no labels, so mapping is by the fixed
+    // Radiometer ABL800 order. This parser is deliberately used only for variants
+    // named value-column-*.
+    const fieldOrder = ["ph","paco2","pao2","hb","sao2","k","na","caion","cl","glu","lac","hco3st","baseb","baseecf"];
+    const lines = String(normalized || "")
+      .split(/\n+/)
+      .map(x=>x.trim())
+      .filter(Boolean)
+      .filter(line => !/radiometer|patient|report|syringe|sample|printed|notes|reference|value\(s\)|department|sex\b|fo2|fio2/i.test(line));
+
+    const rowNums = [];
+    const numRe = /[+\-]?\s*(?:\d{1,4}(?:[.,]\d{1,4})?|[.,]\d{1,4})/g;
+    for(const line of lines){
+      if(/\d+\s*[\/-]\s*\d+\s*[\/-]\s*\d+/.test(line)) continue; // dates/ratios
+      const matches = Array.from(line.matchAll(numRe));
+      if(!matches.length) continue;
+      // For a measured-value crop, the first numeric token on each row is the value.
+      // Extra tokens are usually reference-range leakage and are ignored.
+      rowNums.push({ token: matches[0][0], line });
+    }
+
+    const candidates = [];
+    const notes = [];
+    if(rowNums.length < 10){
+      return { candidates, notes:[`value-column: only ${rowNums.length} numeric rows; skipped`] };
+    }
+
+    let anchorOk = true;
+    for(let i=0; i<Math.min(fieldOrder.length, rowNums.length); i++){
+      const fieldId = fieldOrder[i];
+      if(fieldId === "baseb") continue;
+      const item = rowNums[i];
+      let v = cleanNumericToken(item.token, fieldId);
+      if(v === null) continue;
+      v = coerceOcrValue(fieldId, v, item.token, item.line);
+      v = convertOcrUnit(v, fieldId, item.line);
+      if(!isPlausibleOcrValue(fieldId, v)){
+        if(i < 3) anchorOk = false;
+        continue;
+      }
+      candidates.push({ fieldId, value:v, token:item.token, context:item.line, location:"value-column-row-" + (i+1) });
+      notes.push(`${fieldId}: ${Number(v.toFixed(ocrDecimals(fieldId)))} (value-column row ${i+1})`);
+    }
+
+    // The first three rows must behave like pH/pCO2/pO2. If not, the crop likely caught
+    // the wrong part of the paper or reference ranges; discard the whole positional parse.
+    const found = Object.fromEntries(candidates.map(c=>[c.fieldId,c.value]));
+    if(!anchorOk || found.ph === undefined || found.paco2 === undefined || found.pao2 === undefined){
+      return { candidates:[], notes:["value-column: anchor rows failed; skipped positional mapping"] };
+    }
+    return { candidates, notes };
+  }
+
+  function parseOcrAbgValues(rawText, variantName=""){
+    const normalized = normalizeOcrText(rawText);
+    const values = {};
+    const notes = [];
+    const rejected = [];
+    const metadata = parseRadiometerMetadata(normalized);
+    notes.push(...metadata.notes);
+    rejected.push(...metadata.rejected);
+
+    // Radiometer ABL800 FLEX printouts are structured in stable blocks:
+    // Blood Gas → Oximetry → Electrolyte → Metabolite → Acid Base. Parse by section/row first.
+    const structured = parseRadiometerSections(normalized);
+    for(const c of structured.candidates){
+      let v = convertOcrUnit(c.value, c.fieldId, c.context);
+      if(!isPlausibleOcrValue(c.fieldId, v)){
+        rejected.push(`${c.fieldId}: rejected structured value ${c.value} from "${String(c.context).slice(0,100)}"`);
+        continue;
+      }
+      values[c.fieldId] = Number(v.toFixed(ocrDecimals(c.fieldId)));
+    }
+    notes.push(...structured.notes);
+
+    // For value-column OCR variants, add positional Radiometer digit-only mapping.
+    // This is especially useful for Na, Cl, pO2, and pH digit accuracy when labels are damaged.
+    if(String(variantName || "").startsWith("value-column")){
+      const vc = parseRadiometerValueColumn(normalized);
+      for(const c of vc.candidates){
+        let v = convertOcrUnit(c.value, c.fieldId, c.context);
+        if(!isPlausibleOcrValue(c.fieldId, v)){
+          rejected.push(`${c.fieldId}: rejected value-column value ${c.value} from "${String(c.context).slice(0,100)}"`);
+          continue;
+        }
+        values[c.fieldId] = Number(v.toFixed(ocrDecimals(c.fieldId)));
+      }
+      notes.push(...vc.notes);
+    }
+
+    // Generic label pass fills missing fields and supports GEM/i-STAT or non-Radiometer layouts.
+    for(const id of OCR_TARGET_FIELDS){
+      if(Object.prototype.hasOwnProperty.call(values, id)) continue;
+      const found = findByLabel(normalized, id);
+      if(!found){
+        notes.push(`${id}: not found`);
+        continue;
+      }
+      let v = convertOcrUnit(found.value, id, found.context);
+      if(!isPlausibleOcrValue(id, v)){
+        rejected.push(`${id}: rejected value ${found.value} from "${String(found.context).slice(0,100)}"`);
+        continue;
+      }
+      values[id] = Number(v.toFixed(ocrDecimals(id)));
+      notes.push(`${id}: ${values[id]} (${found.location})`);
+    }
+
+    return { normalized, values, metadata: metadata.values, notes, rejected };
+  }
+
+  function applyOcrValues(values){
+    const filled = [];
+    for(const id of OCR_TARGET_FIELDS){
+      if(!Object.prototype.hasOwnProperty.call(values, id)) continue;
+      const el = $(id);
+      if(!el) continue;
+      el.value = String(values[id]);
+      filled.push(id);
+    }
+    return filled;
+  }
+
+  function applyOcrMetadata(values){
+    const filled = [];
+    for(const id of OCR_META_FIELDS){
+      if(!Object.prototype.hasOwnProperty.call(values, id)) continue;
+      const el = $(id);
+      if(!el) continue;
+      el.value = String(values[id]);
+      filled.push(id);
+    }
+    if(values.patientId){
+      const caseEl = $("caseNo");
+      if(caseEl && !caseEl.value.trim()){
+        caseEl.value = safeCaseNo(values.patientId);
+        filled.push("caseNo");
+      }
+    }
+    return filled;
+  }
+
+  function blobToImage(blob){
+    return new Promise((resolve, reject)=>{
+      const url = URL.createObjectURL(blob);
+      const img = new Image();
+      img.onload = ()=>{ URL.revokeObjectURL(url); resolve(img); };
+      img.onerror = ()=>{ URL.revokeObjectURL(url); reject(new Error("Could not read the selected image.")); };
+      img.src = url;
+    });
+  }
+
+  function isPdfSource(source){
+    const type = String(source && source.type || "").toLowerCase();
+    const name = String(source && source.name || "").toLowerCase();
+    return type.includes("pdf") || name.endsWith(".pdf");
+  }
+
+  async function getPdfJsModule(){
+    if(__pdfjsModule) return __pdfjsModule;
+    try{
+      __pdfjsModule = await import("https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.min.mjs");
+      if(__pdfjsModule && __pdfjsModule.GlobalWorkerOptions){
+        __pdfjsModule.GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs";
+      }
+      return __pdfjsModule;
+    }catch(e){
+      throw new Error("PDF support could not be loaded. Check internet/CDN access, or vendor pdf.js locally.");
+    }
+  }
+
+  async function renderPdfFirstPageToCanvas(file){
+    const pdfjsLib = await getPdfJsModule();
+    const data = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data }).promise;
+    if(!pdf || pdf.numPages < 1) throw new Error("Selected PDF has no readable pages.");
+    const page = await pdf.getPage(1);
+    const baseViewport = page.getViewport({ scale: 1 });
+    const targetWidth = 1800;
+    const scale = Math.max(1.5, Math.min(3.5, targetWidth / Math.max(1, baseViewport.width)));
+    const viewport = page.getViewport({ scale });
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.ceil(viewport.width);
+    canvas.height = Math.ceil(viewport.height);
+    const ctx = canvas.getContext("2d", { alpha:false });
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    await page.render({ canvasContext: ctx, viewport }).promise;
+    return canvas;
+  }
+
+  async function sourceToImageLike(source){
+    if(isPdfSource(source)) return renderPdfFirstPageToCanvas(source);
+    return blobToImage(source);
+  }
+
+  function canvasToBlob(canvas, type="image/jpeg", quality=0.95){
+    return new Promise((resolve, reject)=>{
+      canvas.toBlob(blob=>{
+        if(blob) resolve(blob);
+        else reject(new Error("Could not capture camera frame."));
+      }, type, quality);
+    });
+  }
+
+  function otsuThreshold(gray){
+    const hist = new Array(256).fill(0);
+    for(const g of gray) hist[g]++;
+    const total = gray.length;
+    let sum = 0;
+    for(let i=0;i<256;i++) sum += i * hist[i];
+    let sumB = 0, wB = 0, maxVar = -1, threshold = 160;
+    for(let t=0;t<256;t++){
+      wB += hist[t];
+      if(wB === 0) continue;
+      const wF = total - wB;
+      if(wF === 0) break;
+      sumB += t * hist[t];
+      const mB = sumB / wB;
+      const mF = (sum - sumB) / wF;
+      const between = wB * wF * Math.pow(mB - mF, 2);
+      if(between > maxVar){ maxVar = between; threshold = t; }
+    }
+    return threshold;
+  }
+
+  function makeOcrCanvasVariant(img, variantName, maxW=2400, minW=1500){
+    let scale = 1;
+    if(img.width < minW) scale = minW / img.width;
+    if(img.width * scale > maxW) scale = maxW / img.width;
+    const w = Math.max(1, Math.round(img.width * scale));
+    const h = Math.max(1, Math.round(img.height * scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d", { willReadFrequently:true });
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, w, h);
+    ctx.drawImage(img, 0, 0, w, h);
+
+    const imageData = ctx.getImageData(0,0,w,h);
+    const data = imageData.data;
+
+    if(variantName === "native-scale"){
+      ctx.putImageData(imageData,0,0);
+      return canvas.toDataURL("image/png");
+    }
+
+    const gray = new Uint8ClampedArray(w*h);
+    let min = 255, max = 0;
+    for(let i=0, p=0; i<data.length; i+=4, p++){
+      const g = Math.round(0.299*data[i] + 0.587*data[i+1] + 0.114*data[i+2]);
+      gray[p] = g;
+      if(g < min) min = g;
+      if(g > max) max = g;
+    }
+
+    if(variantName === "gray"){
+      for(let i=0, p=0; i<data.length; i+=4, p++){
+        const g = gray[p];
+        data[i] = data[i+1] = data[i+2] = g;
+        data[i+3] = 255;
+      }
+    }else if(variantName === "soft-contrast"){
+      // Mild contrast stretch. This usually helps labels while preserving digits.
+      const lo = Math.max(0, min + 6);
+      const hi = Math.min(255, max - 6);
+      const span = Math.max(1, hi - lo);
+      for(let i=0, p=0; i<data.length; i+=4, p++){
+        const g = Math.max(0, Math.min(255, Math.round((gray[p] - lo) * 255 / span)));
+        data[i] = data[i+1] = data[i+2] = g;
+        data[i+3] = 255;
+      }
+    }else if(variantName === "binary"){
+      // Binary image is useful for labels, but can flip similar digits on thermal paper.
+      // It is used only as one vote in consensus, not as the sole truth.
+      const t = otsuThreshold(gray);
+      for(let i=0, p=0; i<data.length; i+=4, p++){
+        const g = gray[p] < t ? 0 : 255;
+        data[i] = data[i+1] = data[i+2] = g;
+        data[i+3] = 255;
+      }
+    }
+
+    ctx.putImageData(imageData,0,0);
+    return canvas.toDataURL("image/png");
+  }
+
+  function makeCroppedCanvas(img, crop){
+    const canvas = document.createElement("canvas");
+    const sx = Math.max(0, Math.round(img.width * crop.x));
+    const sy = Math.max(0, Math.round(img.height * crop.y));
+    const sw = Math.min(img.width - sx, Math.round(img.width * crop.w));
+    const sh = Math.min(img.height - sy, Math.round(img.height * crop.h));
+    canvas.width = Math.max(1, sw);
+    canvas.height = Math.max(1, sh);
+    const ctx = canvas.getContext("2d", { alpha:false });
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+    return canvas;
+  }
+
+  function ocrAccuracyMode(){
+    const el = $("ocrAccuracyMode");
+    return el ? el.value : "high";
+  }
+
+  async function preprocessImageForOcrVariants(source){
+    const img = await sourceToImageLike(source);
+    const mode = ocrAccuracyMode();
+    const variants = [];
+
+    function addVariant(name, imageLike, processor, psm="6", maxW=2400, minW=1500, profile="default"){
+      variants.push({
+        name,
+        psm,
+        profile,
+        dataUrl: makeOcrCanvasVariant(imageLike, processor, maxW, minW)
+      });
+    }
+
+    // Full-page variants preserve labels and section headings. Keep these even in high-accuracy
+    // mode because the section names protect against unsafe row shifts.
+    addVariant("full-soft-contrast", img, "soft-contrast", "6");
+    addVariant("full-gray", img, "gray", "6");
+    addVariant("full-native", img, "native-scale", "6");
+    addVariant("full-binary", img, "binary", "6");
+
+    if(mode === "high"){
+      // Header/ID/footer crops improve Patient ID and report date/time recognition.
+      const metadataCrops = [
+        { name:"header-wide", x:0.02, y:0.02, w:0.96, h:0.24, psms:["6","11"] },
+        { name:"header-right", x:0.50, y:0.03, w:0.48, h:0.15, psms:["6","11"] },
+        // Radiometer ABL800: report time/date are on the FIRST right-side row immediately
+        // below the RADIOMETER title. "Sample #" and the sample number are below them.
+        // Multiple y-bands are used because WhatsApp crops and tilted paper shift this row.
+        { name:"header-first-row-right-a", x:0.54, y:0.055, w:0.45, h:0.070, psms:["7","11","13"] },
+        { name:"header-first-row-right-b", x:0.54, y:0.070, w:0.45, h:0.075, psms:["7","11","13"] },
+        { name:"header-first-row-right-c", x:0.50, y:0.080, w:0.49, h:0.080, psms:["7","11"] },
+        { name:"header-first-row-right-wide", x:0.47, y:0.055, w:0.52, h:0.110, psms:["6","11"] },
+        // Actual Radiometer date/time row lies lower than the title in many phone photos.
+        // These focused strips deliberately exclude the large RADIOMETER heading, because
+        // that heading was dominating OCR and hiding the small header date/time.
+        { name:"header-datetime-strip-a", x:0.50, y:0.105, w:0.49, h:0.075, psms:["6","7","11"] },
+        { name:"header-datetime-strip-b", x:0.50, y:0.120, w:0.49, h:0.075, psms:["6","7","11"] },
+        { name:"header-datetime-strip-c", x:0.48, y:0.135, w:0.51, h:0.080, psms:["6","7","11"] },
+        { name:"header-datetime-strip-wide", x:0.42, y:0.105, w:0.57, h:0.105, psms:["6","11"] },
+        { name:"header-datetime-right-tight", x:0.67, y:0.095, w:0.32, h:0.095, psms:["6","7","11"] },
+        // Secondary fallback: time is above "Sample #"; date is above the numeric sample number.
+        { name:"header-time-date-line", x:0.57, y:0.045, w:0.42, h:0.075, psms:["7","11","13"] },
+        { name:"header-sample-window", x:0.57, y:0.05, w:0.42, h:0.13, psms:["6","11"] },
+        { name:"header-time-column", x:0.58, y:0.04, w:0.25, h:0.12, psms:["6","7","11"] },
+        { name:"header-date-sample-column", x:0.74, y:0.02, w:0.25, h:0.14, psms:["6","7","11"] },
+        { name:"id-block", x:0.04, y:0.08, w:0.62, h:0.23, psms:["6"] },
+        { name:"footer-printed", x:0.04, y:0.78, w:0.72, h:0.16, psms:["6"] }
+      ];
+      for(const spec of metadataCrops){
+        const c = makeCroppedCanvas(img, spec);
+        const psms = spec.psms || ["6"];
+        const isDateTime = /datetime|time-date|time-column|date-sample|sample-window|first-row-right|header-right/i.test(spec.name);
+        const maxW = isDateTime ? 3600 : 2400;
+        const minW = isDateTime ? 2200 : 1200;
+        const profile = isDateTime ? "datetime" : "default";
+        for(const psm of psms){
+          addVariant(`${spec.name}-gray-p${psm}`, c, "gray", psm, maxW, minW, profile);
+          addVariant(`${spec.name}-soft-p${psm}`, c, "soft-contrast", psm, maxW, minW, profile);
+          if(isDateTime){
+            addVariant(`${spec.name}-binary-p${psm}`, c, "binary", psm, maxW, minW, profile);
+          }
+        }
+      }
+
+      // Table crops exclude handwritten notes, right-side reference ranges, and other clutter.
+      // They still contain labels + values, so they are safer than pure numeric-column OCR.
+      const tableCrops = [
+        { name:"table-wide", x:0.04, y:0.16, w:0.72, h:0.72 },
+        { name:"table-core", x:0.09, y:0.22, w:0.60, h:0.62 },
+        { name:"table-left-center", x:0.00, y:0.20, w:0.67, h:0.66 }
+      ];
+      for(const spec of tableCrops){
+        const c = makeCroppedCanvas(img, spec);
+        addVariant(`${spec.name}-soft`, c, "soft-contrast", "6", 2200, 1400);
+        addVariant(`${spec.name}-gray`, c, "gray", "6", 2200, 1400);
+      }
+    }
+
+    // Radiometer ABL800 measured-value column crops. Several x-positions are used because
+    // handheld photos and WhatsApp crops vary. A candidate is accepted only after parser
+    // plausibility checks and consensus rules.
+    const valueCrops = mode === "high" ? [
+      { name:"value-column-left",   x:0.27, y:0.24, w:0.24, h:0.60 },
+      { name:"value-column-middle", x:0.31, y:0.24, w:0.26, h:0.60 },
+      { name:"value-column-right",  x:0.35, y:0.24, w:0.26, h:0.60 },
+      { name:"value-column-low",    x:0.31, y:0.29, w:0.26, h:0.54 }
+    ] : [
+      { name:"value-column-middle", x:0.31, y:0.25, w:0.28, h:0.58 }
+    ];
+
+    for(const spec of valueCrops){
+      const c = makeCroppedCanvas(img, spec);
+      addVariant(`${spec.name}-gray`, c, "gray", "6", 1800, 1200);
+      addVariant(`${spec.name}-soft`, c, "soft-contrast", "6", 1800, 1200);
+      if(mode === "high") addVariant(`${spec.name}-native`, c, "native-scale", "6", 1800, 1200);
+    }
+
+    return variants;
+  }
+
+  async function getOcrWorker(){
+    if(__ocrWorker) return __ocrWorker;
+    if(!window.Tesseract || !Tesseract.createWorker){
+      throw new Error("Tesseract.js is not loaded. Check internet/CDN access, or vendor the library locally.");
+    }
+    __ocrWorker = await Tesseract.createWorker("eng", 1, {
+      logger: m => {
+        if(!m || !m.status) return;
+        const pct = Number.isFinite(m.progress) ? ` ${Math.round(m.progress*100)}%` : "";
+        setOcrStatus("busy", `<b>Analyzing image locally...</b> ${escapeHtml(m.status)}${pct}<div class="ocr-help">This may take a moment on mobile devices.</div>`);
+      }
+    });
+    await __ocrWorker.setParameters({
+      tessedit_pageseg_mode: "6",
+      preserve_interword_spaces: "1",
+      user_defined_dpi: "300",
+      tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.+-/(),:%[] "
+    });
+    return __ocrWorker;
+  }
+
+  function consensusKey(fieldId, value){
+    const dp = ocrDecimals(fieldId);
+    return Number(value).toFixed(dp);
+  }
+
+  function valueNeedsOcrConsensus(fieldId, value){
+    // pH is a high-risk field: one digit error can radically change interpretation.
+    // Extremely abnormal pH values from thermal-paper OCR should require at least two agreeing passes.
+    if(fieldId === "ph" && (value < 7.20 || value > 7.55)) return true;
+    return false;
+  }
+
+  function isValueColumnVariant(name){
+    return String(name || "").startsWith("value-column");
+  }
+
+  function groupHitSummary(groupHits){
+    const avgConfidence = groupHits.reduce((sum,x)=>sum+x.confidence,0) / Math.max(1, groupHits.length);
+    const valueColumnCount = groupHits.filter(x=>isValueColumnVariant(x.variant)).length;
+    return { avgConfidence, valueColumnCount, fullPageCount: groupHits.length - valueColumnCount };
+  }
+
+
+  function mergeOcrMetadata(attempts){
+    const values = {};
+    const notes = [];
+    const rejected = [];
+
+    for(const id of OCR_META_FIELDS){
+      const hits = [];
+      for(const attempt of attempts){
+        const md = attempt && attempt.parsed && attempt.parsed.metadata;
+        if(md && Object.prototype.hasOwnProperty.call(md, id) && md[id]){
+          hits.push({ value:String(md[id]).trim(), variant:attempt.variant, confidence:Number.isFinite(attempt.confidence) ? attempt.confidence : 0 });
+        }
+      }
+      if(!hits.length){
+        notes.push(`${id}: not found in consensus OCR`);
+        continue;
+      }
+
+      const groups = new Map();
+      for(const h of hits){
+        const key = h.value.toUpperCase().replace(/\s+/g," ");
+        if(!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(h);
+      }
+      const ranked = Array.from(groups.entries()).sort((a,b)=>{
+        function metaScore(entry){
+          const [key, arr] = entry;
+          let score = arr.length * 10;
+          score += arr.reduce((s,x)=>s+x.confidence,0) / Math.max(1, arr.length) / 10;
+          if(id === "abgDateTime"){
+            // Prefer explicit top-right header crops over full-page/table crops.
+            if(arr.some(x => /header-datetime/i.test(x.variant))) score += 100;
+            if(arr.some(x => /header-first-row-right/i.test(x.variant))) score += 80;
+            if(arr.some(x => /header-time-date|header-sample|header-right|header-time-column|header-date-sample/i.test(x.variant))) score += 35;
+            if(arr.some(x => /footer|printed/i.test(x.variant))) score -= 20;
+            if(arr.some(x => /table|value-column|full-/i.test(x.variant))) score -= 10;
+          }
+          return score;
+        }
+        return metaScore(b) - metaScore(a);
+      });
+      const [bestKey, bestHits] = ranked[0];
+      // Patient ID should not be accepted from a single noisy full-page pass unless it has
+      // a strong Radiometer/TMC pattern. Date/time is less dangerous and can be accepted once.
+      if(id === "patientId" && bestHits.length < 2 && !/^\d{1,3}[A-Z]\d{4}\/\d{3,6}$/i.test(bestKey)){
+        rejected.push(`patientId: single weak OCR candidate ${bestKey}; field left blank`);
+        continue;
+      }
+      values[id] = bestHits[0].value;
+      notes.push(`${id}: ${values[id]} by ${bestHits.length}/${hits.length} OCR pass(es): ${bestHits.map(h=>h.variant).join(", ")}`);
+    }
+    return { values, notes, rejected };
+  }
+
+  function mergeOcrAttempts(attempts){
+    const values = {};
+    const notes = [];
+    const rejected = [];
+
+    for(const id of OCR_TARGET_FIELDS){
+      const hits = [];
+      for(const attempt of attempts){
+        if(attempt && attempt.parsed && Object.prototype.hasOwnProperty.call(attempt.parsed.values, id)){
+          hits.push({
+            value: attempt.parsed.values[id],
+            key: consensusKey(id, attempt.parsed.values[id]),
+            variant: attempt.variant,
+            confidence: Number.isFinite(attempt.confidence) ? attempt.confidence : 0
+          });
+        }
+      }
+      if(!hits.length){
+        notes.push(`${id}: not found in consensus OCR`);
+        continue;
+      }
+
+      const groups = new Map();
+      for(const h of hits){
+        if(!groups.has(h.key)) groups.set(h.key, []);
+        groups.get(h.key).push(h);
+      }
+
+      let ranked = Array.from(groups.entries()).sort((a,b)=>{
+        const as = groupHitSummary(a[1]);
+        const bs = groupHitSummary(b[1]);
+        // For the Radiometer value table, a repeated value-column reading is very useful
+        // for measured digits; otherwise use ordinary vote count and OCR confidence.
+        const aScore = a[1].length + (as.valueColumnCount >= 2 ? 1.25 : 0) + (as.valueColumnCount === 1 ? 0.25 : 0);
+        const bScore = b[1].length + (bs.valueColumnCount >= 2 ? 1.25 : 0) + (bs.valueColumnCount === 1 ? 0.25 : 0);
+        if(bScore !== aScore) return bScore - aScore;
+        return bs.avgConfidence - as.avgConfidence;
+      });
+
+      // For high-risk pH, prefer a repeated value-column group when available.
+      // The full-page OCR can confuse 5/6 on thermal paper; the cropped value column is less affected by labels/notes.
+      if(id === "ph"){
+        const cropRanked = ranked.filter(([_, arr]) => groupHitSummary(arr).valueColumnCount >= 2);
+        if(cropRanked.length){
+          // If value-column crops disagree with each other, do not guess.
+          const topCrop = cropRanked[0];
+          const secondCrop = cropRanked[1];
+          if(secondCrop && groupHitSummary(secondCrop[1]).valueColumnCount === groupHitSummary(topCrop[1]).valueColumnCount){
+            rejected.push(`ph: conflicting value-column OCR values ${cropRanked.map(([k,arr])=>`${k}(${arr.map(x=>x.variant).join("+")})`).join(" vs ")}; field left blank`);
+            continue;
+          }
+          ranked = [topCrop, ...ranked.filter(([k,_]) => k !== topCrop[0])];
+        }
+      }
+
+      const [bestKey, bestHits] = ranked[0];
+      const bestVal = Number(bestKey);
+      const second = ranked[1];
+      const bestStats = groupHitSummary(bestHits);
+      const secondStats = second ? groupHitSummary(second[1]) : null;
+      const hasConflict = second && second[1].length === bestHits.length && secondStats.valueColumnCount === bestStats.valueColumnCount;
+      const needsConsensus = valueNeedsOcrConsensus(id, bestVal);
+
+      if(id === "ph"){
+        // Very alkalemic/acidotic pH values are too important to accept from full-page OCR alone.
+        // They need repeated agreement and at least one value-column confirmation.
+        if((bestVal > 7.55 || bestVal < 7.20) && (bestHits.length < 2 || bestStats.valueColumnCount < 1)){
+          rejected.push(`ph: ${bestKey} is high-risk and lacks value-column confirmation; field left blank`);
+          continue;
+        }
+        // If a value-column result conflicts substantially with the selected pH, leave blank.
+        const cropConflicts = ranked
+          .filter(([k,arr]) => k !== bestKey && groupHitSummary(arr).valueColumnCount > 0 && Math.abs(Number(k) - bestVal) >= 0.030);
+        if(cropConflicts.length){
+          rejected.push(`ph: value-column OCR conflicts with full-page OCR (${bestKey} vs ${cropConflicts.map(([k])=>k).join(", ")}); field left blank`);
+          continue;
+        }
+      }
+
+      if(needsConsensus && bestHits.length < 2){
+        rejected.push(`${id}: ${bestKey} seen only once; high-risk value requires repeat OCR agreement`);
+        continue;
+      }
+      if(hasConflict){
+        rejected.push(`${id}: conflicting OCR values ${ranked.map(([k,arr])=>`${k}(${arr.map(x=>x.variant).join("+")})`).join(" vs ")}; field left blank`);
+        continue;
+      }
+
+      values[id] = bestVal;
+      const sourceNote = bestStats.valueColumnCount ? `; value-column confirmations=${bestStats.valueColumnCount}` : "";
+      notes.push(`${id}: ${bestKey} by ${bestHits.length}/${hits.length} OCR pass(es)${sourceNote}: ${bestHits.map(h=>h.variant).join(", ")}`);
+    }
+
+    return { values, notes, rejected };
+  }
+
+  function formatOcrAttemptReport(attempts){
+    const chunks = [];
+    for(const attempt of attempts){
+      const confText = Number.isFinite(attempt.confidence) ? attempt.confidence.toFixed(0) + "%" : "—";
+      chunks.push([
+        `=== OCR pass: ${attempt.variant} | confidence ${confText} ===`,
+        attempt.error ? `ERROR: ${attempt.error}` : (attempt.parsed ? attempt.parsed.normalized : attempt.text || "—"),
+        "",
+        attempt.parsed ? "Parsed: " + (attempt.parsed.notes.join("; ") || "None") : "Parsed: —",
+        attempt.parsed && attempt.parsed.rejected.length ? "Rejected: " + attempt.parsed.rejected.join("; ") : "Rejected: None"
+      ].join("\n"));
+    }
+    return chunks.join("\n\n");
+  }
+
+  function getOcrInputSource(){
+    const fileInput = $("ocrImage");
+    const file = fileInput && fileInput.files && fileInput.files[0];
+    return file || __ocrCurrentSource || null;
+  }
+
+  function describeOcrSource(source){
+    if(!source) return "selected source";
+    const name = source.name ? String(source.name) : "captured camera photo";
+    const type = isPdfSource(source) ? "PDF" : "image";
+    return `${type}: ${name}`;
+  }
+
+  function setCurrentOcrSource(source, clearMainFileInput=false){
+    __ocrCurrentSource = source || null;
+    if(clearMainFileInput){
+      const fileInput = $("ocrImage");
+      if(fileInput) fileInput.value = "";
+    }
+  }
+
+  function handleOcrFileSelected(){
+    const fileInput = $("ocrImage");
+    const preview = $("ocrPreview");
+    const file = fileInput && fileInput.files && fileInput.files[0];
+    if(!file) return;
+    setCurrentOcrSource(file, false);
+    if(preview){
+      if(isPdfSource(file)){
+        preview.removeAttribute("src");
+        preview.style.display = "none";
+        setOcrStatus("", `<b>PDF selected.</b><div class="ocr-help">Press <b>Auto-Fill Selected</b>. The first PDF page will be rendered locally before OCR.</div>`);
+      }else{
+        const url = URL.createObjectURL(file);
+        preview.onload = ()=>URL.revokeObjectURL(url);
+        preview.src = url;
+        preview.style.display = "block";
+        setOcrStatus("", `<b>Image selected.</b><div class="ocr-help">Press <b>Auto-Fill Selected</b> to run local OCR.</div>`);
+      }
+    }
+  }
+
+  function handleNativeCameraFileSelected(){
+    const camInput = $("ocrCameraFile");
+    const file = camInput && camInput.files && camInput.files[0];
+    if(!file) return;
+    setCurrentOcrSource(file, true);
+    runOcrAutoFill(file);
+  }
+
+  async function runOcrAutoFill(sourceOverride=null){
+    const btn = $("btnOCR");
+    const capBtn = $("btnCaptureOcr");
+    const rawBox = $("ocrRawText");
+    const preview = $("ocrPreview");
+    const source = sourceOverride || getOcrInputSource();
+    if(!source){
+      alert("Please select an ABG image/PDF, or open the camera and capture a photo first.");
+      return;
+    }
+
+    try{
+      if(btn) btn.disabled = true;
+      if(capBtn) capBtn.disabled = true;
+      setOcrStatus("busy", `<b>Analyzing ${escapeHtml(describeOcrSource(source))} locally...</b><div class="ocr-help">Preparing high-resolution OCR views. High-accuracy mode may take longer on mobile.</div>`);
+      const variants = await preprocessImageForOcrVariants(source);
+      if(preview && variants.length){
+        preview.src = variants[0].dataUrl;
+        preview.style.display = "block";
+      }
+
+      const worker = await getOcrWorker();
+      const attempts = [];
+      for(let i=0; i<variants.length; i++){
+        const variant = variants[i];
+        setOcrStatus("busy", `<b>Analyzing image locally...</b><div class="ocr-help">OCR pass ${i+1}/${variants.length}: ${escapeHtml(variant.name)} (PSM ${escapeHtml(variant.psm || "6")})</div>`);
+        try{
+          if(variant.psm || variant.profile){
+            const params = {
+              tessedit_pageseg_mode: String(variant.psm || "6"),
+              preserve_interword_spaces: "1",
+              user_defined_dpi: "300"
+            };
+            if(variant.profile === "datetime"){
+              // Focus header OCR on the printed date/time characters. This prevents the
+              // large title text and table values from dominating tiny header digits.
+              params.tessedit_char_whitelist = "0123456789/:.- AMPamp";
+            }else{
+              params.tessedit_char_whitelist = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.+-/(),:%[] ";
+            }
+            await worker.setParameters(params);
+          }
+          const result = await worker.recognize(variant.dataUrl);
+          const data = result && result.data ? result.data : {};
+          const text = data.text || "";
+          const confidence = Number.isFinite(data.confidence) ? data.confidence : null;
+          const parsed = text.trim() ? parseOcrAbgValues(text, variant.name) : null;
+          attempts.push({ variant: variant.name, profile: variant.profile || "default", confidence, text, parsed });
+        }catch(e){
+          attempts.push({ variant: variant.name, profile: variant.profile || "default", confidence: null, text: "", parsed: null, error: e && e.message ? e.message : String(e) });
+        }
+      }
+
+      const successful = attempts.filter(a => a.parsed && Object.keys(a.parsed.values).length);
+      if(!successful.length){
+        throw new Error("No OCR pass produced parsable ABG values.");
+      }
+
+      const metadataAttempts = attempts.filter(a => a.parsed);
+      const merged = mergeOcrAttempts(successful);
+      const mergedMeta = mergeOcrMetadata(metadataAttempts);
+      const filled = applyOcrValues(merged.values);
+      const metaFilled = applyOcrMetadata(mergedMeta.values);
+      const avgConf = successful
+        .map(a=>a.confidence)
+        .filter(x=>Number.isFinite(x))
+        .reduce((a,b,_,arr)=>a + b/arr.length, 0);
+      const confText = Number.isFinite(avgConf) && avgConf > 0 ? avgConf.toFixed(0) + "% average" : "—";
+      const rawReport = [
+        "OCR consensus confidence: " + confText,
+        "OCR passes used: " + successful.map(a=>a.variant).join(", "),
+        "",
+        "--- Consensus Parsed Metadata ---",
+        mergedMeta.notes.join("\n") || "None",
+        "",
+        "--- Consensus Parsed ABG Fields ---",
+        merged.notes.join("\n") || "None",
+        "",
+        "--- Consensus Rejected / Conflicting Candidates ---",
+        merged.rejected.concat(mergedMeta.rejected).join("\n") || "None",
+        "",
+        "--- Individual OCR Passes ---",
+        formatOcrAttemptReport(attempts)
+      ].join("\n");
+      if(rawBox) rawBox.textContent = rawReport;
+
+      if(filled.length === 0 && metaFilled.length === 0){
+        setOcrStatus("warn", `<b>OCR completed but no fields were auto-filled.</b><div class="ocr-help">The consensus parser rejected all values or found conflicts. Enter data manually and check the raw OCR text below.</div>`);
+        alert("OCR completed, but no ABG values or metadata could be confidently parsed. Please enter data manually.");
+        return;
+      }
+
+      const allFilled = filled.concat(metaFilled);
+      const conflictText = merged.rejected.concat(mergedMeta.rejected).length ? `<div class="ocr-help">Some conflicting/high-risk OCR values were left blank. Check raw OCR notes below.</div>` : `<div class="ocr-help">Verify every populated value and metadata item against the printout before interpretation.</div>`;
+      setOcrStatus("ok", `<b>OCR auto-fill completed.</b> Filled ${allFilled.length} field(s): ${allFilled.map(escapeHtml).join(", ")}. ${conflictText}`);
+    }catch(err){
+      const msg = err && err.message ? err.message : String(err);
+      setOcrStatus("warn", `<b>OCR failed or confidence was too low.</b><div class="ocr-help">${escapeHtml(msg)} Enter data manually.</div>`);
+      alert("OCR failed or confidence was too low. Please enter ABG values manually.");
+    }finally{
+      if(btn) btn.disabled = false;
+      if(capBtn) capBtn.disabled = !!__ocrCameraStream ? false : true;
+    }
+  }
+
+  async function openOcrCamera(){
+    const panel = $("cameraPanel");
+    const video = $("ocrVideo");
+    const capBtn = $("btnCaptureOcr");
+    const nativeCamInput = $("ocrCameraFile");
+
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+      setOcrStatus("warn", `<b>Live camera API unavailable.</b><div class="ocr-help">Opening the device camera/file picker fallback.</div>`);
+      if(nativeCamInput) nativeCamInput.click();
+      return;
+    }
+
+    try{
+      setOcrStatus("busy", `<b>Requesting camera permission...</b><div class="ocr-help">Allow camera access when the browser asks. No image is sent outside this page.</div>`);
+      stopOcrCamera(false);
+      __ocrCameraStream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: "environment" },
+          width: { ideal: 3840 },
+          height: { ideal: 2160 },
+          frameRate: { ideal: 15, max: 30 }
+        },
+        audio: false
+      });
+      try{
+        const track = __ocrCameraStream.getVideoTracks()[0];
+        if(track && track.applyConstraints){
+          await track.applyConstraints({ advanced:[
+            { focusMode:"continuous" },
+            { exposureMode:"continuous" },
+            { whiteBalanceMode:"continuous" }
+          ] });
+        }
+      }catch(_){
+        // Browser/camera may not expose focus/exposure constraints; ignore safely.
+      }
+      if(video){
+        video.srcObject = __ocrCameraStream;
+        await video.play();
+      }
+      if(panel) panel.style.display = "block";
+      if(capBtn) capBtn.disabled = false;
+      setOcrStatus("ok", `<b>Camera ready.</b><div class="ocr-help">Frame the printed Radiometer ABG value table, then press <b>Capture Photo & Auto-Fill</b>.</div>`);
+    }catch(e){
+      const msg = e && e.message ? e.message : String(e);
+      setOcrStatus("warn", `<b>Camera permission failed or was blocked.</b><div class="ocr-help">${escapeHtml(msg)} Opening native camera/file picker fallback if available.</div>`);
+      if(nativeCamInput) nativeCamInput.click();
+    }
+  }
+
+  function stopOcrCamera(updateStatus=true){
+    if(__ocrCameraStream){
+      for(const track of __ocrCameraStream.getTracks()) track.stop();
+      __ocrCameraStream = null;
+    }
+    const video = $("ocrVideo");
+    if(video) video.srcObject = null;
+    const panel = $("cameraPanel");
+    if(panel) panel.style.display = "none";
+    const capBtn = $("btnCaptureOcr");
+    if(capBtn) capBtn.disabled = true;
+    if(updateStatus) setOcrStatus("", `Camera stopped. Select a saved photo/PDF or open the camera again.`);
+  }
+
+  async function captureHighResolutionCameraBlob(video, canvas){
+    const track = __ocrCameraStream && __ocrCameraStream.getVideoTracks ? __ocrCameraStream.getVideoTracks()[0] : null;
+
+    // Prefer ImageCapture.takePhoto(): on many phones this captures a full-resolution still,
+    // whereas drawing the video stream to a canvas may only capture a low-resolution preview.
+    if(track && window.ImageCapture){
+      try{
+        const imageCapture = new ImageCapture(track);
+        let photoSettings = {};
+        if(imageCapture.getPhotoCapabilities){
+          const caps = await imageCapture.getPhotoCapabilities();
+          if(caps && caps.imageWidth && caps.imageWidth.max) photoSettings.imageWidth = caps.imageWidth.max;
+          if(caps && caps.imageHeight && caps.imageHeight.max) photoSettings.imageHeight = caps.imageHeight.max;
+        }
+        const blob = await imageCapture.takePhoto(photoSettings);
+        if(blob && blob.size) return blob;
+      }catch(_){
+        // Fall back to video-frame canvas capture below.
+      }
+    }
+
+    const w = video.videoWidth || 1920;
+    const h = video.videoHeight || 1080;
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(video, 0, 0, w, h);
+    return canvasToBlob(canvas, "image/jpeg", 0.98);
+  }
+
+  async function captureCameraAndRunOcr(){
+    const video = $("ocrVideo");
+    const canvas = $("ocrCaptureCanvas");
+    const preview = $("ocrPreview");
+    if(!video || !canvas || !__ocrCameraStream){
+      alert("Camera is not open.");
+      return;
+    }
+    setOcrStatus("busy", `<b>Capturing high-resolution still...</b><div class="ocr-help">Hold the phone steady. The app will use full still-photo resolution when the browser exposes it.</div>`);
+    const blob = await captureHighResolutionCameraBlob(video, canvas);
+    blob.name = `ABG-camera-${Date.now()}.jpg`;
+    setCurrentOcrSource(blob, true);
+    if(preview){
+      const url = URL.createObjectURL(blob);
+      preview.onload = ()=>URL.revokeObjectURL(url);
+      preview.src = url;
+      preview.style.display = "block";
+    }
+    await runOcrAutoFill(blob);
+  }
+
+  function clearOcrOnly(){
+    const fileInput = $("ocrImage");
+    const camInput = $("ocrCameraFile");
+    const rawBox = $("ocrRawText");
+    const preview = $("ocrPreview");
+    stopOcrCamera(false);
+    __ocrCurrentSource = null;
+    if(fileInput) fileInput.value = "";
+    if(camInput) camInput.value = "";
+    if(rawBox) rawBox.textContent = "—";
+    if(preview){ preview.removeAttribute("src"); preview.style.display = "none"; }
+    setOcrStatus("", `Select a saved photo/PDF or open the camera, then run OCR auto-fill.`);
+  }
+
+  function clearAll(){
+    const st = getFormState();
+    for(const k of Object.keys(st)){
+      const el = $(k);
+      if(!el) continue;
+      if(el.tagName === 'SELECT'){
+        // keep defaults
+        continue;
+      }
+      el.value = '';
+    }
+    $("txtOut").textContent = "—";
+    $("ddxContainer").innerHTML = "";
+    $("kpis").innerHTML = "";
+    setStatus("", `<div class="tiny">Cleared. Enter values and press <b>Interpret ABG</b>.</div>`);
+  }
+
+  function init(){
+    // View mode persistence
+    const vm = localStorage.getItem("abg_view_mode_v2") || "auto";
+    $("viewMode").value = vm;
+    applyViewMode(vm);
+
+    $("viewMode").addEventListener('change', e=>applyViewMode(e.target.value));
+
+    $("btnInterpret").addEventListener('click', interpret);
+    $("btnSave").addEventListener('click', saveLocal);
+    $("btnLoad").addEventListener('click', loadLocal);
+    $("btnClear").addEventListener('click', clearAll);
+    $("btnOCR").addEventListener('click', ()=>runOcrAutoFill());
+    $("btnOcrClear").addEventListener('click', clearOcrOnly);
+    $("ocrImage").addEventListener('change', handleOcrFileSelected);
+    $("ocrCameraFile").addEventListener('change', handleNativeCameraFileSelected);
+    $("btnOpenCamera").addEventListener('click', openOcrCamera);
+    $("btnCaptureOcr").addEventListener('click', captureCameraAndRunOcr);
+    $("btnStopCamera").addEventListener('click', ()=>stopOcrCamera(true));
+    const capBtn = $("btnCaptureOcr");
+    if(capBtn) capBtn.disabled = true;
+
+    $("btnCopy").addEventListener('click', async ()=>{
+      const rep = window.__abg_latest_report || $("txtOut").textContent;
+      const ok = await copyToClipboard(rep);
+      setStatus(ok?"ok":"warn", ok?`<div><b>Copied.</b></div><div class="tiny">Report copied to clipboard.</div>`:`<div><b>Copy failed.</b></div><div class="tiny">Browser blocked clipboard. Long-press in output and copy manually.</div>`);
+    });
+
+    $("btnTXT").addEventListener('click', ()=>{
+      const rep = window.__abg_latest_report || $("txtOut").textContent;
+      const stamp = window.__abg_latest_stamp || tsStamp(new Date());
+      const caseNo = safeCaseNo($("caseNo").value);
+      const fname = `${caseNo}${stamp}_abg.txt`;
+      downloadText(fname, rep);
+    });
+  }
+
+  init();
+})();
+
+</script>
+</body>
+</html>
