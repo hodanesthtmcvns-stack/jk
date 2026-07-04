@@ -27,7 +27,7 @@ This repository hosts a suite of portable, offline-ready HTML applications desig
 | **Lab Trends & Alerts** | Clinical Decision Support | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/ICU-lab-trends-alerts-v2.0.html) |
 | **Agitation Manager** | ICU Delirium | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/acute-agitation-v1.0.html) |
 | **Label Generator** | Workflow Efficiency | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/Patient-label-generator-v1.5.html) |
-|**PAC-AIR-Offline** | Pre Anesthesia Checkup and Anesthesia Intraoperative Record Offline| [Launch App](https://hodanesthtmcvns-stack.github.io/jk/PAC-AIC-Offline-v1.0.html) |
+|**PAC-AIR-Offline** | Pre Anesthesia Checkup and Anesthesia Intraoperative Record Offline| [Launch App](https://hodanesthtmcvns-stack.github.io/jk/PAC-AIR-Offline-v1.0.html) |
 |**ePAC** | Pre Anesthesia Checkup | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/ePAC-v3.0.html) |
 |**PAC-assistant** | PAC Assistant for Anesthesia Residents | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/PAC-assistant-v1.15.html) |
 |**AIR** | Anesthesia Intraoperative Record | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/AIR-v2.0.html) |
