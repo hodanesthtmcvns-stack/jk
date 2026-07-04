@@ -1,8 +1,6 @@
 # PAC + AIR Offline Fallback Record (v1.0)
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Platform](https://img.shields.io/badge/Platform-Web%20Browser-lightgrey.svg)]()
-[![Status](https://img.shields.io/badge/Status-Active-success.svg)]()
 
 **A zero-dependency, fully offline digital clinical documentation tool for Anesthesiologists.**
 
