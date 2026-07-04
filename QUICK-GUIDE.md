@@ -23,6 +23,7 @@ These are a set of Software Tools created and maintained by Prof. Jyotirmay Kirt
 | **FILM-Sim2026** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/FILM-Sim2026.html) | [📖 About & Help](./docs/FILM-Sim2026-Help.md) |
 | **Vent Simulator** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/ICU-vent-sim-v%201.2.html) | [📖 About & Help](./docs/Vent-Sim-Help.md) |
 | **VENT-CDSS-2026** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/VENT-CDSS-2026.html) | [📖 About & Help](./docs/About-VENT-CDSS-2026.md) |
+| **PAC-AIR-offline** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/PAC-AIR-Offline-v1.0.html) | [📖 About & Help](./docs/PAC-AIR-Offline-Help.md) |
 | **ePAC** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/ePAC-v3.0.html) | [📖 About & Help](./docs/ePAC-Help.md) |
 | **PAC-assistant** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/PAC-assistant-v1.15.html) | [📖 About & Help](./docs/About-Help-PAC-assistant-v1.15.md) |
 | **AIR** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/AIR-v2.0.html) | [📖 About & Help](./docs/AIR-Help.md) |
