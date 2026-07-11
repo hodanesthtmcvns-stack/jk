@@ -18,6 +18,7 @@ These are a set of Software Tools created and maintained by Prof. Jyotirmay Kirt
 | **SPA (Septic Shock Perfusion Analyzer)** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/SPA-v2.1.html) | [📖 About & Help](./docs/SPA-v2.1-Help.md) |
 | **ACDC (Acute Care Decision Coach)** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/ACDC.html) | 📖 About & Help are inbuilt in this app
 | **PEEP Titrator** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/PEEP-titration-v1.4.html) | [📖 About & Help](./docs/PEEP-titration-v1.4-Help.md) |
+| **Delirium Care Assistant** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/delirium-care-assistant.html) | [📖 About & Help](./docs/delirium-care-assistant-Help.md) |
 | **Agitation Manager** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/acute-agitation-v1.0.html) | [📖 About & Help](./docs/Agitation-Manager-Help.md) |
 | **Lab Trends & Alerts** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/ICU-lab-trends-alerts-v2.0.html) | [📖 About & Help](./docs/Lab-Trends-Help.md) |
 | **Patient Label Gen** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/Patient-label-generator-v1.5.html) | [📖 About & Help](./docs/Patient-Label-Help.md) |
