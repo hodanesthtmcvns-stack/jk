@@ -26,6 +26,7 @@ This repository hosts a suite of portable, offline-ready HTML applications desig
 | **Ventilator Simulator** | Respiratory Education | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/ICU-vent-sim-v%201.2.html) |
 | **VENT-CDSS-2026** | Clinical Decision Support | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/VENT-CDSS-2026.html) |
 | **Lab Trends & Alerts** | Clinical Decision Support | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/ICU-lab-trends-alerts-v2.0.html) |
+| **Delirium Care Assistant** | ICU Delirium | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/delirium-care-assistant.html) |
 | **Agitation Manager** | ICU Delirium | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/acute-agitation-v1.0.html) |
 | **Label Generator** | Workflow Efficiency | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/Patient-label-generator-v1.5.html) |
 |**PAC-AIR-Offline** | Pre Anesthesia Checkup and Anesthesia Intraoperative Record Offline| [Launch App](https://hodanesthtmcvns-stack.github.io/jk/PAC-AIR-Offline-v1.0.html) |
