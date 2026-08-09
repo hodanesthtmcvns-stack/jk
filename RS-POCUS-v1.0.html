@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RS-POCUS — Rapid Shock POCUS</title>
+<!--
+  RS-POCUS (Rapid Shock POCUS): curvilinear/microconvex-probe protocol for undifferentiated shock —
+  shock phenotyping, fluid responsiveness and fluid tolerance. Resident teaching + clinical documentation tool.
+  Author: Prof. (Dr) Jyotirmay Kirtania
+  Copyright (C) 2026 Prof. (Dr) Jyotirmay Kirtania
+  SPDX-License-Identifier: GPL-3.0-or-later
+
+  This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License
+  as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+  warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+-->
+<style>
+:root{--bg:#f4f7fb;--card:#fff;--line:#d7dee8;--ink:#17212b;--muted:#5a6a7a;--accent:#1d4ed8;--good:#166534;--warn:#b45309;--bad:#b91c1c;--soft:#eef4ff}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--ink);font-size:14px}
+.wrap{max-width:1200px;margin:0 auto;padding:0 12px 40px}
+h1,h2,h3,h4{margin:0 0 8px}
+h3{font-size:15px;border-bottom:2px solid var(--soft);padding-bottom:4px}
+.sub{font-size:12px;color:var(--muted);line-height:1.4}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:8px 12px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px 12px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px 12px}
+.grid5{display:grid;grid-template-columns:repeat(5,1fr);gap:8px 12px}
+.gridflag{display:grid;grid-template-columns:repeat(3,1fr);gap:6px 12px}
+@media(max-width:1000px){.grid4,.grid5{grid-template-columns:repeat(2,1fr)}.gridflag{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){.grid2,.grid3,.grid4,.grid5,.gridflag{grid-template-columns:1fr}}
+.field{margin-bottom:8px;min-width:0}
+label{display:block;font-size:11.5px;color:var(--muted);margin-bottom:3px;font-weight:600}
+label .req{color:var(--bad)}
+input,select,textarea{width:100%;padding:7px 8px;border:1px solid var(--line);border-radius:6px;background:#fff;font-family:inherit;font-size:13.5px;color:var(--ink)}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
+textarea{min-height:60px;resize:vertical}
+input[readonly]{background:#f1f5f9;color:var(--muted)}
+button,.btn{border:1px solid var(--line);background:#fff;border-radius:7px;padding:8px 12px;cursor:pointer;font-weight:600;font-size:13px;color:var(--ink);text-decoration:none;display:inline-block}
+button:hover,.btn:hover{background:#f0f5ff}
+button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+button.primary:hover{background:#1740b0}
+button.danger{background:#fff0f0;border-color:#f3bcbc;color:var(--bad)}
+button.tiny{padding:4px 8px;font-size:12px}
+.chk{display:flex;align-items:flex-start;gap:6px;padding:5px 6px;border:1px solid var(--line);border-radius:6px;background:#fbfcfe;font-size:12.5px}
+.chk input{width:auto;margin-top:2px}
+.chkgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+@media(max-width:900px){.chkgrid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.chkgrid{grid-template-columns:1fr}}
+.ibtn{border:1px solid var(--line);background:#eef4ff;color:var(--accent);border-radius:50%;width:18px;height:18px;line-height:16px;text-align:center;font-size:11px;font-weight:700;cursor:pointer;flex:0 0 auto;padding:0}
+details.section{border:1px solid var(--line);border-radius:10px;background:#fff;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+details.section>summary{cursor:pointer;font-weight:700;padding:10px 12px;list-style:none;font-size:14px}
+details.section>summary::-webkit-details-marker{display:none}
+details.section>summary:before{content:'\25B8 ';color:var(--accent)}
+details.section[open]>summary:before{content:'\25BE ';}
+.secbody{padding:0 12px 12px}
+.topbar{position:sticky;top:0;z-index:20;background:#0f172a;color:#fff;padding:8px 12px}
+.topbar .grid4{max-width:1200px;margin:0 auto}
+.topbar label{color:#b9c4d4}
+.topbar input,.topbar select{background:#1e293b;color:#fff;border-color:#334155}
+.tabbar{display:flex;gap:6px;margin:12px 0;flex-wrap:wrap}
+.tabbtn{padding:9px 14px;border-radius:8px 8px 0 0;border:1px solid var(--line);background:#e2e8f0;font-weight:700;cursor:pointer;font-size:12.5px}
+.tabbtn.active{background:var(--card);border-bottom:2px solid var(--card);color:var(--accent)}
+.toolbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:8px 0}
+.module{display:none}
+.module.active{display:block}
+.hidden{display:none !important}
+.banner{padding:8px 12px;border-radius:8px;font-size:12.5px;margin-bottom:10px}
+.banner.warn{background:#fff7ed;border:1px solid #fed7aa;color:var(--warn)}
+.banner.bad{background:#fdecec;border:1px solid #f3bcbc;color:var(--bad)}
+.banner.good{background:#eaf7ee;border:1px solid #bfe6c9;color:var(--good)}
+table.logtbl{width:100%;border-collapse:collapse;font-size:12.5px}
+table.logtbl th,table.logtbl td{border:1px solid var(--line);padding:4px 5px}
+table.logtbl th{background:#f1f5f9;text-align:left}
+table{width:100%;border-collapse:collapse;font-size:12.5px;margin:8px 0}
+th,td{border:1px solid var(--line);padding:6px 7px;text-align:left;vertical-align:top}
+th{background:#f1f5f9}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.5);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+.modal.open{display:flex}
+.modalbox{background:#fff;border-radius:10px;max-width:640px;max-height:80vh;overflow:auto;padding:18px}
+.status{font-size:12px;color:var(--muted)}
+.disclaimer{font-size:11px;color:var(--muted);line-height:1.5}
+.citation{font-size:12px;color:#374151;margin:6px 0;padding-left:18px}
+footer.appfoot{margin-top:20px}
+.compact-cdss-card{border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-bottom:8px;font-size:12.5px;background:#f8fafc}
+.compact-cdss-card strong{display:block;font-size:13px;margin-bottom:3px}
+.compact-cdss-card.cdss-info{border-left:3px solid var(--accent)}
+.compact-cdss-card.cdss-good{border-left:3px solid var(--good);background:#f2fbf5}
+.compact-cdss-card.cdss-amber{border-left:3px solid var(--warn);background:#fff9f0}
+.compact-cdss-card.cdss-red{border-left:3px solid var(--bad);background:#fdecec}
+.cdss-cards-wrap{display:flex;flex-direction:column;gap:0}
+.qfToggle{margin-left:6px}
+.stepTime{font-size:10.5px;font-weight:700;color:var(--accent);background:var(--soft);border-radius:999px;padding:2px 8px;margin-left:6px}
+.cap{font-size:12px;color:var(--muted);margin-top:4px;min-height:14px}
+.timerBox{border:1px solid var(--line);border-radius:8px;padding:5px 10px;background:#fbfcfe;font-family:ui-monospace,Consolas,monospace;font-weight:700}
+details.section.full-only{display:none}
+@media print{
+  .topbar{position:static;background:#fff;color:#000}
+  .topbar input,.topbar select{background:#fff;color:#000;border-color:#999}
+  .topbar label{color:#333}
+  .tabbar,.toolbar,#gateBanner,.modal,#moduleTextOut,#safetyBanner{display:none !important}
+  details.section.full-only{display:block !important}
+  .module{display:none !important}
+  .module.active{display:block !important}
+  details.section>summary:before{content:''}
+  button,.ibtn{display:none !important}
+  .card{box-shadow:none;border:1px solid #999}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="grid4">
+    <div class="field"><label>Case / Patient ID <span class="req">*</span></label><input id="caseId" placeholder="Case number / bed" oninput="renderGateBannerDebounced()"></div>
+    <div class="field"><label>Operator <span class="req">*</span></label><input id="operator" placeholder="Resident / operator name" oninput="renderGateBannerDebounced()"></div>
+    <div class="field"><label>Age, years</label><input id="age" type="number" min="0"></div>
+    <div class="field"><label>Sex</label><select id="sex"><option value="">Select</option><option>Male</option><option>Female</option></select></div>
+    <div class="field"><label>Setting</label><select id="setting"><option>ER</option><option>ICU</option><option>Resuscitation bay</option><option>Ward</option><option>Other</option></select></div>
+    <div class="field"><label>Scan date &amp; time</label><input id="scanTime" type="datetime-local"></div>
+    <div class="field"><label>Probe</label><input id="probe" value="Curvilinear / microconvex, ~2–5 MHz"></div>
+    <div class="field"><label>Supervision / competency</label><select id="supervision" onchange="renderSafetyBanner()"><option value="">Select</option><option>Independent competency confirmed</option><option>Directly supervised</option><option>Learning — not for independent management decisions</option></select></div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="tabbar">
+    <button class="tabbtn active" data-mod="overview" onclick="switchStep('overview')">1. Pre-scan</button>
+    <button class="tabbtn" data-mod="cardiac" onclick="switchStep('cardiac')">2. Cardiac</button>
+    <button class="tabbtn" data-mod="ivc" onclick="switchStep('ivc')">3. IVC</button>
+    <button class="tabbtn" data-mod="lung" onclick="switchStep('lung')">4. Lung</button>
+    <button class="tabbtn" data-mod="abdo" onclick="switchStep('abdo')">5. Abdominal / Vascular</button>
+    <button class="tabbtn" data-mod="dynamic" onclick="switchStep('dynamic')">6. PLR / Fluid Responsiveness</button>
+    <button class="tabbtn" data-mod="phenotype" onclick="switchStep('phenotype')">7. Phenotype &amp; Plan</button>
+  </div>
+
+  <div class="card">
+    <div class="toolbar">
+      <button class="primary" onclick="saveScan()">Save scan</button>
+      <button onclick="updateLoadedScan()">Update loaded scan</button>
+      <button onclick="openRecordsPicker()">Saved scans&hellip;</button>
+      <button onclick="newCase()">New case</button>
+      <button class="danger" onclick="resetFindings()">Reset findings</button>
+      <span style="width:1px;background:var(--line);align-self:stretch"></span>
+      <button onclick="copyNotepadText()">Copy Notepad text</button>
+      <button onclick="downloadNotepadText()">Download .txt</button>
+      <button onclick="window.print()">Print</button>
+      <span style="width:1px;background:var(--line);align-self:stretch"></span>
+      <button onclick="exportJSON()">Export JSON</button>
+      <label class="btn" for="importJSONFile">Import JSON</label>
+      <input id="importJSONFile" type="file" accept="application/json" class="hidden" onchange="importJSON(event)">
+      <button onclick="openAbout()">About</button>
+      <button class="qfToggle" id="qfToggleBtn" onclick="toggleQuickFullMode()">Show full detail</button>
+      <span class="timerBox" id="timerDisplay">00:00</span>
+      <button class="tiny" onclick="timerStart()">Start</button>
+      <button class="tiny" onclick="timerPause()">Pause</button>
+      <button class="tiny" onclick="timerReset()">Reset</button>
+      <span class="status" id="saveStatus" style="margin-left:auto"></span>
+    </div>
+    <div id="gateBanner"></div>
+    <div id="safetyBanner"></div>
+    <div class="cdss-cards-wrap" id="cdssCardsContainer"></div>
+  </div>
+
+  <div id="moduleTextOut" class="card hidden">
+    <h3>Notepad-compatible text output</h3>
+    <div class="sub">Select all &amp; copy, or use the buttons above. Safe to paste into plain-text / minimally-formatted CIS fields.</div>
+    <textarea id="textOutBox" style="min-height:340px;font-family:ui-monospace,Consolas,monospace;font-size:12.5px;white-space:pre"></textarea>
+  </div>
+
+  <div class="module active" id="module-overview" data-module="overview">
+    <div class="banner warn"><strong>Evidence scope:</strong> RS-POCUS is currently designed and evidence-anchored for adults. Pediatric use has not been evaluated in this version — its guideline anchor (2024 SCCM focused update on adult critical care ultrasonography) and its PLR/IVC evidence base are adult-derived.</div>
+    <details class="section" open>
+      <summary>1. Indication &amp; Clinical Context</summary>
+      <div class="secbody">
+        <div class="chkgrid">
+          <label class="chk"><input type="checkbox" id="ind_shock" onchange="updateIndication()">Undifferentiated shock</label>
+          <label class="chk"><input type="checkbox" id="ind_hypotension" onchange="updateIndication()">Hypotension</label>
+          <label class="chk"><input type="checkbox" id="ind_dyspnea" onchange="updateIndication()">Acute dyspnea</label>
+          <label class="chk"><input type="checkbox" id="ind_arrest" onchange="updateIndication()">Cardiac arrest — reversible-cause assessment</label>
+          <label class="chk"><input type="checkbox" id="ind_rosc" onchange="updateIndication()">Post-arrest / post-ROSC evaluation</label>
+          <label class="chk"><input type="checkbox" id="ind_trauma" onchange="updateIndication()">Trauma</label>
+        </div>
+        <div class="grid2" style="margin-top:8px">
+          <div class="field"><label>Other indication (free text)</label><input id="indOtherText" oninput="updateIndication()" placeholder="Specify if not listed above"></div>
+          <div class="field"><label>Combined indication summary (auto-generated)</label><input id="indication" readonly></div>
+        </div>
+        <div class="field"><label>Brief clinical context</label><textarea id="clinicalContext" placeholder="Relevant history, vitals, working diagnosis, ventilation status, current vasopressor/fluid therapy..."></textarea></div>
+      </div>
+    </details>
+    <details class="section full-only">
+      <summary>1b. Suggested Sequence, Probe Principle &amp; Core Objectives</summary>
+      <div class="secbody">
+        <div class="banner">Recommended principle: use the curvilinear/microconvex probe as a versatile first-line probe when it provides adequate image quality. Do not sacrifice diagnostic quality simply to maintain a single-probe workflow — switch to a phased-array or linear probe when it materially improves the required examination.</div>
+        <table><tr><th>Step</th><th>Target</th><th>Typical teaching time*</th></tr>
+        <tr><td>1</td><td>Subcostal cardiac: RV/LV relationship, gross LV function, pericardium</td><td>60–90 s</td></tr>
+        <tr><td>2</td><td>IVC: anatomy and respiratory behavior as contextual data</td><td>30–45 s</td></tr>
+        <tr><td>3</td><td>Lung: sliding, A/B-line pattern, consolidation/effusion as indicated</td><td>60 s</td></tr>
+        <tr><td>4</td><td>FAST / aorta / venous screen when clinically indicated</td><td>30–60 s</td></tr>
+        <tr><td>5</td><td>PLR + LVOT VTI when fluid responsiveness remains clinically important</td><td>Variable</td></tr>
+        </table>
+        <p class="sub">*Approximate teaching targets after competency, not a validated universal completion time. The sequence may be reordered according to the suspected immediately reversible cause and patient stability.</p>
+        <h4>Core objectives</h4>
+        <ul class="sub">
+          <li>Identify immediately important obstructive causes: tamponade, tension pneumothorax and major RV pressure overload/possible PE.</li>
+          <li>Characterize gross LV and RV systolic function and chamber relationships.</li>
+          <li>Look for pulmonary interstitial syndrome, pleural effusion, consolidation and pneumothorax-related signs.</li>
+          <li>Assess venous filling/IVC behavior as one contextual variable rather than a stand-alone volume or fluid-responsiveness test.</li>
+          <li>When a fluid challenge is being considered, determine whether a reversible preload challenge produces a meaningful increase in forward flow and whether the lungs appear tolerant of additional fluid.</li>
+          <li>Repeat POCUS after major therapeutic interventions when the clinical question persists.</li>
+        </ul>
+      </div>
+    </details>
+    <div class="banner warn">Evidence status: this app implements a focused POCUS teaching protocol revised against PubMed-indexed studies, systematic reviews/meta-analyses, peer-reviewed full texts and the 2024 SCCM focused update on adult critical care ultrasonography. It deliberately avoids treating single ultrasound measurements as stand-alone determinants of fluid administration or shock diagnosis.</div>
+  </div>
+
+  <div class="module" id="module-cardiac" data-module="cardiac">
+    <details class="section" open>
+      <summary>2. Step 1 — Subcostal Cardiac Window <span class="stepTime">60–90 s</span></summary>
+      <div class="secbody">
+        <p class="sub">Probe position: subxiphoid/subcostal, using the liver as an acoustic window. Obtain a subcostal four-chamber view when possible.</p>
+        <div class="chkgrid">
+          <label class="chk"><input type="checkbox" id="c_view4ch">Subcostal 4-chamber view obtained</label>
+          <label class="chk"><input type="checkbox" id="c_viewSA">Subcostal short-axis view obtained</label>
+          <label class="chk"><input type="checkbox" id="c_view5ch">Subcostal 5-chamber / LVOT view obtained</label>
+        </div>
+        <div class="grid2" style="margin-top:8px">
+          <div class="field">
+            <label>LV size / function</label>
+            <select id="c_lv" onchange="setCaption('c_lv');calculateAll()">
+              <option value="">Select…</option>
+              <option>Normal / no major abnormality</option>
+              <option>Hyperkinetic, small cavity</option>
+              <option>Global systolic impairment</option>
+              <option>Not assessed / inadequate window</option>
+            </select>
+            <div class="cap" id="c_lv_cap"></div>
+          </div>
+          <div class="field">
+            <label>RV size relative to LV</label>
+            <select id="c_rv" onchange="setCaption('c_rv');calculateAll()">
+              <option value="">Select…</option>
+              <option>Normal</option>
+              <option>RV enlarged relative to LV</option>
+              <option>Not assessed</option>
+            </select>
+            <div class="cap" id="c_rv_cap"></div>
+          </div>
+          <div class="field">
+            <label>Septal configuration</label>
+            <select id="c_septal" onchange="setCaption('c_septal');calculateAll()">
+              <option value="">Select…</option>
+              <option>None / normal</option>
+              <option>Systolic flattening (D-sign)</option>
+              <option>Diastolic flattening</option>
+              <option>Mixed flattening</option>
+              <option>Not assessed</option>
+            </select>
+            <div class="cap" id="c_septal_cap"></div>
+          </div>
+          <div class="field">
+            <label>Pericardium</label>
+            <select id="c_pericardium" onchange="setCaption('c_pericardium');calculateAll()">
+              <option value="">Select…</option>
+              <option>None</option>
+              <option>Effusion without collapse</option>
+              <option>Effusion with chamber collapse</option>
+              <option>Not assessed</option>
+            </select>
+            <div class="cap" id="c_pericardium_cap"></div>
+          </div>
+        </div>
+        <div class="field"><label>Notes</label><textarea id="c_notes" placeholder="Image quality, additional observations..."></textarea></div>
+      </div>
+    </details>
+    <details class="section full-only">
+      <summary>2b. Teaching Notices</summary>
+      <div class="secbody">
+        <div class="banner bad"><strong>Important correction:</strong> RV/LV enlargement should not be assigned a universal threshold such as RV:LV &gt;0.6 for diagnosis of massive PE. RV enlargement is a non-specific sign and should be integrated with clinical probability, venous findings, lung ultrasound and other investigations.</div>
+        <div class="banner"><strong>D-sign teaching point:</strong> systolic septal flattening is more consistent with RV pressure overload, whereas diastolic flattening is more consistent with RV volume overload. Mixed flattening may occur with combined loading conditions.</div>
+      </div>
+    </details>
+  </div>
+
+  <div class="module" id="module-ivc" data-module="ivc">
+    <details class="section" open>
+      <summary>3. Step 2 — IVC Assessment <span class="stepTime">30–45 s</span></summary>
+      <div class="secbody">
+        <p class="sub">Context, not a stand-alone fluid test. Obtain a longitudinal subcostal IVC view with the vessel entering the right atrium; measure perpendicular to its long axis at a consistent site. A high-quality B-mode cine loop is often preferable to M-mode alone for confirming anatomy and avoiding off-axis measurements.</p>
+        <div class="grid3">
+          <div class="field"><label>IVC visualization</label><select id="i_visualized"><option value="">Select…</option><option>Adequately visualized</option><option>Poorly visualized</option></select></div>
+          <div class="field"><label>IVC diameter, cm</label><input id="i_diameter" type="number" step="0.1" min="0"></div>
+          <div class="field"><label>Collapsibility / respiratory variation, %</label><input id="i_collapse" type="number" step="1" min="0" max="100"></div>
+        </div>
+        <div class="field">
+          <label>Overall IVC pattern</label>
+          <select id="i_pattern" onchange="setCaption('i_pattern');calculateAll()">
+            <option value="">Select…</option>
+            <option>Small &amp; highly variable</option>
+            <option>Dilated &amp; minimally variable</option>
+            <option>Marked respiratory variation</option>
+            <option>Normal / indeterminate</option>
+            <option>Poorly visualized</option>
+          </select>
+          <div class="cap" id="i_pattern_cap"></div>
+        </div>
+        <h4>Confounders present</h4>
+        <div class="chkgrid">
+          <label class="chk"><input type="checkbox" id="i_conf_spont">Spontaneous respiratory effort</label>
+          <label class="chk"><input type="checkbox" id="i_conf_vent">Mechanical ventilation</label>
+          <label class="chk"><input type="checkbox" id="i_conf_rvfail">Right-heart failure</label>
+          <label class="chk"><input type="checkbox" id="i_conf_tr">Tricuspid regurgitation</label>
+          <label class="chk"><input type="checkbox" id="i_conf_phtn">Pulmonary hypertension</label>
+          <label class="chk"><input type="checkbox" id="i_conf_tamp">Tamponade</label>
+          <label class="chk"><input type="checkbox" id="i_conf_iah">Intra-abdominal hypertension</label>
+          <label class="chk"><input type="checkbox" id="i_conf_peep">Elevated PEEP</label>
+          <label class="chk"><input type="checkbox" id="i_conf_copd">Severe COPD / auto-PEEP</label>
+          <label class="chk"><input type="checkbox" id="i_conf_compliance">Altered venous compliance</label>
+        </div>
+        <div class="field" style="margin-top:8px"><label>Notes</label><textarea id="i_notes"></textarea></div>
+      </div>
+    </details>
+    <details class="section full-only">
+      <summary>3b. Evidence Note</summary>
+      <div class="secbody">
+        <div class="banner bad">The 2.1-cm / 50% collapsibility framework is primarily an estimate of right atrial pressure in appropriate echocardiographic contexts; it should not be converted directly into a universal fluid-responsiveness rule. In spontaneously breathing patients, IVC collapsibility has only moderate diagnostic accuracy and should not be used in isolation.</div>
+        <p class="sub">Major confounders include spontaneous respiratory effort, mechanical ventilation settings, right-heart failure, tricuspid regurgitation, pulmonary hypertension, tamponade, intra-abdominal hypertension, elevated PEEP, severe COPD/auto-PEEP and altered venous compliance. When these are present, prioritize dynamic flow-based assessment when feasible.</p>
+      </div>
+    </details>
+  </div>
+
+  <div class="module" id="module-lung" data-module="lung">
+    <details class="section" open>
+      <summary>4. Step 3 — Lung Ultrasound <span class="stepTime">60 s</span></summary>
+      <div class="secbody">
+        <p class="sub">Use the same curvilinear/microconvex probe when image quality is adequate. A limited screen is appropriate during immediate resuscitation; extend posteriorly and complete the examination when the diagnosis remains uncertain.</p>
+        <div class="grid2">
+          <div class="field"><label>Right anterior zone</label><select id="l_RA" onchange="calculateAll()"><option value="">Not scanned</option><option>A-lines with lung sliding (normal)</option><option>Focal B-lines</option><option>Diffuse B-lines</option><option>Consolidation with dynamic air bronchograms</option><option>Absent lung sliding</option><option>Lung point</option><option>Pleural effusion</option><option>Inadequate image quality — non-diagnostic</option></select></div>
+          <div class="field"><label>Left anterior zone</label><select id="l_LA" onchange="calculateAll()"><option value="">Not scanned</option><option>A-lines with lung sliding (normal)</option><option>Focal B-lines</option><option>Diffuse B-lines</option><option>Consolidation with dynamic air bronchograms</option><option>Absent lung sliding</option><option>Lung point</option><option>Pleural effusion</option><option>Inadequate image quality — non-diagnostic</option></select></div>
+          <div class="field"><label>Right lateral zone</label><select id="l_RL" onchange="calculateAll()"><option value="">Not scanned</option><option>A-lines with lung sliding (normal)</option><option>Focal B-lines</option><option>Diffuse B-lines</option><option>Consolidation with dynamic air bronchograms</option><option>Absent lung sliding</option><option>Lung point</option><option>Pleural effusion</option><option>Inadequate image quality — non-diagnostic</option></select></div>
+          <div class="field"><label>Left lateral zone</label><select id="l_LL" onchange="calculateAll()"><option value="">Not scanned</option><option>A-lines with lung sliding (normal)</option><option>Focal B-lines</option><option>Diffuse B-lines</option><option>Consolidation with dynamic air bronchograms</option><option>Absent lung sliding</option><option>Lung point</option><option>Pleural effusion</option><option>Inadequate image quality — non-diagnostic</option></select></div>
+        </div>
+        <div class="grid2" style="margin-top:8px">
+          <label class="chk"><input type="checkbox" id="l_posterior">Posterior zones also examined</label>
+          <div class="field"><label>Effusion / consolidation location (if any)</label><input id="l_effusionLoc" placeholder="e.g. right posterolateral"></div>
+        </div>
+        <div class="field"><label>Notes</label><textarea id="l_notes"></textarea></div>
+        <p class="sub">Aggregate lung pattern and pneumothorax/effusion/consolidation flags are computed live in the decision-support cards above.</p>
+      </div>
+    </details>
+    <details class="section full-only">
+      <summary>4b. Teaching Notices</summary>
+      <div class="secbody">
+        <div class="banner bad">B-lines are not synonymous with cardiogenic pulmonary edema. Diffuse B-lines indicate an interstitial-alveolar syndrome and can occur in cardiogenic edema, ARDS, pneumonia and other conditions. Absence of lung sliding should not be documented as "pneumothorax" unless the overall examination (lung point, pleural-line assessment, clinical setting) supports that diagnosis.</div>
+      </div>
+    </details>
+  </div>
+
+  <div class="module" id="module-abdo" data-module="abdo">
+    <details class="section" open>
+      <summary>5. Step 4 — Abdominal / Vascular Screen <span class="stepTime">30–60 s, if indicated</span></summary>
+      <div class="secbody">
+        <p class="sub">Perform FAST views, abdominal aortic screening or focused venous assessment only when clinically indicated. The curvilinear probe is well suited to these deeper examinations.</p>
+        <div class="grid2">
+          <div class="field"><label>FAST</label><select id="a_fast"><option value="">Not performed</option><option>Negative</option><option>Positive — free fluid</option><option>Equivocal</option></select></div>
+          <div class="field"><label>FAST fluid location (if positive/equivocal)</label><input id="a_fastLoc"></div>
+        </div>
+        <div class="grid3">
+          <div class="field"><label>Aortic diameter, cm</label><input id="a_aortaDiam" type="number" step="0.1" min="0"></div>
+          <div class="field">
+            <label>Aortic assessment</label>
+            <select id="a_aortaAssess" onchange="setCaption('a_aortaAssess');calculateAll()">
+              <option value="">Select…</option>
+              <option>Normal, &lt;3.0 cm</option>
+              <option>≥3.0 cm — aneurysmal range</option>
+              <option>Not assessed</option>
+            </select>
+            <div class="cap" id="a_aortaAssess_cap"></div>
+          </div>
+          <div class="field"><label>Femoral / proximal venous screen</label><select id="a_femoral"><option value="">Not performed</option><option>Compressible bilaterally — normal</option><option>Non-compressible — suspect DVT</option><option>Equivocal</option></select></div>
+        </div>
+        <div class="field"><label>IVC anatomy / patency</label><select id="a_ivcPatency"><option value="">Not assessed</option><option>Normal</option><option>Abnormal / thrombus suspected</option></select></div>
+        <div class="field"><label>Notes</label><textarea id="a_notes"></textarea></div>
+      </div>
+    </details>
+    <details class="section full-only">
+      <summary>5b. Interpretive Cautions</summary>
+      <div class="secbody">
+        <div class="banner">A negative FAST does not exclude all internal bleeding. A focused DVT examination can support PE evaluation but does not by itself establish PE. Do not use IVC appearance alone to diagnose fluid overload or obstruction.</div>
+      </div>
+    </details>
+  </div>
+
+  <div class="module" id="module-dynamic" data-module="dynamic">
+    <details class="section" open>
+      <summary>6. Step 5 — Fluid Responsiveness: PLR + LVOT VTI <span class="stepTime">Variable</span></summary>
+      <div class="secbody">
+        <p class="sub">Fluid responsiveness means an increase in cardiac output or stroke volume after a preload increase — it does not mean the patient requires fluid.</p>
+        <div class="grid2">
+          <div class="field"><label>Is additional fluid clinically being considered?</label><select id="d_fluidConsidered"><option value="">Select…</option><option>Yes</option><option>No</option></select></div>
+          <div class="field"><label>Intended physiological endpoint</label><input id="d_endpoint" placeholder="e.g. increase MAP, reduce lactate, wean pressor"></div>
+        </div>
+        <div class="grid2">
+          <div class="field"><label>PLR performed?</label><select id="d_plrPerformed" onchange="calculateAll();renderSafetyBanner()"><option value="">Select…</option><option>Yes</option><option>No</option><option>Not suitable (e.g. raised ICP, lower-limb injury/amputation, compartment syndrome)</option></select></div>
+          <div class="field"><label>Doppler alignment (subcostal 5-chamber/LVOT)</label><select id="d_alignment" onchange="calculateAll();renderSafetyBanner()"><option value="">Select…</option><option>Adequate — parallel to LVOT flow</option><option>Suboptimal — do not report numeric VTI</option></select></div>
+        </div>
+        <div class="grid2">
+          <div class="field"><label>Baseline LVOT VTI, cm (average of ≥3 beats)</label><input id="d_vtiBase" type="number" step="0.1" min="0" oninput="calculateAll()"></div>
+          <div class="field"><label>Post-PLR LVOT VTI, cm (average of ≥3 beats)</label><input id="d_vtiPLR" type="number" step="0.1" min="0" oninput="calculateAll()"></div>
+        </div>
+        <label class="chk"><input type="checkbox" id="d_technicallyComparable" onchange="calculateAll()">Baseline and post-PLR measurements are technically comparable (same view, gate position and settings) and each averaged over ≥3 beats</label>
+        <div class="field"><label>Notes</label><textarea id="d_notes"></textarea></div>
+        <p class="sub">PLR/LVOT VTI interpretation is computed live in the decision-support cards above.</p>
+      </div>
+    </details>
+    <details class="section full-only">
+      <summary>6b. Technical Requirement &amp; Evidence</summary>
+      <div class="secbody">
+        <div class="banner bad"><strong>Technical requirement:</strong> if a reliable LVOT VTI cannot be obtained with the curvilinear probe, do not manufacture a numerical result — use another validated flow-based method or a different transducer if available.</div>
+        <div class="banner">PLR coupled to a flow variable (cardiac output or its direct surrogate) has strong diagnostic performance — pooled sensitivity ~86%, specificity ~92% in meta-analysis — and performs better than pulse-pressure changes. A reproducible increase in VTI of approximately 10–15% is commonly used as supportive evidence of preload responsiveness, though thresholds vary by technique and clinical context.</div>
+      </div>
+    </details>
+  </div>
+
+  <div class="module" id="module-phenotype" data-module="phenotype">
+    <details class="section" open>
+      <summary>7. Clinician-Confirmed Phenotype &amp; Plan</summary>
+      <div class="secbody">
+        <p class="sub">Auto-suggested phenotype, fluid tolerance and PLR interpretation appear in the decision-support cards above — decision-support only, not a diagnosis.</p>
+        <div class="grid2">
+          <div class="field"><label>Final working phenotype (clinical judgment)</label><select id="p_workingPhenotype"><option value="">Select…</option><option>Hypovolemic / low filling</option><option>Distributive</option><option>Cardiogenic</option><option>Obstructive</option><option>Mixed</option><option>Undetermined</option></select></div>
+          <div class="field"><label>Important uncertainty / discordance</label><input id="p_uncertainty" placeholder="e.g. image quality limited, findings discordant with clinical picture"></div>
+        </div>
+        <div class="field"><label>Plan / next actions (documentation only — not prescriptive)</label><textarea id="p_dominantAction" placeholder="Dominant physiology addressed, reassessment plan, escalation, formal echo/CT/specialist referral if indicated..."></textarea></div>
+        <h4>Post-scan checklist</h4>
+        <div class="chkgrid">
+          <label class="chk"><input type="checkbox" id="ps_images">Key images / clips documented</label>
+          <label class="chk"><input type="checkbox" id="ps_communicated">Findings communicated to resuscitation team</label>
+          <label class="chk"><input type="checkbox" id="ps_repeat">Repeat POCUS planned if clinical question persists</label>
+        </div>
+        <div class="field" style="margin-top:8px"><label>Repeat-scan timing / trigger</label><input id="ps_repeatWhen" placeholder="e.g. after fluid bolus / after pressor titration / in 30 min"></div>
+      </div>
+    </details>
+    <details class="section full-only">
+      <summary>7b. Shock Phenotyping Decision Matrix (reference)</summary>
+      <div class="secbody">
+        <table><tr><th>Working phenotype</th><th>Typical POCUS pattern</th><th>Management implication</th></tr>
+        <tr><td>Hypovolemic / low filling</td><td>Small/hyperdynamic LV, low venous filling, A-line-predominant lungs, compatible history</td><td>Consider a monitored fluid challenge if a therapeutic indication exists; treat the cause of volume loss</td></tr>
+        <tr><td>Distributive</td><td>Hyperdynamic or preserved LV, variable venous findings, A-line or source-specific lung pattern</td><td>Treat infection/vasodilation/other cause; use dynamic assessment to determine whether fluid is likely to help</td></tr>
+        <tr><td>Cardiogenic</td><td>LV systolic dysfunction and/or major valvular/cardiac abnormality, pulmonary congestion, venous congestion</td><td>Avoid routine empiric fluid loading; prioritize cause-specific cardiac management and perfusion support</td></tr>
+        <tr><td>Obstructive</td><td>Tamponade physiology, major RV pressure overload/possible PE, or pneumothorax-related findings</td><td>Urgently evaluate and relieve the obstruction; do not delay definitive management for serial POCUS</td></tr>
+        <tr><td>Mixed</td><td>More than one phenotype simultaneously</td><td>Treat the dominant immediately reversible physiology and reassess dynamically</td></tr>
+        </table>
+        <div class="banner"><strong>Core teaching principle:</strong> fluid responsiveness ≠ fluid requirement. A patient can be preload responsive while simultaneously being at high risk of harm from additional fluid. POCUS should generate a working physiological phenotype, not a single-label diagnosis — mixed shock is common.</div>
+      </div>
+    </details>
+    <details class="section full-only">
+      <summary>7c. Evidence-Based Teaching Pearls &amp; Limitations</summary>
+      <div class="secbody">
+        <ul class="sub">
+          <li>A curvilinear/microconvex probe is a versatile shock POCUS probe, not a universal replacement for every ultrasound transducer.</li>
+          <li>IVC size and respiratory variation are contextual findings; do not use them as an isolated prescription for fluid.</li>
+          <li>PLR coupled to a flow variable is substantially more robust than static volume surrogates for testing preload responsiveness.</li>
+          <li>B-lines indicate an interstitial syndrome; they do not by themselves diagnose cardiogenic pulmonary edema.</li>
+          <li>Absent lung sliding is not synonymous with pneumothorax; look for a coherent pleural pattern and, when possible, a lung point.</li>
+          <li>RV enlargement is not synonymous with acute PE and should be integrated with the clinical probability and other POCUS findings.</li>
+          <li>Fluid responsiveness is a physiological property. Fluid requirement is a treatment decision.</li>
+          <li>Serial, integrated reassessment is more defensible than a one-time threshold-driven decision.</li>
+        </ul>
+        <h4>Limitations</h4>
+        <ul class="sub">
+          <li><strong>Probe:</strong> less optimal cardiac temporal/superficial resolution than a phased-array probe; less suitable for superficial structures than a linear probe.</li>
+          <li><strong>Window:</strong> severe obesity, bowel gas, abdominal distension, dressings, subcutaneous emphysema and prior surgery may prevent adequate subcostal imaging.</li>
+          <li><strong>IVC:</strong> diameter and respiratory variation are strongly affected by ventilation, respiratory effort, right-heart pathology and intra-abdominal pressure.</li>
+          <li><strong>Lung:</strong> B-lines and absent lung sliding are pattern findings, not single-diagnosis findings.</li>
+          <li><strong>Operator dependence:</strong> all focused ultrasound findings depend on acquisition quality and interpretation. Residents should obtain supervised competency before using quantitative measurements for management.</li>
+          <li><strong>Doppler:</strong> VTI is highly dependent on alignment, sample location and beat selection. Poor alignment should be reported as a limitation rather than converted into a false numerical value.</li>
+          <li><strong>PE:</strong> RV enlargement is supportive but non-specific. POCUS cannot reliably exclude PE in isolation.</li>
+          <li><strong>Tamponade:</strong> pericardial effusion is not synonymous with tamponade. Chamber collapse and hemodynamic context matter.</li>
+          <li><strong>Time:</strong> ≈5 minutes is a training target for a core screen, not a validated universal completion time.</li>
+        </ul>
+      </div>
+    </details>
+  </div>
+
+  <details class="section">
+    <summary>References</summary>
+    <div class="secbody">
+      <ol class="citation">
+        <li>Andruszkiewicz P, Sobczyk D, Nycz K, et al. A comparison of the ultrasound measurement of the inferior vena cava obtained with cardiac and convex transducers. <i>Journal of Ultrasonography.</i> 2017;17:241–245. PMID: 29375898. PMCID: PMC5769663. DOI: 10.15557/JoU.2017.0035.</li>
+        <li>Lichtenstein DA. How can the use of lung ultrasound in cardiac arrest make ultrasound a holistic discipline. The example of the SESAME-protocol. <i>Medical Ultrasonography.</i> 2014;16:252–255. PMID: 25110767. DOI: 10.11152/mu.2013.2066.163.dal1.</li>
+        <li>Lichtenstein D, Malbrain MLNG. Critical care ultrasound in cardiac arrest. Technological requirements for performing the SESAME-protocol—a holistic approach. <i>Anaesthesiology Intensive Therapy.</i> 2015;47:471–481. PMID: 26578398. DOI: 10.5603/AIT.a2015.0072.</li>
+        <li>Lari A, et al. Inferior Vena Cava Ultrasonography for Volume Status Evaluation: An Intriguing Promise Never Fulfilled. <i>Journal of Clinical Medicine.</i> 2023. PMCID: PMC10053997.</li>
+        <li>Cardozo Júnior LCM, Lemos GSDL, Besen BAMP. Fluid responsiveness assessment using inferior vena cava collapsibility among spontaneously breathing patients: Systematic review and meta-analysis. <i>Medicina Intensiva.</i> 2023;47:90–98. PMID: 36272909. DOI: 10.1016/j.medine.2021.12.018.</li>
+        <li>Islam M, Levitus M, Eisen L, Shiloh AL, Fein D. Lung Ultrasound for the Diagnosis and Management of Acute Respiratory Failure. <i>Lung.</i> 2020 Feb;198(1):1-11. DOI: 10.1007/s00408-019-00309-1.</li>
+        <li>Lichtenstein DA, Mezière GA, Lagoueyte JF, et al. A-lines and B-lines: lung ultrasound as a bedside tool for predicting pulmonary artery occlusion pressure in the critically ill. <i>Chest.</i> 2009;136:1014–1020. PMID: 19809049. DOI: 10.1378/chest.09-0001.</li>
+        <li>Díaz-Gómez JL, Sharif S, Ablordeppey E, et al. Society of Critical Care Medicine Guidelines on Adult Critical Care Ultrasonography: Focused Update 2024. <i>Critical Care Medicine.</i> 2025;53:e447–e458. PMID: 39982182.</li>
+        <li>Cherpanath TGV, Hirsch A, Geerts BF, et al. Predicting Fluid Responsiveness by Passive Leg Raising: A Systematic Review and Meta-Analysis of 23 Clinical Trials. <i>Critical Care Medicine.</i> 2016;44:981–991. PMID: 26741579. DOI: 10.1097/CCM.0000000000001556.</li>
+        <li>Cavallaro F, Sandroni C, Marano C, et al. Diagnostic accuracy of passive leg raising for prediction of fluid responsiveness in adults: systematic review and meta-analysis of clinical studies. <i>Intensive Care Medicine.</i> 2010;36:1475–1483. PMID: 20502865. DOI: 10.1007/s00134-010-1929-y.</li>
+      </ol>
+      <p class="sub" style="margin-top:10px"><strong>Program:</strong> RS-POCUS (Rapid Shock POCUS) v1.0. <strong>Author:</strong> Prof. (Dr) Jyotirmay Kirtania. <strong>Copyright:</strong> © 2026 Prof. (Dr) Jyotirmay Kirtania. <strong>License:</strong> GNU General Public License version 3.0 or later (GPL-3.0-or-later).</p>
+    </div>
+  </details>
+
+  <footer class="appfoot disclaimer">Evidence scope: RS-POCUS is currently designed and evidence-anchored for adults; pediatric use has not been evaluated in this version. This record is intended for education and structured POCUS practice. It does not replace formal echocardiography, comprehensive diagnostic ultrasound, CT, specialist consultation or established resuscitation protocols. Ultrasound findings must be interpreted with the complete clinical picture. Quantitative thresholds are supportive rather than absolute and should not override clinical deterioration, image-quality limitations or discordant physiological data. Saved records are stored in browser local storage and are not encrypted by RS-POCUS; data are never transmitted anywhere unless you explicitly export them. For community testing, use synthetic or de-identified patient data.</footer>
+</div>
+
+<div class="modal" id="recordsModal"><div class="modalbox" style="max-width:900px">
+  <div class="row" style="justify-content:space-between"><h3>Saved scans</h3><button onclick="closeRecords()">Close</button></div>
+  <div class="sub" style="margin-bottom:8px">Saved records are stored in browser local storage and are not encrypted by RS-POCUS. For community testing, use synthetic or de-identified patient data.</div>
+  <table class="logtbl" id="recordsTable"><thead><tr><th>Case / Patient ID</th><th>Operator</th><th>Age/Sex</th><th>Scan date/time</th><th>Suggested phenotype</th><th>Saved</th><th></th></tr></thead><tbody id="recordsTbody"></tbody></table>
+</div></div>
+
+<div class="modal" id="aboutModal"><div class="modalbox">
+  <div class="row" style="justify-content:space-between"><h3>About RS-POCUS</h3><button onclick="closeAbout()">Close</button></div>
+  <div class="sub" style="font-size:13px;color:var(--ink);white-space:pre-wrap">RS-POCUS (Rapid Shock POCUS) v1.0
+Curvilinear/microconvex-probe protocol for undifferentiated shock: phenotyping, fluid responsiveness and fluid tolerance.
+
+Purpose:
+Structured bedside documentation and lightweight decision support for the five-step curvilinear-probe shock POCUS sequence — subcostal cardiac, IVC, lung, abdominal/vascular, and PLR/LVOT VTI — for emergency medicine and critical care residents.
+
+Design principle:
+The operator remains the author of the scan and its interpretation. The software provides standard terminology, structured documentation, and evidence-anchored teaching captions without imposing unnecessary clerical burden. No shock phenotype or fluid decision should be triggered from a single isolated finding.
+
+This tool supports documentation and teaching. It does not replace formal echocardiography, comprehensive diagnostic ultrasound, CT, specialist consultation, established resuscitation protocols, or consultant judgement.
+
+Evidence scope:
+RS-POCUS is currently designed and evidence-anchored for adults. Pediatric use has not been evaluated in this version; adult-derived thresholds and interpretations may not apply.
+
+Privacy:
+Saved records are stored in browser local storage and are not encrypted by RS-POCUS. Nothing is transmitted anywhere unless you explicitly export it. For community testing, use synthetic or de-identified patient data.
+
+Author: Prof. (Dr) Jyotirmay Kirtania | Copyright © 2026 | License: GNU GPL v3.0-or-later</div>
+</div></div>
+
+<script>
+const $=id=>document.getElementById(id);
+function val(id){ const el=$(id); return el ? el.value : ''; }
+function setVal(id,v){ const el=$(id); if(el) el.value = v; }
+function pf(id){ return (val(id)||'').trim(); }
+function chk(id){ const el=$(id); return el ? el.checked : false; }
+function fmt(x,d=0){ return Number.isFinite(x)?x.toFixed(d):'—'; }
+function num(id){ const x=parseFloat(val(id)); return Number.isFinite(x)?x:null; }
+function esc(s){return String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+function toast(msg){ $('saveStatus').textContent = msg; setTimeout(()=>{ if($('saveStatus').textContent===msg) $('saveStatus').textContent=''; }, 3000); }
+
+const SHARED_KEYS=['caseId','operator','age','sex','setting','scanTime','probe','supervision'];
+function currentStep(){ const active=document.querySelector('.tabbtn.active'); return active ? active.dataset.mod : 'overview'; }
+function switchStep(name){
+  document.querySelectorAll('.module').forEach(m=>m.classList.toggle('active', m.dataset.module===name));
+  document.querySelectorAll('.tabbtn').forEach(b=>b.classList.toggle('active', b.dataset.mod===name));
+  $('moduleTextOut').classList.add('hidden');
+}
+
+/* ================= quick/full toggle ================= */
+let quickMode=true;
+function applyQuickFullVisibility(){
+  document.querySelectorAll('details.section.full-only').forEach(sec=>{ sec.style.display = quickMode ? 'none' : 'block'; });
+  $('qfToggleBtn').textContent = quickMode ? 'Show full detail' : 'Show quick mode';
+}
+function toggleQuickFullMode(){ quickMode=!quickMode; applyQuickFullVisibility(); }
+
+function updateIndication(){
+  const labels={ind_shock:'Undifferentiated shock',ind_hypotension:'Hypotension',ind_dyspnea:'Acute dyspnea',ind_arrest:'Cardiac arrest — reversible-cause assessment',ind_rosc:'Post-arrest / post-ROSC evaluation',ind_trauma:'Trauma'};
+  const selected=Object.keys(labels).filter(chk).map(id=>labels[id]);
+  const other=pf('indOtherText');
+  let combined=selected.join('; ');
+  if(other) combined = combined ? (combined+'; '+other) : other;
+  setVal('indication', combined);
+  renderSafetyBannerDebounced();
+}
+
+/* ================= teaching captions ================= */
+const CAPTIONS={
+ c_lv:{'Hyperkinetic, small cavity':'Low LV filling and/or high sympathetic state. Supports hypovolemia or distributive physiology but is not specific.','Global systolic impairment':'Reduced LV pump function. Supports cardiogenic contribution; quantify only when image quality and method are adequate.','Normal / no major abnormality':'No obvious gross cardiac cause on this focused exam. Does not exclude ischemia, valvular disease, early shock or other pathology.'},
+ c_rv:{'RV enlarged relative to LV':'RV pressure/volume overload. Consider acute PE, pulmonary hypertension, RV infarction, ARDS or acute-on-chronic RV disease.'},
+ c_septal:{'Systolic flattening (D-sign)':'RV pressure and/or volume loading — systolic flattening favors RV pressure overload.','Diastolic flattening':'RV pressure and/or volume loading — diastolic flattening favors RV volume overload.','Mixed flattening':'May occur with combined RV pressure and volume loading conditions.'},
+ c_pericardium:{'Effusion with chamber collapse':'Tamponade physiology may be present. Interpret with clinical context and respiratory/hemodynamic findings.','Effusion without collapse':'Pericardial effusion is not synonymous with tamponade — chamber collapse and hemodynamic context matter.'},
+ i_pattern:{'Small & highly variable':'Possible low right-sided filling. Does not prove fluid responsiveness or fluid requirement.','Dilated & minimally variable':'Elevated right-sided pressure or impaired venous compliance may be present. Does not prove fluid overload — consider RV failure, TR, tamponade, high intrathoracic pressure and intra-abdominal hypertension.','Marked respiratory variation':'May support preload dependence in selected patients. Not a stand-alone indication for fluid administration.','Poorly visualized':'No reliable IVC conclusion. Use other dynamic/physiological tests.'},
+ a_aortaAssess:{'≥3.0 cm — aneurysmal range':'Generally considered aneurysmal; management requires clinical and vascular assessment.'}
+};
+function setCaption(id){ const v=val(id); $(id+'_cap').textContent=(CAPTIONS[id]&&CAPTIONS[id][v])||''; }
+
+/* ================= clinical logic ================= */
+const NOT_ASSESSED='Not assessed / insufficient examination';
+/* A zone marked explicitly low-quality/non-diagnostic must not count as an assessed (negative)
+   finding — an attempted-but-non-diagnostic window carries the same "not assessed" weight as a
+   blank field for every downstream CDSS conclusion. */
+function isDiagnosticZone(v){ return !!v && v!=='Inadequate image quality — non-diagnostic'; }
+function lungZoneVals(){ return [{z:'l_RA',side:'R'},{z:'l_RL',side:'R'},{z:'l_LA',side:'L'},{z:'l_LL',side:'L'}].map(o=>({...o,v:val(o.z)})); }
+function lungPatternSummary(){
+  const zones=lungZoneVals();
+  const diagnostic=zones.filter(z=>isDiagnosticZone(z.v));
+  const inadequateCount=zones.filter(z=>z.v==='Inadequate image quality — non-diagnostic').length;
+  const lungPoint=diagnostic.some(z=>z.v==='Lung point');
+  const absentSliding=diagnostic.some(z=>z.v==='Absent lung sliding');
+  const effusion=diagnostic.some(z=>z.v==='Pleural effusion');
+  const consolidation=diagnostic.some(z=>z.v==='Consolidation with dynamic air bronchograms');
+  const diffuseR=diagnostic.some(z=>z.side==='R'&&z.v==='Diffuse B-lines');
+  const diffuseL=diagnostic.some(z=>z.side==='L'&&z.v==='Diffuse B-lines');
+  const blineR=diagnostic.some(z=>z.side==='R'&&(z.v==='Diffuse B-lines'||z.v==='Focal B-lines'));
+  const blineL=diagnostic.some(z=>z.side==='L'&&(z.v==='Diffuse B-lines'||z.v==='Focal B-lines'));
+  const normalCount=diagnostic.filter(z=>z.v==='A-lines with lung sliding (normal)').length;
+  let pattern='Not assessed / insufficient data';
+  if((diffuseR&&blineL)||(diffuseL&&blineR)||(diffuseR&&diffuseL)) pattern='Diffuse bilateral B-lines';
+  else if(blineR||blineL) pattern='Focal / patchy B-lines';
+  else if(normalCount>0&&diagnostic.length===normalCount) pattern='A-line predominant';
+  /* Pneumothorax screening classically requires at least the bilateral ANTERIOR windows (least-
+     dependent, gas-rising zones in a supine patient) — two diagnostic zones on the same side, or a
+     single zone anywhere, is not a complete bilateral screen. */
+  const bilateralAnteriorAssessed=isDiagnosticZone(val('l_RA'))&&isDiagnosticZone(val('l_LA'));
+  const bilateralAnyAssessed=(isDiagnosticZone(val('l_RA'))||isDiagnosticZone(val('l_RL')))&&(isDiagnosticZone(val('l_LA'))||isDiagnosticZone(val('l_LL')));
+  return {pattern,lungPoint,absentSliding,effusion,consolidation,scannedCount:diagnostic.length,inadequateCount,bilateralAnteriorAssessed,bilateralAnyAssessed};
+}
+/* Lung point alone is a strong, near-specific pneumothorax sign; absent lung sliding without a lung
+   point is only suspicious (many non-PTX causes exist — pleurodesis, ARDS, main-stem intubation,
+   apnea) and must not by itself drive an "Obstructive" phenotype or a green reversible-causes screen. */
+const REQUIRED_LUNG_ZONES_FOR_REASSURANCE=3;
+function fluidToleranceAssess(lp){
+  const lvPoor=val('c_lv')==='Global systolic impairment';
+  const rvDys=val('c_rv')==='RV enlarged relative to LV';
+  const venousCong=val('i_pattern')==='Dilated & minimally variable';
+  let tone='info',text=NOT_ASSESSED+' — insufficient data entered to assess fluid tolerance.';
+  if(rvDys&&venousCong){ tone='red'; text='RV dysfunction with venous congestion: fluid may worsen RV loading even if the patient is preload responsive.'; }
+  else if(lvPoor&&lp.pattern==='Diffuse bilateral B-lines'){ tone='red'; text='Poor LV function with diffuse B-lines: high concern for cardiogenic pulmonary congestion.'; }
+  else if(lp.pattern==='Diffuse bilateral B-lines'){ tone='amber'; text='Diffuse bilateral B-lines: higher likelihood of pulmonary congestion; additional fluid requires stronger justification.'; }
+  else if(lp.pattern==='Focal / patchy B-lines'){ tone='amber'; text='Focal/patchy B-lines: regional interstitial/pleural abnormality; do not infer systemic pulmonary fluid intolerance from this finding alone.'; }
+  else if(lp.pattern==='A-line predominant'&&!lvPoor){
+    if(lp.scannedCount>=REQUIRED_LUNG_ZONES_FOR_REASSURANCE&&lp.bilateralAnyAssessed){ tone='good'; text=`A-line predominant lungs (${lp.scannedCount}/4 zones examined, bilateral) without major pulmonary congestion: lower ultrasound evidence of pulmonary fluid intolerance.`; }
+    else if(!lp.bilateralAnyAssessed){ tone='info'; text=`A-line pattern noted, but the screen is unilateral/geographically incomplete (${lp.scannedCount}/4 zones, one side only) — insufficient to conclude reassuring fluid tolerance. Examine both sides before using this as supporting evidence.`; }
+    else { tone='info'; text=`A-line pattern noted, but only ${lp.scannedCount} of 4 zones examined — too limited a screen to conclude reassuring fluid tolerance. Extend the lung exam (additional zones, posterior fields) before using this as supporting evidence.`; }
+  }
+  return {tone,text};
+}
+function dynamicTestAssess(){
+  const performed=val('d_plrPerformed'), align=val('d_alignment'), comparable=chk('d_technicallyComparable'), base=num('d_vtiBase'), post=num('d_vtiPLR');
+  let tone='info',lines=[],resultLabel='—';
+  if(!performed){ lines.push('Select whether PLR was performed.'); }
+  else if(performed!=='Yes'){ lines.push(`PLR ${performed.toLowerCase()}. Consider another dynamic or static assessment and document why PLR was not used.`); resultLabel=performed; }
+  else if(align!=='Adequate — parallel to LVOT flow'){
+    tone='amber';
+    if(align==='Suboptimal — do not report numeric VTI'){ lines.push('Doppler alignment reported as suboptimal — numeric VTI / percentage change is not reported per protocol. Use another validated flow-based method or a different transducer if available.'); resultLabel='Alignment inadequate'; }
+    else { lines.push(NOT_ASSESSED+' — Doppler alignment not yet documented. Numeric VTI/percentage-change interpretation is withheld until alignment is explicitly confirmed adequate (parallel to LVOT flow); a blank field is not treated as adequate.'); resultLabel='Alignment not documented'; }
+  }
+  else if(!comparable){
+    tone='amber';
+    lines.push('Doppler alignment is adequate, but technical comparability between the baseline and post-PLR measurements (same view/gate/settings, each averaged over ≥3 beats) has not been confirmed — numeric percentage change is withheld until confirmed.');
+    resultLabel='Comparability not confirmed';
+  }
+  else if(Number.isFinite(base)&&Number.isFinite(post)&&base>0){
+    const pct=(post-base)/base*100;
+    if(pct>=15){ tone='good'; lines.push(`Reproducible ${fmt(pct,0)}% increase in LVOT VTI with PLR: consistent with preload responsiveness.`); resultLabel=`+${fmt(pct,0)}% — responsive`; }
+    else if(pct>=10){ tone='amber'; lines.push(`Borderline ${fmt(pct,0)}% increase in LVOT VTI with PLR: equivocal — consider repeat measurement or an alternate flow-based method.`); resultLabel=`+${fmt(pct,0)}% — borderline`; }
+    else { lines.push(`${pct>=0?'+':''}${fmt(pct,0)}% change in LVOT VTI with PLR: no convincing increase — not clearly preload responsive by this test.`); resultLabel=`${fmt(pct,0)}% — not responsive`; }
+  } else { lines.push('Enter baseline and post-PLR LVOT VTI (each averaged over ≥3 beats) to assess.'); }
+  lines.push('Fluid responsiveness ≠ fluid requirement. Decide whether to administer fluid only after considering fluid tolerance and the therapeutic goal.');
+  return {tone,text:lines.join(' '),resultLabel};
+}
+/* Shared, completeness-gated assessment of the three immediately-reversible-cause domains
+   (tamponade, RV pressure overload/possible PE, pneumothorax). A domain only reads "negative" when
+   it was actually, adequately assessed; a blank, "Not assessed", or image-quality-inadequate field
+   is reported as not assessed, never folded into a reassuring conclusion. Pneumothorax additionally
+   requires a bilateral-anterior screen (see lungPatternSummary) before it can read negative — a
+   single examined zone must not be treated as a completed PTX screen. Used by both the phenotype
+   suggestion and the reversible-causes screen so the two stay consistent. */
+function computeReversibleFlags(lp){
+  const peri=val('c_pericardium'), rv=val('c_rv'), septal=val('c_septal');
+  const redFlags=[], amberFlags=[], notAssessed=[];
+  let tamponadeFlag=false, rvFlag=false, ptxFlag=false, ptxSuspected=false;
+  if(peri==='Effusion with chamber collapse'){ tamponadeFlag=true; redFlags.push('Pericardial effusion with chamber collapse — tamponade physiology.'); }
+  else if(!peri||peri==='Not assessed'){ notAssessed.push('pericardium / tamponade'); }
+  if(rv==='RV enlarged relative to LV'&&(septal==='Systolic flattening (D-sign)'||septal==='Mixed flattening')){
+    rvFlag=true;
+    redFlags.push('Major RV pressure-overload pattern (RV enlargement with septal flattening) — evaluate urgently for acute PE and other causes. Possible alternatives include pulmonary hypertension, ARDS/high pulmonary vascular load, RV infarction, and acute-on-chronic RV dysfunction; this pattern does not by itself confirm obstructive shock.');
+  }
+  else if(!rv||rv==='Not assessed'||!septal||septal==='Not assessed'){ notAssessed.push('RV / septal configuration'); }
+  if(lp.lungPoint){ ptxFlag=true; redFlags.push('Lung point identified — strongly supports pneumothorax at that location.'); }
+  else if(lp.absentSliding){ ptxSuspected=true; amberFlags.push('Absent lung sliding without a confirmed lung point — suspected pneumothorax pattern, not diagnostic by itself; correlate with pleural-line assessment, lung point search and clinical context.'); }
+  else if(!lp.bilateralAnteriorAssessed){ notAssessed.push('bilateral anterior lung sliding (pneumothorax screen incomplete)'); }
+  return {tamponadeFlag,rvFlag,ptxFlag,ptxSuspected,redFlags,amberFlags,notAssessed};
+}
+function phenotypeSuggest(lp,rf){
+  const c_lv=val('c_lv'), c_rv=val('c_rv'), c_peri=val('c_pericardium'), i_pattern=val('i_pattern');
+  /* Only tamponade-with-collapse and a definite lung point are treated as strong/definite obstructive
+     triggers. RV pressure-overload pattern alone gets its own softer, differential-diagnosis-aware
+     label rather than a flat "Obstructive" — see computeReversibleFlags for the underlying wording. */
+  const strongObstructive=rf.tamponadeFlag||rf.ptxFlag;
+  const cardiogenic=c_lv==='Global systolic impairment'&&(lp.pattern==='Diffuse bilateral B-lines'||i_pattern==='Dilated & minimally variable');
+  const hypoDistrib=c_lv==='Hyperkinetic, small cavity';
+  const flagCount=[strongObstructive,rf.rvFlag,cardiogenic,hypoDistrib].filter(Boolean).length;
+  let tone='info',label='Undetermined',reasons=[];
+  if(strongObstructive){
+    label='Obstructive'; tone='red';
+    reasons.push(...rf.redFlags.filter(f=>!f.startsWith('Major RV pressure-overload')));
+    reasons.push('Urgently evaluate and relieve the obstruction — do not delay definitive management for serial POCUS.');
+    if(rf.rvFlag) reasons.push('A major RV pressure-overload pattern is also present — see the reversible-causes card for detail.');
+  } else if(rf.rvFlag){
+    label='Possible obstructive / RV pressure-overload physiology'; tone='red';
+    reasons.push('Major RV pressure-overload pattern — evaluate urgently for acute PE and other causes. Possible alternatives include pulmonary hypertension, ARDS/high pulmonary vascular load, RV infarction, and acute-on-chronic RV dysfunction. This pattern does not by itself confirm obstructive shock — correlate with hemodynamics, clinical probability and further imaging.');
+  } else if(cardiogenic){
+    label='Cardiogenic'; tone='amber';
+    reasons.push('LV systolic impairment with pulmonary and/or venous congestion. Avoid routine empiric fluid loading; prioritize cause-specific cardiac management.');
+  } else if(hypoDistrib){
+    label='Hypovolemic or distributive'; tone='amber';
+    reasons.push('Hyperkinetic, small LV cavity is non-specific for hypovolemia vs. distributive physiology — correlate with clinical context (fever, vasoplegia, rash, source, history of losses). Use Step 5 dynamic assessment to determine whether fluid is likely to help.');
+  } else if(c_lv==='Normal / no major abnormality'&&c_rv==='Normal'&&c_peri==='None'){
+    label='No major abnormality'; tone='good';
+    reasons.push('No obvious gross cardiac cause on this focused exam. Does not exclude ischemia, valvular disease, early shock or other pathology.');
+  } else {
+    reasons.push('Enter cardiac, IVC and lung findings to generate a suggestion.');
+  }
+  if(!strongObstructive&&!rf.rvFlag&&rf.ptxSuspected){
+    reasons.push('Note: absent lung sliding was noted without a confirmed lung point — suspected but not diagnostic, and this alone does not drive the phenotype to Obstructive.');
+    if(tone!=='red') tone='amber';
+  }
+  if(flagCount>1){ label+=' (mixed features present)'; if(tone!=='red') tone='amber'; }
+  return {label,tone,text:reasons.join(' ')};
+}
+function reversibleCauseScreen(rf,lp){
+  const allBlank=!val('c_pericardium')&&!val('c_rv')&&!val('c_septal')&&lp.scannedCount===0&&lp.inadequateCount===0;
+  let tone='info',html;
+  if(rf.redFlags.length){
+    tone='red';
+    html=`<ul>${rf.redFlags.map(f=>`<li>${f}</li>`).join('')}</ul>`;
+    if(rf.amberFlags.length) html+=`<ul>${rf.amberFlags.map(f=>`<li>${f}</li>`).join('')}</ul>`;
+    html+='<div>Urgently evaluate and relieve/investigate the cause; do not delay definitive management for serial POCUS.</div>';
+  } else if(allBlank){
+    html='Enter Step 1 (cardiac) and Step 3 (lung) findings to screen for tamponade, major RV pressure overload/possible PE, and pneumothorax-related signs.';
+  } else if(rf.notAssessed.length){
+    tone='amber';
+    html=`<div><strong>${NOT_ASSESSED}</strong> for: ${rf.notAssessed.join(', ')}. Tamponade, major RV pressure overload/possible PE, and pneumothorax cannot be excluded from an incomplete or inadequate-quality screen.</div>`;
+    if(rf.amberFlags.length) html+=`<ul>${rf.amberFlags.map(f=>`<li>${f}</li>`).join('')}</ul>`;
+  } else if(rf.amberFlags.length){
+    tone='amber';
+    html=`<ul>${rf.amberFlags.map(f=>`<li>${f}</li>`).join('')}</ul><div>Correlate clinically; not diagnostic by itself.</div>`;
+  } else {
+    tone='good';
+    html='No tamponade physiology, major RV pressure-overload/PE pattern, or pneumothorax-related sign identified — pericardium, RV/septal configuration and bilateral anterior lung sliding were all adequately assessed. This does not exclude these diagnoses — correlate clinically.';
+  }
+  return {tone,html};
+}
+function cdssCard(title,bodyHtml,tone){ return '<div class="compact-cdss-card cdss-'+(tone||'info')+'"><strong>'+title+'</strong><div>'+bodyHtml+'</div></div>'; }
+
+function renderCDSSCards(){
+  const lp=lungPatternSummary();
+  const tol=fluidToleranceAssess(lp);
+  const dyn=dynamicTestAssess();
+  const rf=computeReversibleFlags(lp);
+  const pheno=phenotypeSuggest(lp,rf);
+  const rev=reversibleCauseScreen(rf,lp);
+  let lpTone=lp.pattern==='Diffuse bilateral B-lines'?'amber':lp.pattern==='Focal / patchy B-lines'?'amber':lp.pattern==='A-line predominant'?'good':'info';
+  if(lp.lungPoint) lpTone='red'; else if(lp.absentSliding&&lpTone!=='amber') lpTone='amber';
+  const extra=[];
+  if(lp.lungPoint) extra.push('Lung point identified — strongly supports pneumothorax at that location.');
+  else if(lp.absentSliding) extra.push('Absent lung sliding without a confirmed lung point — suspected pneumothorax pattern; not diagnostic by itself. Correlate with pleural-line assessment and clinical context.');
+  if(lp.effusion) extra.push('Pleural effusion present.');
+  if(lp.consolidation) extra.push('Consolidation with dynamic air bronchograms present — supports pneumonia.');
+  if(lp.inadequateCount>0) extra.push(`${lp.inadequateCount} zone(s) attempted but marked image-quality inadequate/non-diagnostic — excluded from the pattern above, not treated as normal.`);
+  if(!lp.bilateralAnteriorAssessed) extra.push('Bilateral anterior lung sliding not yet fully assessed — pneumothorax screen incomplete.');
+  const lpHtml=extra.length?`<ul>${extra.map(x=>`<li>${x}</li>`).join('')}</ul>`:'No pneumothorax, effusion or consolidation flags from entered zones.';
+  const cards=[
+    cdssCard('Immediately reversible causes screen', rev.html, rev.tone),
+    cdssCard('Aggregate lung pattern — '+lp.pattern+' ('+lp.scannedCount+'/4 zones scanned)', lpHtml, lpTone),
+    cdssCard('Fluid tolerance assessment', tol.text, tol.tone),
+    cdssCard('PLR / LVOT VTI interpretation — '+dyn.resultLabel, dyn.text, dyn.tone),
+    cdssCard('Auto-suggested working phenotype — '+pheno.label+' <span class="sub">(decision-support only — not a diagnosis)</span>', pheno.text, pheno.tone)
+  ];
+  $('cdssCardsContainer').innerHTML=cards.join('');
+}
+function calculateAll(){
+ ['c_lv','c_rv','c_septal','c_pericardium','i_pattern','a_aortaAssess'].forEach(id=>{ if($(id+'_cap')) setCaption(id); });
+ updateIndication();
+ renderCDSSCards();
+}
+
+/* ================= required-field gating (soft) ================= */
+const REQUIRED_COMMON=[['caseId','Case / Patient ID'],['operator','Operator'],['age','Age'],['sex','Sex']];
+function getMissingRequired(){ return REQUIRED_COMMON.filter(([id])=>!pf(id)).map(([,label])=>label); }
+function renderGateBanner(){
+  const missing=getMissingRequired();
+  $('gateBanner').innerHTML = missing.length
+    ? '<div class="banner bad">Missing required fields: <strong>'+missing.join(', ')+'</strong></div>'
+    : '<div class="banner good">All required fields complete.</div>';
+  return missing;
+}
+let gateTimer=null;
+function renderGateBannerDebounced(){ clearTimeout(gateTimer); gateTimer=setTimeout(renderGateBanner,300); }
+function softGateOrAbort(){
+  const missing=getMissingRequired();
+  if(missing.length) return confirm('The following required fields are not documented:\n'+missing.join('\n')+'\n\nProceed anyway?');
+  return true;
+}
+function renderSafetyBanner(){
+  const warnings=[];
+  const ageVal=parseFloat(val('age'));
+  if(Number.isFinite(ageVal)&&ageVal<18) warnings.push('Pediatric use has not been evaluated in this version; adult-derived thresholds and interpretations may not apply.');
+  if(val('supervision')==='Learning — not for independent management decisions') warnings.push('Operator flagged as learning-level: findings should not independently drive management decisions without supervision.');
+  if(!pf('indication')) warnings.push('No indication selected — confirm the clinical question being asked of this scan.');
+  if(val('d_plrPerformed')==='Yes' && !val('d_alignment')) warnings.push('PLR performed but Doppler alignment not yet documented.');
+  $('safetyBanner').innerHTML=warnings.map(w=>'<div class="banner warn">'+w+'</div>').join('');
+}
+let safetyTimer=null;
+function renderSafetyBannerDebounced(){ clearTimeout(safetyTimer); safetyTimer=setTimeout(renderSafetyBanner,300); }
+
+document.addEventListener('input',e=>{
+  if(!e.target.closest('input,select,textarea')) return;
+  clearTimeout(window._t); window._t=setTimeout(()=>{ calculateAll(); renderGateBanner(); renderSafetyBanner(); }, 150);
+});
+document.addEventListener('change',e=>{
+  if(!e.target.closest('input,select,textarea')) return;
+  calculateAll(); renderGateBanner(); renderSafetyBanner();
+});
+
+/* ================= timer ================= */
+let timerInterval=null,timerElapsed=0,timerRunning=false;
+function timerTick(){ timerElapsed++; const m=String(Math.floor(timerElapsed/60)).padStart(2,'0'),s=String(timerElapsed%60).padStart(2,'0'); $('timerDisplay').textContent=`${m}:${s}`; }
+function timerStart(){ if(timerRunning) return; timerRunning=true; timerInterval=setInterval(timerTick,1000); }
+function timerPause(){ timerRunning=false; clearInterval(timerInterval); }
+function timerReset(){ timerRunning=false; clearInterval(timerInterval); timerElapsed=0; $('timerDisplay').textContent='00:00'; }
+
+/* ================= notepad text ================= */
+function zoneText(id){ return val(id)||'Not scanned'; }
+function buildNotepadText(){
+  calculateAll();
+  const lp=lungPatternSummary();
+  const cardsText=$('cdssCardsContainer').innerText;
+  return `=== RS-POCUS RECORD START ===
+RS-POCUS (Rapid Shock POCUS) — Curvilinear Probe Shock Phenotyping
+Author: Prof. (Dr) Jyotirmay Kirtania | Copyright (C) 2026 | License: GNU GPL v3.0-or-later
+Generated: ${new Date().toLocaleString()}
+
+=== CASE ===
+Case/Patient ID: ${val('caseId')||'NA'}
+Operator: ${val('operator')||'NA'}
+Supervision: ${val('supervision')||'NA'}
+Age/Sex: ${val('age')||'NA'} / ${val('sex')||'NA'}
+Setting: ${val('setting')||'NA'}
+Scan date/time: ${val('scanTime')||'NA'}
+Probe: ${val('probe')||'NA'}
+Indication: ${val('indication')||'NA'}
+Clinical context: ${val('clinicalContext')||'NA'}
+
+=== STEP 1: SUBCOSTAL CARDIAC ===
+Views obtained: ${[chk('c_view4ch')&&'4-chamber',chk('c_viewSA')&&'short-axis',chk('c_view5ch')&&'5-chamber/LVOT'].filter(Boolean).join(', ')||'NA'}
+LV size/function: ${val('c_lv')||'NA'}
+RV size: ${val('c_rv')||'NA'}
+Septal configuration: ${val('c_septal')||'NA'}
+Pericardium: ${val('c_pericardium')||'NA'}
+Notes: ${val('c_notes')||'NA'}
+
+=== STEP 2: IVC ===
+Visualization: ${val('i_visualized')||'NA'}
+Diameter: ${val('i_diameter')||'NA'} cm
+Collapsibility/variation: ${val('i_collapse')||'NA'} %
+Pattern: ${val('i_pattern')||'NA'}
+Confounders: ${['i_conf_spont','i_conf_vent','i_conf_rvfail','i_conf_tr','i_conf_phtn','i_conf_tamp','i_conf_iah','i_conf_peep','i_conf_copd','i_conf_compliance'].filter(chk).map(id=>id.replace('i_conf_','')).join(', ')||'None selected'}
+Notes: ${val('i_notes')||'NA'}
+
+=== STEP 3: LUNG ULTRASOUND ===
+Right anterior: ${zoneText('l_RA')}
+Right lateral: ${zoneText('l_RL')}
+Left anterior: ${zoneText('l_LA')}
+Left lateral: ${zoneText('l_LL')}
+Posterior examined: ${chk('l_posterior')?'Yes':'No'}
+Effusion/consolidation location: ${val('l_effusionLoc')||'NA'}
+Aggregate pattern: ${lp.pattern} (${lp.scannedCount}/4 zones scanned)
+Notes: ${val('l_notes')||'NA'}
+
+=== STEP 4: ABDOMINAL / VASCULAR ===
+FAST: ${val('a_fast')||'Not performed'}
+FAST location: ${val('a_fastLoc')||'NA'}
+Aortic diameter: ${val('a_aortaDiam')||'NA'} cm
+Aortic assessment: ${val('a_aortaAssess')||'NA'}
+Femoral/venous screen: ${val('a_femoral')||'Not performed'}
+IVC patency: ${val('a_ivcPatency')||'Not assessed'}
+Notes: ${val('a_notes')||'NA'}
+
+=== STEP 5: FLUID RESPONSIVENESS (PLR + LVOT VTI) ===
+Fluid clinically considered: ${val('d_fluidConsidered')||'NA'}
+Intended endpoint: ${val('d_endpoint')||'NA'}
+PLR performed: ${val('d_plrPerformed')||'NA'}
+Doppler alignment: ${val('d_alignment')||'NA'}
+Baseline LVOT VTI: ${val('d_vtiBase')||'NA'} cm
+Post-PLR LVOT VTI: ${val('d_vtiPLR')||'NA'} cm
+Notes: ${val('d_notes')||'NA'}
+
+=== DECISION-SUPPORT SUMMARY (auto-generated — not a diagnosis) ===
+${cardsText}
+
+=== CLINICIAN-CONFIRMED PHENOTYPE & PLAN ===
+Final working phenotype: ${val('p_workingPhenotype')||'NA'}
+Uncertainty/discordance: ${val('p_uncertainty')||'NA'}
+Plan/next actions: ${val('p_dominantAction')||'NA'}
+
+=== POST-SCAN CHECKLIST ===
+Key images/clips documented: ${chk('ps_images')?'Yes':'No'}
+Communicated to resuscitation team: ${chk('ps_communicated')?'Yes':'No'}
+Repeat POCUS planned: ${chk('ps_repeat')?'Yes':'No'}${pf('ps_repeatWhen')?(' — '+val('ps_repeatWhen')):''}
+
+Elapsed scan time: ${String(Math.floor(timerElapsed/60)).padStart(2,'0')}:${String(timerElapsed%60).padStart(2,'0')}
+
+--- Evidence scope & disclaimer: RS-POCUS is currently designed and evidence-anchored for adults; pediatric use has not been evaluated in this version. This record is intended for education and structured POCUS practice. It does not replace formal echocardiography, comprehensive diagnostic ultrasound, CT, specialist consultation or established resuscitation protocols. Quantitative thresholds are supportive rather than absolute. ---
+=== RS-POCUS RECORD END ===`;
+}
+function copyNotepadText(){
+  if(!softGateOrAbort()) return;
+  const text=buildNotepadText();
+  $('textOutBox').value=text; $('moduleTextOut').classList.remove('hidden');
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(()=>toast('Copied to clipboard')).catch(()=>{ $('textOutBox').select(); document.execCommand('copy'); toast('Copied (fallback)'); });
+  } else { $('textOutBox').select(); document.execCommand('copy'); toast('Copied (fallback)'); }
+}
+function downloadNotepadText(){
+  if(!softGateOrAbort()) return;
+  const text=buildNotepadText();
+  $('textOutBox').value=text; $('moduleTextOut').classList.remove('hidden');
+  const blob=new Blob([text],{type:'text/plain'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=baseName()+'.txt'; a.click(); URL.revokeObjectURL(a.href);
+}
+function baseName(){ return ((val('caseId')||'rspocus').toLowerCase().replace(/[^a-z0-9]+/g,'_'))+'_'+new Date().toISOString().slice(0,16).replace(/[-:T]/g,''); }
+
+/* ================= records (save/load/export/import) ================= */
+const APP_ID='RS-POCUS'; const APP_VERSION='1.0'; const STORE_KEY='RSPOCUS_records_v1';
+function genId(){ return 'r_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8); }
+function loadStore(){ try{ return JSON.parse(localStorage.getItem(STORE_KEY))||[]; }catch(e){ return []; } }
+function saveStore(arr){ localStorage.setItem(STORE_KEY, JSON.stringify(arr)); }
+function collectFields(){
+  const shared={}, fields={};
+  document.querySelectorAll('input,select,textarea').forEach(el=>{
+    if(!el.id) return;
+    const v = el.type==='checkbox' ? el.checked : el.value;
+    if(SHARED_KEYS.includes(el.id)) shared[el.id]=v; else fields[el.id]=v;
+  });
+  return {shared,fields};
+}
+function applyFields(data){
+  Object.entries(data.shared||{}).forEach(([id,v])=>{ const el=$(id); if(el){ if(el.type==='checkbox') el.checked=!!v; else el.value=v; } });
+  Object.entries(data.fields||{}).forEach(([id,v])=>{ const el=$(id); if(el){ if(el.type==='checkbox') el.checked=!!v; else el.value=v; } });
+  calculateAll(); renderGateBanner(); renderSafetyBanner();
+}
+function buildRecordObject(recordId){
+  const {shared,fields}=collectFields();
+  const lp=lungPatternSummary(); const rf=computeReversibleFlags(lp); const pheno=phenotypeSuggest(lp,rf);
+  return { app:APP_ID, version:APP_VERSION, recordId: recordId||genId(), savedAt:new Date().toISOString(), shared, fields, phenotypeSummary: pheno.label, notepadText: buildNotepadText() };
+}
+function saveScan(){
+  if(!pf('caseId')){ alert('Enter a Case / Patient ID before saving.'); return; }
+  const record=buildRecordObject();
+  const store=loadStore(); store.push(record); saveStore(store);
+  window._loadedRecordId=record.recordId;
+  toast('Saved scan for '+record.shared.caseId);
+}
+function updateLoadedScan(){
+  if(!pf('caseId')){ alert('Enter a Case / Patient ID before saving.'); return; }
+  if(!window._loadedRecordId){ alert('No loaded scan to update. Use "Save scan" to create a new one.'); return; }
+  const record=buildRecordObject(window._loadedRecordId);
+  const store=loadStore().filter(r=>r.recordId!==record.recordId); store.push(record); saveStore(store);
+  toast('Updated scan for '+record.shared.caseId);
+}
+function recordDescriptor(r){ return (r.shared&&r.shared.age?r.shared.age+'y ':'')+((r.shared&&r.shared.sex)||''); }
+function openRecordsPicker(){
+  const store=loadStore().sort((a,b)=>new Date(b.savedAt)-new Date(a.savedAt));
+  window._recordsCache=store;
+  $('recordsTbody').innerHTML = store.map((r,i)=>
+    '<tr><td>'+esc((r.shared&&r.shared.caseId)||'')+'</td><td>'+esc((r.shared&&r.shared.operator)||'')+'</td><td>'+esc(recordDescriptor(r))+'</td>'
+    +'<td>'+esc((r.shared&&r.shared.scanTime)||'')+'</td><td>'+esc(r.phenotypeSummary||'')+'</td><td>'+esc(new Date(r.savedAt).toLocaleString())+'</td>'
+    +'<td><button type="button" class="tiny" onclick="loadRecordByIndex('+i+')">Load</button> '
+    +'<button type="button" class="tiny danger" onclick="deleteRecordByIndex('+i+')">Delete</button></td></tr>'
+  ).join('') || '<tr><td colspan="7">No saved scans.</td></tr>';
+  $('recordsModal').classList.add('open');
+}
+function closeRecords(){ $('recordsModal').classList.remove('open'); }
+function loadRecordByIndex(i){ const store=window._recordsCache||[]; if(store[i]){ applyFields(store[i]); window._loadedRecordId=store[i].recordId; closeRecords(); toast('Loaded scan for '+((store[i].shared&&store[i].shared.caseId)||'')); } }
+function deleteRecordByIndex(i){
+  const store=window._recordsCache||[]; const rec=store[i]; if(!rec) return;
+  if(!confirm('Delete saved scan for '+((rec.shared&&rec.shared.caseId)||'')+' ('+new Date(rec.savedAt).toLocaleString()+')?')) return;
+  saveStore(loadStore().filter(r=>r.recordId!==rec.recordId));
+  openRecordsPicker();
+}
+function newCase(){
+  if(!confirm('Start a new case? This clears all fields on this device.')) return;
+  document.querySelectorAll('input,textarea').forEach(el=>{ if(el.type==='checkbox') el.checked=false; else el.value=''; });
+  document.querySelectorAll('select').forEach(el=>el.selectedIndex=0);
+  setVal('probe','Curvilinear / microconvex, ~2–5 MHz');
+  window._loadedRecordId=null; timerReset();
+  calculateAll(); renderGateBanner(); renderSafetyBanner();
+  toast('New case started');
+}
+function resetFindings(){
+  if(!confirm('Reset all scan findings (Steps 1–7)? Case/patient identifiers in the top bar are kept.')) return;
+  document.querySelectorAll('.module input, .module textarea').forEach(el=>{ if(el.type==='checkbox') el.checked=false; else el.value=''; });
+  document.querySelectorAll('.module select').forEach(el=>el.selectedIndex=0);
+  window._loadedRecordId=null;
+  calculateAll(); renderGateBanner(); renderSafetyBanner();
+  toast('Findings reset');
+}
+function exportJSON(){
+  const record=buildRecordObject(window._loadedRecordId);
+  const blob=new Blob([JSON.stringify(record,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=baseName()+'.json'; a.click(); URL.revokeObjectURL(a.href);
+}
+function validateImportedRecord(record){
+  const errors=[];
+  if(!record||typeof record!=='object'||Array.isArray(record)){ errors.push('The file does not contain a single JSON object.'); return errors; }
+  if(record.app!==APP_ID) errors.push('This file does not carry a recognized RS-POCUS "app" identifier.');
+  if(!record.shared||typeof record.shared!=='object') errors.push('Missing or invalid "shared" object.');
+  if(!record.fields||typeof record.fields!=='object') errors.push('Missing or invalid "fields" object.');
+  return errors;
+}
+function importJSON(evt){
+  const file=evt.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=function(){
+    let record;
+    try{ record=JSON.parse(String(reader.result)); } catch(e){ alert('Invalid JSON file.'); return; }
+    const errors=validateImportedRecord(record);
+    if(errors.length){ alert('This file could not be imported:\n\n- '+errors.join('\n- ')); return; }
+    applyFields(record);
+    window._loadedRecordId=record.recordId||null;
+    toast('Imported scan for '+((record.shared&&record.shared.caseId)||''));
+  };
+  reader.readAsText(file);
+  evt.target.value='';
+}
+
+function openAbout(){ $('aboutModal').classList.add('open'); }
+function closeAbout(){ $('aboutModal').classList.remove('open'); }
+
+applyQuickFullVisibility();
+calculateAll();
+renderGateBanner();
+renderSafetyBanner();
+</script>
+</body>
+</html>
