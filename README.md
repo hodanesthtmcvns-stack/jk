@@ -18,6 +18,7 @@ This repository hosts a suite of portable, offline-ready HTML applications desig
 | **PIM3 Calculator** | Predicted hospital mortality at ICU admission using the validated Pediatric Index of Mortality 3 (PIM3) model | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/PIM3-Calculator.html) |
 | **ABG Interpreter** | Comprehensive acid-base analysis from ABG report | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/ABG-Interpreter-v3.0.html) |
 | **Shock** | Learning and decision-support application for the recognition, classification, and mechanistic understanding of shock states | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/Shock-v1.0.html) |
+| **RS-POCUS** | Learning and decision-support application for point of care ultrasound in shock | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/RS-POCUS-v1.0.html) |
 | **SPA (Septic Shock Perfusion Assessment)** | Clinical Decision Support | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/SPA-v2.1.html) |
 | **BEAT-C** | Empiric Antibiotics in Sepsis | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/BEAT-C-v1.0.html) |
 | **ACDC** | Acute Care Decision Coach | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/ACDC.html) |
