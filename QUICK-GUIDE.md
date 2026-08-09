@@ -15,6 +15,7 @@ These are a set of Software Tools created and maintained by Prof. Jyotirmay Kirt
 | **PIM3-Calculator** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/PIM3-Calculator.html) | [📖 About & Help](./docs/PIM3-Calculator-Help.md) |
 | **ABG Interpreter** |🚀 [Launch](https://hodanesthtmcvns-stack.github.io/jk/ABG-Interpreter-v3.0.html) | [📖 About & Help](./docs/ABG-Interpreter-v3.0-Help.md) |
 | **Shock** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/Shock-v1.0.html) | [📖 About & Help](./docs/Shock-v1.0-Help.md) |
+| **RS-POCUS** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/RS-POCUS-v1.0.html) | [📖 About & Help](./docs/RS-POCUS-v1.0-About-Help.md) |
 | **SPA (Septic Shock Perfusion Analyzer)** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/SPA-v2.1.html) | [📖 About & Help](./docs/SPA-v2.1-Help.md) |
 | **ACDC (Acute Care Decision Coach)** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/ACDC.html) | 📖 About & Help are inbuilt in this app
 | **PEEP Titrator** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/PEEP-titration-v1.4.html) | [📖 About & Help](./docs/PEEP-titration-v1.4-Help.md) |
