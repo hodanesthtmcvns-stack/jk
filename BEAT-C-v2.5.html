@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport"/>
+<meta content="light dark" name="color-scheme"/>
+<title>BEAT-C v2.5 | Bedside antimicrobial decision support</title>
+<style>
+:root{--bg:#0b1220;--panel:#131e33;--panel2:#182741;--edge:#30445c;--fg:#f0f4fa;--sub:#b4c5da;--accent:#74b4ff;--warn:#ffd27f;--danger:#ffa4a4;--success:#89dbbd}
+*{box-sizing:border-box}body{margin:0;font:15px/1.48 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--fg)}header{background:#101b2d;border-bottom:1px solid var(--edge);padding:15px max(16px,calc((100vw - 1080px)/2))}h1{font-size:1.45rem;margin:0 0 2px}h2{font-size:1.09rem;margin:0 0 12px}h3{font-size:1rem;margin:8px 0 6px}p{margin:7px 0}main{max-width:1080px;margin:auto;padding:12px 14px 55px}.sub,.muted{color:var(--sub)}.small{font-size:.84rem}.eyebrow{font-size:.78rem;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);font-weight:750}.card{background:var(--panel);border:1px solid var(--edge);border-radius:14px;padding:16px;margin:12px 0}.alert{border-left:4px solid var(--warn);background:#292537;padding:10px 13px;border-radius:7px;margin:10px 0}.alert.danger{border-color:var(--danger);background:#30212d}.alert.good{border-color:var(--success);background:#17332f}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}.field{min-width:0;display:block}.field>span{display:block;color:var(--sub);font-size:.86rem;margin-bottom:4px}.checks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.check{display:flex;gap:9px;align-items:flex-start;padding:9px;border:1px solid var(--edge);border-radius:9px;background:#0d1729;font-size:.91rem}.check input{width:18px;min-width:18px;height:18px;margin:2px 0 0}input,select,textarea{font:inherit;background:#0c1728;border:1px solid #53657b;color:var(--fg);border-radius:8px;padding:9px;width:100%;min-width:0}input:focus,select:focus,textarea:focus,button:focus{outline:2px solid var(--accent);outline-offset:1px}input[type="checkbox"]{accent-color:var(--accent)}button{font:inherit;border-radius:9px;border:1px solid #647993;background:#20344f;color:var(--fg);font-weight:650;padding:10px 14px;cursor:pointer}button.primary{background:var(--accent);color:#081526;border-color:var(--accent)}button:hover{filter:brightness(1.1)}.actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.result-card{border:1px solid #465d79;background:#0e1b2e;border-radius:10px;padding:12px;margin:10px 0}.tag{display:inline-block;background:#273c55;border:1px solid #52647a;border-radius:6px;font-size:.78rem;padding:2px 6px;margin:2px 4px 2px 0}.warn-tag{background:#4d3834;color:#ffe0ac}.good-tag{background:#1a473b;color:#d6fff3}.drug{font-weight:750;color:#e8f4ff}.tight li{margin:5px 0}.tight{padding-left:20px}.ref{font-weight:600;color:#9acaff}.table-wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:.89rem}th,td{border:1px solid #465770;padding:7px 9px;text-align:left;vertical-align:top}th{background:#22324a}details{margin:12px 0}summary{cursor:pointer;font-weight:700;color:#c4dbf8}a{color:#a7d1ff}hr{border:0;border-top:1px solid var(--edge);margin:14px 0}#result:empty{display:none}.ind{font-size:.83rem;background:#0c1524;padding:8px 10px;border-radius:7px;color:var(--sub)}.localdata th,.localdata td{white-space:nowrap}.spacer{margin-top:12px}.onlyPrint{display:none}
+@media(max-width:760px){.grid,.grid.three,.checks{grid-template-columns:1fr}.card{padding:12px}h1{font-size:1.22rem}header{padding:13px 14px}.actions button{flex:1}}
+@media print{body{background:white;color:#171717;font:11pt/1.4 Arial}main{max-width:none;padding:0}.card,.result-card,.alert{break-inside:avoid;border:1px solid #999;background:white!important;color:#111!important}.drug,.eyebrow,.ref{color:#111!important}.sub,.muted{color:#444}.noprint,#sourceCard,#antibiogramCard{display:none!important}#result{display:block}a{color:#333}}
+
+.sofa-panel{padding:14px;background:#0d1a2c;border:1px solid #496581;border-radius:12px;margin:14px 0}
+.sofa-panel .grid{margin-top:10px}.sofa-check{align-items:center;align-self:end;min-height:44px}
+.sofa-score-wrap{margin:14px 0 8px}.sofa-summary{font-size:1.12rem;font-weight:750;background:#233653;border-radius:9px;padding:10px 12px}
+.sofa-domains{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:10px 0}
+.sofa-domain{background:#1b2b44;border:1px solid #3a516b;border-radius:7px;padding:6px 8px;font-size:.83rem}
+.sofa-domain strong{float:right}.sofa-domain.missing{color:var(--warn)}.sofa-summary.meets{background:#1c4b40}.sofa-summary.uncertain{background:#493d2b}
+.severity-select{display:block;margin:13px 0 3px;max-width:520px}. li{padding-left:3px;margin-bottom:10px;overflow-wrap:anywhere}
+.sofa-abg{border:1px solid #3d5772;background:#11233a;border-radius:12px;padding:12px;margin:12px 0}
+.sofa-abg h4{font-size:.98rem;margin:0 0 8px}.sofa-abg .grid{margin-top:9px}
+.abg-summary{border-left:3px solid #74b4ff;background:#20334f;padding:10px 12px;margin-top:10px;border-radius:4px;line-height:1.55}
+.abg-summary.urgent{border-left-color:#ffa4a4}.abg-summary .part{display:block;margin:3px 0}
+@media(max-width:760px){.sofa-domains{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* v2.4: adaptive, bedside-first interface. The drug knowledge-base is unchanged. */
+:root{color-scheme:dark;--bg:#0b1220;--panel:#141f31;--panel2:#192840;--edge:#34455f;--fg:#edf3fc;--sub:#aec0d5;--accent:#79b8fd;--ctl:#101c2e;--soft:#202f48;--soft-alert:#2f2b37;--success-bg:#193a32;--bad-bg:#35252c;--input-border:#536780;--drug-ink:#eaf3ff;--shadow:0 18px 36px rgba(0,0,0,.17)}
+html[data-theme="light"]{color-scheme:light;--bg:#f3f6fa;--panel:#fff;--panel2:#f3f7fc;--edge:#d5deeb;--fg:#182a41;--sub:#52677c;--accent:#1761b4;--ctl:#fff;--soft:#e8f1fc;--soft-alert:#fff5df;--success-bg:#e6f6f0;--bad-bg:#fff0ed;--input-border:#98adc3;--drug-ink:#124f95;--warn:#8b5400;--danger:#9e2d30;--success:#167b60;--shadow:0 16px 32px rgba(32,52,77,.07)}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);transition:background .15s,color .15s}
+main{max-width:1450px;padding:16px 18px 85px}
+.app-header{position:relative;padding:12px max(18px,calc((100vw - 1400px)/2));background:var(--panel);border-color:var(--edge)}
+.topbar,.brandline{display:flex;align-items:center;gap:12px}.topbar{justify-content:space-between;flex-wrap:wrap;gap:14px}
+.brandmark{display:grid;place-items:center;background:var(--accent);color:#071524;width:40px;height:40px;border-radius:12px;font-weight:900;font-size:1.26rem}
+.brand h1{margin:0;font-size:1.3rem;letter-spacing:-.03em}.brand .version{font-size:.75rem;font-weight:650;color:var(--sub);letter-spacing:0;margin-left:5px}.brand p{font-size:.79rem;color:var(--sub);margin:0}
+.preferences{display:flex;align-items:center;gap:8px}.pref{display:flex;align-items:center;gap:6px;color:var(--sub);font-size:.8rem}.pref select{width:auto;min-width:92px;min-height:38px;font-size:.85rem;padding:6px 26px 6px 9px}
+.workspace{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;align-items:start}.workspace-input,.workspace-output{min-width:0}
+@media (min-width:1040px){body:not(.view-mobile) .workspace{grid-template-columns:minmax(0,1fr) minmax(380px,.91fr);gap:24px}body:not(.view-mobile) .workspace-output{position:sticky;top:14px;max-height:calc(100vh - 28px);overflow:auto;overscroll-behavior:contain}body:not(.view-mobile) .workspace-output::-webkit-scrollbar{width:7px}body:not(.view-mobile) .workspace-output::-webkit-scrollbar-thumb{background:var(--edge);border-radius:10px}}
+body.view-mobile main{max-width:710px}.intro{padding:5px 2px 10px}.intro h2{font-size:1.18rem;letter-spacing:-.02em;margin:3px 0}.intro p{color:var(--sub);font-size:.9rem;margin:0}
+.card{background:var(--panel);border-color:var(--edge);box-shadow:var(--shadow);padding:17px;margin:10px 0;border-radius:15px}
+h2{font-size:1.08rem}h3{font-size:.98rem}.eyebrow{color:var(--accent);font-size:.71rem}
+input,select,textarea{background:var(--ctl);border:1px solid var(--input-border);color:var(--fg);min-height:42px}
+input[type="checkbox"],input[type="radio"]{min-height:0;accent-color:var(--accent)}
+button{background:var(--soft);border-color:var(--input-border);color:var(--fg);min-height:44px}
+button.primary{background:var(--accent);border-color:var(--accent);color:#071524}
+html[data-theme="light"] button.primary{color:#fff}
+button:disabled{opacity:.48;cursor:not-allowed}
+.field>span{color:var(--sub)}.check{background:var(--panel2);border-color:var(--edge);align-items:center}.check input{margin:0;min-height:0}
+.sectiontop{display:flex;align-items:start;justify-content:space-between;gap:10px}.sectiontop h2{margin:4px 0 8px}.mini-info{font-size:.72rem;color:var(--sub);white-space:nowrap;margin-top:4px}
+.severity-path{background:var(--panel2);border:1px solid var(--edge);border-radius:14px;padding:14px;margin-top:16px}
+.mode-tabs{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:6px 0 12px}.mode-tab input{position:absolute;opacity:0;width:1px;height:1px}.mode-tab span{display:block;text-align:center;background:var(--ctl);padding:10px 8px;border:1px solid var(--input-border);border-radius:10px;font-size:.89rem;font-weight:700;cursor:pointer}.mode-tab input:checked+span{border:2px solid var(--accent);background:var(--soft);padding:9px 7px;color:var(--fg)}.mode-tab input:focus-visible+span{outline:3px solid var(--accent);outline-offset:3px}
+.question{font-weight:650;margin:10px 0}.choice-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.choice{min-width:0;cursor:pointer}.choice input{position:absolute;opacity:0;width:1px;height:1px}.choice span{height:100%;display:block;border:1px solid var(--input-border);border-radius:11px;background:var(--ctl);padding:12px 9px}.choice strong{display:block;font-size:.93rem}.choice small{display:block;color:var(--sub);font-size:.73rem;line-height:1.3;margin-top:4px}.choice input:checked+span{background:var(--soft);border:2px solid var(--accent);padding:11px 8px}.choice input:focus-visible+span{outline:3px solid var(--accent);outline-offset:2px}
+.shock-choice{margin-top:10px;min-height:44px}.decision-state{font-size:.83rem;color:var(--sub);margin:9px 2px}.selected-severity{display:flex;align-items:center;gap:8px;justify-content:space-between;border-radius:10px;background:var(--ctl);padding:9px 12px;margin-top:9px;border:1px solid var(--edge);font-size:.82rem;color:var(--sub)}.selected-severity strong{color:var(--fg);text-align:right}
+#detailedPath{padding-top:9px}.sofa-panel{background:var(--panel);border-color:var(--edge);padding:12px;margin:8px 0}.sofa-abg{background:var(--panel2);border-color:var(--edge)}.sofa-summary{background:var(--soft);color:var(--fg)}.sofa-summary.meets{background:var(--success-bg)}.sofa-summary.uncertain{background:var(--soft-alert)}.sofa-domain{background:var(--panel2);border-color:var(--edge)}.abg-summary{background:var(--soft);color:var(--fg)}.clinical-override{padding:10px 3px}.severity-select{max-width:none}
+.risk-section{margin-top:16px}.priority-checks{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:10px}.priority-checks .check{background:var(--ctl);min-height:48px}.extra-risks,.demographics{margin-top:10px;border:1px solid var(--edge);border-radius:10px;padding:9px 12px;background:var(--panel2)}.extra-risks summary,.demographics summary{font-size:.9rem;color:var(--fg)}.extra-risks .checks{margin-top:12px}.demographics .grid{margin-bottom:7px}
+.conditional-status{display:block}.conditional-status[hidden]{display:none}.fast-micro{margin-top:0}
+.ancillary{box-shadow:none}.ancillary>summary{color:var(--fg);font-size:1.02rem;padding:2px 0}.ancillary[open]>summary{margin-bottom:12px}
+.decision-actions{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 18px}.decision-actions button.compute-button{flex:1;min-width:245px}.decision-actions button:not(.compute-button){min-width:76px}
+.workspace-output #result{min-height:220px}.workspace-output .card{margin:0 0 12px}.empty-result{border:1px dashed var(--input-border);border-radius:16px;background:var(--panel);text-align:center;padding:38px 28px;color:var(--sub)}.empty-result h2{color:var(--fg);margin:7px 0}.empty-result p{margin:8px auto;max-width:380px}.empty-icon{margin:0 auto 15px;border-radius:18px;width:62px;height:62px;background:var(--soft);display:grid;place-items:center;font-size:1.4rem;color:var(--accent);font-weight:850}
+#result .card{box-shadow:var(--shadow)}.result-card{border-color:var(--edge);background:var(--panel2);padding:11px;border-radius:12px}.result-card h3{margin:8px 0}.drug{color:var(--drug-ink)}.tag{background:var(--soft);border-color:var(--edge);color:var(--fg);font-size:.73rem}.warn-tag{background:var(--soft-alert);color:var(--warn)}.good-tag{background:var(--success-bg);color:var(--success)}.alert{background:var(--soft-alert);color:var(--fg);font-size:.85rem}.alert.danger{background:var(--bad-bg)}.alert.good{background:var(--success-bg)}.ind{background:var(--panel2);color:var(--sub)}.ref{color:var(--accent)}summary{color:var(--fg)}a{color:var(--accent)}th,td{border-color:var(--edge)}th{background:var(--panel2)}
+.brief-head{padding-bottom:10px;border-bottom:1px solid var(--edge);margin-bottom:10px}.brief-head h2{margin:4px 0}.brief-meta{font-size:.8rem;color:var(--sub)}.brief-tag{display:inline-block;background:var(--soft);padding:4px 7px;border-radius:7px;font-size:.75rem;margin:5px 4px 4px 0}.focus-label{font-size:.76rem;font-weight:800;color:var(--sub);text-transform:uppercase;letter-spacing:.07em;margin:12px 0 6px}.more-results{border:1px solid var(--edge);border-radius:11px;padding:11px;margin-top:12px}.more-results>summary{font-size:.9rem}.more-results .result-card{margin-top:10px}.brief-alerts{margin:11px 0}.brief-alerts .alert{margin:5px 0}.result-footer{font-size:.81rem;color:var(--sub);margin-top:11px}.result-detail>summary{color:var(--fg);font-size:.87rem}.result-detail{margin:10px 0}.result-detail .alert{margin:6px 0}.result-brief .result-card:first-of-type{border:1.6px solid var(--accent)}
+.mobile-dock{display:none}
+@media(max-width:1039px){main{max-width:730px}.workspace-output{position:static}}
+@media(max-width:760px){main{padding:10px 12px 105px}.app-header{padding:11px 12px}.brandmark{width:35px;height:35px}.brand h1{font-size:1.1rem}.brand p{font-size:.73rem}.preferences{width:100%;justify-content:flex-end}.pref select{min-width:91px}.intro{padding:6px 1px 7px}.intro h2{font-size:1.05rem}.card{padding:12px;box-shadow:none}.mode-tab span{font-size:.8rem}.choice span{padding:10px 6px}.choice strong{font-size:.84rem}.choice small{font-size:.69rem}.choice input:checked+span{padding:9px 5px}.risk-section .checks{grid-template-columns:1fr}.priority-checks{gap:6px}.choice-grid{gap:5px}.severity-path{padding:10px}.selected-severity{font-size:.77rem}.decision-actions{display:none}.mobile-dock{display:block;position:fixed;bottom:0;left:0;right:0;z-index:30;background:var(--panel);padding:9px 12px calc(9px + env(safe-area-inset-bottom));border-top:1px solid var(--edge);box-shadow:0 -10px 35px rgba(0,0,0,.14)}.mobile-dock button{width:100%;min-height:48px;font-size:1rem}.empty-result{padding:24px 16px}#result .card{margin:3px 0 12px}.mini-info{display:none}}
+@media(max-width:370px){.brand p{max-width:260px}.choice-grid{grid-template-columns:1fr}.choice span{display:flex;align-items:center;gap:8px}.choice small{margin-top:0}}
+@media print{html,html[data-theme="light"]{color-scheme:light}body{background:white!important;color:#000!important}.app-header,.mobile-dock,.decision-actions,.workspace-input,.ancillary,.noprint{display:none!important}.workspace{display:block!important}.workspace-output{max-height:none!important;overflow:visible!important;position:static!important}.result-card,.card,.alert,.brief-alerts{background:#fff!important;color:#000!important;border-color:#888!important;box-shadow:none!important}.more-results{display:block!important}.more-results>summary{display:none}#result{min-height:0!important}main{padding:0!important}#result .card{display:block!important}}
+
+/* Finishing adjustments */
+.result-brief > .eyebrow,.result-brief > h2,.result-brief > h3{display:none}
+#result .result-brief .brief-priority{border:1.5px solid var(--accent)}
+.extra-risks.has-risk summary{color:var(--accent)}
+.mobile-dock{gap:7px;align-items:stretch}.mobile-dock #resetFloat{flex:none;min-width:67px;min-height:48px;padding:9px 10px}
+.mobile-dock #computeFloat{flex:1;min-width:0;padding:9px 10px}
+@media print{#result details{display:block!important}#result details > *:not(summary){display:block!important}#result details > summary{display:none!important}}
+
+/* Instant theme switch prevents mismatched foreground/background during crossfade. */
+body{transition:none}
+@media(max-width:760px){.mobile-dock{display:flex}.mobile-dock #computeFloat{min-width:0}.mobile-dock #resetFloat{max-width:76px}}
+.stale-result{border:1px dashed var(--input-border);border-radius:13px;padding:18px;background:var(--panel);color:var(--fg)}.stale-result h3{margin:0 0 6px}.stale-result p{font-size:.85rem;color:var(--sub)}
+
+/* v2.5: directly accessible dosing in each recommendation, without leaving the case. */
+.drug-dose-link{display:inline-flex;flex-wrap:wrap;align-items:center;gap:5px;text-align:left;vertical-align:baseline;min-height:31px;margin:2px 0;padding:2px 3px;border:0;border-bottom:1px dashed var(--accent);border-radius:4px;color:var(--drug-ink);background:transparent;font-size:inherit;font-weight:750;line-height:1.3;cursor:pointer;max-width:100%;overflow-wrap:anywhere}
+.drug-dose-link:hover,.drug-dose-link[aria-expanded="true"]{background:var(--soft);filter:none}
+.drug-dose-link:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.dose-cue{flex-shrink:0;padding:2px 5px;border:1px solid var(--edge);border-radius:5px;font-size:.65rem;letter-spacing:.02em;font-weight:750;color:var(--accent);background:var(--panel)}
+.dose-hint{font-size:.74rem;color:var(--sub);margin:3px 0 8px}
+.inline-dose-panel{background:var(--panel);border:1px solid var(--accent);border-radius:11px;padding:12px;margin:10px 0 12px;line-height:1.5;color:var(--fg)}
+.inline-dose-panel[hidden]{display:none!important}
+.dose-panel-top{display:flex;justify-content:space-between;gap:9px;align-items:start;margin-bottom:7px}.dose-panel-title{font-size:1rem;font-weight:800;overflow-wrap:anywhere}.dose-close{font-size:.78rem;min-height:32px;padding:5px 9px;flex-shrink:0}
+.dose-panel-main{margin:6px 0;font-size:.94rem}.dose-panel-notes{font-size:.81rem;color:var(--sub);margin:6px 0}.dose-panel-safety{font-size:.81rem;margin:9px 0;padding:9px;border-left:3px solid var(--warn);background:var(--soft-alert);border-radius:5px}
+.dose-panel-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-top:8px}.dose-full-link{font-size:.82rem;min-height:34px;padding:5px 9px}
+#doses .dose-row-active{outline:2px solid var(--accent);outline-offset:-2px;background:var(--soft)}
+@media(max-width:380px){.drug-dose-link{font-size:.93rem}.inline-dose-panel{padding:10px}}
+@media print{.dose-hint,.dose-cue,.dose-close,.dose-panel-actions{display:none!important}.drug-dose-link{border:0;background:none!important;color:#111!important;padding:0!important;min-height:0}.inline-dose-panel:not([hidden]){border:1px solid #777;break-inside:avoid}}
+</style>
+</head>
+<body>
+<header class="app-header noprint"><div class="topbar">
+  <div class="brand"><div class="brandline"><span class="brandmark">B</span><div><h1>BEAT-C <span class="version">v2.5</span></h1><p>Best-fit empiric antimicrobial · bedside decision support</p></div></div></div>
+  <div class="preferences">
+    <label class="pref"><span>Screen</span><select id="viewMode" aria-label="Screen layout"><option value="auto">Auto</option><option value="mobile">Mobile</option><option value="pc">PC</option></select></label>
+    <label class="pref"><span>Theme</span><select id="themeMode" aria-label="Color theme"><option value="auto">Auto</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
+  </div>
+</div></header>
+<main id="appMain"><div class="workspace"><div class="workspace-input">
+<div class="intro"><span class="eyebrow">Rapid clinical pathway</span><h2>Choose the infection. Check the risk. Review the options.</h2><p>Use direct organ-dysfunction assessment for rapid review, or open the full SOFA / ABG screener.</p></div>
+<section class="card" id="patientCard"><div class="eyebrow">01 · Clinical context</div><h2>Infection and suspected source</h2>
+<div class="grid">
+<label class="field"><span>Evidence of infection</span><select id="infection"><option value="suspected">Suspected clinically significant infection</option><option value="unclear">Uncertain infection versus noninfectious cause</option><option value="colonization">Colonization / asymptomatic bacteriuria without special indication</option><option value="confirmed">Confirmed clinically significant infection</option></select></label>
+<label class="field"><span>Clinical syndrome</span><select id="source"><option value="unknown">Sepsis — source not identified</option><option value="cap">Community-acquired pneumonia</option><option value="hap">Hospital-acquired / ventilator-associated pneumonia</option><option value="abd">Intra-abdominal / biliary infection</option><option value="uti">Pyelonephritis / complicated UTI / urosepsis</option><option value="line">Catheter-related bloodstream infection</option><option value="skin">Skin / soft tissue infection</option><option value="cns">Meningitis / CNS infection</option><option value="fn">Febrile neutropenia (high-risk)</option><option value="diarrhea">Diarrhea / possible C. difficile infection</option></select></label><label class="field skin-field" style="display:none"><span>If skin / soft tissue: clinical subtype</span><select id="skinSubtype"><option value="unspecified">Not yet categorized</option><option value="nonpurulent">Nonpurulent cellulitis</option><option value="purulent">Purulent infection / abscess</option><option value="necrotizing">Necrotizing infection suspected</option></select></label>
+<label class="field"><span>Acquisition</span><select id="acq"><option value="community">Community acquired</option><option value="health">Healthcare / hospital acquired</option><option value="icu">ICU acquired</option></select></label>
+
+<div class="fast-micro"><label class="field"><span>Previously / currently known resistance (optional)</span><select id="resistance"><option value="none">None documented / unknown</option><option value="esbl">ESBL-producing Enterobacterales</option><option value="ampc">Inducible AmpC-risk Enterobacterales</option><option value="cre_unknown">CRE — carbapenemase not yet characterized</option><option value="kpc">KPC-producing Enterobacterales</option><option value="ndm">NDM / other metallo-β-lactamase-producing Enterobacterales</option><option value="oxa48">OXA-48-like-producing Enterobacterales</option><option value="dtrpsa">Difficult-to-treat resistant Pseudomonas aeruginosa</option><option value="crab">Carbapenem-resistant Acinetobacter baumannii (CRAB)</option><option value="steno">Stenotrophomonas maltophilia</option></select></label></div><div class="fast-micro conditional-status" id="evidenceField" hidden><label class="field"><span>Status of evidence</span><select id="microstatus"><option value="prior">Previous culture / colonization history (empiric risk only)</option><option value="current">Current clinically significant isolate with AST available</option><option value="pending">Current isolate identified; AST/mechanism incomplete</option></select></label></div></div><section class="severity-path" aria-labelledby="severityPathTitle">
+<div class="sectiontop"><div><div class="eyebrow">02 · Organ dysfunction</div><h2 id="severityPathTitle">Sepsis assessment</h2></div><span class="mini-info">Choose one method</span></div>
+<div class="mode-tabs" role="radiogroup" aria-label="Sepsis assessment method">
+<label class="mode-tab"><input type="radio" name="screenMethod" value="quick" checked><span>Direct assessment</span></label>
+<label class="mode-tab"><input type="radio" name="screenMethod" value="detailed"><span>SOFA + ABG / lactate</span></label>
+</div>
+<div id="quickPath" class="quick-path">
+<p class="question">Acute organ dysfunction attributable to suspected infection?</p>
+<div class="choice-grid" role="radiogroup" aria-label="Acute organ dysfunction">
+<label class="choice"><input type="radio" name="organStatus" value="absent"><span><strong>Absent</strong><small>No new infection-related organ dysfunction</small></span></label>
+<label class="choice"><input type="radio" name="organStatus" value="present"><span><strong>Present</strong><small>New infection-related organ dysfunction</small></span></label>
+<label class="choice"><input type="radio" name="organStatus" value="uncertain"><span><strong>Uncertain</strong><small>Assessment incomplete</small></span></label>
+</div>
+<label class="check shock-choice"><input type="checkbox" id="quickShock">Septic shock / rapidly deteriorating — clinically assessed</label>
+<p class="decision-state" id="quickDecision" role="status">Select organ dysfunction status to continue.</p>
+</div>
+<div id="detailedPath" hidden>
+<p class="small muted">Complete SOFA for a structured assessment; enter ABG/lactate where available. You can still make a clinical severity determination if measurements are incomplete.</p>
+<section aria-labelledby="sofaTitle" class="sofa-panel" id="sofaPanel">
+<div class="eyebrow">Sepsis screener · SOFA (6 organ systems)</div>
+<h3 id="sofaTitle">Infection + acute organ dysfunction</h3>
+<p class="small muted">Conventional SOFA score (0–24). Enter observed values for the same clinical assessment. Suspected/confirmed infection is taken from the <strong>Evidence of infection</strong> field above. Missing values are not assumed normal. [8,9]</p>
+<div class="sofa-abg" id="sofaABGPanel">
+<h4>ABG and serial lactate</h4>
+<p class="small muted">PaO₂ and FiO₂ calculate the respiratory SOFA component. Acid–base variables and lactate are clinical adjuncts and do not add SOFA points. Use a contemporaneous arterial sample for PaO₂; lactate can also be measured from venous blood. [9,10]</p>
+<div class="grid three">
+<label class="field"><span>PaO₂ (mmHg; arterial)</span><input id="sofaPaO2" max="800" min="10" placeholder="Arterial ABG" step="0.1" type="number"/></label>
+<label class="field"><span>FiO₂ (%) at ABG sampling</span><input id="sofaFiO2" max="100" min="21" placeholder="21–100" step="0.1" type="number"/></label>
+<label class="check sofa-check"><input id="sofaRespSupport" type="checkbox"/>Respiratory support (for SOFA respiratory grades 3–4)</label>
+<label class="field"><span>Arterial pH</span><input id="abgPH" type="number" min="6.5" max="7.8" step="0.01" placeholder="e.g. 7.31"/></label>
+<label class="field"><span>PaCO₂ (mmHg)</span><input id="abgPCO2" type="number" min="5" max="200" step="0.1" placeholder="e.g. 48"/></label>
+<label class="field"><span>HCO₃⁻ (mmol/L)</span><input id="abgHCO3" type="number" min="2" max="60" step="0.1" placeholder="e.g. 18"/></label>
+<label class="field"><span>Base excess (mmol/L)</span><input id="abgBE" type="number" min="-40" max="40" step="0.1" placeholder="e.g. -7"/></label>
+<label class="field"><span>Lactate units (both samples)</span><select id="abgLacUnit"><option value="mmol">mmol/L</option><option value="mgdl">mg/dL</option></select></label>
+<label class="field"><span>Earlier lactate (optional)</span><input id="abgLacEarlier" type="number" min="0" step="0.1" placeholder="Initial / previous"/></label>
+<label class="field"><span>Latest lactate</span><input id="abgLacLatest" type="number" min="0" step="0.1" placeholder="Most recent"/></label>
+<label class="field"><span>Time between samples (hours; optional)</span><input id="abgLacHours" type="number" min="0.1" max="168" step="0.1" placeholder="e.g. 2"/></label>
+<label class="field"><span>After appropriate resuscitation / hypovolaemia excluded?</span><select id="abgResuscitation"><option value="unknown">Not established</option><option value="yes">Yes — clinically assessed</option><option value="no">No — not yet / ongoing</option></select></label>
+<label class="field"><span>Vasopressors required to target MAP ≥65 mmHg?</span><select id="abgPressorTarget"><option value="unknown">Not assessed</option><option value="yes">Yes — clinically confirmed</option><option value="no">No</option></select></label>
+</div>
+<div class="abg-summary" id="abgInterpret" role="status" aria-live="polite">Enter ABG or lactate values for interpretation.</div>
+<div class="actions"><button disabled id="abgApplyShock" type="button">Apply confirmed shock criteria to Severity</button></div>
+<p class="small muted">Sepsis-3 septic shock criteria require <strong>sepsis + vasopressor requirement to maintain MAP ≥65 mmHg + lactate &gt;2 mmol/L despite adequate volume resuscitation</strong>. The two confirmation fields above are independent clinical assessments, not automatically inferred from SOFA drugs or MAP. Lactate is nonspecific; interpret changes alongside clinical perfusion and do not give additional fluid solely to normalize it. [9,10]</p>
+</div>
+<div class="grid three">
+<label class="field"><span>Platelets (×10³/µL)</span><input id="sofaPlatelets" max="2000" min="0" placeholder="e.g. 110" step="0.1" type="number"/></label>
+<label class="field"><span>Total bilirubin (mg/dL)</span><input id="sofaBili" max="80" min="0" placeholder="e.g. 1.6" step="0.01" type="number"/></label>
+<label class="field"><span>GCS (3–15; assess sedation confounding)</span><input id="sofaGCS" max="15" min="3" placeholder="3–15" step="1" type="number"/></label>
+<label class="field"><span>Mean arterial pressure (mmHg)</span><input id="sofaMAP" max="250" min="0" placeholder="Required if no vasoactives" step="0.1" type="number"/></label>
+<label class="field"><span>Vasoactive drugs administered ≥1 h</span><select id="sofaVasoStatus"><option value="unknown">Not assessed</option><option value="none">None</option><option value="yes">Yes — enter drug and dose below</option></select></label>
+<label class="field"><span>Norepinephrine (µg/kg/min)</span><input id="sofaNE" max="10" min="0" placeholder="If used" step="0.001" type="number"/></label>
+<label class="field"><span>Epinephrine (µg/kg/min)</span><input id="sofaEpi" max="10" min="0" placeholder="If used" step="0.001" type="number"/></label>
+<label class="field"><span>Dopamine (µg/kg/min)</span><input id="sofaDopa" max="50" min="0" placeholder="If used" step="0.1" type="number"/></label>
+<label class="check sofa-check"><input id="sofaDobut" type="checkbox"/>Dobutamine (any dose, ≥1 h)</label>
+<label class="field"><span>Serum creatinine (mg/dL)</span><input id="creatinine" max="20" min="0.1" placeholder="Also used for CrCl below" step="0.01" type="number"/></label>
+<label class="field"><span>Urine output (mL / 24 h)</span><input id="sofaUrine" max="15000" min="0" placeholder="Optional; 24-h total" step="1" type="number"/></label>
+<label class="field"><span>Documented pre-infection/baseline SOFA</span><select id="sofaBaselineMode"><option value="unknown">Unknown</option><option value="zero">Confirmed baseline 0</option><option value="known">Known baseline SOFA (enter below)</option></select></label>
+<label class="field"><span>Known baseline SOFA score</span><input disabled="" id="sofaBaseline" max="24" min="0" placeholder="0–24" step="1" type="number"/></label>
+<label class="field"><span>Is new organ dysfunction caused by infection?</span><select id="sofaAttribution"><option value="uncertain">Not yet established</option><option value="yes">Yes — clinically attributable</option><option value="no">No — alternative explanation</option></select></label>
+</div>
+<div aria-live="polite" class="sofa-score-wrap">
+<div class="sofa-summary" id="sofaSummary">SOFA score: awaiting measurements</div>
+<div class="sofa-domains" id="sofaDomainList"></div>
+<div class="ind" id="sofaInterpret" role="status">Enter the six organ system measurements to assess acute organ dysfunction.</div>
+</div>
+<div class="actions"><button disabled="" id="sofaApply" type="button">Apply positive screen to Severity</button></div>
+<p class="small muted">Sepsis-3 screening requires suspected/confirmed infection plus an <strong>acute SOFA increase ≥2 points</strong> attributable to infection. A current SOFA ≥2 alone is insufficient without baseline assessment. SOFA does not diagnose septic shock; shock also requires clinical assessment including vasopressor and lactate criteria. The legacy SOFA calculation is distinct from SOFA-2.</p>
+</section><div class="clinical-override"><label class="field severity-select"><span>Clinical severity used for antibiotic selection</span><select id="severity"><option value="">Select / confirm severity</option><option value="stable">No sepsis or organ dysfunction</option><option value="sepsis">Sepsis / organ dysfunction</option><option value="shock">Septic shock or rapidly deteriorating</option></select></label>
+<p class="small muted">SOFA inputs are adjuncts. A positive screening calculation can populate the clinical severity field; review and confirm before generating a regimen.</p></div></div>
+<div class="selected-severity" id="severityReadout" role="status"><span>Clinical status</span><strong>Not assessed</strong></div>
+</section>
+<div class="risk-section"><div class="sectiontop"><div><div class="eyebrow">03 · Risk modifiers</div><h2>Factors that change the choice</h2></div></div>
+<p class="small muted">Common and syndrome-specific factors appear first. Open the remaining checklist only when relevant.</p>
+<div class="checks priority-checks" id="riskFocus"></div>
+<details class="extra-risks" id="riskMore"><summary id="riskMoreSummary">Other patient and microbiology factors</summary><div class="checks" id="riskAll">
+<label class="check"><input id="prevABX" type="checkbox"/>Broad-spectrum antibiotic exposure within 90 days</label>
+<label class="check"><input id="priorCarb" type="checkbox"/>Carbapenem exposure within 90 days</label>
+<label class="check"><input id="immuno" type="checkbox"/>Profound immunosuppression / active chemotherapy</label>
+<label class="check"><input id="neut" type="checkbox"/>Neutropenia</label>
+<label class="check"><input id="device" type="checkbox"/>Indwelling vascular/urinary/other device</label>
+<label class="check"><input id="vent" type="checkbox"/>Mechanical ventilation</label>
+<label class="check"><input id="mrsaRisk" type="checkbox"/>Strong prior MRSA risk or positive culture</label>
+<label class="check"><input id="candidaRisk" type="checkbox"/>High risk for invasive candidiasis</label>
+<label class="check"><input id="sourceControl" type="checkbox"/>Drainage / obstruction / device source control needed</label>
+<label class="check"><input id="allergy" type="checkbox"/>Severe immediate β-lactam hypersensitivity or SCAR history</label>
+<label class="check"><input id="preg" type="checkbox"/>Pregnancy / possibility of pregnancy</label>
+<label class="check"><input id="qtc" type="checkbox"/>Marked QT prolongation</label>
+<label class="check"><input id="mg" type="checkbox"/>Myasthenia gravis</label>
+<label class="check"><input id="renal" type="checkbox"/>AKI or unstable renal function</label>
+<label class="check"><input id="rrt" type="checkbox"/>IHD / CRRT / other renal replacement therapy</label>
+<label class="check"><input id="ivABX90" type="checkbox"/>IV antibiotics during hospitalization in previous 90 days</label><label class="check"><input id="priorRespPsa" type="checkbox"/>Pseudomonas in respiratory culture within 12 months</label><label class="check"><input id="priorRespMRSA" type="checkbox"/>MRSA in respiratory culture within 12 months</label><label class="check"><input id="priorUrineRes" type="checkbox"/>Resistant urine/blood isolate within 12 months</label><label class="check"><input id="fqlastYear" type="checkbox"/>Fluoroquinolone exposure within 12 months</label><label class="check"><input id="postop" type="checkbox"/>Postoperative infection</label><label class="check"><input id="enteroRisk" type="checkbox"/>Specific Enterococcus risk in intra-abdominal infection</label><label class="check"><input id="vreRisk" type="checkbox"/>Known prior VRE colonization/invasive infection</label></div></details></div>
+<details class="demographics"><summary>Age, weight and renal dosing parameters (optional)</summary>
+<div class="grid three spacer">
+<label class="field"><span>Age (years; adults only)</span><input id="age" max="120" min="18" placeholder="Optional" step="1" type="number"/></label>
+<label class="field"><span>Weight (kg)</span><input id="weight" max="350" min="20" placeholder="Optional" step="0.1" type="number"/></label>
+
+<label class="field"><span>Sex coefficient (Cockcroft–Gault)</span><select id="sex"><option value="male">Male factor</option><option value="female">Female factor</option></select></label>
+<label class="field"><span>Weight method for CG</span><select id="cgweight"><option value="actual">Actual body weight (verify suitability)</option><option value="adjusted">Adjusted body weight (manual value needed)</option></select></label>
+<label class="field"><span>If adjusted, enter kg</span><input id="adjusted" max="350" min="20" placeholder="Optional" step="0.1" type="number"/></label>
+</div></details>
+</section>
+<details class="card ancillary" id="microCard"><summary>Culture / MIC details <span class="muted small">(optional)</span></summary><p class="sub small">Document the organism, specimen, individual AST/MIC, and source. Do not infer NDM from generic carbapenem resistance.</p>
+
+<label class="field spacer"><span>Culture, MIC, source, documented resistance and formulary availability (optional; stays on device)</span><textarea id="microNote" placeholder="Do not enter patient identifiers. E.g. blood culture K. pneumoniae, NDM+, AST pending." rows="2"></textarea></label>
+</details>
+<section class="decision-actions noprint"><button class="primary compute-button" id="compute" type="button">Review antimicrobial options <span aria-hidden="true">→</span></button><button id="reset" type="button">Clear</button><button id="print" type="button">Print</button></section>
+
+</div><aside class="workspace-output" aria-label="Clinical antibiotic recommendation">
+<section aria-live="polite" id="result"><div class="empty-result"><div class="empty-icon">Rx</div><h2>Recommendation workspace</h2><p>Enter a clinical source, choose a direct sepsis assessment or SOFA, and select <strong>Review antimicrobial options</strong>.</p><p class="small muted">Your result will show a short initial shortlist, urgent safety checks and expandable details.</p></div></section>
+</aside></div>
+<details class="card ancillary" id="localBundle">
+<summary>Supportive treatment instructions</summary>
+
+<h3>Parallel tasks (first hour to first six hours bundle)</h3>
+<ol class="tight" id="localBundleList">
+<li>Send cultures before first dose if feasible: blood ×2, sputum/ETA/NDBAL, urine, pus/drain.</li>
+<li>Source control within 6–12 h (drain/debride, remove/exchange infected lines &amp; tubes).</li>
+<li>Hemodynamics: PLR and POCUS-guided balanced crystalloids (RL); noradrenaline infusion to MAP ≥65 mmHg; hydrocortisone 4 mg/kg IV bolus and 4 mg/kg IVI over 24 h for 3 days.</li>
+<li>Oxygenation target: PaO2 70 - 90 mmHg, SpO₂ 92–96%; avoid hyperoxia (avoid PaO2 &gt; 120 mmHg for prolonged periods).</li>
+<li>Intubate and Ventilate if, GCS≤8 or inability to protect airway, or, Refractory Hypoxemia (PaO2/FiO2 &lt;200 or SpO2 &lt;90% on FiO2 &gt;50% on &gt;30 LPM flow on HFNC), or, Hypercapnic Respiratory Failure (PaCO2 ≥50 mmHg with pH &lt;7.30), or, Signs of Impending Exhaustion (RR&gt;33 bpm, tracheal tug, sweating, agitation, paradoxical breathing).</li>
+<li>Monitoring: mental status, capillary refill time, ABG, lactate trend, MAP, urine output, tympanic and peripheral temperature, 6am blood glucose, serum NT-proBNP, serum creatinine, INR; daily de-escalation review (24–48–72 h).</li>
+<li>Glycemia 140–180 mg/dL.</li>
+<li>Stress-ulcer prophylaxis - pantoprazole 40 mg IV/PO once daily.</li>
+<li>VTE prophylaxis, Enoxaparin 20 - 40 mg SC once daily (withhold if platelets &lt; 80,000/micro L, or INR &gt; 1.4).</li>
+<li>Early enteral nutrition, calorie dense diet / NGT formula feed (2 - 3 scoops/100mL), plus MCT oil 20 mL twice daily.</li>
+<li>Severe anemia correction, target Hb 8 - 10 g/dL; followup action, syrup multivitamin 15 mL once daily.</li>
+<li>Communicate with the family - present physical status, prognosis, ongoing treatment, short term treatment plan.</li>
+</ol>
+</details>
+<details class="card ancillary noprint" id="antibiogramCard"><summary>Verified antibiogram (optional)</summary><div class="eyebrow">04 / Antimicrobial surveillance</div><h2>Optional future verified antibiogram — empty dataset</h2><div class="alert"><strong>No local values are preloaded.</strong> Any future institutional aggregate must be entered from a verified report.</div>
+<div class="grid"><label class="field"><span>Institution / unit</span><input id="abgInstitution" placeholder="Institution or ICU name"/></label><label class="field"><span>Surveillance period</span><input id="abgPeriod" placeholder="Dates of approved surveillance report"/></label></div>
+<label class="check spacer"><input id="abgVerified" type="checkbox"/>I verified these data against the actual unit-specific official antibiogram (first isolate per patient, denominator, site and time period).</label>
+<div class="grid three spacer"><label class="field"><span>Organism</span><select id="abgOrg"><option>E. coli</option><option>Klebsiella pneumoniae</option><option>Pseudomonas aeruginosa</option><option>Acinetobacter baumannii</option><option>Enterobacter cloacae complex</option><option>Staphylococcus aureus</option><option>Enterococcus faecium</option><option>Stenotrophomonas maltophilia</option></select></label><label class="field"><span>Antimicrobial agent</span><input id="abgAgent" placeholder="e.g. meropenem"/></label><label class="field"><span>Number tested (n)</span><input id="abgN" max="100000" min="1" step="1" type="number"/></label><label class="field"><span>% susceptible (S only)</span><input id="abgPct" max="100" min="0" step="0.1" type="number"/></label></div>
+<div class="actions"><button id="abgAdd">Add / update data point</button><button id="abgImport">Import CSV or JSON</button><button id="abgExport">Export JSON</button><button id="abgTemplate">CSV template</button><button id="abgClear">Clear antibiogram</button><input accept=".csv,.json,application/json,text/csv" id="abgFile" style="display:none" type="file"/></div><div class="small muted" id="abgStatus"></div><div class="table-wrap"><table class="localdata"><thead><tr><th>Organism</th><th>Antibiotic</th><th>n</th><th>%S</th><th>Interpretation</th><th>Action</th></tr></thead><tbody id="abgBody"><tr><td colspan="6">No verified data entered.</td></tr></tbody></table></div><p class="sub small">CSV columns: organism,antibiotic,n,percent_s. Do not combine separate institutions, species or specimen sources. Intermediate (I) is not counted as S in the Stanford dataset. n&lt;30 is flagged.</p></details>
+<details class="card ancillary" id="doses"><summary>Adult antibiotic dosing reference</summary><div class="eyebrow">05 / Drug reference</div><h2>Adult reference dosing — not an automatic prescription</h2><p class="sub small">Typical adult doses shown assume <strong>normal or stable renal/hepatic function unless noted</strong>. In shock, AKI, obesity, ARC, IHD or CRRT, verify loading dose, maintenance dosing, infusion strategy, dialyzer/effluent, levels and local pharmacy protocol. Differing syndrome-specific doses are intentional.</p><div class="table-wrap"><table><thead><tr><th>Agent</th><th>Normal renal function reference</th><th>High-risk caveat / reference</th></tr></thead><tbody id="doseBody"></tbody></table></div></details>
+<details class="card ancillary" id="sourceCard"><summary>References</summary>
+<div class="eyebrow">06 / References</div>
+<h2>References</h2>
+<ol class="tight small vancouver">
+<li>National Centre for Disease Control; Indian Council of Medical Research. <i>National treatment guidelines for antimicrobial use in infectious disease syndromes</i>. Version 2.0. New Delhi: Ministry of Health and Family Welfare, Government of India; 2025 Nov.</li>
+<li>Jawaharlal Institute of Postgraduate Medical Education and Research, Antimicrobial Stewardship Committee. <i>Antibiotic policy 2026</i>. Version 1.0. Puducherry: JIPMER; 2026 Apr 15.</li>
+<li>Tamma PD, Bonomo RA, Heil EL, Justo JA, Satlin MJ, Mathers AJ. Infectious Diseases Society of America 2026 guidance on the treatment of antimicrobial-resistant Gram-negative infections. <i>Clin Infect Dis</i>. 2026 Aug 8:ciag481. doi: <a href="https://doi.org/10.1093/cid/ciag481" rel="noopener" target="_blank">10.1093/cid/ciag481</a>.</li>
+<li>Todi SK, Jagiasi BG, Juneja D, Gopaldas JA, Soni KD, Karanth S, et al. Indian Society of Critical Care Medicine guidelines on evidence-based recommendations for the treatment of carbapenem-resistant Enterobacterales, carbapenem-resistant Acinetobacter baumannii, and carbapenem-resistant Pseudomonas aeruginosa in critically ill patients: a GRADE-guided approach. <i>Indian J Crit Care Med</i>. 2026;30(6):472–517. doi: <a href="https://doi.org/10.5005/jp-journals-10071-25216" rel="noopener" target="_blank">10.5005/jp-journals-10071-25216</a>.</li>
+<li>Stanford Health Care, Antimicrobial Safety &amp; Sustainability Program. <i>SHC sepsis empiric antibiotic selection guide</i>. Stanford (CA): Stanford Health Care; 2026 Aug.</li>
+<li>Stanford Health Care, Antimicrobial Stewardship Program. <i>Stanford Health Care antimicrobial dosing reference guide</i>. Stanford (CA): Stanford Health Care; 2026 Aug.</li>
+<li>Stanford Health Care, Clinical Microbiology Laboratory. <i>SHC antibiogram data for bacterial and yeast isolates, January 1–December 31, 2025</i> [institutional surveillance report]. Stanford (CA): Stanford Health Care; publication date not stated.</li>
+<li>Vincent JL, Moreno R, Takala J, Willatts S, De Mendonça A, Bruining H, et al. The SOFA (Sepsis-related Organ Failure Assessment) score to describe organ dysfunction/failure. <i>Intensive Care Med</i>. 1996;22(7):707–710. doi: <a href="https://doi.org/10.1007/BF01709751" rel="noopener" target="_blank">10.1007/BF01709751</a>.</li>
+<li>Singer M, Deutschman CS, Seymour CW, Shankar-Hari M, Annane D, Bauer M, et al. The third international consensus definitions for sepsis and septic shock (Sepsis-3). <i>JAMA</i>. 2016;315(8):801–810. doi: <a href="https://doi.org/10.1001/jama.2016.0287" rel="noopener" target="_blank">10.1001/jama.2016.0287</a>.</li>
+<li>Prescott HC, Antonelli M, Alhazzani W, et al. Surviving Sepsis Campaign: international guidelines for management of sepsis and septic shock 2026. <i>Crit Care Med</i>. 2026. doi: <a href="https://doi.org/10.1097/CCM.0000000000007075" rel="noopener" target="_blank">10.1097/CCM.0000000000007075</a>.</li>
+</ol>
+</details>
+<details class="card ancillary"><summary>Software licence and clinical-use limitation</summary><p class="small">BEAT-C original © 2025 Prof. Jyotirmay Kirtania, distributed under GNU GPL v3 or later. This modified version is a decision-support reference, not a validated diagnostic or prescribing medical device. It runs locally; does not transmit patient data. No warranty. The prescribing clinician remains responsible for patient-specific decisions, verification and local governance approval before clinical use.</p></details>
+</main>
+<div class="mobile-dock noprint"><button id="computeFloat" class="primary" type="button">Review antimicrobial options <span aria-hidden="true">→</span></button><button id="resetFloat" type="button" aria-label="Clear clinical inputs">Clear</button></div>
+<script>
+(() => {
+'use strict';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+const EMPTY_RESULT = `<div class="empty-result"><div class="empty-icon">Rx</div><h2>Recommendation workspace</h2><p>Enter the infection source, select a sepsis assessment, then review antimicrobial options.</p><p class="small muted">A brief conditional shortlist appears here; rationale and full references remain available.</p></div>`;
+function invalidateReview(){const r=$('result');if(r.dataset.reviewed!=='1')return;r.dataset.reviewed='0';r.innerHTML='<div class="stale-result"><h3>Clinical inputs changed</h3><p>The previous options are hidden because they no longer correspond to the current inputs. Select <strong>Review antimicrobial options</strong> to update.</p></div>';}
+function runReview(){compute();$('result').dataset.reviewed='1';}
+const screenMode = () => document.querySelector('input[name="screenMethod"]:checked')?.value || 'quick';
+const organState = () => document.querySelector('input[name="organStatus"]:checked')?.value || '';
+const clinicalNames={stable:'No acute infection-related dysfunction',sepsis:'Acute organ dysfunction / sepsis',shock:'Shock or rapid deterioration'};
+const focusBySource={unknown:['prevABX','priorCarb','mrsaRisk'],cap:['priorRespPsa','priorRespMRSA','ivABX90'],hap:['priorCarb','priorRespPsa','priorRespMRSA'],abd:['postop','enteroRisk','vreRisk'],uti:['priorUrineRes','fqlastYear','priorCarb'],line:['device','mrsaRisk','priorCarb'],skin:['mrsaRisk','immuno','sourceControl'],cns:['immuno','postop','device'],fn:['neut','immuno','priorCarb'],diarrhea:['prevABX','immuno']};
+function setStatus(value){if($('severity').value!==(value||''))invalidateReview();$('severity').value=value||'';const text=clinicalNames[value]||'Not assessed';$('severityReadout').querySelector('strong').textContent=text;}
+function syncQuickSeverity(){if(screenMode()!=='quick')return;const state=organState();let value=state==='present'?'sepsis':state==='absent'?'stable':'';if($('quickShock').checked){value='shock';if(state==='absent'){document.querySelector('input[name="organStatus"][value="present"]').checked=true;}}
+  setStatus(value);$('quickDecision').textContent=$('quickShock').checked?'Shock / rapid deterioration selected by clinical assessment.':state==='present'?'Acute infection-related organ dysfunction recorded.':state==='absent'?'Acute infection-related organ dysfunction absent.':state==='uncertain'?'Assessment uncertain: confirm clinical severity before a regimen is generated.':'Choose Absent or Present; use the detailed screener if uncertain.';
+}
+function syncAssessmentMode(){const detailed=screenMode()==='detailed';$('quickPath').hidden=detailed;$('detailedPath').hidden=!detailed;if(detailed){setStatus('');refreshSofa();}else{syncQuickSeverity();}updateScreenHint();}
+function updateScreenHint(){const x=$('severity').value;const name=clinicalNames[x]||'Not assessed';$('severityReadout').querySelector('strong').textContent=name;}
+function focusFactors(){const selected=['prevABX','allergy',...(focusBySource[$('source').value]||[])];const ids=[...new Set(selected)].slice(0,6);const all=$('riskAll'),focus=$('riskFocus');
+  const labels=[...document.querySelectorAll('#riskFocus label.check,#riskAll label.check')];for(const l of labels){const box=l.querySelector('input');if(!box)continue;(ids.includes(box.id)?focus:all).appendChild(l);}
+  const chosen=labels.filter(l=>l.querySelector('input').checked).length;
+  const hiddenChosen=[...all.querySelectorAll('input:checked')].length;
+  $('riskMoreSummary').textContent='Other clinical risk factors'+(hiddenChosen?' · '+hiddenChosen+' selected':'')+' ('+all.querySelectorAll('input').length+')';
+  $('riskMore').classList.toggle('has-risk',chosen>0);
+}
+function syncResistance(){const known=$('resistance').value!=='none';$('evidenceField').hidden=!known;if(!known){$('microstatus').value='prior';}}
+function syncPrefs(){const view=$('viewMode').value;document.body.classList.toggle('view-mobile',view==='mobile');document.body.classList.toggle('view-pc',view==='pc');const theme=$('themeMode').value;const dark=theme==='dark'||(theme==='auto'&&window.matchMedia?.('(prefers-color-scheme: dark)').matches);document.documentElement.dataset.theme=dark?'dark':'light';try{localStorage.setItem('beatc-ui-v24',JSON.stringify({view,theme}));}catch(_){} }
+function initPrefs(){try{const p=JSON.parse(localStorage.getItem('beatc-ui-v24')||'{}');for(const [id,value] of [['viewMode',p.view],['themeMode',p.theme]])if(value&&[...$(id).options].some(o=>o.value===value))$(id).value=value;}catch(_){}syncPrefs();}
+function validateClinicalPath(){const isDetailed=screenMode()==='detailed';if(!isDetailed&&(!organState()||organState()==='uncertain')&&!$('quickShock').checked)return 'Select Absent or Present for acute organ dysfunction, or use SOFA / ABG and confirm clinical severity.';
+ if(!$('severity').value)return 'Confirm the clinical severity for antibiotic selection. If SOFA is incomplete, make an explicit clinical assessment.';return null;}
+function showBlocking(msg){$('result').innerHTML=`<div class="card"><div class="alert danger">${esc(msg)}</div></div>`;$('result').scrollIntoView({behavior:'smooth',block:'start'});}
+function wrapBriefResult(c){const result=$('result'),root=result.querySelector(':scope > .card');if(!root)return;const cards=[...root.querySelectorAll(':scope > .result-card')];if(!cards.length)return;
+ const src=$('source').selectedOptions[0]?.textContent||'Source unknown';const active=document.querySelectorAll('#riskFocus input:checked,#riskAll input:checked').length;
+ const header=document.createElement('div');header.className='brief-head';header.innerHTML=`<div class="eyebrow">BEDSIDE SHORTLIST</div><h2>${esc(src)}</h2><div class="brief-meta">${esc(clinicalNames[c.severity]||'Clinical severity not established')} · ${esc($('acq').selectedOptions[0]?.textContent||'')} · ${active} risk modifier${active===1?'':'s'}</div>`;
+ root.insertBefore(header,root.firstChild);
+ const currentDirected=c.resistance!=='none'&&c.microstatus==='current';const directedCards=cards.filter(x=>x.querySelector('.tag')?.textContent.includes('Directed'));
+ const directedSuitable=directedCards.filter(x=>c.source==='uti'||!(/For cUTI\/pyelonephritis/i.test(x.textContent)));const priorityCards=currentDirected&&directedCards.length?directedSuitable:cards.filter(x=>!directedCards.includes(x));
+ const visible=priorityCards.slice(0,2);if(visible.length===0)visible.push(...cards.slice(0,2));
+ const other=cards.filter(x=>!visible.includes(x));
+ // Every option remains in the HTML. Only the initial shortlist is expanded.
+ const firstLabel=document.createElement('p');firstLabel.className='focus-label';firstLabel.textContent=currentDirected?'Organism-directed options to evaluate':'Initial empiric options to evaluate';
+ const firstNode=visible[0];root.insertBefore(firstLabel,firstNode);for(const x of visible)x.classList.add('brief-priority');
+ if(other.length){const more=document.createElement('details');more.className='more-results';more.innerHTML=`<summary>${other.length} additional / alternative regimen${other.length===1?'':'s'} · view details</summary>`;for(const card of other)more.appendChild(card);root.appendChild(more);}
+ const danger=[...root.querySelectorAll(':scope > .alert.danger')];
+ // Keep every high-impact risk alert visible near the top of the shortlist.
+ const alertHost=document.createElement('div');alertHost.className='brief-alerts';for(const el of danger)alertHost.appendChild(el);if(danger.length)root.insertBefore(alertHost,firstLabel);
+ const cautions=[...root.querySelectorAll(':scope > .alert:not(.danger):not(.good)')];
+ const urgentCautions=cautions.filter(x=>/Neutropenia flagged|Urgent source-control|Time-critical specialist|shock|rapid decompensation|severe intra-abdominal|current isolate/i.test(x.textContent));
+ for(const item of urgentCautions){alertHost.appendChild(item);}if(urgentCautions.length&&!alertHost.isConnected)root.insertBefore(alertHost,firstLabel);
+ const remainingCautions=cautions.filter(x=>!urgentCautions.includes(x));
+ if(remainingCautions.length){const d=document.createElement('details');d.className='result-detail';d.innerHTML=`<summary>Clinical modifiers and caution notes (${remainingCautions.length})</summary>`;for(const a of remainingCautions)d.appendChild(a);root.appendChild(d);}
+ const notesHeading=[...root.querySelectorAll(':scope > h3')].find(x=>x.textContent==='Do not overlook');if(notesHeading){const ul=notesHeading.nextElementSibling;if(ul?.tagName==='UL'){const d=document.createElement('details');d.className='result-detail';d.innerHTML='<summary>Review source control, cultures and stewardship</summary>';d.append(notesHeading,ul);root.appendChild(d);}}
+ const cl=root.querySelector('p.ind');if(cl){const d=document.createElement('details');d.className='result-detail';d.innerHTML='<summary>Renal function / Cockcroft–Gault context</summary>';d.appendChild(cl);root.appendChild(d);}
+ const sofaInfo=[...root.querySelectorAll('p.ind')];for(const n of sofaInfo){if(n===cl)continue;const d=document.createElement('details');d.className='result-detail';d.innerHTML='<summary>SOFA calculation context</summary>';d.appendChild(n);root.appendChild(d);}
+ root.classList.add('result-brief');
+}
+const names={ptz:'Piperacillin/tazobactam',mero:'Meropenem',ctx:'Ceftriaxone',metro:'Metronidazole',cefepime:'Cefepime',vanc:'Vancomycin',linezolid:'Linezolid',azithro:'Azithromycin',doxy:'Doxycycline',ami:'Amikacin',cza:'Ceftazidime/avibactam',azt:'Aztreonam',aztavi:'Aztreonam/avibactam',cefiderocol:'Cefiderocol',ctz:'Ceftolozane/tazobactam',imirel:'Imipenem/cilastatin/relebactam',merovab:'Meropenem/vaborbactam',suldur:'Sulbactam/durlobactam',imipenem:'Imipenem/cilastatin',ampsul:'High-dose ampicillin/sulbactam',mino:'Minocycline',tmp:'Trimethoprim/sulfamethoxazole',cipro:'Ciprofloxacin',levo:'Levofloxacin',erta:'Ertapenem',caspo:'Caspofungin',mica:'Micafungin',clinda:'Clindamycin',cefazolin:'Cefazolin',ampicillin:'Ampicillin'};
+const beta=new Set(['ptz','mero','ctx','cefepime','cza','azt','aztavi','cefiderocol','ctz','imirel','merovab','suldur','imipenem','ampsul','erta','cefazolin','ampicillin']);
+const dosing=[
+['ptz','4.5 g IV every 6 h (30-min infusion) for severe infection; alternative 3.375–4.5 g IV every 8 h infused over 4 h where protocol supports.','Renal adjustment depends on infusion strategy and CrCl. [JIPMER 2026; SHC Dose 2026]'],
+['mero','1–2 g IV every 8 h; 3-h infusion where feasible for serious resistant infection.','Consider 2 g for CNS infection, ARC, ECMO or obesity as specified in IDSA; renal dose adjustment essential. [IDSA 2026 Table 1; SHC Dose 2026]'],
+['cefepime','Serious non-UTI infection: 2 g IV loading over 30 min, then 2 g every 8 h over 3 h.','Dose reduction in renal dysfunction; neurotoxicity risk. AmpC susceptible/SDD MIC ≤8 µg/mL. [IDSA 2026 Table 1, §2.3]'],
+['cefazolin','Typical adult non-CNS therapy: 2 g IV every 8 h for susceptible skin/soft tissue pathogens.','Confirm weight, renal function, infection severity and local formulary. [SHC Sepsis 2026]'],
+['ampicillin','For Listeria meningitis risk: 2 g IV every 4 h in adults with normal renal function.','Use only with a complete meningitis regimen; renal adjustment and allergy assessment required. [SHC Sepsis 2026]'],
+['ctx','Common non-CNS adult reference: 1–2 g IV every 24 h.','Meningitis requires syndrome-specific dosing; no ESBL treatment for invasive disease. [JIPMER 2026; NCDC–ICMR 2025]'],
+['metro','Intra-abdominal anaerobic coverage: 500 mg IV/PO every 8–12 h.','Usually unnecessary with piperacillin/tazobactam or meropenem unless separate indication. [SHC Dose 2026]'],
+['vanc','Individualized loading and maintenance with AUC-guided monitoring.','Target AUC24/MIC 400–600 for serious MRSA when MIC=1, per established vancomycin guidance; renal/TDM review mandatory. Not linezolid for MRSA bacteremia.'],
+['linezolid','600 mg IV/PO every 12 h.','For appropriate MRSA syndromes (e.g. pneumonia); monitor platelets, interactions and exposure. Not routinely selected for S. aureus bacteremia. [SHC Dose 2026]'],
+['ami','Initial dose often 15–20 mg/kg IV (indication-specific); subsequent regimen via PK/TDM.','Avoid unmonitored repeat daily dosing, especially in AKI, RRT or shock. [JIPMER 2026; IDSA 2026 Table 1]'],
+['cza','2.5 g IV every 8 h over 3 h for normal renal function.','Active against many KPC/OXA-48 isolates; NOT reliable against NDM alone. Renal adjust. [IDSA 2026 Table 1]'],
+['azt','For NDM with ceftazidime/avibactam: 2 g IV every 8 h over 3 h, concurrent via validated Y-site method.','Must use both agents, confirm compatibility/administration; ceftazidime/avibactam alone fails NDM. [IDSA 2026 Table 1]'],
+['aztavi','2.67 g IV loading over 3 h, then 2 g IV every 6 h over 3 h (normal renal function).','Doses given for aztreonam/avibactam combination. India availability, AST and product regulatory status must be checked. [IDSA 2026 Table 1]'],
+['merovab','4 g IV every 8 h infused over 3 h (2 g meropenem + 2 g vaborbactam).','KPC-directed; NOT NDM or reliable OXA-48-directed therapy. Renal adjust. [IDSA 2026 Table 1]'],
+['imirel','1.25 g IV every 6 h over 30 min (imipenem/cilastatin/relebactam).','KPC and selected DTR Pseudomonas when susceptible; NOT NDM. [IDSA 2026 Table 1]'],
+['ctz','Serious non-UTI infections: 3 g IV every 8 h over 3 h.','For DTR Pseudomonas when susceptible, particularly pneumonia. Renal adjust. [IDSA 2026 Table 1]'],
+['cefiderocol','2 g IV every 8 h over 3 h (CrCl 60–120 mL/min); at CrCl ≥120 mL/min: 2 g every 6 h.','CrCl 30–60: 1.5 g q8h; 15–30: 1 g q8h per SHC guide; verify AST and PK/PD. [IDSA 2026 Table 1; SHC Dose 2026]'],
+['suldur','2 g IV every 6 h infused over 3 h (1 g sulbactam + 1 g durlobactam).','For invasive CRAB combine with imipenem/cilastatin or meropenem; may not be locally available. Renal adjust. [IDSA 2026 Table 1; §5.1]'],
+['ampsul','High-dose CRAB bridging: 9 g total combination IV every 8 h infused over 4 h (27 g/day = 9 g sulbactam/day).','Only as targeted combination bridge if sulbactam/durlobactam unavailable; special pharmacy review of dose/formulation/renal function. [IDSA 2026 Table 1; §5.2]'],
+['mino','200 mg IV/PO every 12 h for applicable serious AMR infections.','Use guided by susceptibility and infection site; NOT reliable for bacteremia monotherapy. [IDSA 2026 Table 1]'],
+['tmp','Dose is expressed by trimethoprim component, syndrome-specific; require weight, renal function and monitoring.','Check potassium, blood count and interactions; use only when active/syndrome appropriate. [IDSA 2026 §6; SHC Dose 2026]'],
+['azithro','CAP adjunctive atypical coverage: 500 mg IV/PO every 24 h (normal renal function).','Check QTc, interactions and syndrome-specific indication. [SHC Dose 2026; SHC Sepsis 2026]'],
+['doxy','Typical adult dose: 100 mg IV/PO every 12 h.','Atypical/rickettsial coverage in relevant syndromes; pregnancy requires specialist decision. [NCDC–ICMR 2025; JIPMER 2026]'],
+['caspo','70 mg IV loading then 50 mg IV every 24 h in a typical adult (dose modifications may be needed).','Only for clinically justified invasive candidiasis concern, not an automatic sepsis add-on; liver/drug interaction review.'],
+['mica','100 mg IV every 24 h for invasive candidiasis treatment (indication-dependent).','Requires separate diagnostic assessment and local formulary.'],['erta','1 g IV every 24 h.','Not active against Pseudomonas, Acinetobacter or Enterococcus. For CrCl <30 mL/min: SHC lists 500 mg IV every 24 h; validate with clinical pharmacy. Avoid as a routine choice for critically ill ESBL infection or marked hypoalbuminemia. [SHC Dose 2026; IDSA 2026]'],
+['imipenem','Imipenem/cilastatin: 500 mg IV every 6 h OR 1 g IV every 8 h in adults with stable normal renal function, per SHC dosing guide.','In CRAB regimens, this is the accompanying carbapenem, NOT an active CRAB monotherapy. Adjust for renal impairment; consider seizure/neurotoxicity risk. [SHC Dose 2026; IDSA 2026 §5]'],
+['levo','Severe pneumonia or complicated UTI: 750 mg IV/PO every 24 h (normal renal function).','Renal adjustment is required below CrCl 50 mL/min; QT prolongation, myasthenia gravis, tendon/CNS toxicity, pregnancy and resistance require review. [SHC Dose 2026; SHC Sepsis 2026]'],
+['cipro','General systemic infection: 400 mg IV every 12 h or 500 mg PO every 12 h; for selected severe Pseudomonas infections: 400 mg IV every 8 h or 750 mg PO every 12 h.','Use only when organism and site are appropriate; adjust in renal impairment and check QT, myasthenia gravis, interactions and susceptibility. [SHC Dose 2026]'],
+['clinda','600–900 mg IV every 8 h; when oral treatment is appropriate, 150–450 mg PO every 6 h.','For selected toxin-mediated severe SSTI, use in combination with definitive antibacterial therapy and urgent source control, not as broad Gram-negative monotherapy. [SHC Dose 2026; SHC Sepsis 2026]']
+];
+function initDoses(){ $('doseBody').innerHTML=dosing.map(([id,d,n])=>`<tr id="dose-row-${id}"><td><strong>${esc(names[id]||id)}</strong></td><td>${esc(d)}</td><td>${esc(n)}</td></tr>`).join('') }
+
+// Six-system conventional SOFA (Sepsis-3). No imputation of missing values.
+function sofaNumber(id){const el=$(id);if(!el||el.value.trim()==='')return null;const n=Number(el.value);return Number.isFinite(n)?n:NaN;}
+function sofaRange(n,min,max,integer=false){return n!==null&&Number.isFinite(n)&&n>=min&&n<=max&&(!integer||Number.isInteger(n));}
+function sofaAssessment(){
+  const p=sofaNumber('sofaPaO2'),f=sofaNumber('sofaFiO2'),pl=sofaNumber('sofaPlatelets'),bil=sofaNumber('sofaBili'),gcs=sofaNumber('sofaGCS'),map=sofaNumber('sofaMAP'),scr=sofaNumber('creatinine'),ur=sofaNumber('sofaUrine');
+  const ne=sofaNumber('sofaNE'),ep=sofaNumber('sofaEpi'),dop=sofaNumber('sofaDopa');
+  const mode=$('sofaVasoStatus').value;const hasSupport=$('sofaRespSupport').checked;
+  const rows=[['Respiratory',null],['Coagulation',null],['Liver',null],['Cardiovascular',null],['CNS',null],['Renal',null]];
+  const errors=[];
+  if(sofaRange(p,10,800)&&sofaRange(f,21,100)){
+    const ratio=p/(f/100);rows[0][1]=ratio<100&&hasSupport?4:ratio<200&&hasSupport?3:ratio<300?2:ratio<400?1:0;
+    rows[0][2]='P/F '+ratio.toFixed(0);
+    if(ratio<200&&!hasSupport)errors.push('P/F <200 without respiratory support: conventional SOFA respiratory score is capped at 2.');
+  } else if(p!==null||f!==null)errors.push('Enter valid PaO₂ (10–800) and FiO₂ (21–100%).');
+  if(sofaRange(pl,0,2000))rows[1][1]=pl<20?4:pl<50?3:pl<100?2:pl<150?1:0;
+  else if(pl!==null)errors.push('Platelets must be 0–2000 ×10³/µL.');
+  if(sofaRange(bil,0,80))rows[2][1]=bil>=12?4:bil>=6?3:bil>=2?2:bil>=1.2?1:0;
+  else if(bil!==null)errors.push('Bilirubin must be 0–80 mg/dL.');
+  if(mode==='none'){
+    if(sofaRange(map,0,250))rows[3][1]=map<70?1:0;
+    else errors.push('Enter MAP (0–250 mmHg) when no vasoactive drugs are used.');
+  }else if(mode==='yes'){
+    const doses=[ne,ep,dop];
+    if(doses.some(n=>n!==null&&!sofaRange(n,0,50))){errors.push('One or more vasoactive drug doses are invalid.');}
+    else if(!doses.some(n=>n>0)&&!$('sofaDobut').checked){errors.push('Enter a dose or check dobutamine for recorded vasoactive therapy.');}
+    else{
+      let v=$('sofaDobut').checked?2:0;
+      if(dop>0)v=Math.max(v,dop>15?4:dop>5?3:2);
+      if(ne>0)v=Math.max(v,ne>0.1?4:3);
+      if(ep>0)v=Math.max(v,ep>0.1?4:3);
+      rows[3][1]=v;
+    }
+  }else if(map!==null){errors.push('Confirm vasoactive drug status to score cardiovascular SOFA.');}
+  if(sofaRange(gcs,3,15,true))rows[4][1]=gcs<6?4:gcs<=9?3:gcs<=12?2:gcs<15?1:0;
+  else if(gcs!==null)errors.push('GCS must be an integer 3–15.');
+  if(sofaRange(scr,0.1,20)){
+    let r=scr>=5?4:scr>=3.5?3:scr>=2?2:scr>=1.2?1:0;
+    if(ur!==null){if(sofaRange(ur,0,15000))r=Math.max(r,ur<200?4:ur<500?3:0);else errors.push('24-hour urine output must be 0–15000 mL.');}
+    rows[5][1]=r;
+  }else if(scr!==null)errors.push('Serum creatinine must be 0.1–20 mg/dL.');
+  if(ur!==null&&!sofaRange(ur,0,15000)&&scr===null)errors.push('24-hour urine output must be 0–15000 mL.');
+  const scored=rows.filter(r=>r[1]!==null).length;
+  const subtotal=rows.reduce((a,r)=>a+(r[1]||0),0);
+  const current=scored===6&&errors.filter(x=>!x.startsWith('P/F <')).length===0?subtotal:null;
+  const baselineMode=$('sofaBaselineMode').value,baseInput=sofaNumber('sofaBaseline');
+  const baseline=baselineMode==='zero'?0:baselineMode==='known'&&sofaRange(baseInput,0,24,true)?baseInput:null;
+  const delta=current!==null&&baseline!==null?current-baseline:null;
+  const infection=['suspected','confirmed'].includes($('infection').value);
+  const attribution=$('sofaAttribution').value;
+  const meets=delta!==null&&delta>=2&&infection&&attribution==='yes';
+  return {rows,scored,subtotal,current,baseline,delta,errors,infection,attribution,meets};
+}
+// ABG and serial lactate are separate from the six SOFA domains.
+// Sepsis-3 shock check is based on clinician-confirmed resuscitation and vasopressor indication.
+function abgAssessment(a){
+ const values={ph:sofaNumber('abgPH'),pco2:sofaNumber('abgPCO2'),hco3:sofaNumber('abgHCO3'),be:sofaNumber('abgBE'),earlier:sofaNumber('abgLacEarlier'),latest:sofaNumber('abgLacLatest'),hours:sofaNumber('abgLacHours')};
+ const unit=$('abgLacUnit').value, multiplier=unit==='mgdl'?1/9.008:1;
+ const issues=[];
+ for(const [key,min,max,label] of [['ph',6.5,7.8,'pH'],['pco2',5,200,'PaCO₂'],['hco3',2,60,'HCO₃⁻'],['be',-40,40,'base excess'],['earlier',0,unit==='mmol'?30:270,'earlier lactate'],['latest',0,unit==='mmol'?30:270,'latest lactate'],['hours',0.1,168,'time between samples']]){
+   if(values[key]!==null&&!sofaRange(values[key],min,max))issues.push('Invalid '+label+' value.');
+ }
+ const earlier=values.earlier===null?null:values.earlier*multiplier,latest=values.latest===null?null:values.latest*multiplier;
+ const resuscitated=$('abgResuscitation').value,pressor=$('abgPressorTarget').value;
+ const clinicalSepsis=a.meets||(a.infection&&['sepsis','shock'].includes($('severity').value));
+ const shockMeets=issues.length===0&&clinicalSepsis&&latest!==null&&latest>2&&resuscitated==='yes'&&pressor==='yes';
+ return {values,earlier,latest,issues,resuscitated,pressor,clinicalSepsis,shockMeets};
+}
+function refreshABG(a){
+ const b=abgAssessment(a), parts=[];
+ const p=sofaNumber('sofaPaO2'),f=sofaNumber('sofaFiO2');
+ if(sofaRange(p,10,800)&&sofaRange(f,21,100))parts.push('Oxygenation: PaO₂/FiO₂ = '+(p/(f/100)).toFixed(0)+' mmHg (used for respiratory SOFA).');
+ const acidBase=[];
+ if(b.values.pco2!==null&&sofaRange(b.values.pco2,5,200))acidBase.push('PaCO₂ '+b.values.pco2.toFixed(1)+' mmHg');
+ if(b.values.hco3!==null&&sofaRange(b.values.hco3,2,60))acidBase.push('HCO₃⁻ '+b.values.hco3.toFixed(1)+' mmol/L');
+ if(b.values.be!==null&&sofaRange(b.values.be,-40,40))acidBase.push('BE '+b.values.be.toFixed(1)+' mmol/L');
+ if(acidBase.length)parts.push('ABG context: '+acidBase.join(' · ')+'. Interpret acid–base disorders with the full clinical picture.');
+ if(b.values.ph!==null&&sofaRange(b.values.ph,6.5,7.8)){
+   const ph=b.values.ph;
+   parts.push(ph<7.20?'Marked acidemia: pH '+ph.toFixed(2)+' — urgent clinical assessment.':ph<7.35?'Acidemia: pH '+ph.toFixed(2)+'.':ph>7.45?'Alkalemia: pH '+ph.toFixed(2)+'.':'pH '+ph.toFixed(2)+' within usual arterial reference range.');
+   if(ph<7.30&&b.values.pco2!==null&&sofaRange(b.values.pco2,5,200)&&b.values.pco2>=50)parts.push('PaCO₂ ≥50 mmHg with pH <7.30: evaluate for hypercapnic respiratory failure using the local airway protocol.');
+ }
+ if(b.latest!==null&&b.issues.length===0){
+   const l=b.latest;
+   parts.push('Latest lactate: '+l.toFixed(2)+' mmol/L'+(l>=4?' — markedly elevated; urgent perfusion and alternative-cause assessment.':l>2?' — elevated; investigate perfusion and other causes.':' — at or below 2 mmol/L; shock is not excluded clinically.') );
+   if(b.earlier!==null){
+     if(b.earlier>0){const change=((b.latest-b.earlier)/b.earlier)*100;parts.push('Lactate trend: '+(change<0?'decrease '+(-change).toFixed(1)+'%':change>0?'increase '+change.toFixed(1)+'%':'no change')+' from '+b.earlier.toFixed(2)+' to '+b.latest.toFixed(2)+' mmol/L'+(b.values.hours!==null?' over '+b.values.hours+' h':'')+'.');}
+     else parts.push('Previous lactate was 0; percentage change is not meaningful.');
+   }
+ }else if(b.earlier!==null&&b.issues.length===0)parts.push('Earlier lactate: '+b.earlier.toFixed(2)+' mmol/L. Enter the latest result for trend and shock assessment.');
+ if(b.shockMeets)parts.push('Sepsis-3 septic shock clinical criteria are met on the entered confirmations. Check concordance with the clinical record; review circulation and antimicrobial therapy urgently.');
+ else if(b.latest!==null&&b.latest>2&&b.issues.length===0){
+   const missing=[];
+   if(!b.clinicalSepsis)missing.push('clinically established sepsis');
+   if(b.pressor!=='yes')missing.push('documented vasopressor requirement to target MAP ≥65');
+   if(b.resuscitated!=='yes')missing.push('adequate resuscitation / exclusion of hypovolaemia');
+   parts.push('Elevated lactate alone does not establish septic shock. For Sepsis-3 shock criteria, confirm: '+missing.join('; ')+'.');
+ }
+ if(b.issues.length)parts.push('Data need correction: '+b.issues.join(' '));
+ if(!parts.length)parts.push('Enter PaO₂/FiO₂, acid–base values, or lactate to view assessment.');
+ const out=$('abgInterpret');out.classList.toggle('urgent',b.shockMeets||b.latest>=4&&b.issues.length===0);
+ out.innerHTML=parts.map(x=>'<span class="part">'+esc(x)+'</span>').join('');
+ $('abgApplyShock').disabled=!b.shockMeets||$('severity').value==='shock';
+ $('abgApplyShock').title=b.shockMeets?'Set Severity to septic shock (clinician must confirm)':'Requires sepsis, repeat/latest lactate >2 mmol/L, and confirmed vasopressor need after adequate resuscitation';
+ return b;
+}
+function applyABGShock(){const a=sofaAssessment(),b=abgAssessment(a);if(!b.shockMeets)return;setStatus('shock');refreshSofa();}
+function refreshSofa(){
+ const a=sofaAssessment();
+ const score=$('sofaSummary');score.className='sofa-summary';
+ score.textContent=a.current!==null?`SOFA ${a.current}/24 · 6/6 systems scored${a.delta!==null?' · Acute change Δ'+(a.delta>=0?'+':'')+a.delta:''}`:`Provisional SOFA subtotal ${a.subtotal}/24 · ${a.scored}/6 systems scored`;
+ $('sofaDomainList').innerHTML=a.rows.map(r=>`<div class="sofa-domain ${r[1]===null?'missing':''}">${esc(r[0])}<strong>${r[1]===null?'—':r[1]+'/4'}</strong></div>`).join('');
+ let msg;
+ if(a.current===null)msg='Incomplete SOFA assessment: do not interpret the subtotal as a final SOFA score.';
+ else if(a.baseline===null)msg='Current SOFA calculated, but baseline SOFA has not been established. Acute change (ΔSOFA) and sepsis screen cannot be determined.';
+ else if(!a.infection)msg='The infection criterion is not established in the infection field above. Organ dysfunction alone is not sepsis.';
+ else if(a.delta<2)msg='Acute ΔSOFA <2: the SOFA organ dysfunction threshold for Sepsis-3 is not met in this assessment. Clinical judgement remains necessary.';
+ else if(a.attribution==='no')msg='Acute ΔSOFA ≥2, but organ dysfunction is attributed to a noninfectious cause; do not label this as sepsis on the score alone.';
+ else if(a.attribution!=='yes')msg='Acute ΔSOFA ≥2 with suspected/confirmed infection: assess whether new dysfunction is attributable to infection before concluding sepsis.';
+ else {msg='Positive sepsis screen: suspected/confirmed infection + acute ΔSOFA ≥2 attributable to infection. This is a screening assessment, not a replacement for clinical diagnosis.';score.classList.add('meets');}
+ if(a.current===null||a.baseline===null||a.attribution==='uncertain')score.classList.add('uncertain');
+ if(a.errors.length)msg+=' '+a.errors.join(' ');
+ $('sofaInterpret').textContent=msg;
+ $('sofaApply').disabled=!a.meets||$('severity').value==='shock';
+ $('sofaApply').title=$('severity').value==='shock'?'Septic shock selection is preserved; do not downgrade automatically.':a.meets?'Select sepsis in Severity':'A confirmed positive sepsis screen is required';
+ refreshABG(a);
+ return a;
+}
+function syncSofaControls(){
+ const active=$('sofaVasoStatus').value==='yes';
+ ['sofaNE','sofaEpi','sofaDopa','sofaDobut'].forEach(id=>{const el=$(id);el.disabled=!active;if(!active){if(el.type==='checkbox')el.checked=false;else el.value='';}});
+ const skin=$('source').value==='skin';const field=$('skinSubtype').closest('.skin-field');field.style.display=skin?'block':'none';
+ if(!skin)$('skinSubtype').value='unspecified';
+}
+function applySofa(){const a=sofaAssessment();if(!a.meets||$('severity').value==='shock')return;setStatus('sepsis');refreshSofa();}
+
+function ctx(){const val=id=>$(id).value;const b=id=>$(id).checked;const num=id=>val(id).trim()===''?null:Number(val(id));return {infection:val('infection'),source:val('source'),acq:val('acq'),severity:val('severity'),resistance:val('resistance'),microstatus:val('microstatus'),microNote:val('microNote'),prevABX:b('prevABX'),ivABX90:b('ivABX90'),priorRespPsa:b('priorRespPsa'),priorRespMRSA:b('priorRespMRSA'),priorUrineRes:b('priorUrineRes'),fqlastYear:b('fqlastYear'),postop:b('postop'),enteroRisk:b('enteroRisk'),vreRisk:b('vreRisk'),skinSubtype:val('skinSubtype'),priorCarb:b('priorCarb'),immuno:b('immuno'),neut:b('neut'),device:b('device'),vent:b('vent'),mrsaRisk:b('mrsaRisk'),candidaRisk:b('candidaRisk'),sourceControl:b('sourceControl'),allergy:b('allergy'),preg:b('preg'),qtc:b('qtc'),mg:b('mg'),renal:b('renal'),rrt:b('rrt'),age:num('age'),wt:num('weight'),scr:num('creatinine'),sex:val('sex'),cgweight:val('cgweight'),adjusted:num('adjusted')};}
+function crcl(c){if(!(c.age>0&&c.age<140&&c.scr>0&&c.scr<30))return null;const w=c.cgweight==='adjusted'?c.adjusted:c.wt;if(!(w>0))return null;return (140-c.age)*w*(c.sex==='female'?.85:1)/(72*c.scr)}
+const opt=(drugs,why,src,qualifier='Pathway option')=>({drugs,why,src,qualifier});
+const emp={
+unknown:[opt(['ptz'],'Possible community-onset sepsis without an established focus; review epidemiology and exclude meningitis/atypical tropical infections.','NCDC–ICMR 2025; JIPMER 2026'),opt(['mero'],'For shock, strong ESBL risk or failure of narrower Gram-negative coverage; do not use simply for fever.','NCDC–ICMR 2025; JIPMER 2026')],
+cap:[opt(['ctx','azithro'],'Hospitalized community-acquired pneumonia when appropriate; assess Legionella/atypicals and local macrolide resistance.','JIPMER 2026, respiratory; NCDC–ICMR 2025'),opt(['ctx','doxy'],'Alternative atypical-pathogen strategy if suitable per local CAP policy.','NCDC–ICMR 2025; JIPMER 2026'),opt(['ptz','azithro'],'Only when severe CAP has a convincing risk for resistant Gram-negatives/Pseudomonas; do not give antipseudomonal cover routinely.','JIPMER 2026, respiratory')],
+hap:[opt(['ptz'],'HAP/VAP without documented ESBL/CRE; requires unit-specific Pseudomonas susceptibility.','JIPMER 2026, respiratory'),opt(['cefepime'],'Alternative antipseudomonal β-lactam if locally susceptible; add anaerobic coverage only if independently indicated.','JIPMER 2026; NCDC–ICMR 2025'),opt(['mero'],'HAP/VAP with high ESBL risk or septic shock if locally appropriate; not reliably active against CRAB, DTR Pseudomonas or Stenotrophomonas.','JIPMER 2026, respiratory; IDSA 2026')],
+abd:[opt(['ptz'],'Complicated abdominal or biliary infection requiring Gram-negative and anaerobic coverage; early source control is central.','JIPMER 2026, GI'),opt(['ctx','metro'],'Selected community-onset intra-abdominal infection without ESBL/Pseudomonas risk, if local susceptibility supports.','NCDC–ICMR 2025; JIPMER 2026, GI'),opt(['mero'],'Severe abdominal sepsis with documented or strongly suspected invasive ESBL infection; do not automatically add metronidazole.','IDSA 2026 §1; JIPMER 2026, GI')],
+uti:[opt(['ctx'],'Selected community-acquired pyelonephritis/complicated UTI when likely susceptible; review urine and blood cultures.','NCDC–ICMR 2025; JIPMER 2026, UTI'),opt(['ptz'],'Healthcare-onset complicated UTI with susceptible local Gram-negative ecology; not preferred for invasive ESBL outside limited contexts.','JIPMER 2026, UTI; IDSA 2026 §1'),opt(['mero'],'Urosepsis/shock with strong ESBL risk or confirmed serious ESBL infection; de-escalate once AST permits.','IDSA 2026 §1; JIPMER 2026')],
+line:[opt(['vanc','ptz'],'Suspected CLABSI with meaningful MRSA and Gram-negative risk; draw peripheral and catheter cultures and assess line removal.','JIPMER 2026, CRBSI'),opt(['vanc','mero'],'Shock, confirmed ESBL risk or resistant Gram-negative risk in CLABSI; reserve broad therapy for justified risk.','JIPMER 2026, CRBSI; NCDC–ICMR 2025')],
+skin:[opt(['vanc'],'Severe purulent infection or high MRSA risk; consider drainage. Not sufficient alone for necrotizing polymicrobial infection.','JIPMER 2026, skin/soft tissue'),opt(['ptz','vanc'],'Severe healthcare-related or necrotizing polymicrobial SSTI with immediate surgical assessment; toxin suppression depends on syndrome.','JIPMER 2026, skin/soft tissue')],
+cns:[opt(['ctx','vanc'],'Possible community-acquired bacterial meningitis: urgent site-specific protocol; add ampicillin if Listeria risk and adapt dose to CNS infection.','NCDC–ICMR 2025, CNS; JIPMER 2026, CNS'),opt(['mero','vanc'],'Healthcare-associated CNS infection, depending on device history and local susceptibility; urgent ID/neurosurgical input.','NCDC–ICMR 2025, CNS; JIPMER 2026, CNS')],
+fn:[opt(['ptz'],'High-risk febrile neutropenia: immediate IV antipseudomonal β-lactam per local oncology policy.','NCDC–ICMR 2025 §17.1'),opt(['cefepime'],'Antipseudomonal alternative if local susceptibility supports; reassess positive blood cultures/abdominal signs.','NCDC–ICMR 2025 §17.1'),opt(['mero'],'Consider where septic shock, colonization with ESBL organism or strong resistance risk warrants initial carbapenem.','NCDC–ICMR 2025 §17.1; IDSA 2026 §1')],
+diarrhea:[]
+};
+const directed={
+esbl:[opt(['mero'],'Preferred for invasive ESBL-producing Enterobacterales infection outside urinary tract; ertapenem is an option in stable suitable patients, not preferred in critical illness/hypoalbuminemia.','IDSA 2026 §1.3'),opt(['tmp'],'For cUTI/pyelonephritis only when proven susceptible and clinically appropriate; IV-to-oral switch can follow stabilization.','IDSA 2026 §1.2'),opt(['cipro'],'For cUTI/pyelonephritis when susceptible; avoid inappropriate use with prolonged QT or myasthenia.','IDSA 2026 §1.2')],
+ampc:[opt(['cefepime'],'Preferred for moderate-risk inducible AmpC Enterobacterales (e.g. Enterobacter cloacae complex, Klebsiella aerogenes, Citrobacter freundii, Hafnia alvei) when cefepime MIC ≤8 µg/mL (S or SDD).','IDSA 2026 §2.3'),opt(['mero'],'Consider if cefepime unsuitable, resistant, or additional ESBL co-production suspected; AST and clinical context mandatory.','IDSA 2026 §2')],
+cre_unknown:[],
+kpc:[opt(['merovab'],'Preferred for susceptible KPC-producing Enterobacterales; monitor for resistance emergence and site/renal dosing.','IDSA 2026 §3.4'),opt(['imirel'],'Preferred KPC-targeted alternative if susceptible.','IDSA 2026 §3.4'),opt(['cza'],'Preferred KPC-targeted alternative if susceptible, with resistance monitoring.','IDSA 2026 §3.4')],
+ndm:[opt(['aztavi'],'Preferred for susceptible NDM/MBL-producing Enterobacterales (regulatory availability and exact formulation must be verified).','IDSA 2026 §3.5'),opt(['cefiderocol'],'Preferred alternative for susceptible NDM/MBL producing Enterobacterales.','IDSA 2026 §3.5'),opt(['cza','azt'],'If aztreonam/avibactam unavailable, use ceftazidime/avibactam plus aztreonam together, with verified administration and AST; ceftazidime/avibactam alone is not reliable for NDM.','IDSA 2026 §3.5')],
+oxa48:[opt(['cza'],'Preferred for susceptible OXA-48-like-producing Enterobacterales; do not substitute meropenem/vaborbactam or imipenem/relebactam based only on class similarity.','IDSA 2026 §3.6'),opt(['aztavi'],'Alternative if susceptible and available.','IDSA 2026 §3.6'),opt(['cefiderocol'],'Alternative if susceptible and appropriate.','IDSA 2026 §3.6')],
+dtrpsa:[opt(['ctz'],'Preferred when susceptible, particularly DTR Pseudomonas pneumonia.','IDSA 2026 §4.3'),opt(['cza'],'Alternative preferred β-lactam option if susceptible, with site considerations.','IDSA 2026 §4.3'),opt(['imirel'],'Alternative preferred β-lactam option if susceptible.','IDSA 2026 §4.3'),opt(['cefiderocol'],'Alternative for infection outside urinary tract; AST and availability necessary.','IDSA 2026 §4.3')],
+crab:[opt(['suldur','imipenem'],'Preferred invasive CRAB treatment is sulbactam/durlobactam plus imipenem/cilastatin (or meropenem).','IDSA 2026 §5.1; ISCCM 2026'),opt(['ampsul','cefiderocol'],'If sulbactam/durlobactam unavailable: high-dose ampicillin/sulbactam (9 g sulbactam/day) plus ≥1 other active agent (e.g. cefiderocol) as a bridging regimen with ID/pharmacy oversight.','IDSA 2026 §5.2; ISCCM 2026')],
+steno:[opt(['cefiderocol'],'IDSA 2026 preferred monotherapy for invasive S. maltophilia, based mainly on animal and susceptibility evidence, not comparative clinical trials. Ensure infection rather than colonization.','IDSA 2026 §6.1'),opt(['aztavi','mino'],'Alternative aztreonam/avibactam preferably combined with another active agent, pending stronger clinical evidence; assess renal function and availability.','IDSA 2026 §6.2'),opt(['tmp','mino'],'Possible alternative combination when preferred agents unavailable and susceptibility demonstrated; specialist-directed, not automatic monotherapy.','IDSA 2026 §6.3–6.6')]
+};
+const notes={
+unknown:['Identify an anatomic focus before deciding that Gram-negative coverage alone is sufficient. Consider tropical infections, noninfectious mimics, and blood cultures.'],
+cap:['Do not routinely treat community-acquired pneumonia as VAP. MRSA/Pseudomonas coverage requires specific risk factors.'],
+hap:['New infiltrate and clinical change should support VAP diagnosis; avoid treating tracheal colonization alone. Collect good-quality lower respiratory specimens.'],
+abd:['Source control (drainage, surgery, biliary decompression) often determines success. Diarrhea alone is not an indication for broad intra-abdominal antibiotics.'],
+uti:['Do not treat asymptomatic bacteriuria except guideline-supported exceptions (e.g., pregnancy, selected invasive urologic procedures). Relieve obstruction when present.'],
+line:['Obtain paired cultures (peripheral and line if feasible); assess need for line removal, metastatic infection and S. aureus bacteremia.'],
+skin:['Drain abscess; necrotizing infection requires urgent surgery. Decide on toxin suppression for suspected streptococcal/staphylococcal toxic shock.'],
+cns:['Do not use the listed abbreviated combinations as complete meningitis orders: age, Listeria, TB/fungal disease, immunocompromise, prior neurosurgery and CSF penetration change regimen and dose.'],
+fn:['Treat as an urgent oncology infection. For persistent fever, reassess focus, catheter, resistant pathogens and invasive fungi rather than automatically adding drugs.'],
+diarrhea:['Investigate C. difficile and other diarrhea syndromes; IV meropenem/piperacillin–tazobactam are not empirical C. difficile treatment. Use a dedicated CDI treatment pathway.']};
+function drugHtml(id){
+ const name=esc(names[id]||id);
+ return `<button type="button" class="drug drug-dose-link" data-dose="${esc(id)}" aria-expanded="false" aria-label="Show adult dosing reference for ${name}" title="Show dosing and safety notes">${name} <span class="dose-cue" aria-hidden="true">Dose</span></button>`;
+}
+function dosePanelHtml(id,c){
+ const d=dosing.find(row=>row[0]===id);
+ const drugName=esc(names[id]||id);
+ if(!d)return `<div class="dose-panel-top"><div class="dose-panel-title">${drugName}</div><button type="button" class="dose-close" data-dose-close>Close</button></div><p>No verified dosing entry is available in the embedded drug reference. Consult institutional pharmacy guidance.</p>`;
+ let dose=d[1], add='';
+ // Apply only explicit source-supported syndrome-specific distinctions; do not auto-adjust.
+ if(id==='ctx'&&c.source==='cns'){
+   dose='Possible bacterial meningitis (normal renal function): ceftriaxone 2 g IV every 12 h.';
+   add='The 1–2 g every 24 h reference in the general table applies to non-CNS indications. [SHC Dose 2026; SHC Sepsis 2026]';
+ }else if(id==='mero'&&c.source==='cns'){
+   dose='Possible bacterial meningitis (normal renal function): meropenem 2 g IV every 8 h, using CNS-specific administration and susceptibility guidance.';
+   add='Standard non-CNS and CNS dosing differ; verify penetration, infusion method and individual MIC. [SHC Dose 2026]';
+ }
+ let renalNote;
+ const cl=crcl(c);
+ if(c.rrt)renalNote='Renal replacement therapy: the reference dose above must NOT be used to set maintenance dosing. Verify IHD/CRRT schedule, effluent, residual kidney function, and drug monitoring with pharmacy.';
+ else if(c.renal)renalNote='AKI or rapidly changing renal function: Cockcroft–Gault is unreliable. Verify loading and maintenance doses individually with pharmacy/PK review.';
+ else if(cl!==null)renalNote='Entered values give an estimated Cockcroft–Gault CrCl of '+cl.toFixed(1)+' mL/min (valid only with stable renal function). Dose above is a reference, NOT an automatically CrCl-adjusted dose; confirm the correct renal bracket.';
+ else renalNote='No reliable individualized renal clearance is available. Reference dose assumes stable normal adult renal function. Verify kidney function and adjust as needed.';
+ return `<div class="dose-panel-top"><div class="dose-panel-title">${drugName} · adult dosing reference</div><button type="button" class="dose-close" data-dose-close aria-label="Close dosing information">Close</button></div><p class="dose-panel-main"><strong>Typical dose:</strong> ${esc(dose)}</p>${add?`<p class="dose-panel-notes">${esc(add)}</p>`:''}<p class="dose-panel-notes"><strong>Key precautions:</strong> ${esc(d[2])}</p><div class="dose-panel-safety"><strong>Before administering:</strong> ${esc(renalNote)} Confirm syndrome, culture/AST, allergy, weight, organ function and infusion strategy.</div><div class="dose-panel-actions"><button type="button" class="dose-full-link" data-dose-full="${esc(id)}">View full dosing table ↓</button></div>`;
+}
+function handleDoseClick(e){
+ const target=e.target.closest('button');if(!target||!$('result').contains(target))return;
+ if(target.matches('[data-dose-full]')){
+   const drug=target.dataset.doseFull;
+   const section=$('doses');section.open=true;
+   const tr=$('dose-row-'+drug);
+   section.scrollIntoView({behavior:'smooth',block:'start'});
+   if(tr){tr.classList.add('dose-row-active');tr.scrollIntoView({behavior:'smooth',block:'center'});setTimeout(()=>tr.classList.remove('dose-row-active'),3000);}
+   return;
+ }
+ const card=target.closest('.result-card');if(!card)return;
+ const panel=card.querySelector('.inline-dose-panel');if(!panel)return;
+ if(target.matches('[data-dose-close]')){
+   panel.hidden=true;card.querySelectorAll('[data-dose]').forEach(btn=>btn.setAttribute('aria-expanded','false'));return;
+ }
+ if(!target.matches('[data-dose]'))return;
+ const isOpen=target.getAttribute('aria-expanded')==='true';
+ card.querySelectorAll('[data-dose]').forEach(btn=>btn.setAttribute('aria-expanded','false'));
+ if(isOpen){panel.hidden=true;panel.innerHTML='';return;}
+ target.setAttribute('aria-expanded','true');panel.innerHTML=dosePanelHtml(target.dataset.dose,ctx());panel.hidden=false;
+}
+
+function citeNums(s){const rules=[[/NCDC.?ICMR 2025/i,1],[/JIPMER 2026/i,2],[/IDSA 2026/i,3],[/ISCCM 2026/i,4],[/SHC Sepsis 2026/i,5],[/SHC Dose 2026/i,6]];const ids=rules.filter(([re])=>re.test(s||'')).map(([,n])=>n);return ids.length?'['+ids.join(', ')+']':'Reference check';}
+function optionHtml(o,c){const alerts=[];if(c.allergy&&o.drugs.some(x=>beta.has(x)))alerts.push('SEVERE β-lactam allergy flag — requires allergy clarification and specialist alternative; do not administer from this screen.');if(c.preg&&o.drugs.some(x=>['doxy','cipro','levo','ami','mino','tmp'].includes(x)))alerts.push('Pregnancy: selected drugs require pregnancy-specific assessment.');if(c.qtc&&o.drugs.some(x=>['azithro','cipro','levo'].includes(x)))alerts.push('Prolonged QT: avoid unreviewed QT-prolonging therapy.');if(c.mg&&o.drugs.some(x=>['ami','cipro','levo'].includes(x)))alerts.push('Myasthenia: selected agents can worsen weakness.');if(c.renal||c.rrt)alerts.push('AKI/RRT: do not apply normal-renal dosing without individualized review.');const local=localContext(o.drugs);return `<div class="result-card"><div><span class="tag">${esc(o.qualifier)}</span> <span class="tag">${esc(citeNums(o.src))}</span>${alerts.length?'<span class="tag warn-tag">Safety review required</span>':''}</div><h3>${o.drugs.map(drugHtml).join(' <span class="muted">+</span> ')}</h3><p class="dose-hint">Tap an antibiotic name to view its adult dosing reference.</p><p>${esc(o.why)}</p><div class="inline-dose-panel" hidden></div>${alerts.map(x=>`<p class="alert danger small">${esc(x)}</p>`).join('')}${local}</div>`}
+let abgRows=[];
+function localContext(drugs){if(!$('abgVerified').checked||!$('abgInstitution').value.trim()||!$('abgPeriod').value.trim()||!abgRows.length)return '';const matches=abgRows.filter(r=>drugs.some(d=>(names[d]||d).toLowerCase()===r.antibiotic.toLowerCase()));if(!matches.length)return '';return `<details><summary class="small">Verified aggregate antibiogram rows (context only)</summary><p class="small muted">No multiplication of %S; organism/ward/site denominators do not establish individual patient coverage.</p><ul class="tight small">${matches.map(r=>`<li>${esc(r.organism)} — ${esc(r.antibiotic)}: ${r.percent_s}% S; n=${r.n}${r.n<30?' (small sample)':''}</li>`).join('')}</ul></details>`}
+function warning(t,css=''){return `<div class="alert ${css}">${esc(t)}</div>`}
+function compute(){try{const gate=validateClinicalPath();if(gate){showBlocking(gate);return;}const c=ctx();const out=[];const highRisk=c.severity!=='stable',resistant=c.resistance!=='none',prior=c.microstatus==='prior';if(c.age!==null&&(!Number.isFinite(c.age)||c.age<18||c.age>120)){ $('result').innerHTML=warning('This edition supports adults only. Age is outside the accepted range.','danger');return;}if([c.wt,c.scr,c.adjusted].some(x=>x!==null&&(!Number.isFinite(x)||x<=0))){$('result').innerHTML=warning('Invalid anthropometric or laboratory input.','danger');return;}
+out.push('<div class="card"><div class="eyebrow">Case review</div><h2>Guideline-based antimicrobial options</h2>');
+if(c.infection==='colonization'){out.push(warning('Colonization or asymptomatic bacteriuria alone is not an indication for systemic antibiotics in most adults. Check pregnancy and urologic-procedure exceptions; reconsider treatment if invasive infection is demonstrated.','good'));out.push('</div>');$('result').innerHTML=out.join('');return;}
+if(c.infection==='unclear'){out.push(warning('Infection is uncertain. Reassess infectious versus noninfectious cause and obtain appropriate diagnostics. Do not automatically use broad-spectrum antibiotics in a stable patient; if shock or compelling infection develops, act urgently.','danger'));if(c.severity==='stable'){out.push('</div>');$('result').innerHTML=out.join('');return;}}
+if(c.severity==='shock')out.push(warning('Septic shock / rapid deterioration: collect cultures immediately if this does not delay therapy; give effective antimicrobials promptly (ideally within 1 hour), pursue urgent source control and simultaneous resuscitation.','danger'));
+if(c.source==='diarrhea')out.push(warning('This is not a C. difficile treatment calculator. Do not apply the generic sepsis antibiotic options to isolated diarrhea. Assess CDI severity, medications, stool tests and alternative causes.','danger'));
+if(c.neut&&c.source!=='fn')out.push(warning('Neutropenia flagged. High-risk febrile neutropenia requires a separate prompt antipseudomonal approach; select the febrile-neutropenia pathway if this is the dominant syndrome.'));
+if(c.immuno)out.push(warning('Cancer chemotherapy / severe immunosuppression: organism epidemiology, invasive fungi, unusual infections, mucositis and device risks may alter empirical choices.'));
+if(c.candidaRisk)out.push(warning('High Candida risk: consider invasive candidiasis only after syndrome- and risk-based assessment (e.g. abdominal catastrophe, TPN, multiple colonized sites, septic shock). An echinocandin is NOT an automatic accompaniment to broad-spectrum antibiotics.'));
+if(c.sourceControl)out.push(warning('Urgent source-control review: drain/debride, relieve obstruction, or remove/exchange infected devices as indicated.'));
+if(c.allergy)out.push(warning('Severe immediate β-lactam allergy / severe cutaneous reaction: all β-lactam options on this screen are REVIEW-ONLY. Clarify culprit, reaction, cross-reactivity and rapid specialist alternative; blanket class exclusion may also deprive a patient of optimal therapy.','danger'));
+if(c.rrt)out.push(warning('Renal replacement therapy: do not compute maintenance dose from Cockcroft–Gault. Use IHD/CRRT-specific dosing based on modality, schedule, effluent, residual function and therapeutic levels.','danger'));
+if(c.renal)out.push(warning('AKI / fluctuating creatinine: Cockcroft–Gault is unreliable during rapid change; avoid fixed renal intervals without pharmacy/PK review.'));
+if(c.preg)out.push(warning('Pregnancy: evaluate drug and infection safety specifically; this app does not select a safe pregnancy regimen.'));
+if(c.qtc||c.mg)out.push(warning('QT prolongation and/or myasthenia require special review of macrolides, fluoroquinolones and aminoglycosides.'));
+const cl=crcl(c);out.push(`<p class="ind">Cockcroft–Gault estimate: <strong>${cl===null?'not calculated':cl.toFixed(1)+' mL/min'}</strong>. ${c.rrt?'Not valid for RRT.':(c.renal?'Not reliable in AKI.':'Weight selection, body habitus, low muscle mass and augmented clearance can affect accuracy; this is NOT an automatic dose adjustment.')}</p>`);
+const core=emp[c.source]||[];
+const sofa=sofaAssessment();
+if(screenMode()==='detailed'&&sofa.current!==null){out.push(`<p class="ind">SOFA ${sofa.current}/24${sofa.delta!==null?' · acute change '+(sofa.delta>=0?'+':'')+sofa.delta:''}; sepsis screen: ${sofa.meets?'positive (confirmed inputs)':sofa.delta===null?'indeterminate baseline':sofa.delta>=2?'review infection attribution':'threshold not met'}. The severity field is clinician-entered.</p>`);}
+else if(screenMode()==='detailed'&&sofa.scored>0){out.push(warning('SOFA has incomplete measurements ('+sofa.scored+'/6 domains); the subtotal cannot establish sepsis.'));}
+
+if(core.length&&!(['colonization'].includes(c.infection))){out.push('<h3>Empiric syndrome-based considerations</h3>');let use=core;
+if(c.source==='unknown'&&c.severity==='stable')use=core.slice(0,1);
+if(c.source==='cap'&&c.acq!=='community')out.push(warning('CAP selected but acquisition is healthcare/ICU: verify whether hospital-acquired pneumonia is the correct syndrome.'));
+if(c.source==='hap'&&c.acq==='community')out.push(warning('HAP/VAP selected but acquisition is community: verify pneumonia classification.'));
+if(c.source==='uti'&&c.severity==='stable'&&!c.prevABX&&!resistant&&!c.priorUrineRes&&!c.fqlastYear)use=core.slice(0,2);
+if(c.source==='cap'){
+  const psaRisk=c.priorRespPsa||c.ivABX90;
+  use=psaRisk?[opt(['cefepime','azithro'],'Consider when Pseudomonas risk is clinically credible; prior respiratory isolation or recent hospital IV antibiotics should guide additional culture review.','SHC Sepsis 2026, CAP','Risk-dependent empiric option'),...core.slice(0,2)]:core.slice(0,2);
+  if(c.priorRespMRSA)out.push(warning('MRSA detected in respiratory culture within 12 months: evaluate need for anti-MRSA coverage, guided by illness severity and current cultures.'));
+}
+if(c.source==='hap'&&(c.prevABX||c.ivABX90||c.priorRespPsa)&&c.severity==='shock')out.push(warning('HAP/VAP with rapid decompensation and significant resistance risk: consider whether a second antipseudomonal class is needed only until susceptibilities return. Avoid routine double coverage.'));
+if(c.source==='uti'&&(c.priorUrineRes||c.fqlastYear||c.prevABX))out.push(warning('Prior resistant blood/urine isolate or fluoroquinolone exposure within 12 months: review species, dates, MICs and recent antibiogram before selecting empiric therapy.'));
+if(c.source==='uti'&&c.resistance==='esbl'&&c.microstatus==='prior'&&c.severity!=='shock')use=[opt(['erta'],'Prior ESBL isolate: ertapenem is a possible empiric option for selected stable patients when susceptible and without Pseudomonas concern. Avoid in septic shock/critical illness or marked hypoalbuminemia.','SHC Sepsis 2026; IDSA 2026','Conditional prior-ESBL option'),...use];
+if(c.source==='abd'&&(c.acq!=='community'||c.postop)){use=use.filter(o=>!o.drugs.includes('ctx'));out.push(warning('Postoperative or healthcare-associated abdominal infection: independently assess Enterococcus, MRSA and prior VRE risk, and prioritize drainage/source control.'));}
+if(c.source==='abd'&&c.vreRisk&&c.severity!=='stable')out.push(warning('Documented VRE history with severe intra-abdominal infection: seek urgent ID/microbiology review of whether VRE-active therapy is needed; it is not routinely added.'));
+if(c.source==='skin'&&c.skinSubtype==='nonpurulent'&&c.severity==='stable')use=[opt(['cefazolin'],'Nonpurulent cellulitis without necrotizing features: a narrower Gram-positive agent is commonly preferable when locally appropriate.','SHC Sepsis 2026, SSTI','Syndrome-specific option')];
+if(c.source==='skin'&&c.skinSubtype==='purulent')use=[core[0]];
+if(c.source==='skin'&&c.skinSubtype==='necrotizing')use=[opt(['ptz','vanc','clinda'],'Necrotizing infection suspected: urgent surgical debridement, broad Gram-negative/anaerobic and MRSA coverage; consider toxin suppression and optimize once cultures return.','SHC Sepsis 2026, SSTI; JIPMER 2026','Emergency specialist regimen')];
+if(c.source==='cns'&&c.acq==='community'&&(c.age>50||c.immuno))use=use.concat([opt(['ampicillin'],'Age >50 years or significant immunocompromise: add Listeria coverage to a complete community-acquired bacterial meningitis regimen, if appropriate.','SHC Sepsis 2026, CNS','Listeria risk consideration')]);
+if(c.source==='cns'&&c.acq!=='community')use=use.concat([opt(['cefepime','vanc'],'Post-neurosurgical/healthcare-associated meningitis: possible empiric option subject to prior cultures, CNS dosing and local resistance.','SHC Sepsis 2026, CNS','Site-specific pathway')]);
+if(c.allergy){const allergyHints={cap:'Stanford lists levofloxacin for selected CAP presentations, or aztreonam plus levofloxacin for Pseudomonas risk.',hap:'Stanford lists aztreonam plus vancomycin, with conditional aminoglycoside assessment.',abd:'Stanford lists aztreonam plus metronidazole plus vancomycin.',uti:'Stanford lists aztreonam for selected high-risk UTI.',cns:'CNS infection requires specialist assessment; Stanford lists syndrome-specific alternatives with important coverage limitations.',skin:'Stanford lists aztreonam, metronidazole and vancomycin when severe polymicrobial infection is plausible.'};if(allergyHints[c.source])out.push(warning('Severe allergy: '+allergyHints[c.source]+' These are reference alternatives only: distinguish anaphylaxis from SCAR, check resistance, cross-reactivity, infection site, renal function, QT/MG concerns, and involve an ID/allergy specialist.'));}
+
+if(c.source==='abd'&&c.enteroRisk)out.push(warning('Specific Enterococcus risk documented: review coverage of candidate antibiotics; cefepime plus metronidazole does not reliably cover Enterococcus.'));
+if(c.source==='line'&&c.microstatus==='current'&&resistant)out.push(warning('Targeted management is primarily determined by bloodstream isolate and AST; empiric options below do not override it.'));
+if(c.source==='cns'||c.source==='fn')out.push(warning('Time-critical specialist protocol: these examples are incomplete for individualized treatment and must be reviewed before administration.'));
+out.push(use.map(o=>optionHtml(o,c)).join(''));
+} else if(!core.length)out.push('<p>No generic empiric regimen provided for this syndrome. Assess cause and use a dedicated protocol.</p>');
+if(resistant){out.push('<h3>Resistance mechanism / organism-directed review</h3>');if(prior)out.push(warning('The resistance information is from a PRIOR isolate/colonization. This increases empiric concern but does not prove that the current infection is caused by the same organism. Obtain new culture/AST and account for time, site and prior treatment.'));if(c.microstatus==='pending')out.push(warning('Current isolate: AST and/or carbapenemase mechanism incomplete. Treat listed options as conditional and obtain rapid AST / mechanism testing.'));
+if(c.resistance==='cre_unknown')out.push(warning('CRE with unknown mechanism: cannot select KPC versus NDM versus OXA-48 therapy safely. Request carbapenemase testing, site-specific AST (including newer β-lactams) and urgent ID/microbiology review. Avoid automatic polymyxin or ceftazidime/avibactam monotherapy.','danger'));
+else out.push((directed[c.resistance]||[]).map(o=>optionHtml({...o,qualifier:'Directed / AST-dependent'},c)).join(''));
+if(['ndm','oxa48','kpc','dtrpsa','crab','steno'].includes(c.resistance))out.push(warning('Do not extrapolate cross-susceptibility from related drugs. Confirm mechanism, individual MIC/AST, source penetration, local availability and whether the isolated organism truly causes infection.'));
+}
+if((c.mrsaRisk||c.priorRespMRSA)&&['hap','cap','line','skin','unknown','fn'].includes(c.source)){out.push('<h3>Conditional MRSA review</h3>');out.push(`<p class="small">Consider <strong>${c.source==='hap'||c.source==='cap'?'vancomycin or linezolid':'vancomycin'}</strong> only where MRSA risk and syndrome justify it. For known MRSA pneumonia linezolid is an option; for S. aureus bloodstream infection an ID-directed bacteremia pathway is required. <span class="ref">[JIPMER 2026; NCDC–ICMR 2025]</span></p>`);}
+out.push(`<h3>Do not overlook</h3><ul class="tight">${(notes[c.source]||[]).map(x=>`<li>${esc(x)}</li>`).join('')}<li>Collect cultures before antibiotics whenever feasible without delaying urgently needed treatment; document focus and source-control plan.</li><li>Review empirical therapy at 24–48 hours, and formally reassess at 48–72 hours: pathogen, AST, de-escalation, IV-to-oral switch, antibiotic duration and discontinuation if infection excluded.</li><li>Do not routinely add amikacin, colistin/polymyxin, antifungals or anti-MRSA drugs without a specific indication. For proven CRE/CRPA prefer active non-polymyxin regimens; for CRAB prefer sulbactam-based treatment when feasible. <span class="ref">[IDSA 2026; ISCCM 2026]</span></li></ul>`);
+if(c.microNote.trim())out.push(`<details><summary>Entered microbiology notes</summary><p class="small">${esc(c.microNote)}</p></details>`);
+out.push(`<p class="small muted">References: [1–5]. Select any antibiotic name above for its inline adult dosing reference; full dosing table is also available below. No automated prescribing, efficacy guarantee or unverified local coverage percentage.</p></div>`);$('result').innerHTML=out.join('');wrapBriefResult(c);$('result').scrollIntoView({behavior:'smooth',block:'start'});
+}catch(err){console.error(err);$('result').innerHTML=warning('Unable to complete review: '+String(err.message||err),'danger');}}
+function reset(){previousLactateUnit='mmol';document.querySelectorAll('#patientCard input,#microCard input').forEach(n=>{if(n.type==='checkbox'||n.type==='radio')n.checked=false;else n.value='';});document.querySelectorAll('#patientCard select,#microCard select').forEach(n=>n.selectedIndex=0);
+ document.querySelector('input[name="screenMethod"][value="quick"]').checked=true;document.querySelectorAll('input[name="organStatus"]').forEach(x=>x.checked=false);$('quickShock').checked=false;
+ $('microNote').value='';$('result').innerHTML=EMPTY_RESULT;$('result').dataset.reviewed='0';$('riskMore').open=false;$('microCard').open=false;syncSofaControls();syncResistance();focusFactors();syncAssessmentMode();refreshSofa();}
+function validRow(x){const org=String(x.organism||'').trim(),agent=String(x.antibiotic||'').trim();const n=Number(x.n),pct=Number(x.percent_s);if(!org||!agent||!Number.isInteger(n)||n<1||n>100000||!Number.isFinite(pct)||pct<0||pct>100)throw Error('Each entry must have organism, antibiotic, positive integer n and percent_s between 0 and 100.');return {organism:org,antibiotic:agent,n,percent_s:Math.round(pct*10)/10}}
+function drawAbg(){const b=$('abgBody');if(!abgRows.length){b.innerHTML='<tr><td colspan="6">No verified antibiogram data entered.</td></tr>';return;}b.innerHTML=abgRows.map((r,i)=>`<tr><td>${esc(r.organism)}</td><td>${esc(r.antibiotic)}</td><td>${r.n}</td><td>${r.percent_s}</td><td>${r.n<30?'<span class="tag warn-tag">Small sample</span>':'Descriptive aggregate'}</td><td><button type="button" data-del="${i}" aria-label="Remove entry">Remove</button></td></tr>`).join('');}
+function addRow(){try{const r=validRow({organism:$('abgOrg').value,antibiotic:$('abgAgent').value,n:$('abgN').value,percent_s:$('abgPct').value});const i=abgRows.findIndex(x=>x.organism.toLowerCase()===r.organism.toLowerCase()&&x.antibiotic.toLowerCase()===r.antibiotic.toLowerCase());if(i>=0)abgRows[i]=r;else abgRows.push(r);$('abgVerified').checked=false;drawAbg();$('abgStatus').textContent='Added. Verify official institutional data before using as contextual evidence.';}catch(e){$('abgStatus').textContent=e.message}}
+function getDocument(){return {format:'BEAT-C-antibiogram-v2.5',metadata:{institution:$('abgInstitution').value.trim(),period:$('abgPeriod').value.trim(),verified_by_user:$('abgVerified').checked},rows:abgRows};}
+function download(name,body,type){const url=URL.createObjectURL(new Blob([body],{type}));const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000)}
+function parseCSV(src){const rows=[];let row=[],cell='',inQuotes=false;for(let i=0;i<src.length;i++){const ch=src[i];if(inQuotes&&ch==='"'&&src[i+1]==='"'){cell+='"';i++;continue;}if(ch==='"'){inQuotes=!inQuotes;continue;}if(ch===','&&!inQuotes){row.push(cell);cell='';continue;}if((ch==='\n'||ch==='\r')&&!inQuotes){if(ch==='\r'&&src[i+1]==='\n')i++;row.push(cell);if(row.some(x=>x.trim()))rows.push(row);row=[];cell='';continue;}cell+=ch;}if(inQuotes)throw Error('Unmatched quote in CSV.');row.push(cell);if(row.some(x=>x.trim()))rows.push(row);if(!rows.length)return [];const h=rows.shift().map(x=>x.toLowerCase().trim().replace(/^\ufeff/,''));for(const k of ['organism','antibiotic','n','percent_s'])if(!h.includes(k))throw Error('CSV missing column '+k);return rows.map(r=>Object.fromEntries(h.map((x,i)=>[x,r[i]??''])))}
+async function importFile(file){try{if(!file) return;let raw=await file.text(),data,metadata={};if(file.name.toLowerCase().endsWith('.json')){const parsed=JSON.parse(raw);data=Array.isArray(parsed)?parsed:parsed.rows;metadata=parsed.metadata||{};}else data=parseCSV(raw);if(!Array.isArray(data)||data.length>5000)throw Error('Expected up to 5000 records.');const newRows=data.map(validRow);abgRows=newRows;$('abgInstitution').value=String(metadata.institution||'').slice(0,150);$('abgPeriod').value=String(metadata.period||'').slice(0,150);$('abgVerified').checked=false;drawAbg();$('abgStatus').textContent=`Imported ${newRows.length} data points. Verification intentionally disabled; check source and denominators.`;}catch(e){$('abgStatus').textContent='Import failed: '+e.message}}
+let previousLactateUnit='mmol';
+$('abgLacUnit').addEventListener('change',()=>{
+ const next=$('abgLacUnit').value;if(next===previousLactateUnit)return;
+ const factor=next==='mgdl'?9.008:1/9.008;
+ for(const id of ['abgLacEarlier','abgLacLatest']){const el=$(id);if(el.value.trim()!==''){const n=Number(el.value);if(Number.isFinite(n))el.value=String(Number((n*factor).toFixed(next==='mgdl'?2:3)));}}
+ previousLactateUnit=next;refreshSofa();
+});
+$('sofaPanel').querySelectorAll('input,select').forEach(el=>{el.addEventListener('input',refreshSofa);el.addEventListener('change',refreshSofa);});
+['infection','severity'].forEach(id=>$(id).addEventListener('change',refreshSofa));
+$('sofaBaselineMode').addEventListener('change',()=>{$('sofaBaseline').disabled=$('sofaBaselineMode').value!=='known';if($('sofaBaseline').disabled)$('sofaBaseline').value='';refreshSofa();});
+$('sofaApply').addEventListener('click',applySofa);$('abgApplyShock').addEventListener('click',applyABGShock);
+$('sofaVasoStatus').addEventListener('change',()=>{syncSofaControls();refreshSofa()});
+$('source').addEventListener('change',syncSofaControls);
+$('source').addEventListener('change',focusFactors);
+$('resistance').addEventListener('change',syncResistance);
+document.querySelectorAll('input[name="screenMethod"]').forEach(x=>x.addEventListener('change',syncAssessmentMode));
+document.querySelectorAll('input[name="organStatus"]').forEach(x=>x.addEventListener('change',()=>{if(organState()==='absent')$('quickShock').checked=false;syncQuickSeverity();refreshSofa();}));
+$('quickShock').addEventListener('change',()=>{if($('quickShock').checked&&organState()==='absent')document.querySelector('input[name="organStatus"][value="present"]').checked=true;syncQuickSeverity();refreshSofa();});
+$('severity').addEventListener('change',updateScreenHint);
+document.querySelectorAll('#riskFocus input,#riskAll input').forEach(x=>x.addEventListener('change',focusFactors));
+['viewMode','themeMode'].forEach(x=>$(x).addEventListener('change',syncPrefs));
+if(window.matchMedia)window.matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change',()=>{if($('themeMode').value==='auto')syncPrefs();});
+$('computeFloat').addEventListener('click',runReview);$('resetFloat').addEventListener('click',reset);
+for(const id of ['patientCard','microCard']){
+  $(id).addEventListener('input',invalidateReview);
+  $(id).addEventListener('change',invalidateReview);
+}
+
+
+$('result').addEventListener('click',handleDoseClick);$('compute').addEventListener('click',runReview);$('reset').addEventListener('click',reset);$('print').addEventListener('click',()=>window.print());$('abgAdd').addEventListener('click',addRow);$('abgBody').addEventListener('click',e=>{const btn=e.target.closest('button[data-del]');if(!btn)return;abgRows.splice(Number(btn.dataset.del),1);$('abgVerified').checked=false;drawAbg();});$('abgClear').addEventListener('click',()=>{abgRows=[];$('abgVerified').checked=false;drawAbg();$('abgStatus').textContent='All imported data cleared.'});$('abgImport').addEventListener('click',()=>$('abgFile').click());$('abgFile').addEventListener('change',async e=>{await importFile(e.target.files[0]);e.target.value=''});$('abgExport').addEventListener('click',()=>download('BEAT-C-antibiogram-v2.5.json',JSON.stringify(getDocument(),null,2),'application/json'));$('abgTemplate').addEventListener('click',()=>download('BEAT-C-antibiogram-template.csv','organism,antibiotic,n,percent_s\n','text/csv'));initDoses();drawAbg();initPrefs();syncSofaControls();syncResistance();focusFactors();syncAssessmentMode();refreshSofa();
+})();
+</script>
+</body>
+</html>
