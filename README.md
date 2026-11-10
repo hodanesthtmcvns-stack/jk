@@ -49,7 +49,7 @@ This repository hosts a suite of portable, offline-ready HTML applications desig
 ## Core Principles
 * **Offline Capability:** Each tool is a single-file HTML/JS application. Once loaded, they function without an internet connection—ideal for high-stakes clinical environments.
 * **Privacy-First:** All data processing occurs locally on your device. No patient data is ever uploaded to a server, ensuring HIPAA/GDPR compliance by design.
-* **Physiology-Based:** Algorithms prioritize lung mechanics (Compliance, Driving Pressure) and hemodynamic stability (MAP).
+* **Physiology-Based:** Algorithms prioritize known physiology and pathophysiology.
 
 ## Key Tool Summaries
 ---
