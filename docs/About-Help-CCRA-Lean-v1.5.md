@@ -4,7 +4,7 @@
 
 Author: Prof. Jyotirmay Kirtania, Department of Anaesthesiology, Critical Care & Pain, MPMMCC & HBCH, Varanasi.
 
-CCRA Lean is a structured ICU documentation tool. The doctor enters demographics and diagnoses once per patient. Every note then reuses them. Each note is finalised, saved on the PC, and exported as plain text for pasting into the CIS or as a printout.
+CCRA Lean is a structured yet fast ICU documentation tool. The doctor enters demographics and diagnoses once per patient. Every note then reuses them. Each note is finalised, saved on the PC, and exported as plain text for pasting into the CIS or as a printout.
 
 Derived from CCRA (Critical Care Record Assistant) v3.1. The dictionaries are imported unchanged. CRIL is not included.
 
