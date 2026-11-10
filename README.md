@@ -11,8 +11,9 @@ This repository hosts a suite of portable, offline-ready HTML applications desig
 | Tool | Clinical Focus | Launch Link |
 | :--- | :--- | :--- |
 | **ICU Help & Support** | Documentation & Orders | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/ICU-Help-Support-v2.4.html) |
+| **CCRA Lean** | Fast and Comprehensive Critical Care Record Assistant | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/CCRA-Lean-v1.5.html)|
 | **CCRA** | Critical Care Record Assistant | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/CCRA-Critical-Care-Record-Assistant-v2.0.html)|
-| **NEWS2OncoTriage** | Clinical Severity Assessment and Triage | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/NEWS2OncoTriage.html) |
+| **NEWS2OncoTriage** | Oncology Setting Clinical Severity Assessment and Triage | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/NEWS2OncoTriage.html) |
 | **NEWS2 Triage** | Clinical Severity Assessment and Triage | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/NEWS2.html) |
 | **MPM0-III Calculator** | Predicted hospital mortality (adult patients) at ICU admission using the validated Mortality Probability Model (MPM₀-III) | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/MPM0-III-Calculator.html) |
 | **PIM3 Calculator** | Predicted hospital mortality at ICU admission using the validated Pediatric Index of Mortality 3 (PIM3) model | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/PIM3-Calculator.html) |
