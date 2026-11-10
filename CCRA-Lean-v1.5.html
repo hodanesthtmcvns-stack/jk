@@ -1,0 +1,1746 @@
+<!doctype html>
+<!--
+  CCRA Lean – ICU record assistant (offline, single file)
+  Copyright (C) 2026 Prof. Jyotirmay Kirtania
+
+  This program is free software: you can redistribute it and/or modify it under the terms of the
+  GNU General Public License as published by the Free Software Foundation, either version 3 of the
+  License, or (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+  even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  General Public License for more details. You should have received a copy of the GNU General
+  Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+-->
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>CCRA Lean · ICU records</title>
+<style>
+:root{
+  --ink:#17303e;--ink2:#4a6170;--mute:#6f8290;--paper:#eef2f1;--card:#fff;--rule:#d6dfe2;--rule2:#e7edee;
+  --acc:#0b5e6b;--acc2:#e3f0f0;--carry:#b26f12;--carryBg:#fdf4e1;--bad:#a2382a;--badBg:#fbebe8;--ok:#2c6e47;
+  --r:8px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--paper);color:var(--ink);font:14px/1.45 "Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+.app{display:grid;grid-template-columns:248px minmax(0,1fr) 400px;min-height:100vh}
+
+/* ---------- rail ---------- */
+.rail{background:#16313f;color:#dce8ec;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+.rail-top{padding:16px 14px 10px;border-bottom:1px solid #2b4756}
+.wordmark{font-size:17px;font-weight:700;letter-spacing:-.2px;color:#fff;margin:0}
+.wordmark span{font-weight:400;color:#9cc3c7}
+.rail-sub{font-size:11px;color:#9bb2bd;margin:2px 0 12px}
+.open-row{display:flex;gap:6px}
+.open-row input{flex:1;min-width:0;background:#0f2531;border:1px solid #36586a;border-radius:6px;padding:7px 8px;color:#fff}
+.open-row input::placeholder{color:#7f9aa7}
+.open-row button{background:#2f8b8f;border:0;color:#fff;border-radius:6px;padding:0 10px;font-weight:600}
+.casenote{font-size:10.5px;color:#e6b864;min-height:14px;margin-top:4px}
+.filter{display:flex;gap:4px;padding:8px 14px 4px}
+.filter button{flex:1;border:1px solid #36586a;background:transparent;color:#a9c1cb;border-radius:5px;padding:4px 0;font-size:12px}
+.filter button.on{background:#2b4b5b;color:#fff}
+.plist{flex:1;overflow:auto;padding:4px 8px}
+.pitem{display:block;width:100%;text-align:left;background:transparent;border:0;border-radius:6px;padding:8px 8px;color:#dce8ec;margin-bottom:2px}
+.pitem:hover{background:#1f3d4d}
+.pitem.on{background:#25495a;box-shadow:inset 3px 0 0 #6fc4c3}
+.pitem b{display:block;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pitem small{display:block;font-size:11px;color:#9bb2bd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pempty{font-size:12px;color:#8aa3ae;padding:10px 8px}
+.rail-foot{border-top:1px solid #2b4756;padding:10px 14px 12px;font-size:11.5px}
+.rail-foot label{display:block;color:#9bb2bd;margin:6px 0 2px}
+.rail-foot input{width:100%;background:#0f2531;border:1px solid #36586a;border-radius:5px;padding:5px 7px;color:#fff}
+.rail-btns{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
+.rail-btns button{background:transparent;border:1px solid #3d6070;color:#cfe0e6;border-radius:5px;padding:4px 7px;font-size:11px}
+.rail-btns button:hover{border-color:#7fb3bb}
+
+/* ---------- main ---------- */
+.main{min-width:0;padding:0 22px 60px}
+.welcome{max-width:640px;margin:80px auto;color:var(--ink2)}
+.welcome h1{font-size:26px;letter-spacing:-.4px;color:var(--ink);margin:0 0 8px}
+.welcome ol{padding-left:20px}
+.welcome li{margin:6px 0}
+
+.banner{padding:14px 0 0}
+.bcard{background:var(--card);border:1px solid var(--rule);border-radius:var(--r);border-left:5px solid var(--acc)}
+.bhead{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;padding:10px 14px 4px}
+.bname{font-size:19px;font-weight:700;letter-spacing:-.3px;margin:0}
+.bmeta{color:var(--ink2);font-size:13px}
+.bday{margin-left:auto;font-weight:700;color:var(--acc);font-size:13px;white-space:nowrap}
+.bclosed{background:#ece8e2;color:#6d5a3d;border-radius:4px;padding:1px 7px;font-size:12px;font-weight:600}
+.spine{padding:2px 14px 10px;font-size:13px;color:var(--ink);display:grid;grid-template-columns:auto 1fr;gap:2px 10px}
+.spine dt{color:var(--mute);font-size:12px}
+.spine dd{margin:0}
+.spine .warnv{color:var(--bad);font-weight:600}
+.bbar{display:flex;gap:6px;padding:0 14px 10px;flex-wrap:wrap}
+.lnk{background:none;border:0;color:var(--acc);font-weight:600;padding:2px 0;font-size:12.5px}
+.lnk.danger{color:var(--bad)}
+.lnk+.lnk{margin-left:12px}
+
+.tabbar{display:flex;align-items:flex-end;gap:10px;margin:12px 0 0;border-bottom:1px solid var(--rule);position:sticky;top:0;z-index:20;background:var(--paper)}
+.tabs{display:flex;gap:2px;overflow-x:auto;flex:1;min-width:0}
+.ur{display:flex;gap:5px;padding:0 0 6px;flex:none}
+.urbtn{border:1px solid #b9cdd3;background:#fff;color:var(--acc);border-radius:6px;padding:4px 10px;font-weight:600;font-size:12.5px}
+.urbtn:hover:not(:disabled){border-color:var(--acc)}
+.urbtn:disabled{color:#9aa9b1;border-color:var(--rule);cursor:not-allowed}
+.tab{border:0;background:transparent;padding:9px 12px 8px;color:var(--ink2);font-weight:600;font-size:13px;white-space:nowrap;border-bottom:3px solid transparent;position:relative}
+.tab:hover{color:var(--ink)}
+.tab.on{color:var(--acc);border-bottom-color:var(--acc)}
+.tab .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--carry);margin-left:5px;vertical-align:2px}
+
+.panel{background:var(--card);border:1px solid var(--rule);border-radius:var(--r);margin-top:14px}
+.sec{padding:14px 16px 6px;border-top:1px solid var(--rule2)}
+.sec:first-child{border-top:0}
+.sec h3{font-size:14px;margin:0 0 2px}
+.sec .shint{font-size:12px;color:var(--mute);margin:0 0 4px}
+.grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:10px 12px;padding:8px 0 10px}
+.fld{min-width:0;position:relative}
+.w2{grid-column:span 2}.w3{grid-column:span 3}.w4{grid-column:span 4}.w5{grid-column:span 5}.w6{grid-column:span 6}.w8{grid-column:span 8}.w9{grid-column:span 9}.w12{grid-column:1/-1}
+.fld>label,.flab{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--ink2);margin:0 0 4px}
+.req::after{content:"*";color:var(--bad);margin-left:1px}
+.fld input:not([type=checkbox]),.fld select,.fld textarea{width:100%;border:1px solid #c7d4d9;border-radius:6px;background:#fff;padding:7px 9px;min-height:36px}
+.fld textarea{resize:vertical;min-height:60px;line-height:1.4}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--acc);outline:0;box-shadow:0 0 0 3px rgba(11,94,107,.13)}
+.fld.carried input:not([type=checkbox]),.fld.carried select,.fld.carried textarea,.fld.carried .ms,.fld.carried .chips{background:var(--carryBg);border-color:#e3c27f}
+.fld.carried>label::after{content:"carried · verify";font-weight:500;font-size:10.5px;color:var(--carry);margin-left:auto}
+.fld.invalid input,.fld.invalid select,.fld.invalid textarea,.fld.invalid .ms{border-color:var(--bad);background:var(--badBg)}
+.sp{margin-left:auto;font-size:11px;border:1px solid var(--rule);border-radius:4px;padding:1px 3px;max-width:150px;background:#fff;color:var(--ink2)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;border-radius:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid #d3dee2;background:#f8fafa;border-radius:16px;padding:4px 10px 4px 8px;font-size:12.5px;cursor:pointer;user-select:none}
+.chip input{accent-color:var(--acc);margin:0}
+.chip:has(input:checked){background:var(--acc2);border-color:#8fc0c2;color:#0a4a54;font-weight:600}
+.single{display:flex;align-items:center;gap:8px;font-size:13px;min-height:36px}
+.single input{accent-color:var(--acc);width:16px;height:16px}
+
+/* multi-select */
+.ms{display:flex;flex-wrap:wrap;gap:5px;align-items:center;border:1px solid #c7d4d9;border-radius:6px;padding:4px 5px;min-height:36px;background:#fff;cursor:text}
+.ms:focus-within{border-color:var(--acc);box-shadow:0 0 0 3px rgba(11,94,107,.13)}
+.tok{display:inline-flex;align-items:center;gap:4px;background:#e4eff0;color:#0b4d57;border-radius:4px;padding:2px 4px 2px 7px;font-size:12.5px}
+.tok button{border:0;background:none;color:#4f7a80;padding:0 3px;font-size:14px;line-height:1}
+.ms input{flex:1;min-width:120px;border:0!important;box-shadow:none!important;padding:3px 4px!important;min-height:26px!important;background:transparent!important}
+.drop{display:none;position:absolute;z-index:40;left:0;right:0;top:100%;margin-top:3px;background:#fff;border:1px solid #b8c9cf;border-radius:6px;box-shadow:0 10px 24px rgba(20,48,62,.16);max-height:280px;overflow:auto;padding:4px}
+.drop.open{display:block}
+.drop .g{font-size:10.5px;color:var(--mute);padding:6px 8px 2px;font-weight:600}
+.drop button{display:block;width:100%;text-align:left;border:0;background:none;border-radius:4px;padding:6px 8px;font-size:12.5px}
+.drop button:hover,.drop button.hi{background:var(--acc2)}
+.drop button .n{float:right;color:var(--mute);font-size:11px}
+.drop .add{color:var(--acc);font-weight:600}
+
+/* devices / tasks tables */
+.rows{display:grid;gap:6px}
+.row{display:grid;gap:6px;align-items:center}
+.row.dev{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) 140px 140px 30px}
+.row.task{grid-template-columns:minmax(0,2fr) minmax(0,1fr) 100px 110px 30px}
+.row.head{font-size:11px;color:var(--mute);font-weight:600}
+.row input,.row select{width:100%;border:1px solid #c7d4d9;border-radius:6px;padding:6px 7px;min-height:34px;background:#fff}
+.row.gone{opacity:.55}
+.row .x{border:0;background:none;color:var(--mute);font-size:17px}
+.row.carried input,.row.carried select{background:var(--carryBg);border-color:#e3c27f}
+.addrow{border:1px dashed #9fb8bf;background:none;border-radius:6px;padding:5px 10px;color:var(--acc);font-weight:600;font-size:12.5px;justify-self:start}
+.qbtn{border:1px solid #9fc4c6;background:var(--acc2);color:#0a4a54;border-radius:6px;padding:5px 10px;font-size:12.5px;font-weight:600}
+.subgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.sysbox{border:1px solid var(--rule2);border-radius:6px;padding:9px 10px;background:#fbfcfc}
+.sysbox h4{margin:0 0 6px;font-size:12.5px}
+.sysbox .grid{padding:0;gap:6px}
+.more{margin:6px 0 4px}
+.more summary{cursor:pointer;color:var(--acc);font-weight:600;font-size:12.5px;padding:4px 0}
+.verify{display:flex;gap:10px;align-items:flex-start;background:#f0f6f5;border:1px solid #cfe2e0;border-radius:6px;padding:10px 12px;margin:4px 0 12px;font-size:13px}
+.verify input{margin-top:3px;width:16px;height:16px;accent-color:var(--acc)}
+.errors{color:var(--bad);font-size:12.5px;padding:0 16px 14px}
+.errors:empty{display:none}
+
+/* ---------- preview ---------- */
+.side{border-left:1px solid var(--rule);background:#f7f9f9;position:sticky;top:0;height:100vh;display:flex;flex-direction:column}
+.side-head{padding:14px 14px 8px}
+.side-head h2{margin:0 0 8px;font-size:15px}
+.ptabs{display:flex;gap:4px}
+.ptab{border:1px solid var(--rule);background:#fff;border-radius:5px;padding:4px 10px;font-size:12px;font-weight:600;color:var(--ink2)}
+.ptab.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.pbody{flex:1;overflow:auto;padding:0 14px}
+.pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#fff;border:1px solid var(--rule);border-radius:6px;padding:12px;font:12px/1.55 Consolas,"Cascadia Mono",ui-monospace,monospace;margin:0}
+.pstate{font-size:12px;color:var(--mute);margin:8px 0}
+.pstate.final{color:var(--ok);font-weight:600}
+.hist button{display:block;width:100%;text-align:left;background:#fff;border:1px solid var(--rule);border-radius:6px;padding:8px 10px;margin-bottom:6px}
+.hist button:hover{border-color:#8fb7bd}
+.hist b{font-size:12.5px}
+.hist small{display:block;color:var(--mute);font-size:11.5px}
+.actions{padding:10px 14px 14px;border-top:1px solid var(--rule);display:grid;grid-template-columns:1fr 1fr;gap:6px;background:#f7f9f9}
+.btn{border:1px solid #c3d2d7;background:#fff;border-radius:6px;padding:8px 10px;font-weight:600;font-size:13px}
+.btn:hover:not(:disabled){border-color:#7fa9b2}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.primary{grid-column:1/-1;background:var(--acc);border-color:var(--acc);color:#fff;padding:10px}
+.btn.primary:hover{background:#094f5a}
+.status{grid-column:1/-1;font-size:12px;color:var(--ink2);min-height:16px}
+
+/* ---------- required-field hints ---------- */
+.fld.invalid>label,.fld.invalid>.flab{color:var(--bad)}
+.fld.invalid::after{content:"Required";display:block;color:var(--bad);font-size:11px;font-weight:700;margin-top:3px}
+.fld.invalid .chips{outline:1.5px solid var(--bad);outline-offset:3px;background:var(--badBg)}
+.fld.invalid input:not([type=checkbox]),.fld.invalid select,.fld.invalid textarea{border-width:2px}
+.row input.invalid{border:2px solid var(--bad);background:var(--badBg)}
+.verify.invalid{border:2px solid var(--bad);background:var(--badBg)}
+.verify.invalid span::after{content:" Required.";color:var(--bad);font-weight:700}
+.rail-foot input.invalid{border:2px solid #ff8f7d;background:#3a1f1c}
+.missbar{position:sticky;top:41px;z-index:15;background:var(--badBg);border:1px solid #e3b4ab;border-left:5px solid var(--bad);border-radius:var(--r);padding:10px 14px;margin-top:10px;font-size:13px}
+.missbar b{color:var(--bad)}
+.missbar.ok{background:#edf6f0;border-color:#b9dcc6;border-left-color:var(--ok)}
+.missbar.ok b{color:var(--ok)}
+.missbar.warnbar{background:var(--carryBg);border-color:#e9c98b;border-left-color:#d79a2b}
+.missbar.warnbar b{color:#8a5a00}
+.mchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
+.mchips .m{border:1px solid #e0a79c;background:#fff;color:var(--bad);border-radius:14px;padding:3px 10px;font-size:12px;font-weight:600}
+.mchips .m:hover{background:var(--bad);color:#fff}
+.tab .cnt{display:inline-block;min-width:18px;padding:0 5px;border-radius:9px;background:var(--bad);color:#fff;font-size:10.5px;line-height:18px;margin-left:6px;text-align:center;vertical-align:1px}
+.tab:disabled{opacity:.4;cursor:not-allowed}
+.reqinfo{grid-column:1/-1;font-size:12.5px;padding:7px 10px;border-radius:6px;border:1px solid var(--rule);background:#fff}
+.reqinfo.left{border-color:#e9c98b;background:var(--carryBg);color:#74490a}
+.reqinfo.done{border-color:#b9dcc6;background:#edf6f0;color:var(--ok);font-weight:600}
+.btn.primary.blocked{background:var(--bad);border-color:var(--bad)}
+.editbtn{grid-column:1/-1}
+.pulse{animation:pulse 1.1s ease-out 2}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(162,56,42,.5)}100%{box-shadow:0 0 0 12px rgba(162,56,42,0)}}
+.shake{animation:shake .4s}
+@keyframes shake{20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
+@media (prefers-reduced-motion:reduce){.pulse,.shake{animation:none}.pulse{outline:3px solid var(--bad)}}
+/* ---------- new patient / edit ---------- */
+.newbtn{width:100%;margin-top:8px;background:transparent;border:1px dashed #6fa9b0;color:#d6ecee;border-radius:6px;padding:7px;font-weight:600}
+.newbtn:hover{background:#1f3d4d}
+.bnew{background:var(--carryBg);color:#7a4d0c;border-radius:4px;padding:1px 7px;font-size:12px;font-weight:600}
+.newbar,.amendbar{background:var(--carryBg)}
+.hist .hrow{display:flex;gap:6px;margin-bottom:6px}
+.hist .hrow>button{margin:0}
+.hist .hrow>button:first-child{flex:1}
+.hist .hedit{flex:none;width:auto!important;color:var(--acc);font-weight:600;font-size:12.5px}
+.hist .old{opacity:.6}
+.tag{display:inline-block;margin-left:6px;font-size:10.5px;background:#ece8e2;color:#6d5a3d;border-radius:3px;padding:0 5px;font-weight:600}
+.fld.warn select,.fld.warn input:not([type=checkbox]){border:2px solid #d79a2b;background:var(--carryBg)}
+.fld.warn::after{content:attr(data-warn);display:block;color:#8a5a00;font-size:11.5px;font-weight:600;margin-top:3px}
+.appfoot{margin:28px 0 0;border-top:1px solid var(--rule);padding-top:10px}
+.appfoot summary{cursor:pointer;font-size:12.5px;font-weight:600;color:var(--ink2);padding:4px 0}
+.appfoot summary:hover{color:var(--acc)}
+.footbody{max-width:880px;font-size:11.5px;line-height:1.55;color:var(--mute)}
+.footbody p{margin:8px 0}
+.footbody strong{color:var(--ink2)}
+.footver{font-size:11px}
+.hidden{display:none!important}
+.printDoc{display:none}
+
+@media (max-width:1280px){.app{grid-template-columns:230px minmax(0,1fr)}.side{grid-column:2;position:static;height:auto;border-left:0;border-top:1px solid var(--rule);margin:0 22px 30px;border:1px solid var(--rule);border-radius:var(--r)}.pbody{max-height:520px}}
+@media (max-width:820px){.app{grid-template-columns:1fr}.rail{position:static;height:auto}.plist{max-height:200px}.side{grid-column:1;margin:0 10px 30px}.main{padding:0 10px 30px}.w2,.w3,.w4,.w5{grid-column:span 6}.w6,.w8,.w9{grid-column:1/-1}.subgrid{grid-template-columns:1fr}.row.dev,.row.task{grid-template-columns:1fr 1fr}.tabbar{position:static;flex-wrap:wrap}}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+
+@page{size:A4;margin:14mm 13mm 15mm}
+@media print{
+  body{background:#fff;font:10pt/1.4 Arial,sans-serif;color:#122a36}
+  .app{display:none!important}.printDoc{display:block!important}
+  .ph{border-bottom:2px solid #174d68;padding-bottom:6px;margin-bottom:8px}
+  .ph .h1{font-size:11pt;font-weight:bold}.ph .h2{font-size:9.5pt;color:#3d5664}
+  .ph h1{font-size:15pt;margin:6px 0 0;color:#143d55}
+  .pmeta{display:grid;grid-template-columns:1fr 1fr;gap:2px 16px;border:1px solid #9fb3be;padding:7px 10px;margin:8px 0 10px;font-size:9.5pt}
+  .psec{margin:8px 0;break-inside:avoid}
+  .psec h2{font-size:10.5pt;color:#174d68;border-bottom:1px solid #aabcc5;padding-bottom:2px;margin:0 0 4px}
+  .prow{padding:2px 0;border-bottom:1px dotted #d3dde2}
+  .prow b{color:#3b5665}
+  .ptext{white-space:pre-wrap;margin:2px 0}
+  .pver{border:1px solid #aac2c9;background:#f1f7f8;padding:6px 9px;margin-top:10px;font-size:9pt}
+  .pfoot{border-top:1px solid #b9c8cf;padding-top:5px;margin-top:12px;font-size:8pt;color:#516a78}
+  .sig{margin-top:22px;display:flex;justify-content:space-between;font-size:9pt}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="rail" aria-label="Patients">
+    <div class="rail-top">
+      <p class="wordmark">CCRA <span>Lean</span></p>
+      <p class="rail-sub">ICU records · MPMMCC &amp; HBCH · stored on this PC only</p>
+      <div class="open-row"><input id="caseIn" placeholder="Case No. e.g. 24A1234/000567" autocomplete="off" aria-label="Case number"><button id="openBtn" type="button">Open</button></div>
+      <div class="casenote" id="caseNote"></div>
+      <button class="newbtn" id="newBtn" type="button">+ New patient</button>
+    </div>
+    <div class="filter"><button class="on" data-f="active" type="button">In ICU</button><button data-f="closed" type="button">Closed</button><button data-f="all" type="button">All</button></div>
+    <div class="plist" id="plist"></div>
+    <div class="rail-foot">
+      <label for="docName">Doctor (this device)</label><input id="docName" autocomplete="off">
+      <label for="docCC">CC No.</label><input id="docCC" autocomplete="off">
+      <div class="rail-btns">
+        <button id="backupBtn" type="button">Export backup</button>
+        <button id="restoreBtn" type="button">Import backup</button>
+        <button id="phraseBtn" type="button">Clear phrases</button>
+        <input id="restoreFile" type="file" accept=".json,application/json" class="hidden">
+      </div>
+      <div class="casenote" id="bkInfo"></div>
+    </div>
+  </aside>
+
+  <main class="main" id="main">
+    <section class="welcome" id="welcome">
+      <h1>Open a patient by case number</h1>
+      <p>Each patient has one record on this PC. Enter demographics and diagnoses once; every note reuses them.</p>
+      <ol>
+        <li>Type the case number in the left panel and press Open, or select New patient. Nothing is stored until you create the record.</li>
+        <li>Complete the patient record (diagnoses, allergy, goal of care, devices).</li>
+        <li>Choose a note. Amber fields were carried from the last note: check or change them.</li>
+        <li>Finalise to save the note, then copy it into CIS or print it.</li>
+      </ol>
+      <p>Records live in this browser profile. Export a backup regularly and keep this file at one fixed location on the PC.</p>
+    </section>
+    <div id="workspace" class="hidden">
+      <div class="banner"><div class="bcard" id="bcard"></div></div>
+      <div class="tabbar"><nav class="tabs" id="tabs" aria-label="Note type"></nav><div class="ur"><button type="button" class="urbtn" id="undoBtn" disabled>Undo</button><button type="button" class="urbtn" id="redoBtn" disabled>Redo</button></div></div>
+      <div class="missbar hidden" id="missBar"></div>
+      <div class="panel" id="formPanel"></div>
+    </div>
+    <footer class="appfoot">
+      <details>
+        <summary>License, attribution and medical disclaimer</summary>
+        <div class="footbody">
+          <p><strong>Software License:</strong> GNU GPL v3. Copyright (C) [2026] [Prof. Jyotirmay Kirtania]. This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.</p>
+          <p><strong>Medical Disclaimer.</strong> NOT A MEDICAL DEVICE: this tool is intended for structured documentation and clinical-reasoning assistance only. It is not an autonomous treatment-decision engine and has not been cleared by the FDA, EMA, or any other regulatory body as a primary medical device. NO SUBSTITUTE FOR CLINICAL JUDGMENT: all entries must be independently verified against institutional standards, bedside assessment, and consultant review. No treatment or intervention should be triggered from a single isolated parameter — ICU decisions require at least three independent, converging parameters or measurements. DATA PRIVACY: this tool runs entirely locally in your browser; no data is transmitted to any external server. The user is solely responsible for compliance with local patient-data-privacy laws and institutional IT policy. LIMITATION OF LIABILITY: in no event shall the authors be liable for any claim, damages, or other liability arising from the use of this software.</p>
+          <p><strong>Attribution.</strong> Author: Prof. Jyotirmay Kirtania, Department of Anaesthesiology, Critical Care &amp; Pain, MPMMCC &amp; HBCH, Varanasi.</p>
+          <p><strong>Design principle.</strong> The doctor remains the author of care. The software provides standard terminology, structured documentation, evidence checks, and fast note generation without imposing unnecessary clerical burden. This tool supports documentation and reasoning. It does not replace bedside assessment, consultant review, institutional policy, or patient-specific clinical judgement. No treatment or intervention should be triggered from a single isolated value. ICU decisions must be based on converging clinical, laboratory, imaging, monitoring, and trend evidence. Data are stored locally in this browser unless exported by the user.</p>
+          <p class="footver"><span id="footVer"></span> – single-file, offline, no network dependency.</p>
+        </div>
+      </details>
+    </footer>
+  </main>
+
+  <aside class="side" id="side">
+    <div class="side-head"><h2 id="pvTitle">Output</h2>
+      <div class="ptabs"><button class="ptab on" data-p="text" type="button">CIS text</button><button class="ptab" data-p="json" type="button">JSON</button><button class="ptab" data-p="hist" type="button">Saved notes</button></div>
+      <div class="pstate" id="pvState">Open a patient to begin.</div>
+    </div>
+    <div class="pbody"><pre class="pre" id="pvText"></pre><pre class="pre hidden" id="pvJson"></pre><div class="hist hidden" id="pvHist"></div></div>
+    <div class="actions">
+      <div class="reqinfo hidden" id="reqInfo" aria-live="polite"></div>
+      <button class="btn primary" id="finBtn" type="button" disabled>Finalise and save note</button>
+      <button class="btn editbtn hidden" id="editBtn" type="button">Edit this saved note</button>
+      <button class="btn" id="copyBtn" type="button" disabled>Copy CIS text</button>
+      <button class="btn" id="printBtn" type="button" disabled>Print / PDF</button>
+      <button class="btn" id="txtBtn" type="button" disabled>Download TXT</button>
+      <button class="btn" id="jsonBtn" type="button" disabled>Download JSON</button>
+      <div class="status" id="status" aria-live="polite"></div>
+    </div>
+  </aside>
+</div>
+<article class="printDoc" id="printDoc"></article>
+<script>
+const BUNDLE = {"dict":{"CANCER_DX_DICTIONARY":{"Hematology":["Acute lymphoblastic leukemia (ALL)","Acute myeloid leukemia (AML)","Acute leukemia under evaluation","Chronic lymphocytic leukemia (CLL)","Chronic myeloid leukemia (CML)","Relapsed leukemia","Refractory leukemia","Multiple myeloma","Plasma cell leukemia","DLBCL","Hodgkin lymphoma","Non-Hodgkin lymphoma","Burkitt lymphoma","T-cell lymphoma","Primary CNS lymphoma","Myelodysplastic syndrome","Aplastic anemia","Hemophagocytic lymphohistiocytosis / HLH"],"Solid tumors":["Carcinoma lung","Carcinoma breast","Carcinoma ovary","Carcinoma cervix","Carcinoma endometrium","Carcinoma esophagus","Carcinoma stomach","Colorectal carcinoma","Hepatobiliary malignancy","Pancreatic malignancy","Head and neck cancer","Oral cavity cancer","Base of tongue cancer","Laryngeal / hypopharyngeal cancer","Thyroid malignancy","Renal cell carcinoma","Bladder cancer","Prostate cancer","Testicular malignancy","Sarcoma","Retroperitoneal sarcoma","Brain tumor","Metastatic malignancy of unknown primary","Cancer under evaluation","Cancer under treatment","Cancer treatment completed"]},"CANCER_STATUS_DICTIONARY":{"":["Newly diagnosed","Under evaluation","Under active chemotherapy","Under radiotherapy","Under concurrent chemoradiotherapy","Under immunotherapy","Under targeted therapy","Post chemotherapy","Post radiotherapy","Post surgery","Relapsed disease","Refractory disease","Progressive disease","Metastatic disease","Neutropenic after chemotherapy","Post stem cell transplant / BMT","CAR-T therapy recipient","Immune checkpoint inhibitor therapy","Palliative intent treatment","Best supportive care","Remission","Treatment completed","Unknown current disease status"]},"ADMISSION_REASON_DICTIONARY":{"":["New ICU admission","ICU readmission","Ward transfer to ICU","Emergency department to ICU","OT / postoperative ICU admission","PACU to ICU transfer","HDU to ICU transfer","BMT unit to ICU transfer","Outside hospital transfer","Post-ROSC care","Planned ICU monitoring after high-risk procedure","Procedure-related ICU monitoring","Respiratory support requirement","Hemodynamic monitoring requirement","Vasopressor / inotrope requirement","Renal replacement therapy requirement","Airway watch","Altered sensorium requiring close monitoring","Massive bleeding / transfusion requirement","Severe metabolic derangement","Sepsis / shock monitoring","End-of-life / limitation-of-treatment discussion ongoing","Other reason"]},"ICU_SYNDROME_DICTIONARY":{"Respiratory":["Pneumonia","Hospital-acquired pneumonia","Ventilator-associated pneumonia","Aspiration pneumonia","Neutropenic pneumonia","Acute hypoxemic respiratory failure","Acute hypercapnic respiratory failure","Mixed hypoxemic and hypercapnic respiratory failure","ARDS","Severe ARDS","Pulmonary edema","Cardiogenic pulmonary edema","Diffuse alveolar hemorrhage","Severe hemoptysis","Pneumothorax","Pleural effusion with respiratory compromise","Empyema","Central airway obstruction","Upper airway obstruction","Superior mediastinal syndrome","Tracheal compression","Bronchospasm","COPD exacerbation","Asthma exacerbation","Pulmonary embolism suspected","Pulmonary embolism confirmed","Weaning failure","Accidental extubation","Tracheostomy-related airway problem","Laryngectomy stoma-related airway problem"],"Sepsis / infection":["Febrile neutropenia","Neutropenic sepsis","Sepsis","Septic shock","Septic cardiomyopathy","Bacteremia","Fungemia","Urosepsis","Catheter-related bloodstream infection","Intra-abdominal sepsis","Soft tissue infection / cellulitis","Mucositis with sepsis","Typhlitis / neutropenic enterocolitis","Clostridioides difficile infection suspected","COVID-19 pneumonia","Influenza pneumonia","Opportunistic infection suspected","Invasive fungal infection suspected","Invasive aspergillosis suspected","Mucormycosis suspected","Deep neck infection","Mediastinitis suspected"],"Cardiovascular":["Shock, undifferentiated","Septic shock","Cardiogenic shock","Hypovolemic shock","Hemorrhagic shock","Obstructive shock","Mixed shock","Acute decompensated heart failure","Acute coronary syndrome","STEMI","NSTEMI","Myocarditis suspected","Arrhythmia with hemodynamic compromise","Atrial fibrillation with fast ventricular rate","Ventricular tachycardia","Complete heart block","Cardiac tamponade","Post cardiac arrest syndrome","Post-ROSC care","Hypertensive emergency","Pulmonary hypertension / RV failure","Acute RV failure","Septic cardiomyopathy","Drug-induced cardiotoxicity suspected"],"Renal / metabolic":["Acute kidney injury","Acute on chronic kidney disease","Oliguric AKI","Anuric AKI","Tumor lysis syndrome","Severe metabolic acidosis","Lactic acidosis","Hyperkalemia","Severe hyponatremia","Severe hypernatremia","Hypocalcemia","Hypercalcemia","Hypophosphatemia","Hyperphosphatemia","Hypomagnesemia","Hyperglycemic crisis","Diabetic ketoacidosis","Hyperosmolar hyperglycemic state","Uremic encephalopathy","Uremic pericarditis","Refractory volume overload","RRT requirement"],"Neurological":["Altered sensorium under evaluation","Coma","Seizure","Status epilepticus","Septic encephalopathy","Metabolic encephalopathy","Hepatic encephalopathy","Uremic encephalopathy","Intracranial hemorrhage suspected","Intracranial hemorrhage confirmed","Ischemic stroke suspected","Raised intracranial pressure suspected","CNS infection suspected","Brainstem dysfunction","Delirium","Hyperactive delirium","Hypoactive delirium","Spinal cord compression suspected"],"GI / liver":["Acute upper GI bleeding","Lower GI bleeding","GI bleeding with shock","Acute liver failure","Acute on chronic liver failure","Severe acute pancreatitis","Pancreatitis with organ failure","Hepatic encephalopathy","Bowel obstruction","Ileus","Typhlitis / neutropenic enterocolitis","Severe diarrhea with dehydration / shock","Ascites with respiratory compromise","Intra-abdominal hypertension suspected","Acute abdomen under evaluation","Bowel perforation suspected","Biliary sepsis suspected","Obstructive jaundice with sepsis"],"Hematology / oncology emergency":["Severe anemia","Severe thrombocytopenia","Pancytopenia","Bleeding due to thrombocytopenia","Coagulopathy","DIC","Febrile neutropenia","Hyperleukocytosis","Leukostasis suspected","Tumor lysis syndrome","Hypercalcemia of malignancy","HLH / cytokine storm suspected","Cytokine release syndrome","Immune effector cell-associated neurotoxicity syndrome / ICANS","Graft-versus-host disease suspected","Massive transfusion requirement","Transfusion reaction suspected","Anaphylaxis","Drug reaction / infusion reaction"],"Postoperative / procedural":["Postoperative respiratory failure","Postoperative shock","Postoperative bleeding","Postoperative sepsis","Postoperative AKI","Postoperative delirium","Postoperative airway edema / airway risk","Post-procedure monitoring after high-risk intervention","Procedure complication under evaluation"]},"ORGAN_FAILURE_DICTIONARY":{"":["No organ failure documented","Acute respiratory failure","Hypoxemic respiratory failure","Hypercapnic respiratory failure","ARDS","Shock / cardiovascular failure","Vasopressor-dependent shock","Inotrope-dependent cardiac failure","Acute RV failure","AKI","RRT-dependent renal failure","Acute liver failure","Liver dysfunction with coagulopathy","CNS failure / coma","Seizure / status epilepticus","Hematological failure","Severe neutropenia","Severe thrombocytopenia","Coagulation failure / DIC","Metabolic failure","Severe lactic acidosis","Tumor lysis syndrome","Multi-organ dysfunction syndrome","Post-cardiac arrest syndrome"]},"SUPPORT_STATE_DICTIONARY":{"":["Room air","Low-flow oxygen","Non-rebreathing mask oxygen","HFNC oxygen therapy","NIV","Invasive mechanical ventilation","Tracheostomy ventilation","Airway watch","Vasopressor support","Inotrope support","Mechanical circulatory support","RRT","SLED","CRRT / CKRT","Intermittent hemodialysis","Peritoneal dialysis","Massive transfusion support","Post-ROSC care","Palliative ICU care / goals-of-care discussion"]},"INFECTION_SOURCE_DICTIONARY":{"":["Respiratory source","Urinary source","Intra-abdominal source","Skin / soft tissue source","Catheter-related bloodstream source","Surgical site source","CNS source","Bone / joint source","Unknown source","Gram-positive organism","Gram-negative organism","Carbapenem-resistant organism","MRSA","VRE","ESBL organism","Candida species","Aspergillus species","Mucormycosis","Multidrug-resistant organism suspected","Culture negative sepsis"]},"ONCOLOGIC_EMERGENCY_DICTIONARY":{"":["Superior vena cava syndrome","Central airway obstruction","Malignant upper airway obstruction","Head and neck cancer airway obstruction","Bilateral vocal cord palsy","Laryngectomy stoma obstruction","Tracheostomy tube obstruction","Tracheostomy tube displacement","Tracheoinnominate fistula suspected","Carotid blowout suspected","Sentinel bleed from head and neck tumor","Massive hemoptysis","Spinal cord compression","Raised intracranial pressure due to tumor","Seizure due to CNS malignancy/metastasis","Tumor lysis syndrome","Hyperleukocytosis","Leukostasis","Febrile neutropenia","Neutropenic enterocolitis / typhlitis","Mucositis with sepsis","Hypercalcemia of malignancy","SIADH","Adrenal crisis","Immune checkpoint inhibitor toxicity suspected","CAR-T cytokine release syndrome","ICANS","Graft-versus-host disease","Malignant bowel obstruction","Bowel perforation due to malignancy","Malignant ascites","Obstructive uropathy","Hemorrhagic cystitis","Cancer-associated thrombosis","Tumor-related bleeding","Post-radiation airway edema","Post-radiation vascular injury suspected","Postoperative oncologic surgical complication"]},"POSTOPERATIVE_COMPLICATION_DICTIONARY":{"":["Postoperative respiratory failure","Postoperative shock","Postoperative hemorrhage","Postoperative sepsis","Postoperative AKI","Postoperative delirium","Postoperative arrhythmia","Postoperative airway edema / airway risk","Anastomotic leak suspected","Surgical site infection","Postoperative ileus","Postoperative pancreatitis","Postoperative venous thromboembolism","Post-procedure monitoring after high-risk intervention","Procedure complication under evaluation"]},"OBSTETRIC_CRITICAL_CARE_DICTIONARY":{"":["Severe preeclampsia","Eclampsia","HELLP syndrome","Postpartum hemorrhage","Antepartum hemorrhage","Obstetric DIC","Amniotic fluid embolism suspected","Peripartum cardiomyopathy","Pregnancy-associated pulmonary edema","Pregnancy-associated ARDS","Obstetric sepsis","Septic abortion","Acute fatty liver of pregnancy","Hyperemesis with severe electrolyte disorder","DKA in pregnancy","Thromboembolism in pregnancy","Stroke in pregnancy","Critical illness in pregnant cancer patient","Postpartum critical illness"]},"PEDIATRIC_CRITICAL_CARE_MODIFIER_DICTIONARY":{"":["Pediatric patient","Adolescent patient","Infant","Immunocompromised child","Pediatric oncology patient","Pediatric septic shock","Pediatric ARDS","Pediatric AKI","Pediatric RRT","Pediatric airway risk","Weight-based device sizing required","Pediatric difficult vascular access","Parent/guardian counselling documented"]}},"smart":{"family_explained_diagnosis":"Diagnosis and current condition explained to family in detail.","family_explained_critical":"Family explained that patient is critically ill and requires close monitoring.","guarded_prognosis":"Prognosis discussed as guarded given current organ dysfunction.","poor_prognosis":"Prognosis discussed as poor given current clinical trajectory.","organ_failure_explained":"Organ failure(s) and their implications explained to family.","procedure_consent":"Procedure, indications, risks, and alternatives explained; consent obtained from patient/family.","rrt_counselling":"Need for renal replacement therapy, its purpose, and risks explained to family.","ventilation_counselling":"Need for mechanical ventilation, expected course, and risks explained to family.","trach_laryngectomy_explanation":"Nature of tracheostomy/laryngectomy airway and its implications for breathing and communication explained to family.","dama_risk":"Patient/family has been explained the critical nature of illness, the need for continued ICU monitoring and treatment, and the risk of sudden deterioration including respiratory failure, shock, cardiac arrest, and death.","current_status_statement":"This summary is issued on request of family/attendant for treatment-related administrative / financial support purpose.","no_single_parameter_principle":"No intervention triggered from a single isolated parameter; decision based on converging clinical, laboratory, and monitoring evidence.","consultant_informed":"Consultant informed and updated regarding clinical status and plan.","pending_reports":"Pending reports to be followed up and communicated to the receiving team.","culture_deescalation_pending":"Antimicrobial de-escalation pending culture and sensitivity report."},"procLabels":{"peripheral_iv":"Peripheral IV cannula","long_peripheral":"Long peripheral catheter / extended dwell catheter","midline":"Midline catheter","arterial":"Arterial catheter","cvc":"CVC","pediatric_cvc_alt":"Pediatric alternative central venous access using long peripheral catheter","dialysis_cath":"Dialysis catheter / Mahurkar","io_access":"Intraosseous access","intubation":"Endotracheal intubation","difficult_airway":"Difficult airway / awake intubation","mv_initiation":"Mechanical ventilation initiation","ett_exchange":"ETT exchange","extubation":"Extubation","trach_exchange":"Tracheostomy tube exchange","perc_trach":"Percutaneous tracheostomy","cricothyrotomy":"Emergency cricothyrotomy / surgical airway","trach_emergency":"Tracheostomy emergency management","laryngectomy_emergency":"Laryngectomy stoma emergency management","bronchoscopy":"Flexible bronchoscopy","rrt_init":"RRT initiation","sled":"SLED session","crrt_init":"CRRT / CKRT initiation","crrt_rx_change":"CRRT / CKRT prescription change","crrt_circuit_change":"CRRT / CKRT circuit change","rrt_wean":"RRT discontinuation / weaning assessment","chest_drain":"Chest drainage","pericardial_drain":"Pericardial drainage","ascites_drain":"Ascites drainage","pleural_aspiration":"Pleural aspiration","abscess_drain":"Abscess drainage","urinary_cath":"Urinary catheterization","ngt":"NGT insertion","njt":"NJT insertion","peg":"PEG","acls":"ACLS / CPR note","post_rosc":"Post-ROSC stabilization note","other":"Other bedside procedure"},"procSchemas":{"vascular_generic":[{"i":"psf_vg_vein","l":"Vein / site","t":"select","o":["Cephalic","Basilic","Forearm","Dorsum of hand","Other"]},{"i":"psf_vg_side","l":"Side","t":"select","o":["Left","Right"]},{"i":"psf_vg_size","l":"Catheter gauge / length"},{"i":"psf_vg_technique","l":"Technique","t":"select","o":["USG-guided","Landmark / palpation"]},{"i":"psf_vg_attempts","l":"Number of skin punctures"},{"i":"psf_vg_secure","l":"Securement","t":"select","o":["Adhesive securement","Suture","Both"]},{"i":"psf_vg_dressing","l":"Dressing","t":"select","o":["Transparent","Gauze"]},{"i":"psf_vg_indication","l":"Intended use","t":"select","o":["Fluids/medications","Difficult access","Contrast injection","Transfusion","Other"]}],"arterial":[{"i":"psf_art_artery","l":"Artery","t":"select","o":["Radial","Femoral","Dorsalis pedis","Posterior tibial","Brachial","Axillary","Other"]},{"i":"psf_art_side","l":"Side","t":"select","o":["Left","Right"]},{"i":"psf_art_collateral","l":"Collateral flow","t":"select","o":["Allen normal","Barbeau normal","Abnormal","Not applicable","Not documented"]},{"i":"psf_art_usgseen","l":"Ultrasound vessel seen and patent","t":"select","o":["Yes","No","Not used"]},{"i":"psf_art_usgapproach","l":"Ultrasound approach","t":"select","o":["Short-axis","Long-axis","Combined","Landmark"]},{"i":"psf_art_gauge","l":"Catheter gauge and length"},{"i":"psf_art_technique","l":"Technique","t":"select","o":["Seldinger","Direct cannulation"]},{"i":"psf_art_punctures","l":"Number of skin punctures"},{"i":"psf_art_backflow","l":"Backflow","t":"select","o":["Pulsatile arterial","Poor","Absent"]},{"i":"psf_art_waveform","l":"Waveform after transduction","t":"select","o":["Good","Damped","Absent","Not transduced"]},{"i":"psf_art_zero","l":"Zeroing level documented","t":"select","o":["Phlebostatic axis","Other","Not documented"]},{"i":"psf_art_flush","l":"Flush system attached","t":"select","o":["Yes","No"]},{"i":"psf_art_pressurebag","l":"Pressure bag inflated","t":"select","o":["Yes","No"]},{"i":"psf_art_distalperf","l":"Distal perfusion after procedure","t":"select","o":["Normal","Abnormal","Not documented"]},{"i":"psf_art_secured","l":"Secured by","t":"select","o":["Suture","Adhesive securement","Both"]},{"i":"psf_art_dressing","l":"Dressing","t":"select","o":["Transparent","CHG transparent","Pressure dressing"]},{"i":"psf_art_indication2","l":"Indication","t":"select","o":["IBP monitoring","Frequent ABG","Shock","Difficult noninvasive BP","Other"]}],"cvc":[{"i":"psf_cvc_vein","l":"Vein","t":"select","o":["Right IJV","Left IJV","Right subclavian","Left subclavian","Right femoral","Left femoral","Other"]},{"i":"psf_cvc_usgvein","l":"Ultrasound vein assessment","t":"select","o":["Patent","Thrombus","Collapsed","Distorted anatomy","Not used"]},{"i":"psf_cvc_arteryid","l":"Artery-vein relationship identified","t":"select","o":["Yes","No","Not applicable"]},{"i":"psf_cvc_compress","l":"Vein compressibility documented","t":"select","o":["Yes","No"]},{"i":"psf_cvc_needletip","l":"Needle tip visualized","t":"select","o":["Yes","No","Partial"]},{"i":"psf_cvc_wire","l":"Guidewire visualized in vein","t":"select","o":["Yes","No","Not documented"]},{"i":"psf_cvc_cathvis","l":"Catheter visualized intraluminally if applicable","t":"select","o":["Yes","No","Not applicable"]},{"i":"psf_cvc_frlumens","l":"Catheter Fr, lumens, length"},{"i":"psf_cvc_depth","l":"Insertion depth at skin"},{"i":"psf_cvc_punctures","l":"Number of punctures"},{"i":"psf_cvc_dilate","l":"Dilatation","t":"select","o":["Uncomplicated","Resistance","Bleeding"]},{"i":"psf_cvc_ectopics","l":"Ectopics during guidewire","t":"select","o":["No","Yes"]},{"i":"psf_cvc_aspirate","l":"Blood aspirated from all lumens","t":"select","o":["Yes","No"]},{"i":"psf_cvc_flushall","l":"All lumens flushed","t":"select","o":["Yes","No"]},{"i":"psf_cvc_tipconf","l":"Tip confirmation","t":"select","o":["CXR","ECG-guided","Ultrasound bubble","Pending","Not required"]},{"i":"psf_cvc_ptxcheck","l":"Pneumothorax check","t":"select","o":["Lung sliding present","CXR pending","Not applicable"]},{"i":"psf_cvc_dressing","l":"Dressing","t":"select","o":["CHG transparent","Transparent","Gauze"]},{"i":"psf_cvc_usable","l":"Line usable immediately","t":"select","o":["Yes","No","Pending confirmation"]},{"i":"psf_cvc_indication2","l":"Line indication","t":"select","o":["Vasopressors","Difficult access","Irritant drugs","TPN","Monitoring","Transfusion","Other"]},{"i":"psf_cvc_dailyreview","l":"Daily line review needed","t":"select","o":["Yes","No"]}],"pediatric_cvc_alt":[{"i":"psf_pcvc_vein","l":"Target vein","t":"select","o":["Right IJV","Left IJV","Femoral","Other"]},{"i":"psf_pcvc_type","l":"Catheter type","t":"select","o":["Leaderflex 20G 4 cm","Leaderflex 20G 8 cm","Other"]},{"i":"psf_pcvc_number","l":"Number of catheters inserted","t":"select","o":["One","Two","Other"]},{"i":"psf_pcvc_separate","l":"Separate cannula punctures","t":"select","o":["Yes","No"]},{"i":"psf_pcvc_usg","l":"Ultrasound-guided puncture","t":"select","o":["Yes","No"]},{"i":"psf_pcvc_wire","l":"Guidewire used","t":"select","o":["Yes","No"]},{"i":"psf_pcvc_aspflush","l":"Blood aspiration and flush","t":"select","o":["Yes","No"]},{"i":"psf_pcvc_connector","l":"Clave/octopus connector attached","t":"select","o":["Yes","No"]},{"i":"psf_pcvc_use","l":"Intended use","t":"select","o":["Vasoactive infusion","Difficult access","Temporary central access alternative","Other"]},{"i":"psf_pcvc_reason","l":"Reason standard pediatric CVC unavailable/unsuitable"},{"i":"psf_pcvc_complications","l":"Complications","t":"textarea"},{"i":"psf_pcvc_replaceplan","l":"Plan for replacement with standard CVC when available","t":"select","o":["Yes","No","Not needed"]}],"dialysis_cath":[{"i":"psf_dc_vein","l":"Vein and side"},{"i":"psf_dc_frlength","l":"Catheter Fr and length"},{"i":"psf_dc_depth","l":"Insertion depth"},{"i":"psf_dc_usgpatency","l":"Ultrasound vein patency"},{"i":"psf_dc_aspirate","l":"Blood aspirated freely from both lumens","t":"select","o":["Yes","No"]},{"i":"psf_dc_flush","l":"Both lumens flushed","t":"select","o":["Yes","No"]},{"i":"psf_dc_lock","l":"Lock solution used"},{"i":"psf_dc_tipconf","l":"Tip confirmation"},{"i":"psf_dc_ready","l":"Catheter ready for dialysis","t":"select","o":["Yes","No","Pending"]},{"i":"psf_dc_indication2","l":"RRT indication linked","t":"select","o":["AKI","Hyperkalemia","Metabolic acidosis","Volume overload","Uremia","TLS","Intoxication","Other"]},{"i":"psf_dc_anticoaglimit","l":"Anticoagulation limitation","t":"select","o":["Thrombocytopenia","Coagulopathy","Active bleeding","None"]}],"io_access":[{"i":"psf_io_site","l":"Site","t":"select","o":["Proximal tibia","Proximal humerus","Distal femur","Sternum","Other"]},{"i":"psf_io_side","l":"Side","t":"select","o":["Left","Right","Not applicable"]},{"i":"psf_io_device","l":"Device","t":"select","o":["Manual","Powered driver","Other"]},{"i":"psf_io_needle","l":"Needle size/length"},{"i":"psf_io_indication2","l":"Indication","t":"select","o":["Cardiac arrest","Shock","Failed IV access","Emergency vascular access"]},{"i":"psf_io_aspirate","l":"Aspiration of marrow/blood","t":"select","o":["Yes","No"]},{"i":"psf_io_flush","l":"Flush successful","t":"select","o":["Yes","No"]},{"i":"psf_io_secure","l":"Securement"},{"i":"psf_io_pressure","l":"Infusion pressure method"},{"i":"psf_io_perfusion","l":"Distal perfusion"},{"i":"psf_io_extravasation","l":"Extravasation/compartment concern","t":"select","o":["No","Yes"]},{"i":"psf_io_defplan","l":"Plan for definitive IV/CVC access"}],"intubation":[{"i":"psf_it_indcat","l":"Indication category","t":"select","o":["Oxygenation failure","Ventilation failure","Airway protection","Anticipated deterioration","Procedure","Cardiac arrest","Other"]},{"i":"psf_it_urgency","l":"Urgency","t":"select","o":["Elective","Urgent","Emergency","Crash airway"]},{"i":"psf_it_riskcontext","l":"Airway risk context","t":"select","o":["Normal","Head-neck cancer","Central airway obstruction","Post-radiation airway","Trismus","Bleeding airway","Cervical spine risk","Obesity","Pediatric","Obstetric","Other"]},{"i":"psf_it_plan","l":"Airway plan","t":"select","o":["RSI","Modified RSI","Awake fiberoptic","Topicalized spontaneous breathing","Standard induction","Inhalational","Cardiac arrest airway"]},{"i":"psf_it_spontpreserved","l":"Spontaneous ventilation preserved until airway secured","t":"select","o":["Yes","No","Not applicable"]},{"i":"psf_it_entbackup","l":"ENT/surgical airway backup","t":"select","o":["Present","Informed","Not available","Not needed"]},{"i":"psf_it_preox","l":"Preoxygenation method","t":"select","o":["Mask PSV+PEEP","NRBM","HFNC","NIV","BVM","Ventilator"]},{"i":"psf_it_apneic","l":"Apneic oxygenation used","t":"select","o":["Yes","No"]},{"i":"psf_it_induction","l":"Induction drugs and doses"},{"i":"psf_it_paralytic","l":"Paralytic and dose"},{"i":"psf_it_laryngoscopy","l":"Laryngoscopy","t":"select","o":["Direct","Videolaryngoscopy","Flexible bronchoscopy","Combined","Through stoma"]},{"i":"psf_it_device","l":"Device/blade/scope"},{"i":"psf_it_view","l":"Cormack-Lehane or POGO view"},{"i":"psf_it_route","l":"Tube route","t":"select","o":["Oral","Nasal","Tracheostomy","Laryngectomy stoma"]},{"i":"psf_it_etttype","l":"ETT type and ID"},{"i":"psf_it_depth","l":"Depth at teeth/nostril/stoma"},{"i":"psf_it_aid","l":"Stylet/bougie/AEC used"},{"i":"psf_it_attempts","l":"Number of attempts"},{"i":"psf_it_lowspo2","l":"Lowest SpO2"},{"i":"psf_it_hypotension","l":"Hypotension during procedure","t":"select","o":["No","Yes"]},{"i":"psf_it_aspiration","l":"Aspiration/regurgitation","t":"select","o":["No","Yes"]},{"i":"psf_it_trauma","l":"Dental/lip/airway trauma","t":"select","o":["No","Yes"]},{"i":"psf_it_tumorbleed","l":"Tumor bleeding","t":"select","o":["No","Yes","Not applicable"]},{"i":"psf_it_confirm","l":"Confirmation","t":"select","o":["Continuous waveform ETCO2","Bilateral chest rise","Auscultation","CXR","Bronchoscopy"]},{"i":"psf_it_cuffpressure","l":"Cuff pressure"},{"i":"psf_it_postvent","l":"Post-intubation ventilator settings"},{"i":"psf_it_postsedation","l":"Post-intubation sedation/analgesia plan"}],"mv_initiation":[{"i":"psf_mv_indication2","l":"Indication"},{"i":"psf_mv_mode","l":"Initial mode","t":"select","o":["AC-VC","AC-PC","PSV","SIMV","CPAP","APRV","Other"]},{"i":"psf_mv_vt","l":"VT in mL"},{"i":"psf_mv_vtkg","l":"VT mL/kg predicted body weight if adult"},{"i":"psf_mv_rr","l":"RR"},{"i":"psf_mv_fio2","l":"FiO2"},{"i":"psf_mv_peep","l":"PEEP"},{"i":"psf_mv_pc","l":"Pressure control / inspiratory pressure"},{"i":"psf_mv_ps","l":"Pressure support"},{"i":"psf_mv_pip","l":"PIP"},{"i":"psf_mv_pplat","l":"Pplat"},{"i":"psf_mv_dp","l":"Driving pressure (auto = Pplat - PEEP)"},{"i":"psf_mv_etco2","l":"EtCO2"},{"i":"psf_mv_abgplan","l":"Initial ABG plan/time"},{"i":"psf_mv_lungprotective","l":"Lung protective ventilation intended","t":"select","o":["Yes","No","Not applicable"]},{"i":"psf_mv_sedtarget","l":"Sedation target"},{"i":"psf_mv_alarms","l":"Ventilator alarms set","t":"select","o":["Yes","No"]},{"i":"psf_mv_vapbundle","l":"VAP prevention bundle documented","t":"select","o":["Yes","No"]}],"tube_exchange":[{"i":"psf_te_reason","l":"Reason for exchange"},{"i":"psf_te_newtube","l":"New tube type/size"},{"i":"psf_te_method","l":"Method","t":"select","o":["Over bougie","Airway exchange catheter","Direct laryngoscopy/videolaryngoscopy","Other"]},{"i":"psf_te_confirm","l":"Confirmation","t":"select","o":["Waveform capnography","Auscultation","CXR"]},{"i":"psf_te_complications","l":"Complications","t":"textarea"}],"extubation":[{"i":"psf_ext_criteria","l":"Extubation readiness criteria met","t":"select","o":["Yes","No"]},{"i":"psf_ext_cuffleak","l":"Cuff leak test","t":"select","o":["Positive (leak present)","Negative (no leak)","Not done"]},{"i":"psf_ext_secretions","l":"Secretions","t":"select","o":["Minimal","Moderate","Copious"]},{"i":"psf_ext_postsupport","l":"Post-extubation support","t":"select","o":["Room air","Low-flow oxygen","HFNC","NIV"]},{"i":"psf_ext_stridor","l":"Stridor post-extubation","t":"select","o":["No","Yes"]},{"i":"psf_ext_reintub","l":"Reintubation needed","t":"select","o":["No","Yes"]}],"perc_trach":[{"i":"psf_pt_indication2","l":"Indication","t":"select","o":["Prolonged ventilation","Airway protection","Secretion management","Upper airway obstruction","Weaning","Aspiration risk","Other"]},{"i":"psf_pt_feedwithheld","l":"Feeds withheld duration"},{"i":"psf_pt_anticoag","l":"Anticoagulant last dose"},{"i":"psf_pt_platinr","l":"Platelet/INR status"},{"i":"psf_pt_airwaystrategy","l":"Airway strategy","t":"select","o":["ETT withdrawn under vision","Bronchoscopy-guided","HFNC spontaneous breathing","Ventilator supported","AEC rescue"]},{"i":"psf_pt_pocus","l":"POCUS airway assessment (tracheal depth, vessels, thyroid isthmus)"},{"i":"psf_pt_level","l":"Tracheal level","t":"select","o":["1st-2nd ring","2nd-3rd ring","3rd-4th ring"]},{"i":"psf_pt_technique","l":"Technique","t":"select","o":["Griggs","Ciaglia","Blue Rhino","Surgical"]},{"i":"psf_pt_kit","l":"Kit used"},{"i":"psf_pt_tube","l":"Tracheostomy tube type and ID"},{"i":"psf_pt_cuffleak","l":"Cuff inflated and leak checked","t":"select","o":["Yes","No"]},{"i":"psf_pt_etco2","l":"ETCO2 confirmation","t":"select","o":["Yes","No"]},{"i":"psf_pt_tv","l":"Exhaled tidal volume after placement"},{"i":"psf_pt_bleeding","l":"Bleeding","t":"select","o":["None","Minimal","Significant"]},{"i":"psf_pt_posteriorinjury","l":"Posterior wall injury suspected","t":"select","o":["No","Yes"]},{"i":"psf_pt_secure","l":"Tube secured by","t":"select","o":["Tape","Sutures","Flange tie"]},{"i":"psf_pt_postvent","l":"Post-procedure ventilator settings"},{"i":"psf_pt_careplan","l":"First tube change plan / trach care plan"}],"cricothyrotomy":[{"i":"psf_cric_indication2","l":"Indication","t":"select","o":["Cannot intubate cannot oxygenate","Failed airway","Massive airway bleeding/obstruction","Other"]},{"i":"psf_cric_technique","l":"Technique","t":"select","o":["Surgical","Needle","Bougie-assisted"]},{"i":"psf_cric_tube","l":"Tube/device placed"},{"i":"psf_cric_confirm","l":"Confirmation","t":"select","o":["Waveform capnography","Auscultation","Chest rise"]},{"i":"psf_cric_complications","l":"Complications","t":"textarea"}],"trach_emergency":[{"i":"psf_te2_existing","l":"Existing airway type","t":"select","o":["Tracheostomy with patent upper airway","Laryngectomy uncertain","Other"]},{"i":"psf_te2_problem","l":"Problem","t":"select","o":["Obstruction","Displacement","Bleeding","Cuff leak","False passage","Mucus plug","Other"]},{"i":"psf_te2_o2applied","l":"Oxygen applied to","t":"select","o":["Face and tracheostomy","Tracheostomy only","Face only","Other"]},{"i":"psf_te2_innercannula","l":"Inner cannula removed","t":"select","o":["Yes","No","Not present"]},{"i":"psf_te2_speakingvalve","l":"Speaking valve/cap removed","t":"select","o":["Yes","No","Not present"]},{"i":"psf_te2_suction","l":"Suction catheter passed","t":"select","o":["Yes","No"]},{"i":"psf_te2_cuffdeflate","l":"Cuff deflated","t":"select","o":["Yes","No","Not applicable"]},{"i":"psf_te2_removed","l":"Tube removed","t":"select","o":["Yes","No"]},{"i":"psf_te2_replaced","l":"Tube replaced","t":"select","o":["Same size","Smaller size","Cuffed ETT","Not replaced"]},{"i":"psf_te2_capnography","l":"Waveform capnography used","t":"select","o":["Yes","No"]},{"i":"psf_te2_bronch","l":"Bronchoscopy/tracheoscopy done","t":"select","o":["Yes","No"]},{"i":"psf_te2_finalpatency","l":"Final airway patency","t":"select","o":["Patent","Partially patent","Secured with new tube","Unresolved"]},{"i":"psf_te2_complications","l":"Complications","t":"textarea"},{"i":"psf_te2_informed","l":"ENT/anesthesia/ICU consultant informed"}],"laryngectomy_emergency":[{"i":"psf_lry_confirmed","l":"Confirmed total laryngectomy","t":"select","o":["Yes","No","Uncertain"]},{"i":"psf_lry_neckbreather","l":"Neck breather","t":"select","o":["Yes","No","Uncertain"]},{"i":"psf_lry_o2stoma","l":"Oxygen applied to stoma","t":"select","o":["Yes","No"]},{"i":"psf_lry_o2face","l":"Oxygen applied to face also if uncertain","t":"select","o":["Yes","No"]},{"i":"psf_lry_stomacover","l":"Stoma cover removed","t":"select","o":["Yes","No","Not present"]},{"i":"psf_lry_tubepresent","l":"Laryngectomy tube present","t":"select","o":["Yes","No"]},{"i":"psf_lry_innertube","l":"Inner tube removed","t":"select","o":["Yes","No","Not present"]},{"i":"psf_lry_tep","l":"TEP prosthesis present","t":"select","o":["Yes","No","Unknown"]},{"i":"psf_lry_tepremoved","l":"TEP prosthesis removed","t":"select","o":["No","Accidentally removed","Not present"]},{"i":"psf_lry_suction","l":"Suction catheter passed","t":"select","o":["Yes","No"]},{"i":"psf_lry_maskvent","l":"Stoma ventilated with pediatric mask/LMA","t":"select","o":["Yes","No"]},{"i":"psf_lry_intubated","l":"Stoma intubated with cuffed ETT/trach tube","t":"select","o":["Yes","No"]},{"i":"psf_lry_sizedepth","l":"Tube size and depth"},{"i":"psf_lry_capnography","l":"Capnography confirmation"},{"i":"psf_lry_finalstatus","l":"Final status"},{"i":"psf_lry_entinformed","l":"ENT informed"}],"bronchoscopy":[{"i":"psf_bx_indication2","l":"Indication","t":"select","o":["Secretion clearance","Atelectasis","BAL","Airway inspection","Hemoptysis localization","Tube position","Foreign body","Other"]},{"i":"psf_bx_route","l":"Route","t":"select","o":["ETT","Tracheostomy","Oral","Nasal","Laryngectomy stoma"]},{"i":"psf_bx_sedation","l":"Sedation/topical anesthesia"},{"i":"psf_bx_o2","l":"Oxygenation during procedure"},{"i":"psf_bx_scopesize","l":"Scope size"},{"i":"psf_bx_findings","l":"Findings by airway segment","t":"textarea"},{"i":"psf_bx_secretions","l":"Secretions","t":"select","o":["Mild","Moderate","Copious","Purulent","Bloody"]},{"i":"psf_bx_bal","l":"BAL/washings done","t":"select","o":["Yes","No"]},{"i":"psf_bx_samplesite","l":"Sample site"},{"i":"psf_bx_suction","l":"Therapeutic suctioning done","t":"select","o":["Yes","No"]},{"i":"psf_bx_bleedsource","l":"Bleeding source localized","t":"select","o":["Yes","No","Not applicable"]},{"i":"psf_bx_tolerance","l":"Tolerance","t":"select","o":["Stable","Transient desaturation","Hypotension","Arrhythmia"]},{"i":"psf_bx_postsupport","l":"Post-procedure ventilator settings/oxygen support"}],"rrt_generic":[{"i":"psf_rrt_modality","l":"Modality","t":"select","o":["SLED","CRRT/CKRT","CVVH","CVVHD","CVVHDF","IHD","AVVHD","Other"]},{"i":"psf_rrt_indication2","l":"Indication","t":"select","o":["Refractory acidosis","Hyperkalemia","Volume overload","Uremia","TLS","AKI","Rhabdomyolysis","Intoxication","Other"]},{"i":"psf_rrt_timing","l":"Timing","t":"select","o":["Emergent","Urgent","Planned","Continuation","Prescription change","Weaning trial"]},{"i":"psf_rrt_access","l":"Access catheter site"},{"i":"psf_rrt_accessfunction","l":"Access function","t":"select","o":["Good","Poor flow","Positional","Recirculation suspected"]},{"i":"psf_rrt_bfr","l":"Blood flow rate"},{"i":"psf_rrt_dialysateflow","l":"Dialysate flow"},{"i":"psf_rrt_replacementflow","l":"Replacement fluid rate"},{"i":"psf_rrt_dilution","l":"Pre/post dilution","t":"select","o":["Pre-dilution","Post-dilution","Both"]},{"i":"psf_rrt_uftarget","l":"Ultrafiltration target"},{"i":"psf_rrt_netbalance","l":"Net fluid balance target"},{"i":"psf_rrt_intake","l":"Net balance calculator - intake (mL)"},{"i":"psf_rrt_output","l":"Net balance calculator - output (mL)"},{"i":"psf_rrt_netbalanceCalc","l":"Net balance (auto = intake - output - UF)"},{"i":"psf_rrt_anticoag","l":"Anticoagulation","t":"select","o":["None","Heparin","Regional citrate","Saline flushes"]},{"i":"psf_rrt_noanticoagreason","l":"Reason for no anticoagulation"},{"i":"psf_rrt_duration","l":"Duration planned"},{"i":"psf_rrt_tolerance","l":"Hemodynamic tolerance"},{"i":"psf_rrt_circuitissue","l":"Circuit issue/clotting"},{"i":"psf_rrt_prelabs","l":"Pre-RRT labs"},{"i":"psf_rrt_postlabs","l":"Post-RRT labs planned"},{"i":"psf_rrt_electrolytetarget","l":"Electrolyte correction target"},{"i":"psf_rrt_drugadjust","l":"Drug dosing adjustment noted","t":"select","o":["Yes","No","Not applicable"]},{"i":"psf_rrt_nutrition","l":"Nutrition/protein loss consideration","t":"select","o":["Yes","No","Not applicable"]},{"i":"psf_rrt_weancriteria","l":"Weaning criteria reviewed","t":"select","o":["Urine output","Creatinine trend","Fluid balance","Hemodynamic stability","Not ready"]}],"chest_drain":[{"i":"psf_cd_indication2","l":"Indication","t":"select","o":["Pneumothorax","Pleural effusion","Empyema","Hemothorax","Chylothorax","Malignant effusion"]},{"i":"psf_cd_side","l":"Side","t":"select","o":["Left","Right"]},{"i":"psf_cd_site","l":"Site: ICS and line"},{"i":"psf_cd_imaging","l":"Imaging confirmation before procedure","t":"select","o":["CXR","USG","CT","Emergency clinical"]},{"i":"psf_cd_usgmark","l":"Ultrasound marking","t":"select","o":["Yes","No"]},{"i":"psf_cd_technique","l":"Technique","t":"select","o":["Seldinger","Blunt dissection","Trocar"]},{"i":"psf_cd_drainsize","l":"Drain size"},{"i":"psf_cd_obtained","l":"Fluid/air obtained"},{"i":"psf_cd_volume","l":"Volume drained initially"},{"i":"psf_cd_character","l":"Fluid character"},{"i":"psf_cd_airleak","l":"Air leak","t":"select","o":["No","Yes"]},{"i":"psf_cd_connected","l":"Connected to","t":"select","o":["Underwater seal","Suction","Heimlich valve"]},{"i":"psf_cd_suctionpressure","l":"Suction pressure if used"},{"i":"psf_cd_secured","l":"Tube secured","t":"select","o":["Yes","No"]},{"i":"psf_cd_postcxr","l":"Post-procedure CXR planned/done","t":"select","o":["Yes","No"]},{"i":"psf_cd_samples","l":"Samples sent","t":"select","o":["Cytology","Culture","Biochemistry","None"]}],"pericardial_drain":[{"i":"psf_pd_indication2","l":"Indication","t":"select","o":["Tamponade","Large effusion","Diagnostic","Malignant effusion","Recurrent effusion"]},{"i":"psf_pd_approach","l":"Approach","t":"select","o":["Subxiphoid","Apical","Parasternal","Other"]},{"i":"psf_pd_window","l":"Ultrasound window"},{"i":"psf_pd_needlepath","l":"Needle path visualized","t":"select","o":["Yes","No"]},{"i":"psf_pd_drainsize","l":"Drain size"},{"i":"psf_pd_volume","l":"Fluid volume aspirated"},{"i":"psf_pd_character","l":"Fluid character"},{"i":"psf_pd_hemoresponse","l":"Hemodynamic response"},{"i":"psf_pd_echoreassess","l":"Echo reassessment after drainage"},{"i":"psf_pd_secured","l":"Drain secured","t":"select","o":["Yes","No"]},{"i":"psf_pd_samples","l":"Samples sent"},{"i":"psf_pd_complications","l":"Complications","t":"select","o":["None","Arrhythmia","RV puncture","Coronary injury suspected","Pneumothorax","Bleeding"]}],"ascites_drain":[{"i":"psf_ad_indication2","l":"Indication","t":"select","o":["Diagnostic","Therapeutic","Respiratory compromise","Abdominal compartment concern","Infected ascites suspected"]},{"i":"psf_ad_site","l":"Site"},{"i":"psf_ad_usgmark","l":"Ultrasound marking","t":"select","o":["Yes","No"]},{"i":"psf_ad_size","l":"Catheter/needle size"},{"i":"psf_ad_volume","l":"Volume drained"},{"i":"psf_ad_character","l":"Fluid character"},{"i":"psf_ad_samples","l":"Samples sent","t":"select","o":["Cell count","Culture","Albumin","Cytology","None"]},{"i":"psf_ad_albuminplan","l":"Albumin/replacement plan documented","t":"select","o":["Yes","No","Not applicable"]},{"i":"psf_ad_leak","l":"Leak/bleeding","t":"select","o":["No","Yes"]},{"i":"psf_ad_tolerance","l":"Hemodynamic tolerance"}],"pleural_aspiration":[{"i":"psf_pa_indication2","l":"Indication","t":"select","o":["Diagnostic","Therapeutic","Respiratory compromise"]},{"i":"psf_pa_site","l":"Site: ICS and line"},{"i":"psf_pa_usgmark","l":"Ultrasound marking","t":"select","o":["Yes","No"]},{"i":"psf_pa_size","l":"Needle/catheter size"},{"i":"psf_pa_volume","l":"Volume aspirated"},{"i":"psf_pa_character","l":"Fluid character"},{"i":"psf_pa_samples","l":"Samples sent","t":"select","o":["Cytology","Culture","Biochemistry","None"]},{"i":"psf_pa_complications","l":"Complications","t":"select","o":["None","Pneumothorax","Bleeding","Re-expansion pulmonary edema"]}],"abscess_drain":[{"i":"psf_ab_site","l":"Site"},{"i":"psf_ab_imaging","l":"Imaging guidance","t":"select","o":["USG","CT","None"]},{"i":"psf_ab_size","l":"Catheter/needle size"},{"i":"psf_ab_volumecharacter","l":"Volume/character of pus"},{"i":"psf_ab_samples","l":"Samples sent","t":"select","o":["Culture","Gram stain","None"]},{"i":"psf_ab_complications","l":"Complications","t":"textarea"}],"urinary_cath":[{"i":"psf_uc_size","l":"Catheter size/type"},{"i":"psf_uc_technique","l":"Technique","t":"select","o":["Standard urethral","Difficult catheterization with coude tip","Suprapubic"]},{"i":"psf_uc_residual","l":"Residual volume"},{"i":"psf_uc_complications","l":"Complications","t":"select","o":["None","Hematuria","Difficult insertion","False passage"]}],"ngtnjt":[{"i":"psf_ng_indication2","l":"Indication"},{"i":"psf_ng_route","l":"Route/nostril"},{"i":"psf_ng_size","l":"Tube size/type"},{"i":"psf_ng_depth","l":"Insertion length/depth"},{"i":"psf_ng_method","l":"Method","t":"select","o":["Blind","Laryngoscopy-assisted","Magill forceps","Endoscopic","Fluoroscopic","Guidewire-assisted"]},{"i":"psf_ng_airwayrisk","l":"Airway risk present","t":"select","o":["Yes","No"]},{"i":"psf_ng_confirm","l":"Confirmation","t":"select","o":["Aspirate pH","CXR","Endoscopy","Fluoroscopy","Contrast","Other"]},{"i":"psf_ng_aspiratechar","l":"Aspirate character"},{"i":"psf_ng_fixed","l":"Tube fixed at marking"},{"i":"psf_ng_feedstatus","l":"Feed/medication order status","t":"select","o":["Allowed","Wait for confirmation","Decompression only"]}],"peg":[{"i":"psf_peg_technique","l":"Endoscopic technique","t":"select","o":["Pull method","Push method","Direct percutaneous"]},{"i":"psf_peg_tube","l":"Tube size/type"},{"i":"psf_peg_gastropexy","l":"Gastropexy sutures placed","t":"select","o":["Yes","No"]},{"i":"psf_peg_confirm","l":"Confirmation","t":"select","o":["Endoscopic visualization","Transillumination","Fluoroscopy"]},{"i":"psf_peg_feedstart","l":"Feeding start time"},{"i":"psf_peg_complications","l":"Complications","t":"textarea"}],"acls":[{"i":"psf_acls_arresttime","l":"Arrest date-time"},{"i":"psf_acls_location","l":"Location"},{"i":"psf_acls_witnessed","l":"Witnessed arrest","t":"select","o":["Yes","No"]},{"i":"psf_acls_rhythm","l":"Initial rhythm","t":"select","o":["VF","Pulseless VT","PEA","Asystole","Brady-asystolic","Unknown"]},{"i":"psf_acls_cprstart","l":"CPR start time"},{"i":"psf_acls_airway","l":"Airway during CPR"},{"i":"psf_acls_shocks","l":"Defibrillation shocks: number and joules"},{"i":"psf_acls_adrenaline","l":"Adrenaline doses/times"},{"i":"psf_acls_otherdrugs","l":"Amiodarone/lidocaine/other drugs"},{"i":"psf_acls_reversible","l":"Reversible causes considered","t":"textarea"},{"i":"psf_acls_rhythmchanges","l":"Rhythm changes"},{"i":"psf_acls_rosc","l":"ROSC","t":"select","o":["Yes","No"]},{"i":"psf_acls_rosctime","l":"ROSC time"},{"i":"psf_acls_duration","l":"Total CPR duration"},{"i":"psf_acls_postrosc","l":"Post-ROSC BP/MAP/SpO2/EtCO2"},{"i":"psf_acls_family","l":"Family informed","t":"select","o":["Yes","No"]},{"i":"psf_acls_consultant","l":"Consultant informed","t":"select","o":["Yes","No"]},{"i":"psf_acls_outcome","l":"Outcome","t":"select","o":["Survived event","Died despite CPR","CPR stopped after decision"]},{"i":"psf_acls_deathlink","l":"Death declaration linkage if applicable"}],"post_rosc":[{"i":"psf_pr_rosctime","l":"ROSC time"},{"i":"psf_pr_bpmap","l":"Post-ROSC BP/MAP"},{"i":"psf_pr_ttm","l":"Targeted temperature management considered","t":"select","o":["Yes","No"]},{"i":"psf_pr_neuro","l":"Post-ROSC neuro exam"},{"i":"psf_pr_eeg","l":"EEG considered","t":"select","o":["Yes","No"]},{"i":"psf_pr_echo","l":"Echo done","t":"select","o":["Yes","No"]},{"i":"psf_pr_family","l":"Family informed","t":"select","o":["Yes","No"]},{"i":"psf_pr_consultant","l":"Consultant informed","t":"select","o":["Yes","No"]}],"other":[{"i":"psf_ot_name","l":"Procedure name (free text)"},{"i":"psf_ot_technique","l":"Technique","t":"textarea"},{"i":"psf_ot_findings","l":"Findings","t":"textarea"},{"i":"psf_ot_complications","l":"Complications","t":"textarea"}]},"quick":{"cvc":["psf_cvc_vein","psf_cvc_usgvein","psf_cvc_frlumens","psf_cvc_depth","psf_cvc_aspirate","psf_cvc_flushall","psf_cvc_tipconf","psf_cvc_ptxcheck"],"intubation":["psf_it_indcat","psf_it_urgency","psf_it_riskcontext","psf_it_plan","psf_it_device","psf_it_etttype","psf_it_confirm","psf_it_postvent"],"rrt_generic":["psf_rrt_modality","psf_rrt_indication2","psf_rrt_access","psf_rrt_bfr","psf_rrt_uftarget","psf_rrt_anticoag","psf_rrt_duration"],"chest_drain":["psf_cd_indication2","psf_cd_side","psf_cd_site","psf_cd_imaging","psf_cd_drainsize","psf_cd_connected","psf_cd_postcxr"],"trach_emergency":["psf_te2_existing","psf_te2_o2applied","psf_te2_innercannula","psf_te2_suction","psf_te2_capnography","psf_te2_replaced","psf_te2_finalpatency"],"laryngectomy_emergency":["psf_lry_confirmed","psf_lry_o2stoma","psf_lry_innertube","psf_lry_suction","psf_lry_capnography","psf_lry_intubated","psf_lry_finalstatus"],"pediatric_cvc_alt":["psf_pcvc_vein","psf_pcvc_type","psf_pcvc_number","psf_pcvc_separate","psf_pcvc_usg","psf_pcvc_aspflush","psf_pcvc_connector","psf_pcvc_reason"]},"alias":{"difficult_airway":"intubation","rrt_init":"rrt_generic","sled":"rrt_generic","crrt_init":"rrt_generic","crrt_rx_change":"rrt_generic","crrt_circuit_change":"rrt_generic","rrt_wean":"rrt_generic","peripheral_iv":"vascular_generic","long_peripheral":"vascular_generic","midline":"vascular_generic","ett_exchange":"tube_exchange","trach_exchange":"tube_exchange","ngt":"ngtnjt","njt":"ngtnjt"},"cb":{"adm_presenting":["Fever / chills / rigors","Dyspnea","Cough / sputum / hemoptysis","Altered sensorium","Seizure","Chest pain","Palpitation / syncope","Reduced urine output / anuria","Vomiting / diarrhea","Hematemesis / melena","Bleeding from other sites","Weakness / fatigue"],"adm_airwayProtection":["Cough reflex present","Gag reflex present","Swallowing intact","Pooling of saliva in oral cavity"],"adm_respSigns":["Crepitations","Wheeze","Reduced air entry","Bronchial breathing"],"adm_lungPocus":["A-lines","B-lines","Consolidation","Pleural effusion","Pneumothorax","Reduced diaphragm movement"],"adm_abdoPocus":["Ascites","Hydronephrosis","Bladder distended"],"adm_comorbid":["Hypertension","Diabetes","CAD / ACS","Heart failure","CKD","Chronic liver disease","COPD / asthma","Stroke / seizure disorder","Thromboembolic disease","Bleeding disorder","Neutropenia","Thrombocytopenia","Immunosuppression / steroid use","Malnutrition","Pressure sore","Other"],"adm_organFailure":["CNS failure","Respiratory failure","Shock / cardiovascular failure","AKI / renal failure","Liver failure","Hematological failure","Coagulation failure / DIC","Metabolic failure (TLS / severe acidosis / electrolyte)","Sepsis / septic shock","Post-ROSC status"],"adm_familyExplained":["Explained diagnosis","Explained current critical condition","Explained organ failures","Explained need for ICU / ventilation / vasopressors / RRT / procedures","Financial / logistics discussion done","Consent obtained for procedures","Questions answered"],"shp_linesPresent":["CVC","HD catheter","Arterial line","NGT","Foley catheter","ETT","Tracheostomy"],"dis_organSupport":["Oxygen / HFNC / NIV","Invasive mechanical ventilation","Tracheostomy","Vasopressors / inotropes","RRT / SLED / CRRT / HD","Transfusions","Procedures performed"]},"sel":{"gender":{"l":"Gender","o":["Male","Female","Other"]},"patientType":{"l":"Patient type","o":["Adult","Pediatric","Obstetric / Pregnant","Postpartum","Mixed / clarify in note"]},"adm_admType":{"l":"Admission type","o":["New ICU admission","ICU readmission","Postoperative ICU admission","Ward transfer","Emergency transfer","Post-ROSC","Other"]},"adm_source":{"l":"Source","o":["Ward","HDU","Emergency","OT","PACU","BMT","Day Care","Outside hospital"]},"adm_priorO2":{"l":"Oxygen / HFNC / NIV / MV before ICU","o":["None","Low-flow oxygen","HFNC","NIV","Invasive MV"]},"adm_avpu":{"l":"ACVPU","o":["A - Alert","C - Confusion or delirium","V - Responds to voice","P - Responds to pain","U - Unresponsive"]},"adm_seizureActivity":{"l":"Seizure activity","o":["Absent","Present"]},"adm_delirium":{"l":"Delirium","o":["Absent","Present","Not assessed"]},"adm_wob":{"l":"Work of breathing","o":["Normal","Increased","Severe distress"]},"adm_o2Device":{"l":"Oxygen device","o":["Room air","Nasal cannula","Face mask","NRBM","HFNC","NIV","Invasive MV"]},"adm_respEscalation":{"l":"Need for escalation","o":["Not needed","HFNC planned/ongoing","NIV planned/ongoing","Intubation planned","Already intubated / invasive MV"]},"adm_crt":{"l":"Capillary refill time","o":["< 3 sec","≥ 3 sec (prolonged)"]},"adm_extremities":{"l":"Extremities","o":["Warm","Cold"]},"adm_shockType":{"l":"Shock type suspected","o":["None","Septic","Cardiogenic","Hypovolemic","Obstructive","Mixed","Unclear"]},"adm_giBleed":{"l":"GI bleed","o":["None","Upper GI bleed","Lower GI bleed","Suspected"]},"adm_coagulopathy":{"l":"Coagulopathy","o":["No","Yes"]},"adm_prognosis":{"l":"Explained prognosis","o":["Guarded","Poor","Uncertain","Improving","Critical"]},"adm_treatmentPriority":{"l":"Treatment priority","o":["Immediate stabilization","Airway / oxygenation priority","Shock / perfusion priority","Sepsis / infection priority","Bleeding / transfusion priority","RRT / metabolic priority","Neurological emergency priority","Postoperative complication priority","Goals-of-care / limitation discussion priority","Other"]},"adm_treatmentPlanStatus":{"l":"Treatment plan status","o":["Drafted by treating doctor","Discussed with consultant","Modified after consultant review","Pending consultant review","Limited by resource/logistic constraint","Time-limited trial","Palliative / limitation-of-treatment context"]},"currentClinicalTrajectory":{"l":"Current clinical trajectory","o":["Improving","Static","Worsening","Fluctuating","Newly admitted","Peri-arrest","Dying process","Unclear"]},"treatmentGoal":{"l":"Treatment goal / escalation status","o":["Full escalation","Time-limited trial","Procedure stabilization","Palliative ICU care","DNAR","Limitation of treatment","Not discussed"]},"prg_noteType":{"l":"Note type","o":["Shift Progress Note","Event Note"]},"shp_avpu":{"l":"ACVPU","o":["A - Alert","C - Confusion or delirium","V - Responds to voice","P - Responds to pain","U - Unresponsive"]},"shp_seizures":{"l":"Seizures","o":["No","Yes"]},"shp_respSupport":{"l":"Support","o":["Room air","HFNC","NIV","Invasive MV"]},"shp_pfTrend":{"l":"PaO2/FiO2 trend","o":["Improving","Static","Deteriorating"]},"shp_wobTrend":{"l":"Work of breathing","o":["Reduced","Unchanged","Increased"]},"shp_onVasopressors":{"l":"On vasopressors","o":["No","Yes"]},"shp_vasoTrend":{"l":"Vasopressor / inotrope trend","o":["Stable","Increasing dose","Reducing dose","Not needed"]},"shp_crt":{"l":"CRT","o":["< 3 sec","Prolonged"]},"shp_lactateTrend":{"l":"Lactate trend","o":["Improving","Static","Rising"]},"shp_oliguric":{"l":"Oliguric?","o":["Oliguric","Non-oliguric"]},"shp_dialysis":{"l":"On dialysis","o":["No","SLED","CRRT","Intermittent HD"]},"shp_bleeding":{"l":"Bleeding","o":["Absent","Present"]},"shp_liverDysfunction":{"l":"Evidence of liver dysfunction","o":["No","Yes"]},"shp_sourceIdentified":{"l":"Source identified","o":["No","Yes"]},"shp_cultureSent":{"l":"Blood culture sent","o":["No","Yes"]},"shp_neutropenia":{"l":"Neutropenia","o":["No","Yes"]},"shp_gcsf":{"l":"G-CSF","o":["Not needed","Started"]},"shp_feeds":{"l":"Feeds","o":["Enteral","Parenteral","NPO"]},"shp_pressureAreas":{"l":"Pressure areas","o":["Intact","Redness","Breakdown"]},"shp_dvtPpx":{"l":"DVT prophylaxis","o":["IPC","LMWH","None"]},"evt_type":{"l":"Event type","o":["Hypotension / shock","Desaturation","Airway obstruction","Tracheostomy emergency","Laryngectomy stoma emergency","Cardiac arrest / ACLS","Bleeding","Febrile neutropenia / sepsis","RRT complication","Line complication","Procedure complication","Transfer / handover event","Goals-of-care / family counselling event","New arrhythmia","Seizure","Agitation / delirium","Fever spike","Oliguria / anuria","Accidental extubation","Tube displacement","Other"]},"evt_familyInformed":{"l":"Family informed","o":["Yes","No"]},"evt_consultantInformed":{"l":"Consultant informed","o":["Yes","No"]},"prg_treatmentModified":{"l":"Treatment modification made?","o":["No major change","Escalated","De-escalated","Changed after new evidence","Stopped due to adverse effect / contraindication","Modified due to resource/logistic constraint","Modified after consultant review","Modified after family/goals-of-care discussion"]},"prg_treatmentConsultantInformed":{"l":"Consultant informed","o":["Yes","No","Not applicable"]},"proc_consent":{"l":"Consent","o":["Patient","Family","Emergency implied","Already consented"]},"proc_pocusUsed":{"l":"POCUS used","o":["Yes","No"]},"proc_side":{"l":"Side","o":["Left","Right","Bilateral","Not applicable"]},"dth_cprDone":{"l":"CPR done","o":["Yes","No"]},"dth_noCprReason":{"l":"If CPR not done, reason","o":["Treatment limitation","DNAR","Death expected after counselling","Other"]},"dth_familyInformed":{"l":"Family informed","o":["Yes","No"]},"cs_prognosis":{"l":"Prognosis wording","o":["Guarded","Critical","Poor","Improving"]},"adm_cancerStatus":{"l":"Current cancer status","o":["Newly diagnosed","Under evaluation","Under treatment","Relapsed","Refractory","Completed treatment","Palliative intent","Remission","Unknown"]}}};
+'use strict';
+/* =====================================================================
+   CCRA Lean — ICU record assistant (offline, single file, no CRIL)
+   Dictionaries imported verbatim from CCRA v3.1 (see BUNDLE).
+   ===================================================================== */
+const APP = {name:'CCRA Lean', version:'1.5', schema:'CCRA-Lean-1.0'};
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad = n => String(n).padStart(2,'0');
+const isEmpty = v => v == null || (Array.isArray(v) ? v.length === 0 : String(v).trim() === '');
+const joinL = a => Array.isArray(a) ? a.filter(Boolean).join(', ') : (a || '');
+const has = (a, v) => Array.isArray(a) && a.includes(v);
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
+const LS = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); return true; }
+    catch(e){ alert('This browser could not save to local storage (storage full or blocked). Export a backup now and free space.'); return false; } },
+  del(k){ try{ localStorage.removeItem(k); }catch(e){} }
+};
+const KEY = {
+  store:'CCRALean_store_v1', phr:'CCRALean_phrases_v1', doc:'CCRALean_doctor_v1', prefs:'CCRALean_prefs_v1',
+  draft:(c, m) => 'CCRALean_draft_v1|' + c + '|' + m
+};
+
+/* ---------- dates ---------- */
+function nowLocal(){ const d = new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+pad(d.getHours())+':'+pad(d.getMinutes()); }
+function todayISO(){ return nowLocal().slice(0,10); }
+function fmtDT(v){ if(!v) return ''; const [d, t] = String(v).split('T'); const [y, m, dd] = d.split('-'); return dd+'-'+m+'-'+y+(t ? ' '+t.slice(0,5) : ''); }
+function fmtD(v){ return v ? fmtDT(String(v).slice(0,10)) : ''; }
+function dayNo(fromISO, refISO){ // calendar day count, day of start = day 1
+  if(!fromISO) return null; const a = new Date(String(fromISO).slice(0,10)+'T00:00'), b = new Date(String(refISO || todayISO()).slice(0,10)+'T00:00');
+  if(isNaN(a) || isNaN(b)) return null; const n = Math.round((b - a) / 864e5) + 1; return n >= 1 ? n : null;
+}
+
+/* ---------- institutional constants (from ICU SBAR app) ---------- */
+const HOSP = {
+  MPMMCC:{code:'MPMMCC', name:'Mahamana Pandit Madan Mohan Malaviya Cancer Centre', city:'Varanasi'},
+  HBCH:{code:'HBCH', name:'Homi Bhabha Cancer Hospital', city:'Varanasi'}
+};
+const ICU_LOC = ['Medical ICU','Surgical ICU','Paediatric ICU','HDU','Other ICU location'];
+const ISOLATION = ['Standard precautions','Contact','Droplet','Airborne','Protective environment'];
+const ALLERGY = ['Not verified','No known drug allergy (verified)','Known allergy'];
+const TMC_CASE = /^[0-9]{2}[A-Z][0-9]{4}\/[0-9]{6}$/;
+const SBAR_SYSTEMS = [ // from ICU SBAR app; first option is now a real choice (was a blank placeholder)
+  {id:'neuro', h:'Neuro / sedation', o:['No active issue / not applicable','Not assessed - verify','Stable / no material change','Improving','Worsening','Sedated / examination limited','New focal deficit / seizure / delirium'], ph:'GCS/RASS, pupils, delirium, analgesia'},
+  {id:'resp', h:'Respiratory', o:['No active issue / not applicable','Not assessed - verify','Stable / no material change','Improving','Worsening oxygenation / ventilation','Escalating support','Airway / secretion concern'], ph:'O2 / ventilator, gas, secretions'},
+  {id:'cvs', h:'Cardiovascular', o:['No active issue / not applicable','Not assessed - verify','Stable / no material change','Improving perfusion / support','Worsening perfusion / support','New rhythm / ischaemic concern','Vasoactive support changed'], ph:'Rhythm, MAP, perfusion, support'},
+  {id:'renal', h:'Renal / fluid', o:['No active issue / not applicable','Not assessed - verify','Stable / no material change','Urine output improving','Oliguria / worsening renal function','RRT / dialysis ongoing or planned','Fluid balance concern'], ph:'UO, balance, creatinine, RRT'},
+  {id:'gi', h:'GI / nutrition / metabolic', o:['No active issue / not applicable','Not assessed - verify','Stable / feeds tolerated','Feeds interrupted / intolerance','Abdominal / bowel concern','Glucose / electrolyte issue','Nutrition plan changed'], ph:'Feeds, bowels, glucose, electrolytes'},
+  {id:'heme', h:'Haematology / oncology', o:['No active issue / not applicable','Not assessed - verify','Stable / no material change','Bleeding / coagulopathy concern','Thrombosis concern','Transfusion / blood product given or planned','Cancer therapy / disease-related change'], ph:'Hb, platelets, coagulation, therapy'},
+  {id:'inf', h:'Infection', o:['No active issue / not applicable','Not assessed - verify','No new infection concern','Fever / inflammatory trend improving','Persistent or worsening infection concern','New source / culture / antimicrobial change','Isolation / exposure concern'], ph:'Source, cultures, antimicrobial day'},
+  {id:'other', h:'Skin / mobility / other', o:['No active issue / not applicable','Not assessed - verify','No material issue','Wound / pressure-area concern','Mobility / rehabilitation issue','Device / line concern','Other active issue'], ph:'Wounds, mobility, lines'}
+];
+const DEVICE_NAMES = ['Peripheral IV cannula','CVC','HD catheter','Arterial line','Midline catheter','Long peripheral catheter','Paediatric central access (long peripheral catheter)','IO access','ETT','Tracheostomy','Surgical airway','NGT','NJT','PEG','Foley catheter','Chest drain','Pericardial drain','Ascitic drain','Abscess drain','Other'];
+// procedure -> device list action
+const DEVMAP = {
+  peripheral_iv:['add','Peripheral IV cannula'], cvc:['add','CVC'], arterial:['add','Arterial line'], dialysis_cath:['add','HD catheter'], midline:['add','Midline catheter'],
+  long_peripheral:['add','Long peripheral catheter'], pediatric_cvc_alt:['add','Paediatric central access (long peripheral catheter)'],
+  io_access:['add','IO access'], intubation:['add','ETT'], difficult_airway:['add','ETT'], ett_exchange:['swap','ETT'],
+  extubation:['remove','ETT'], perc_trach:['trach','Tracheostomy'], trach_exchange:['swap','Tracheostomy'], cricothyrotomy:['add','Surgical airway'],
+  chest_drain:['add','Chest drain'], pericardial_drain:['add','Pericardial drain'], ascites_drain:['add','Ascitic drain'], abscess_drain:['add','Abscess drain'],
+  urinary_cath:['add','Foley catheter'], ngt:['add','NGT'], njt:['add','NJT'], peg:['add','PEG']
+};
+
+/* ---------- imported CCRA dictionaries ---------- */
+const S = BUNDLE.sel, CB = BUNDLE.cb, DI = BUNDLE.dict, SMART = BUNDLE.smart;
+const SYN = { // CCRA enrichTerm synonyms
+  'Acute hypoxemic respiratory failure':'ahrf type 1 respiratory failure hypoxia',
+  'Acute hypercapnic respiratory failure':'type 2 respiratory failure hypercarbia co2 retention',
+  'Febrile neutropenia':'fn neutropenic fever', 'Tumor lysis syndrome':'tls tumour lysis',
+  'Superior vena cava syndrome':'svcs svc syndrome', 'Tracheoinnominate fistula suspected':'tif sentinel bleed tracheostomy bleed',
+  'CRRT / CKRT':'continuous renal replacement therapy cvvh cvvhd cvvhdf'
+};
+function dictOpts(name, fallbackGroup){
+  return Object.entries(DI[name]).flatMap(([g, vs]) => vs.map(v => ({v, g: g || fallbackGroup || '', s: SYN[v] || ''})));
+}
+function dedupe(list){ const seen = new Set(); return list.filter(o => !seen.has(o.v) && seen.add(o.v)); }
+const DX = {
+  cancer: dictOpts('CANCER_DX_DICTIONARY'),
+  cancerStatus: dictOpts('CANCER_STATUS_DICTIONARY'),
+  reason: dictOpts('ADMISSION_REASON_DICTIONARY'),
+  icu: dedupe([].concat(dictOpts('ICU_SYNDROME_DICTIONARY'), dictOpts('ONCOLOGIC_EMERGENCY_DICTIONARY','Oncologic emergency'),
+       dictOpts('POSTOPERATIVE_COMPLICATION_DICTIONARY','Postoperative / procedural complication'),
+       dictOpts('OBSTETRIC_CRITICAL_CARE_DICTIONARY','Obstetric critical care'), dictOpts('PEDIATRIC_CRITICAL_CARE_MODIFIER_DICTIONARY','Paediatric modifier'))),
+  organ: dictOpts('ORGAN_FAILURE_DICTIONARY'),
+  support: dictOpts('SUPPORT_STATE_DICTIONARY'),
+  infection: dictOpts('INFECTION_SOURCE_DICTIONARY')
+};
+const PROC_OPTS = Object.entries(BUNDLE.procLabels).map(([v, l]) => ({v, l}));
+const procLabel = k => BUNDLE.procLabels[k] || k || '';
+
+/* ---------- field definition helpers ---------- */
+const f = (k, l, t, o, x) => Object.assign({k, l, t: t || 'txt', o: o || null}, x || {});
+const sec = (h, hint, x) => Object.assign({t:'sec', h, hint}, x || {});
+const fs = (k, selKey, x) => f(k, S[selKey].l, 'sel', S[selKey].o, x); // select straight from CCRA
+const isProg = d => d.noteType !== 'Event note';
+const isEvt = d => d.noteType === 'Event note';
+
+/* ---------- patient record (entered once, reused by every note) ---------- */
+const PROFILE = [
+  sec('Identification'),
+  f('caseNo','Case No.','txt',null,{w:3, req:1, ro:1}),
+  f('name','Patient name','txt',null,{w:5, req:1}),
+  f('age','Age','txt',null,{w:2, req:1, ph:'years / months'}),
+  fs('sex','gender',{l:'Sex', w:2, req:1}),
+  fs('ptype','patientType',{w:3, rr:1}),
+  f('weight','Weight (kg)','txt',null,{w:2}),
+  f('hosp','Hospital','sel',[{v:'MPMMCC',l:'MPMMCC Varanasi'},{v:'HBCH',l:'HBCH Varanasi'}],{w:3, req:1}),
+  f('icu','ICU location','sel',ICU_LOC,{w:2, req:1}),
+  f('bed','Bed','txt',null,{w:2}),
+  f('admDT','ICU admission date-time','dt',null,{w:4, req:1}),
+  f('consultant','Consultant','txt',null,{w:4, learn:1}),
+  f('unit','Primary unit','txt',null,{w:4, learn:1}),
+  sec('Diagnosis','Shared by every note. Update it here when it changes.'),
+  f('cancerDx','Primary cancer diagnosis or under evaluation','ms',DX.cancer,{w:8, custom:1}),
+  f('cancerStatus','Current disease status','ms',DX.cancerStatus,{w:4}),
+  f('icuDx','ICU diagnosis','ms',DX.icu,{w:12, custom:1, req:1, ph:'Search syndrome, oncologic emergency, postoperative complication…'}),
+  f('organFail','Organ failure','ms',DX.organ,{w:6}),
+  f('infection','Infection source / organism','ms',DX.infection,{w:6, custom:1}),
+  f('comorb','Co-morbidities','chips',CB.adm_comorbid,{w:12, rr:1}),
+  f('comorbOther','Other co-morbidity','txt',null,{w:12, learn:1, show:p => has(p.comorb,'Other')}),
+  f('otherDx','Other / present diagnosis','ta',null,{w:12, learn:1}),
+  sec('Safety and goals of care'),
+  f('allergy','Allergy status','sel',ALLERGY,{w:4, req:1, rr:1}),
+  f('allergyDetail','Allergen and reaction','txt',null,{w:8, req:1, show:p => p.allergy === 'Known allergy'}),
+  f('isolation','Isolation / precautions','sel',ISOLATION,{w:4}),
+  fs('goal','treatmentGoal',{w:4, req:1, rr:1}),
+  f('goalNote','Limitation details','txt',null,{w:4, learn:1, show:p => p.goal && !['Full escalation','Not discussed'].includes(p.goal)}),
+  f('support','Current organ support','ms',DX.support,{w:12}),
+  sec('Lines, tubes and drains','Day 1 is the day of insertion. Procedure notes add or remove devices here.'),
+  f('devices','Devices','devices',null,{w:12})
+];
+
+
+/* ---------- immediate cause of death: oncology ICU, ranked most → least common ----------
+   Ranking reflects the consistent pattern in published adult and paediatric oncology ICU cohorts
+   (sepsis/septic shock and acute respiratory failure dominate); the order of the middle and lower
+   items is approximate and varies by centre. Re-rank from local death-audit data when available. */
+const COD = {
+  sepsis:'Septic shock with multi-organ dysfunction',
+  pneum:'Acute respiratory failure due to pneumonia (bacterial / viral / fungal / opportunistic)',
+  ards:'Acute respiratory distress syndrome (ARDS)',
+  mods:'Multi-organ dysfunction syndrome due to progressive malignancy (non-septic)',
+  tumresp:'Respiratory failure due to progressive malignancy (lung / pleural / lymphangitic / mediastinal disease)',
+  bleed:'Massive haemorrhage (tumour-related / gastrointestinal / pulmonary)',
+  hie:'Hypoxic-ischaemic brain injury after cardiac arrest',
+  cardio:'Cardiogenic shock',
+  pe:'Pulmonary embolism',
+  airway:'Central / upper airway obstruction (tumour / tracheostomy / laryngectomy stoma)',
+  icp:'Raised intracranial pressure / brainstem herniation',
+  ich:'Intracranial haemorrhage',
+  tls:'Tumour lysis syndrome with refractory hyperkalaemia / acidosis',
+  leuko:'Hyperleukocytosis with leukostasis',
+  hlh:'HLH / cytokine storm (including CAR-T cytokine release syndrome)',
+  dah:'Diffuse alveolar haemorrhage',
+  liver:'Acute liver failure',
+  vod:'Hepatic sinusoidal obstruction syndrome / VOD after HSCT',
+  gvhd:'Graft-versus-host disease with organ failure',
+  aki:'Acute kidney injury with refractory metabolic derangement',
+  arrhythmia:'Malignant arrhythmia (including electrolyte- or drug-induced)',
+  perf:'Bowel perforation / neutropenic enterocolitis (typhlitis)',
+  postop:'Postoperative complication (bleeding / anastomotic leak / sepsis)',
+  carotid:'Carotid blowout / tumour vessel rupture',
+  ici:'Immune checkpoint inhibitor toxicity (myocarditis / pneumonitis)',
+  svc:'Superior vena cava syndrome with haemodynamic / airway compromise',
+  anaph:'Anaphylaxis / severe drug or transfusion reaction'
+};
+const COD_OTHER = 'Other (specify)';
+const COD_RANK = {
+  adult:['sepsis','pneum','ards','mods','tumresp','bleed','hie','cardio','pe','airway','icp','ich','tls','hlh','dah','liver','aki','arrhythmia','perf','postop','carotid','ici','svc','leuko','vod','gvhd','anaph'],
+  paed:['sepsis','pneum','ards','bleed','icp','ich','mods','tls','leuko','hlh','tumresp','airway','hie','perf','vod','gvhd','cardio','liver','dah','aki','arrhythmia','postop','pe','anaph','svc','carotid','ici']
+};
+function isPaed(p){
+  if(p.ptype === 'Pediatric') return true;
+  const a = String(p.age || '').toLowerCase(), n = parseFloat(a);
+  if(/month|mo\b|day|week|wk/.test(a)) return true;
+  return !isNaN(n) && n < 18;
+}
+const codOptions = p => COD_RANK[isPaed(p) ? 'paed' : 'adult'].map(k => COD[k]).concat(COD_OTHER);
+
+/* ---------- modules ---------- */
+const FAM_SP = ['family_explained_diagnosis','family_explained_critical','organ_failure_explained','guarded_prognosis','poor_prognosis','ventilation_counselling','rrt_counselling','trach_laryngectomy_explanation','consultant_informed'];
+const PROG_BOXES = [
+  {h:'Neuro', f:[fs('avpu','shp_avpu',{short:'ACVPU'}), fs('seiz','shp_seizures'), f('neuroNote','Note','txt',null,{bare:1, ph:'GCS, sedation, delirium'})]},
+  {h:'Respiratory', f:[fs('resp','shp_respSupport'), fs('pf','shp_pfTrend',{short:'P/F'}), fs('wobT','shp_wobTrend',{short:'WOB'}), f('respNote','Settings / note','txt',null,{bare:1, ph:'FiO2, PEEP, ABG trend'})]},
+  {h:'Circulation', f:[fs('vaso','shp_onVasopressors',{short:'Vasopressors'}), fs('vasoT','shp_vasoTrend',{short:'Trend'}), fs('crt','shp_crt'), fs('lacT','shp_lactateTrend',{short:'Lactate'}), f('cvNote','Note','txt',null,{bare:1, ph:'Agent and dose, rhythm, echo'})]},
+  {h:'Renal', f:[fs('olig','shp_oliguric',{short:'UO'}), fs('dial','shp_dialysis',{short:'Dialysis'}), f('renalNote','Note','txt',null,{bare:1, ph:'UO mL/24 h, creatinine, K'})]},
+  {h:'Haematology / liver', f:[fs('bleed','shp_bleeding'), fs('liver','shp_liverDysfunction',{short:'Liver dysfunction'}), fs('neut','shp_neutropenia'), fs('gcsf','shp_gcsf',{short:'G-CSF'}), f('hemNote','Note','txt',null,{bare:1, ph:'Hb, platelets, INR, transfusion'})]},
+  {h:'Infection', f:[fs('src','shp_sourceIdentified',{short:'Source identified'}), fs('cult','shp_cultureSent',{short:'Blood culture sent'}), f('abx','Antimicrobials (day)','txt',null,{short:'Antimicrobials', ph:'e.g. Meropenem D3'})]},
+  {h:'Nutrition / skin / prophylaxis', f:[fs('feeds','shp_feeds'), fs('skin','shp_pressureAreas',{short:'Pressure areas'}), fs('dvt','shp_dvtPpx',{short:'DVT prophylaxis'}), f('giNote','Note','txt',null,{bare:1, ph:'Bowels, glucose, mobility'})]}
+];
+PROG_BOXES.forEach(b => b.f.forEach(c => { c.carry = 1; c.w = c.t === 'txt' ? 12 : 6; }));
+const SBAR_BOXES = SBAR_SYSTEMS.map(s => ({h:s.h, f:[
+  f('s_'+s.id, 'Status / trend', 'sel', s.o, {bare:1, carry:1, w:12}),
+  f('d_'+s.id, 'Key value / change', 'txt', null, {bare:1, carry:1, w:12, learn:1, ph:s.ph})
+]}));
+
+const MODS = {
+  admission:{tab:'Admission', doc:() => 'ICU ADMISSION RECORD', fields:[
+    sec('Admission'),
+    f('dt','Note date-time','dt',null,{w:3, req:1}),
+    fs('admType','adm_admType',{w:3}),
+    fs('source','adm_source',{w:3}),
+    f('reasons','Reason for ICU admission','ms',DX.reason,{w:12, req:1, custom:1}),
+    f('presenting','Presenting features','chips',CB.adm_presenting,{w:12}),
+    f('history','Brief history','ta',null,{w:12, learn:1, ph:'Onset, duration and course before ICU'}),
+    fs('preO2','adm_priorO2',{l:'Respiratory support before ICU', w:4}),
+    f('preTx','Treatment before ICU','txt',null,{w:8, learn:1, ph:'Antibiotics, fluids, vasopressors already given'}),
+    sec('Diagnosis', null, {ctx:'full', ctxOnly:1}),
+    sec('Assessment at admission','Select findings. Serial values stay in the CIS flowsheet.'),
+    fs('avpu','adm_avpu',{w:3}),
+    f('gcs','GCS','txt',null,{w:2, ph:'E_V_M_'}),
+    fs('delirium','adm_delirium',{w:2}),
+    fs('seizure','adm_seizureActivity',{w:2}),
+    fs('wob','adm_wob',{w:3}),
+    f('airway','Airway protection','chips',CB.adm_airwayProtection,{w:12}),
+    fs('o2Device','adm_o2Device',{w:3}),
+    fs('respEsc','adm_respEscalation',{w:5}),
+    fs('shockType','adm_shockType',{w:4}),
+    fs('crt','adm_crt',{w:3}),
+    fs('extremities','adm_extremities',{w:3}),
+    fs('giBleed','adm_giBleed',{w:3}),
+    fs('coag','adm_coagulopathy',{w:3}),
+    f('lungPocus','Lung POCUS','chips',CB.adm_lungPocus,{w:12}),
+    f('pocus','POCUS impression','txt',null,{w:12, learn:1}),
+    f('keyValues','Key values driving decisions','txt',null,{w:12, ph:'e.g. MAP 58 on noradrenaline 0.2; lactate 4.1; P/F 140'}),
+    sec('Initial plan'),
+    fs('priority','adm_treatmentPriority',{w:6, req:1}),
+    fs('planStatus','adm_treatmentPlanStatus',{w:6}),
+    f('plan','Initial plan','ta',null,{w:12, req:1, learn:1, ph:'Airway, ventilation, circulation, antimicrobials, renal, nutrition, prophylaxis, monitoring'}),
+    sec('Family communication'),
+    f('famExplained','Explained to family','chips',CB.adm_familyExplained,{w:12}),
+    fs('prognosis','adm_prognosis',{w:3}),
+    f('famName','Family member','txt',null,{w:5}),
+    f('famRel','Relation','txt',null,{w:4, learn:1}),
+    f('famNotes','Communication notes','ta',null,{w:12, sp:FAM_SP})
+  ]},
+
+  progress:{tab:'Progress / event', doc:d => isEvt(d) ? 'ICU EVENT NOTE' : 'ICU PROGRESS NOTE', fields:[
+    sec('Note'),
+    f('noteType','Note type','sel',['Progress note','Event note'],{w:3, rr:1, noBlank:1, def:'Progress note', noOut:1}),
+    f('dt','Note date-time','dt',null,{w:3, req:1}),
+    fs('traj','currentClinicalTrajectory',{w:6, req:1, carry:1, show:isProg}),
+    sec('Context', null, {ctx:'compact', ctxOnly:1}),
+    sec('Since last note', null, {show:isProg}),
+    f('events','Events since last note','ta',null,{w:12, learn:1, auto:1, show:isProg, ph:'Saved event and procedure notes are listed automatically'}),
+    sec('By system','Carried from the last progress note. Change what changed.', {show:isProg}),
+    f('sys','By system','boxes',null,{w:12, show:isProg, boxes:PROG_BOXES}),
+    f('keyValues','Key values driving decisions','txt',null,{w:12, show:isProg}),
+    sec('Treatment and plan', null, {show:isProg}),
+    fs('txMod','prg_treatmentModified',{w:6, rr:1, show:isProg}),
+    f('txWhy','Rationale for the change','txt',null,{w:6, learn:1, show:d => isProg(d) && d.txMod && d.txMod !== 'No major change'}),
+    fs('consInf','prg_treatmentConsultantInformed',{w:3, show:isProg}),
+    f('famUpd','Family updated this shift','chk',null,{w:3, show:isProg}),
+    f('plan','Plan for next shift','ta',null,{w:12, req:1, learn:1, show:isProg}),
+    sec('Event', null, {show:isEvt}),
+    fs('evtType','evt_type',{l:'Event type', w:5, req:1, show:isEvt}),
+    f('evtTime','Event time','dt',null,{w:4, req:1, show:isEvt}),
+    f('trigger','Trigger / context','txt',null,{w:12, learn:1, show:isEvt}),
+    f('assess','Assessment','ta',null,{w:12, learn:1, show:isEvt, ph:'Findings, vitals, ABG/POCUS that drove the decision'}),
+    f('interv','Interventions done','ta',null,{w:12, req:1, learn:1, show:isEvt}),
+    f('resp','Response to treatment','txt',null,{w:12, learn:1, show:isEvt}),
+    f('after','Status after event','txt',null,{w:12, learn:1, show:isEvt}),
+    f('evPlan','Plan','ta',null,{w:12, learn:1, show:isEvt}),
+    fs('evCons','evt_consultantInformed',{w:3, req:1, show:isEvt}),
+    fs('evFam','evt_familyInformed',{w:3, show:isEvt})
+  ]},
+
+  procedure:{tab:'Procedure', doc:() => 'ICU BEDSIDE PROCEDURE NOTE', fields:[
+    sec('Context', null, {ctx:'proc', ctxOnly:1}),
+    sec('Procedure'),
+    f('procType','Procedure','sel',PROC_OPTS,{w:6, req:1, rr:1}),
+    f('dt','Start date-time','dt',null,{w:3, req:1}),
+    f('endDT','End date-time','dt',null,{w:3}),
+    f('indication','Indication','txt',null,{w:6, learn:1}),
+    fs('consent','proc_consent',{w:3}),
+    fs('pocus','proc_pocusUsed',{w:3}),
+    fs('side','proc_side',{w:3}),
+    f('site','Site','txt',null,{w:3, learn:1}),
+    f('santt','Asepsis: SANTT followed','chk',null,{w:6}),
+    f('sedation','Sedation / analgesia / local anaesthesia','txt',null,{w:6, learn:1}),
+    f('coag','Platelet and coagulation check','txt',null,{w:6, learn:1}),
+    sec('Procedure-specific details', 'Core fields first; open “More details” only if needed.', {show:d => !!d.procType}),
+    f('psf','Procedure-specific details','procspec',null,{w:12, show:d => !!d.procType}),
+    sec('Outcome'),
+    f('confirm','Confirmation method','txt',null,{w:6, learn:1}),
+    f('complic','Complications','txt',null,{w:6, req:1, learn:1, ph:'Write None if none'}),
+    f('post','Post-procedure status and orders','ta',null,{w:12, learn:1}),
+    f('operator','Operator','txt',null,{w:4, req:1, learn:1, pg:'staff'}),
+    f('assistant','Assistant','txt',null,{w:4, learn:1, pg:'staff'}),
+    f('supervisor','Supervisor / consultant','txt',null,{w:4, learn:1, pg:'staff'}),
+    f('devSync','Update the device list in the patient record','chk',null,{w:12, def:true, noOut:1, show:d => !!DEVMAP[d.procType] && !d._amends})
+  ]},
+
+  sbar:{tab:'SBAR handover', doc:() => 'ICU SBAR HANDOVER', fields:[
+    sec('Handover'),
+    f('dt','Handover date-time','dt',null,{w:3, req:1}),
+    f('shift','Shift','sel',['Day','Night','Other'],{w:2}),
+    f('from','Outgoing doctor','txt',null,{w:3, pg:'staff', learn:1}),
+    f('to','Receiving doctor','txt',null,{w:4, req:1, pg:'staff', learn:1}),
+    sec('S – Situation'),
+    f('status','Current status','sel',['Stable','Improving','Worsening','Unstable / active rescue'],{w:4, req:1}),
+    f('concern','Key status / immediate concern','txt',null,{w:8, learn:1}),
+    sec('B – Background','Diagnosis, allergy, goal of care and devices come from the patient record.', {ctx:'sbar'}),
+    f('events','Events / procedures since previous handover','ta',null,{w:12, learn:1, auto:1}),
+    sec('A – Assessment by system','Carried from the last handover. Use the button to mark untouched systems.'),
+    f('fillSys','','action',null,{w:12, label:'Set unselected systems to “Stable / no material change”', noOut:1}),
+    f('sys','Assessment','boxes',null,{w:12, boxes:SBAR_BOXES}),
+    f('keyRes','Key investigation / observation trend','txt',null,{w:12, learn:1}),
+    sec('R – Recommendation and tasks','Pending tasks from the last handover are carried forward.'),
+    f('tasks','Tasks','tasks',null,{w:12}),
+    f('escalate','Escalate / watch for','txt',null,{w:6, learn:1}),
+    f('dispo','Plan disposition','sel',['Specific tasks handed over above','Continue current plan; no new task dictated','Plan requires review by responsible consultant'],{w:6, req:1})
+  ], check(d, p, add){
+    SBAR_SYSTEMS.forEach(s => { if(!d['s_'+s.id]) add('s_'+s.id, 'A: ' + s.h + ' status'); });
+    (d.tasks || []).forEach((t, i) => { if(t.a && t.st !== 'Done' && t.st !== 'Cancelled' && (!t.o || !t.due)) add('task:'+i, 'R: owner and due time for “' + t.a + '”'); });
+    if(d.dispo === 'Specific tasks handed over above' && !(d.tasks || []).some(t => t.a && (t.st || 'Pending') === 'Pending')) add('tasks', 'R: at least one pending task');
+  }},
+
+  current_status:{tab:'Current status', doc:() => 'CURRENT ICU STATUS SUMMARY', fields:[
+    sec('Summary'),
+    f('dt','Date-time','dt',null,{w:3, req:1}),
+    f('purpose','Issued for','sel',['Family / attendant request','Administrative / financial support','Transfer / referral','Other'],{w:5}),
+    sec('Diagnosis', null, {ctx:'status', ctxOnly:1}),
+    sec('Current status'),
+    f('condition','Current physical condition','ta',null,{w:12, req:1, auto:1}),
+    f('treatments','Current ICU treatments','ta',null,{w:12, learn:1, carry:1}),
+    f('procs','Procedures already done','ta',null,{w:12, auto:1}),
+    f('needs','Ongoing treatment needs','ta',null,{w:12, learn:1, carry:1}),
+    f('expected','Expected need for continued ICU care','txt',null,{w:12, learn:1}),
+    fs('prognosis','cs_prognosis',{w:4, req:1, carry:1}),
+    f('stmt','Add the standard statement on purpose of issue','chk',null,{w:8, def:true, yes:SMART.current_status_statement, l2:'Statement'})
+  ]},
+
+  discharge:{tab:'Discharge', doc:() => 'ICU DISCHARGE / TRANSFER SUMMARY', closes:1, fields:[
+    sec('Discharge / transfer'),
+    f('dt','Discharge / transfer date-time','dt',null,{w:4, req:1}),
+    f('to','Transferred to','txt',null,{w:8, req:1, learn:1, ph:'Ward / primary team / other facility'}),
+    sec('Diagnosis', null, {ctx:'discharge', ctxOnly:1}),
+    sec('ICU course'),
+    f('course','Brief ICU course','ta',null,{w:12, req:1, auto:1}),
+    f('supportUsed','Organ support required in ICU','chips',CB.dis_organSupport,{w:12, auto:1}),
+    f('procs','Procedures during ICU stay','ta',null,{w:12, auto:1}),
+    f('micro','Microbiology and antimicrobials','ta',null,{w:12, learn:1}),
+    f('labs','Major laboratory / imaging findings','ta',null,{w:12, learn:1}),
+    sec('At discharge'),
+    f('condition','Condition at discharge','ta',null,{w:12, req:1, learn:1}),
+    f('lines','Lines / tubes at discharge','txt',null,{w:12, auto:1}),
+    f('meds','Medications at discharge / transfer','ta',null,{w:12}),
+    f('pending','Pending reports','txt',null,{w:12, sp:['pending_reports','culture_deescalation_pending']}),
+    f('risks','Handover risks','txt',null,{w:12, learn:1}),
+    f('nutrition','Feeding / nutrition / rehabilitation plan','ta',null,{w:12, learn:1}),
+    f('followup','Follow-up advice','ta',null,{w:12, learn:1}),
+    f('warning','Warning signs / when to seek urgent care','ta',null,{w:12, learn:1})
+  ]},
+
+  death:{tab:'Death', doc:() => 'ICU DEATH SUMMARY', closes:1, warn(d){
+    const v = (k, o) => (d[k] === COD_OTHER ? d[o] : d[k]) || '';
+    const a = v('immediate','immediateOther').trim().toLowerCase().replace(/\s+/g,' '), b = v('antecedent','antecedentOther').trim().toLowerCase().replace(/\s+/g,' ');
+    if(!a || !b || a !== b) return [];
+    const msg = 'Same as the immediate cause. The antecedent cause should be the condition that led to it; choose another or leave blank.';
+    return [{k:'antecedent', msg}, {k:'immediate', msg:'Same cause selected as the antecedent cause.'}].concat(d.antecedent === COD_OTHER ? [{k:'antecedentOther', msg}] : []);
+  }, fields:[
+    sec('Death'),
+    f('dt','Date-time of death','dt',null,{w:4, req:1}),
+    sec('Diagnosis', null, {ctx:'death', ctxOnly:1}),
+    sec('ICU course'),
+    f('course','Brief course in ICU','ta',null,{w:12, req:1, auto:1}),
+    f('lifeSupport','Life support used','txt',null,{w:12, auto:1}),
+    fs('cpr','dth_cprDone',{w:3, req:1, rr:1}),
+    f('cprDetails','CPR details','ta',null,{w:12, req:1, show:d => d.cpr === 'Yes'}),
+    fs('noCpr','dth_noCprReason',{w:5, req:1, rr:1, show:d => d.cpr === 'No'}),
+    f('noCprOther','Specify reason','txt',null,{w:4, req:1, show:d => d.cpr === 'No' && d.noCpr === 'Other'}),
+    sec('Cause of death','Choose the condition that directly caused death, not the mode of dying (for example, not “cardiac arrest”). The list is ranked for adult or paediatric patients from the patient record.'),
+    f('immediate','Immediate cause of death','sel',null,{w:12, req:1, rr:1, oFn:codOptions, otherK:'immediateOther'}),
+    f('immediateOther','Specify the immediate cause of death','txt',null,{w:12, req:1, learn:1, noOut:1, show:d => d.immediate === COD_OTHER}),
+    f('antecedent','Antecedent cause','sel',null,{w:12, rr:1, oFn:codOptions, otherK:'antecedentOther'}),
+    f('antecedentOther','Specify the antecedent cause','txt',null,{w:12, req:1, learn:1, noOut:1, show:d => d.antecedent === COD_OTHER}),
+    f('underlying','Underlying disease','txt',null,{w:12, auto:1}),
+    f('otherCond','Other significant conditions','txt',null,{w:12, auto:1}),
+    sec('Communication and handover'),
+    fs('famInf','dth_familyInformed',{w:3, req:1}),
+    f('famNote','Family informed – details','txt',null,{w:9}),
+    f('body','Body handover','txt',null,{w:12, learn:1}),
+    f('certBy','Death certificate issued by','txt',null,{w:12, req:1, auto:1, pg:'staff', learn:1})
+  ]},
+
+  dama:{tab:'DAMA', doc:() => 'DISCHARGE AGAINST MEDICAL ADVICE SUMMARY', closes:1, fields:[
+    sec('DAMA'),
+    f('dt','Date-time','dt',null,{w:4, req:1}),
+    sec('Diagnosis', null, {ctx:'full', ctxOnly:1}),
+    sec('Clinical position'),
+    f('condition','Current physical condition','ta',null,{w:12, req:1, learn:1}),
+    f('summary','ICU treatment summary','ta',null,{w:12, auto:1}),
+    f('ongoing','Ongoing treatment requirement','ta',null,{w:12, learn:1}),
+    f('risks','Risks if treatment is discontinued','ta',null,{w:12, req:1, auto:1, sp:['dama_risk','no_single_parameter_principle','ventilation_counselling','rrt_counselling']}),
+    sec('Counselling and decision'),
+    f('counsel','Counselling details','ta',null,{w:12, learn:1, sp:FAM_SP}),
+    f('decision','Family / attendant decision','ta',null,{w:12, learn:1}),
+    f('attendant','Patient / attendant name','txt',null,{w:5, req:1}),
+    f('relation','Relation','txt',null,{w:3, learn:1}),
+    f('witness','Witness','txt',null,{w:4}),
+    f('lines','Lines / tubes / support at time of DAMA','txt',null,{w:12, auto:1}),
+    f('advice','Medications / advice given','ta',null,{w:12, learn:1})
+  ]}
+};
+// amendment reason: shown only when a saved note is being edited
+Object.values(MODS).forEach(M => { const i = M.fields.findIndex(x => x.t === 'sec' && !x.ctxOnly);
+  M.fields.splice(i + 1, 0, f('_amendReason','Reason for amendment','txt',null,{w:12, req:1, learn:1, noOut:1, show:d => !!d._amends, ph:'What was wrong or missing in the saved note'})); });
+const MOD_ORDER = ['record','admission','progress','procedure','sbar','current_status','discharge','death','dama'];
+
+/* ---------- context rows drawn from the patient record ---------- */
+function allergyText(p){
+  if(p.allergy === 'Known allergy') return 'KNOWN ALLERGY: ' + (p.allergyDetail || 'details not entered – verify');
+  return p.allergy || 'Not verified';
+}
+function activeDevices(p){ return (p.devices || []).filter(x => x.name && !x.removed); }
+function devText(p, refISO){
+  return activeDevices(p).map(x => {
+    const n = dayNo(x.ins, refISO);
+    return (x.name === 'Other' ? (x.site || 'Other device') : x.name) + (x.site && x.name !== 'Other' ? ' (' + x.site + ')' : '') + (n ? ' – day ' + n : '');
+  }).join('; ');
+}
+const CTX = {
+  cancer: p => ['Primary cancer diagnosis', joinL(p.cancerDx) + (p.cancerDx?.length && p.cancerStatus?.length ? ' – ' : '') + joinL(p.cancerStatus)],
+  icu: p => ['ICU diagnosis', joinL(p.icuDx)],
+  organ: p => ['Organ failure', joinL(p.organFail)],
+  infection: p => ['Infection source / organism', joinL(p.infection)],
+  comorb: p => ['Co-morbidities', [].concat((p.comorb || []).filter(x => x !== 'Other'), p.comorbOther || []).filter(Boolean).join(', ')],
+  other: p => ['Other / present diagnosis', p.otherDx],
+  allergy: p => ['Allergy', allergyText(p), 1],
+  isolation: p => ['Isolation / precautions', p.isolation],
+  goal: p => ['Treatment goal / code status', (p.goal || 'Not entered – verify') + (p.goalNote ? ' – ' + p.goalNote : ''), 1],
+  support: p => ['Organ support', joinL(p.support)],
+  devices: (p, d) => ['Lines / tubes / drains', devText(p, d && d.dt)]
+};
+const CTXSETS = {
+  full: ['cancer','icu','organ','infection','comorb','other','allergy','isolation','goal','support','devices'],
+  compact: ['icu','cancer','allergy','goal','support','devices'],
+  sbar: ['icu','cancer','comorb','other','allergy','isolation','goal','support','devices'],
+  status: ['cancer','icu','organ','comorb','other','support'],
+  discharge: ['cancer','icu','organ','infection','comorb','other','allergy','goal'],
+  death: ['cancer','icu','organ','infection','comorb','other','goal'],
+  proc: ['icu','allergy']
+};
+
+/* =====================================================================
+   State and storage
+   ===================================================================== */
+let store = LS.get(KEY.store, {v:1, patients:{}});
+if(!store.patients) store = {v:1, patients:{}};
+const doctor = LS.get(KEY.doc, {name:'', cc:''});
+const prefs = LS.get(KEY.prefs, {filter:'active', lastHosp:'MPMMCC', lastIcu:'', lastBackup:''});
+const cur = {cs:null, mod:'record', draft:null, view:null, defs:{}, tried:{}, newPt:null, missItems:[]};
+const NEW = '__new__';
+let saveTimer = null, pvTimer = null;
+
+const P = () => cur.cs === NEW ? cur.newPt : (cur.cs ? store.patients[cur.cs] : null);
+function saveStore(){ store.updated = new Date().toISOString(); return LS.set(KEY.store, store); }
+function savePrefs(){ LS.set(KEY.prefs, prefs); }
+function notesOf(pt, mod, all){ return (pt.notes || []).filter(n => (!mod || n.mod === mod) && (all || !n.supersededBy)).sort((a, b) => String(a.dt).localeCompare(String(b.dt))); }
+function lastNote(pt, mod, pred){ const l = notesOf(pt, mod).filter(n => !pred || pred(n)); return l[l.length - 1] || null; }
+
+/* flatten definitions (boxes children inherit parent visibility) */
+function flat(defs){
+  const out = [];
+  defs.forEach(d => {
+    if(d.t === 'boxes') d.boxes.forEach(b => b.f.forEach(c => out.push(Object.assign({}, c, {parentShow:d.show}))));
+    else if(d.t !== 'sec') out.push(d);
+  });
+  return out;
+}
+const visible = (def, d, p) => (!def.show || def.show(d, p)) && (!def.parentShow || def.parentShow(d, p));
+
+/* =====================================================================
+   Auto-derived content (reduces re-entry)
+   ===================================================================== */
+function chronLines(pt, sinceDT){
+  return notesOf(pt).filter(n => (n.mod === 'procedure' || (n.mod === 'progress' && n.data.noteType === 'Event note')) && (!sinceDT || String(n.dt) > String(sinceDT)))
+    .map(n => {
+      const d = n.data;
+      if(n.mod === 'procedure') return fmtDT(n.dt) + ' Procedure: ' + procLabel(d.procType) + (d.site ? ' (' + [d.side, d.site].filter(x => x && x !== 'Not applicable').join(' ') + ')' : '') + (d.complic && !/^none\.?$/i.test(d.complic) ? '; complication: ' + d.complic : '');
+      return fmtDT(d.evtTime || n.dt) + ' Event: ' + (d.evtType || 'event') + (d.interv ? ' – ' + String(d.interv).replace(/\s+/g, ' ').slice(0, 90) : '');
+    });
+}
+function procList(pt){ return notesOf(pt, 'procedure').map(n => fmtD(n.dt) + ': ' + procLabel(n.data.procType) + ([n.data.side, n.data.site].filter(x => x && x !== 'Not applicable').length ? ' (' + [n.data.side, n.data.site].filter(x => x && x !== 'Not applicable').join(' ') + ')' : '')).join('\n'); }
+function courseSeed(pt){
+  const p = pt.p, adm = lastNote(pt, 'admission'), L = [];
+  const reasons = adm ? joinL(adm.data.reasons) : '';
+  L.push('Admitted to ICU on ' + (fmtDT(p.admDT) || '[date]') + (adm && adm.data.source ? ' from ' + adm.data.source : '') + (reasons ? ' for ' + reasons : '') + '.');
+  chronLines(pt).forEach(x => L.push(x));
+  const pr = lastNote(pt, 'progress', n => n.data.noteType !== 'Event note');
+  if(pr && pr.data.traj) L.push('Trajectory at last review (' + fmtDT(pr.dt) + '): ' + pr.data.traj + '.');
+  return L.join('\n');
+}
+function supportUsedSeed(pt){
+  const ever = new Set([].concat(pt.supportEver || [], pt.p.support || []));
+  const dev = new Set((pt.p.devices || []).map(x => x.name)), out = [];
+  const anyOf = arr => arr.some(x => ever.has(x));
+  if(anyOf(['Low-flow oxygen','Non-rebreathing mask oxygen','HFNC oxygen therapy','NIV'])) out.push('Oxygen / HFNC / NIV');
+  if(anyOf(['Invasive mechanical ventilation','Tracheostomy ventilation']) || dev.has('ETT')) out.push('Invasive mechanical ventilation');
+  if(dev.has('Tracheostomy') || ever.has('Tracheostomy ventilation')) out.push('Tracheostomy');
+  if(anyOf(['Vasopressor support','Inotrope support','Mechanical circulatory support'])) out.push('Vasopressors / inotropes');
+  if(anyOf(['RRT','SLED','CRRT / CKRT','Intermittent hemodialysis','Peritoneal dialysis']) || dev.has('HD catheter')) out.push('RRT / SLED / CRRT / HD');
+  if(ever.has('Massive transfusion support')) out.push('Transfusions');
+  if(notesOf(pt, 'procedure').length) out.push('Procedures performed');
+  return out;
+}
+function lifeSupportSeed(pt){
+  const ever = joinL([...new Set([].concat(pt.supportEver || [], pt.p.support || []))]);
+  const dev = joinL([...new Set((pt.p.devices || []).map(x => x.name).filter(Boolean))]);
+  return [ever && 'Organ support: ' + ever, dev && 'Devices: ' + dev].filter(Boolean).join('; ');
+}
+
+/* build a new draft with carried and auto-derived values */
+function newDraft(mod){
+  const pt = P(), M = MODS[mod], d = {}, carried = [];
+  flat(M.fields).forEach(def => { if(def.def !== undefined) d[def.k] = def.def; });
+  d.dt = nowLocal();
+  // carry-forward from the last note of the same module
+  const prevSame = mod === 'progress' ? lastNote(pt, 'progress', n => n.data.noteType !== 'Event note') : lastNote(pt, mod);
+  if(prevSame) flat(M.fields).forEach(def => {
+    if(def.carry && !isEmpty(prevSame.data[def.k])){ d[def.k] = prevSame.data[def.k]; carried.push(def.k); }
+  });
+  const auto = (k, v) => { if(!isEmpty(v)){ d[k] = v; carried.push(k); } };
+  const p = pt.p;
+  if(mod === 'progress'){
+    const since = prevSame ? prevSame.dt : (lastNote(pt, 'admission') || {}).dt;
+    auto('events', chronLines(pt, since).join('\n'));
+    d.evtTime = nowLocal();
+  }
+  if(mod === 'sbar'){
+    const h = new Date().getHours(); d.shift = (h >= 8 && h < 20) ? 'Day' : 'Night';
+    d.from = doctor.name || '';
+    auto('events', chronLines(pt, prevSame ? prevSame.dt : (lastNote(pt, 'admission') || {}).dt).join('\n'));
+    const pend = prevSame ? (prevSame.data.tasks || []).filter(t => t.a && (t.st || 'Pending') === 'Pending').map(t => Object.assign({}, t, {c:1})) : [];
+    d.tasks = pend.length ? pend : [{a:'', o:'', due:'', st:'Pending'}];
+  }
+  if(mod === 'current_status'){
+    const pr = lastNote(pt, 'progress', n => n.data.noteType !== 'Event note');
+    const parts = [];
+    if(pr && pr.data.traj) parts.push('Clinical trajectory: ' + pr.data.traj + ' (last review ' + fmtDT(pr.dt) + ').');
+    if(p.support && p.support.length) parts.push('Currently requiring ' + joinL(p.support) + '.');
+    if(activeDevices(p).length) parts.push('Lines / tubes: ' + devText(p) + '.');
+    auto('condition', parts.join(' '));
+    auto('procs', procList(pt));
+  }
+  if(mod === 'discharge'){
+    auto('course', courseSeed(pt)); auto('supportUsed', supportUsedSeed(pt)); auto('procs', procList(pt)); auto('lines', devText(p));
+  }
+  if(mod === 'death'){
+    auto('course', courseSeed(pt)); auto('lifeSupport', lifeSupportSeed(pt));
+    auto('underlying', joinL(p.cancerDx) + (p.cancerStatus && p.cancerStatus.length ? ' (' + joinL(p.cancerStatus) + ')' : ''));
+    auto('otherCond', CTX.comorb(p)[1]);
+    auto('certBy', doctor.name ? doctor.name + (doctor.cc ? ' (CC No. ' + doctor.cc + ')' : '') : '');
+  }
+  if(mod === 'dama'){
+    auto('summary', courseSeed(pt)); auto('risks', SMART.dama_risk); auto('lines', devText(p));
+  }
+  return {data:d, carried:[...new Set(carried)], created:new Date().toISOString()};
+}
+function loadDraft(mod){
+  const saved = LS.get(KEY.draft(cur.cs, mod), null);
+  return saved && saved.data ? Object.assign(saved, {dirty:true}) : newDraft(mod);
+}
+function persistDraft(){
+  if(!cur.cs || cur.cs === NEW || cur.mod === 'record' || !cur.draft || !cur.draft.dirty) return;
+  const d = Object.assign({}, cur.draft, {data:Object.assign({}, cur.draft.data, {verified:false})});
+  LS.set(KEY.draft(cur.cs, cur.mod), d);
+}
+function hasDraft(mod){ try{ return !!localStorage.getItem(KEY.draft(cur.cs, mod)); }catch(e){ return false; } }
+
+/* =====================================================================
+   Phrase memory (learned on finalise only; never stores identifiers)
+   ===================================================================== */
+const phr = () => LS.get(KEY.phr, {});
+const phrKey = (def, scope) => (def.pg || scope) + '.' + def.k.replace(/^d_/, 'sysd_');
+function learnPhrase(key, text){
+  text = String(text || '').trim().replace(/[ \t]+/g, ' ');
+  if(text.length < 2 || text.length > 240) return;
+  const pt = P(); if(pt && ((pt.p.name && text.toLowerCase().includes(pt.p.name.toLowerCase())) || text.includes(pt.p.caseNo))) return;
+  const s = phr(); s[key] = s[key] || {}; s[key][text] = (s[key][text] || 0) + 1;
+  const ent = Object.entries(s[key]); if(ent.length > 60){ ent.sort((a, b) => a[1] - b[1]); delete s[key][ent[0][0]]; }
+  LS.set(KEY.phr, s);
+}
+function phrasesFor(key, q){
+  q = (q || '').toLowerCase().trim();
+  return Object.entries(phr()[key] || {}).filter(([t]) => !q || (t.toLowerCase().includes(q) && t.toLowerCase() !== q))
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 7);
+}
+
+/* =====================================================================
+   Form rendering
+   ===================================================================== */
+function optHTML(o, v){
+  return (o || []).map(x => { const val = typeof x === 'object' ? x.v : x, lab = typeof x === 'object' ? (x.l || x.v) : x;
+    return '<option value="' + esc(val) + '"' + (String(v) === String(val) ? ' selected' : '') + '>' + esc(lab) + '</option>'; }).join('');
+}
+function fieldHTML(def, data, carried, scope){
+  const v = data[def.k], id = 'f_' + def.k.replace(/\W/g, '_');
+  const cls = 'fld w' + (def.w || 4) + (carried.has(def.k) ? ' carried' : '');
+  const req = def.req ? ' req' : '';
+  const spSel = def.sp ? '<select class="sp" data-sp="' + esc(def.k) + '" aria-label="Insert standard phrase"><option value="">Insert phrase…</option>' + def.sp.map(k => '<option value="' + k + '">' + esc(k.replace(/_/g, ' ')) + '</option>').join('') + '</select>' : '';
+  const lab = '<label for="' + id + '" class="' + req.trim() + '">' + esc(def.l) + spSel + '</label>';
+  const learn = def.learn ? ' data-learn="' + esc(phrKey(def, scope)) + '"' : '';
+  const ph = def.ph ? ' placeholder="' + esc(def.ph) + '"' : '';
+  const wrap = inner => '<div class="' + cls + '" data-k="' + esc(def.k) + '">' + inner + '</div>';
+  switch(def.t){
+    case 'sel': {
+      let o = def.oFn ? def.oFn(P() ? P().p : {}) : def.o;
+      if(def.oFn && !isEmpty(v) && !o.includes(v)) o = o.concat([{v, l:v + ' (entered earlier)'}]); // never lose an older free-text value
+      return wrap(lab + '<select id="' + id + '">' + (def.noBlank ? '' : '<option value="">Select</option>') + optHTML(o, v ?? '') + '</select>');
+    }
+    case 'ta': return wrap(lab + '<textarea id="' + id + '" rows="' + (String(v || '').split('\n').length > 2 ? 4 : 2) + '"' + learn + ph + '>' + esc(v || '') + '</textarea>');
+    case 'dt': return wrap(lab + '<input id="' + id + '" type="datetime-local" value="' + esc(v || '') + '">');
+    case 'chk': return wrap('<label class="single"><input id="' + id + '" type="checkbox"' + (v ? ' checked' : '') + '>' + esc(def.l) + '</label>');
+    case 'chips': return wrap('<span class="flab' + req + '">' + esc(def.l) + '</span><div class="chips">' + def.o.map(o => '<label class="chip"><input type="checkbox" value="' + esc(o) + '"' + (has(v, o) ? ' checked' : '') + '>' + esc(o) + '</label>').join('') + '</div>');
+    case 'ms': return wrap('<span class="flab' + req + '">' + esc(def.l) + '</span><div class="ms" data-ms="' + esc(def.k) + '"><input id="' + id + '" autocomplete="off"' + (def.ph ? ' placeholder="' + esc(def.ph) + '"' : ' placeholder="Search or type…"') + '></div><div class="drop"></div>');
+    case 'action': return wrap('<button type="button" class="qbtn" data-act="' + esc(def.k) + '">' + esc(def.label) + '</button>');
+    case 'devices': return '<div class="fld w12" data-k="devices"><div id="devHost"></div></div>';
+    case 'tasks': return '<div class="fld w12" data-k="tasks"><div id="taskHost"></div></div>';
+    case 'procspec': return '<div class="fld w12" data-k="psf"><div id="psfHost"></div></div>';
+    case 'boxes': return '<div class="fld w12"><div class="subgrid">' + def.boxes.map(b => '<div class="sysbox"><h4>' + esc(b.h) + '</h4><div class="grid">' + b.f.map(c => fieldHTML(c, data, carried, scope)).join('') + '</div></div>').join('') + '</div></div>';
+    default: return wrap(lab + '<input id="' + id + '" autocomplete="off"' + (def.ro && !(def.k === 'caseNo' && cur.cs === NEW) ? ' readonly' : '') + learn + ph + ' value="' + esc(v || '') + '">');
+  }
+}
+function renderForm(){
+  const pt = P(); if(!pt) return;
+  const isRec = cur.mod === 'record';
+  const defs = isRec ? PROFILE : MODS[cur.mod].fields;
+  const data = isRec ? pt.p : cur.draft.data;
+  const carried = new Set(isRec ? [] : cur.draft.carried);
+  const scope = isRec ? 'p' : cur.mod;
+  const sy = window.scrollY;
+  cur.defs = {}; flat(defs).forEach(d => cur.defs[d.k] = d);
+  let html = '', open = false;
+  const close = () => { if(open){ html += '</div></div>'; open = false; } };
+  const showDef = def => isRec ? (!def.show || def.show(data)) : visible(def, data, pt.p);
+  if(!isRec){
+    const n = cur.draft.carried.length, am = data._amends && (pt.notes || []).find(x => x.id === data._amends);
+    html += am
+      ? '<div class="sec amendbar"><p class="shint" style="margin:0"><b>Editing the note saved ' + esc(fmtDT(am.savedAt)) + (am.doctor && am.doctor.name ? ' by ' + esc(am.doctor.name) : '') + '.</b> Saving creates an amended version; the original stays in the record, marked superseded. <button type="button" class="lnk" data-act="discard">Cancel editing</button></p></div>'
+      : '<div class="sec"><p class="shint" style="margin:0">' + (n ? n + ' field' + (n > 1 ? 's' : '') + ' carried or auto-filled (amber). Check each before finalising. ' : 'New note. ') +
+        '<button type="button" class="lnk" data-act="discard">Reset note</button></p></div>';
+  } else if(cur.cs === NEW){
+    html += '<div class="sec newbar"><p class="shint" style="margin:0"><b>New patient.</b> Nothing is stored until you select Create patient record. <button type="button" class="lnk" data-act="cancelNew">Cancel</button></p></div>';
+  }
+  defs.forEach(def => {
+    if(def.t === 'sec'){
+      if(def.ctxOnly) return;
+      close();
+      if(def.show && !def.show(data, pt.p)) return;
+      html += '<div class="sec"><h3>' + esc(def.h) + '</h3>' + (def.hint ? '<p class="shint">' + esc(def.hint) + '</p>' : '') + '<div class="grid">'; open = true;
+      return;
+    }
+    if(!showDef(def)) return;
+    if(!open){ html += '<div class="sec"><div class="grid">'; open = true; }
+    html += fieldHTML(def, data, carried, scope);
+  });
+  close();
+  if(!isRec){
+    const sb = cur.mod === 'sbar';
+    html += '<div class="sec"><label class="verify"><input type="checkbox" id="verifyChk"' + (data.verified ? ' checked' : '') + '><span>I have checked this ' + (sb ? 'handover' : 'note') + ' against the current CIS and bedside record, including the amber carried entries' + (sb ? ', and read back the key tasks and concerns to the receiving doctor' : '') + '.</span></label></div><div class="errors" id="errors"></div>';
+  } else {
+    html += '<div class="errors" id="errors"></div>';
+  }
+  $('formPanel').innerHTML = html;
+  // mount widgets
+  $('formPanel').querySelectorAll('[data-ms]').forEach(box => mountMS(box, cur.defs[box.dataset.ms], data));
+  if($('devHost')) renderDevices();
+  if($('taskHost')) renderTasks();
+  if($('psfHost')) renderProcSpec();
+  window.scrollTo(0, sy);
+  applyHints();
+  histInit();
+}
+
+/* ---------- searchable multi-select ---------- */
+function mountMS(box, def, data){
+  const inp = box.querySelector('input'), drop = box.parentElement.querySelector('.drop');
+  let list = [], hi = 0;
+  const vals = () => Array.isArray(data[def.k]) ? data[def.k] : (data[def.k] = []);
+  const draw = () => {
+    box.querySelectorAll('.tok').forEach(t => t.remove());
+    vals().forEach((v, i) => {
+      const t = document.createElement('span'); t.className = 'tok'; t.textContent = v;
+      const b = document.createElement('button'); b.type = 'button'; b.textContent = '×'; b.setAttribute('aria-label', 'Remove ' + v);
+      b.addEventListener('click', e => { e.stopPropagation(); vals().splice(i, 1); draw(); changed(def.k); });
+      t.appendChild(b); box.insertBefore(t, inp);
+    });
+  };
+  const show = () => {
+    const q = inp.value.trim().toLowerCase(), sel = vals();
+    list = def.o.filter(o => !sel.includes(o.v) && (!q || o.v.toLowerCase().includes(q) || (o.g || '').toLowerCase().includes(q) || (o.s || '').includes(q))).slice(0, 80);
+    hi = Math.min(hi, Math.max(list.length - 1, 0));
+    let h = '', g = null;
+    list.forEach((o, i) => { if(o.g !== g){ g = o.g; if(g) h += '<div class="g">' + esc(g) + '</div>'; } h += '<button type="button" data-i="' + i + '"' + (i === hi ? ' class="hi"' : '') + '>' + esc(o.v) + '</button>'; });
+    if(def.custom && q && !def.o.some(o => o.v.toLowerCase() === q) && !sel.some(v => v.toLowerCase() === q)) h += '<button type="button" class="add" data-c="1">Add “' + esc(inp.value.trim()) + '”</button>';
+    drop.innerHTML = h || '<div class="g">No match' + (def.custom ? '' : ' in the CCRA dictionary') + '</div>';
+    drop.classList.add('open');
+    const hiEl = drop.querySelector('.hi'); if(hiEl) hiEl.scrollIntoView({block:'nearest'});
+  };
+  let nav = false;
+  const add = v => { v = String(v || '').trim(); if(!v || vals().includes(v)) return; vals().push(v); inp.value = ''; nav = false; draw(); drop.classList.remove('open'); changed(def.k); };
+  drop.addEventListener('mousedown', e => e.preventDefault());
+  drop.addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; if(b.dataset.c) add(inp.value); else add(list[+b.dataset.i].v); inp.focus(); });
+  inp.addEventListener('focus', () => { hi = 0; nav = false; show(); });
+  inp.addEventListener('input', () => { hi = 0; nav = false; show(); });
+  inp.addEventListener('blur', () => setTimeout(() => drop.classList.remove('open'), 120));
+  inp.addEventListener('keydown', e => {
+    if(e.key === 'ArrowDown'){ if(drop.classList.contains('open')) hi = Math.min(hi + 1, list.length - 1); nav = true; show(); e.preventDefault(); }
+    else if(e.key === 'ArrowUp'){ hi = Math.max(hi - 1, 0); nav = true; show(); e.preventDefault(); }
+    else if(e.key === 'Enter'){ e.preventDefault(); if(list[hi] && (inp.value.trim() || nav)) add(list[hi].v); else if(def.custom && inp.value.trim()) add(inp.value); }
+    else if(e.key === 'Backspace' && !inp.value && vals().length){ vals().pop(); draw(); changed(def.k); }
+    else if(e.key === 'Escape'){ drop.classList.remove('open'); }
+  });
+  box.addEventListener('click', e => { if(e.target === box) inp.focus(); });
+  draw();
+}
+
+/* ---------- devices (patient record) ---------- */
+function renderDevices(){
+  const pt = P(), devs = pt.p.devices = pt.p.devices || [];
+  const row = (x, i) => '<div class="row dev' + (x.removed ? ' gone' : '') + '" data-di="' + i + '">' +
+    '<select data-df="name" aria-label="Device"><option value="">Select device</option>' + optHTML(DEVICE_NAMES, x.name || '') + '</select>' +
+    '<input data-df="site" value="' + esc(x.site || '') + '" placeholder="' + (x.name === 'Other' ? 'Name the device' : 'Site / size') + '" aria-label="Site">' +
+    '<input data-df="ins" type="date" value="' + esc(x.ins || '') + '" aria-label="Inserted">' +
+    '<input data-df="removed" type="date" value="' + esc(x.removed || '') + '" aria-label="Removed">' +
+    '<button type="button" class="x" data-ddel="' + i + '" title="Delete entry (wrong entry only)">×</button></div>';
+  const act = devs.map((x, i) => [x, i]).filter(([x]) => !x.removed), gone = devs.map((x, i) => [x, i]).filter(([x]) => x.removed);
+  $('devHost').innerHTML = '<div class="rows"><div class="row dev head"><span>Device</span><span>Site / size</span><span>Inserted</span><span>Removed</span><span></span></div>' +
+    (act.length ? act.map(([x, i]) => row(x, i)).join('') : '<p class="shint">No active devices recorded.</p>') +
+    '<button type="button" class="addrow" data-act="addDev">Add device</button>' +
+    (gone.length ? '<details class="more"><summary>Removed devices (' + gone.length + ')</summary><div class="rows">' + gone.map(([x, i]) => row(x, i)).join('') + '</div></details>' : '') + '</div>';
+}
+/* ---------- tasks (SBAR) ---------- */
+function renderTasks(){
+  const t = cur.draft.data.tasks = cur.draft.data.tasks || [];
+  $('taskHost').innerHTML = '<div class="rows"><div class="row task head"><span>Action or pending decision</span><span>Owner</span><span>Due / review</span><span>Status</span><span></span></div>' +
+    t.map((x, i) => '<div class="row task' + (x.c ? ' carried' : '') + '" data-ti="' + i + '">' +
+      '<input data-tf="a" value="' + esc(x.a || '') + '" placeholder="' + (x.c ? '' : 'Action') + '" data-learn="sbar.task" aria-label="Action">' +
+      '<input data-tf="o" value="' + esc(x.o || '') + '" placeholder="Name / role" data-learn="staff.owner" aria-label="Owner">' +
+      '<input data-tf="due" type="time" value="' + esc(x.due || '') + '" aria-label="Due time">' +
+      '<select data-tf="st" aria-label="Status">' + optHTML(['Pending','Done','Cancelled'], x.st || 'Pending') + '</select>' +
+      '<button type="button" class="x" data-tdel="' + i + '" title="Remove">×</button></div>').join('') +
+    '<button type="button" class="addrow" data-act="addTask">Add task</button></div>';
+}
+/* ---------- procedure-specific fields (CCRA schemas) ---------- */
+function procSchema(key){
+  const sk = BUNDLE.alias[key] || key, sch = BUNDLE.procSchemas[sk] || [];
+  const q = BUNDLE.quick[sk] || sch.slice(0, 8).map(x => x.i);
+  return {sch, core:sch.filter(x => q.includes(x.i)), rest:sch.filter(x => !q.includes(x.i))};
+}
+function renderProcSpec(){
+  const d = cur.draft.data; d.psf = d.psf || {};
+  const {core, rest} = procSchema(d.procType);
+  const fh = x => { const def = {k:'psf.' + x.i, l:x.l, t:x.t === 'select' ? 'sel' : (x.t === 'textarea' ? 'ta' : 'txt'), o:x.o, w:x.t === 'textarea' ? 12 : 4};
+    cur.defs[def.k] = def; return fieldHTML(def, {[def.k]: d.psf[x.i]}, new Set(), 'procedure'); };
+  const restFilled = rest.some(x => !isEmpty(d.psf[x.i]));
+  $('psfHost').innerHTML = '<div class="grid" style="padding:0">' + core.map(fh).join('') + '</div>' +
+    (rest.length ? '<details class="more"' + (restFilled ? ' open' : '') + '><summary>More details (' + rest.length + ')</summary><div class="grid">' + rest.map(fh).join('') + '</div></details>' : '');
+}
+
+/* =====================================================================
+   Output (one structure → CIS text, print, JSON)
+   ===================================================================== */
+function localISO(dt){ return dt.getFullYear()+'-'+pad(dt.getMonth()+1)+'-'+pad(dt.getDate())+'T'+pad(dt.getHours())+':'+pad(dt.getMinutes()); }
+const docLine = doc => doc && doc.name ? doc.name + (doc.cc ? ' (CC No. ' + doc.cc + ')' : '') : '';
+function metaRows(p, d, doc){
+  const n = dayNo(p.admDT, d.dt);
+  return [
+    ['Patient', p.name], ['Case No.', p.caseNo], ['Age / Sex', [p.age, p.sex].filter(Boolean).join(' / ')],
+    ['Weight', p.weight ? p.weight + ' kg' : ''], ['ICU / Bed', [p.icu, p.bed ? 'Bed ' + p.bed : ''].filter(Boolean).join(', ')],
+    ['ICU admission', fmtDT(p.admDT) + (n ? ' (ICU day ' + n + ')' : '')], ['Consultant / Unit', [p.consultant, p.unit].filter(Boolean).join(' / ')],
+    ['Date-time', fmtDT(d.dt)], ['Doctor', docLine(doc)]
+  ].filter(r => !isEmpty(r[1]));
+}
+function buildOut(mod, d, pt, doc, final, savedAt){
+  const p = pt.p, M = MODS[mod];
+  const o = {title:M.doc(d), hosp:p.hosp, meta:metaRows(p, d, doc), sections:[], verify:''};
+  let cs = null;
+  const newSec = h => { cs = {h, rows:[]}; o.sections.push(cs); };
+  const push = (l, v, always) => {
+    if(Array.isArray(v)) v = v.filter(Boolean).join(', ');
+    v = v == null ? '' : String(v).trim();
+    if(!v && !always) return;
+    if(!cs) newSec('Details');
+    cs.rows.push([l, v || 'Not entered – verify']);
+  };
+  M.fields.forEach(def => {
+    if(def.t === 'sec'){
+      if(def.show && !def.show(d, p)){ cs = {h:def.h, rows:[]}; return; } // hidden: rows discarded
+      newSec(def.h);
+      if(def.ctx) CTXSETS[def.ctx].forEach(key => { const r = CTX[key](p, d); push(r[0], r[1], r[2]); });
+      return;
+    }
+    if(def.noOut || !visible(def, d, p)) return;
+    switch(def.t){
+      case 'boxes': def.boxes.forEach(b => {
+        const parts = b.f.map(c => isEmpty(d[c.k]) ? '' : (c.bare ? d[c.k] : (c.short || c.l) + ': ' + d[c.k])).filter(Boolean);
+        if(parts.length) push(b.h, parts.join(mod === 'sbar' ? ' | ' : '; '));
+      }); break;
+      case 'tasks': {
+        const t = (d.tasks || []).filter(x => x.a);
+        const pend = t.filter(x => (x.st || 'Pending') === 'Pending');
+        pend.forEach((x, i) => push('Action ' + (i + 1), x.a + ' | Owner: ' + (x.o || '[assign]') + ' | Due / review: ' + (x.due || '[specify]')));
+        if(!pend.length) push('Tasks', d.dispo === 'Continue current plan; no new task dictated' ? 'No new handover-specific task; continue the current plan.' : 'No pending task entered.');
+        push('Completed since last handover', t.filter(x => x.st === 'Done').map(x => x.a).join('; '));
+        push('Cancelled', t.filter(x => x.st === 'Cancelled').map(x => x.a).join('; '));
+        break;
+      }
+      case 'procspec': procSchema(d.procType).sch.forEach(x => push(x.l, (d.psf || {})[x.i])); break;
+      case 'chk': if(d[def.k]) push(def.l2 || def.l, def.yes || 'Yes'); break;
+      case 'sel':
+        if(def.otherK && d[def.k] === COD_OTHER){ push(def.l, d[def.otherK] || 'Other – not specified'); break; }
+        push(def.l, def.o && typeof def.o[0] === 'object' ? (def.o.find(x => x.v === d[def.k]) || {}).l : d[def.k]); break;
+      case 'action': break;
+      case 'dt': if(def.k !== 'dt') push(def.l, fmtDT(d[def.k])); break; // note date-time is in the header
+      default: push(def.l, d[def.k]);
+    }
+  });
+  o.sections = o.sections.filter(s => s.rows.length);
+  if(d._amends){
+    const orig = (pt.notes || []).find(x => x.id === d._amends);
+    o.title += ' – AMENDMENT';
+    o.sections.unshift({h:'Amendment', rows:[['Replaces note saved', orig ? fmtDT(orig.savedAt) + (orig.doctor && orig.doctor.name ? ' by ' + docLine(orig.doctor) : '') : '[original not found]'], ['Reason for amendment', d._amendReason || 'Not entered – verify']]});
+  }
+  o.verify = final
+    ? 'Verified by ' + (docLine(doc) || '[doctor]') + ' on ' + fmtDT(savedAt) + ' against the current CIS / bedside record; carried-forward entries re-checked.' + (mod === 'sbar' ? ' Key tasks and concerns read back to the receiving doctor.' : '')
+    : 'DRAFT – not finalised or verified.';
+  return o;
+}
+function recordOut(pt){
+  const p = pt.p, d = {dt:nowLocal()};
+  const rows = CTXSETS.full.map(k => CTX[k](p, d)).filter(r => r[2] || !isEmpty(r[1])).map(r => [r[0], r[1] || 'Not entered – verify']);
+  const notes = notesOf(pt).slice().reverse().map(n => [fmtDT(n.dt), n.out.title + (n.doctor && n.doctor.name ? ' – ' + n.doctor.name : '')]);
+  return {title:'ICU PATIENT RECORD SUMMARY', hosp:p.hosp, meta:metaRows(p, d, doctor),
+    sections:[{h:'Diagnosis and safety', rows}].concat(notes.length ? [{h:'Saved notes', rows:notes}] : []),
+    verify:'Record summary generated ' + fmtDT(d.dt) + '. Not a signed clinical note.'};
+}
+function toText(o){
+  const h = HOSP[o.hosp] || HOSP.MPMMCC, L = [h.name + ' (' + h.code + '), ' + h.city, o.title];
+  const m = o.meta.map(r => r[0] + ': ' + r[1]);
+  for(let i = 0; i < m.length; i += 3) L.push(m.slice(i, i + 3).join(' | '));
+  o.sections.forEach(s => {
+    L.push('', s.h.toUpperCase());
+    s.rows.forEach(([l, v]) => { if(v.includes('\n')){ L.push(l + ':'); v.split('\n').forEach(x => L.push('  ' + x)); } else L.push(l + ': ' + v); });
+  });
+  L.push('', o.verify);
+  return L.join('\n');
+}
+function toPrint(o){
+  const h = HOSP[o.hosp] || HOSP.MPMMCC;
+  return '<div class="ph"><div class="h1">' + esc(h.name) + ' (' + esc(h.code) + ')</div><div class="h2">' + esc(h.city) + '</div><h1>' + esc(o.title) + '</h1></div>' +
+    '<div class="pmeta">' + o.meta.map(r => '<div><b>' + esc(r[0]) + ':</b> ' + esc(r[1]) + '</div>').join('') + '</div>' +
+    o.sections.map(s => '<section class="psec"><h2>' + esc(s.h) + '</h2>' + s.rows.map(([l, v]) => '<div class="prow"><b>' + esc(l) + ':</b> ' + (v.includes('\n') ? '<div class="ptext">' + esc(v) + '</div>' : esc(v)) + '</div>').join('') + '</section>').join('') +
+    '<div class="pver">' + esc(o.verify) + '</div><div class="sig"><span>Signature: ______________________</span><span>Name / CC No.: ______________________</span></div>' +
+    '<div class="pfoot">Generated by ' + APP.name + ' ' + APP.version + '. Verify before signing or filing. Does not replace the CIS flowsheet, medication chart or authorised orders.</div>';
+}
+function noteJSON(n){ return {schema:APP.schema, app:APP.name + ' ' + APP.version, module:n.mod, title:n.out.title, noteDateTime:n.dt, savedAt:n.savedAt, doctor:n.doctor, patient:n.profile, data:n.data, text:n.text}; }
+
+/* =====================================================================
+   Validation and finalising
+   ===================================================================== */
+function missingItems(){
+  const pt = P(); if(!pt) return [];
+  const items = [], p = pt.p, add = (s, k, l) => items.push({s, k, l});
+  PROFILE.forEach(def => { if(def.t === 'sec' || !def.req || (def.show && !def.show(p))) return; if(isEmpty(p[def.k])) add('record', def.k, def.l); });
+  if(cur.cs === NEW){ const cs = normCase(p.caseNo); if(cs && store.patients[cs]) add('record', 'caseNo', 'Case No. ' + cs + ' already has a record'); return items; }
+  if(cur.mod === 'record' || !cur.draft) return items;
+  const d = cur.draft.data, M = MODS[cur.mod];
+  flat(M.fields).forEach(def => { if(def.req && visible(def, d, p) && isEmpty(d[def.k])) add('note', def.k, def.l); });
+  if(M.check) M.check(d, p, (k, l) => add('note', k, l));
+  if(!doctor.name) add('doctor', 'docName', 'Doctor name (left panel)');
+  if(!doctor.cc) add('doctor', 'docCC', 'Doctor CC No. (left panel)');
+  if(!d.verified) add('verify', 'verifyChk', 'Verification tick');
+  return items;
+}
+const scopeKey = () => cur.mod === 'record' ? 'record' : cur.mod;
+function applyHints(){
+  const pt = P(), ri = $('reqInfo'), mb = $('missBar');
+  if(!pt){ ri.className = 'reqinfo hidden'; mb.className = 'missbar hidden'; return; }
+  const items = cur.missItems = missingItems(), inRec = cur.mod === 'record';
+  const tried = !!cur.tried[scopeKey()];
+  const here = new Set(items.filter(i => i.s === (inRec ? 'record' : 'note')).map(i => i.k));
+  const panel = $('formPanel');
+  panel.querySelectorAll('.fld[data-k]').forEach(el => el.classList.toggle('invalid', tried && here.has(el.dataset.k)));
+  panel.querySelectorAll('[data-ti]').forEach(r => { const bad = tried && here.has('task:' + r.dataset.ti); r.querySelectorAll('[data-tf="o"],[data-tf="due"]').forEach(x => x.classList.toggle('invalid', bad && !x.value)); });
+  const vb = panel.querySelector('.verify'); if(vb) vb.classList.toggle('invalid', tried && items.some(i => i.s === 'verify'));
+  ['docName','docCC'].forEach(id => $(id).classList.toggle('invalid', !!cur.tried[cur.mod] && items.some(i => i.k === id)));
+  // banner listing every missing item
+  if(tried && items.length){
+    mb.className = 'missbar'; mb.setAttribute('role', 'alert');
+    mb.innerHTML = '<b>Not saved. ' + items.length + ' required item' + (items.length > 1 ? 's are' : ' is') + ' missing.</b> Select one to go to it.<div class="mchips">' +
+      items.map((it, i) => '<button type="button" class="m" data-miss="' + i + '">' + esc((it.s === 'record' && !inRec ? 'Patient record: ' : '') + it.l) + '</button>').join('') + '</div>';
+  } else if(tried){
+    mb.className = 'missbar ok'; mb.removeAttribute('role');
+    mb.innerHTML = '<b>All required items are complete.</b> ' + (cur.cs === NEW ? 'Select Create patient record.' : inRec ? 'Return to your note and finalise it.' : 'Select Finalise and save note.');
+  } else mb.className = 'missbar hidden';
+  // live counter beside the save button
+  const n = items.length;
+  if(cur.view && !inRec){ ri.className = 'reqinfo hidden'; }
+  else if(inRec && cur.cs !== NEW){
+    ri.className = 'reqinfo ' + (n ? 'left' : 'done');
+    ri.innerHTML = n ? n + ' required record field' + (n > 1 ? 's' : '') + ' missing. Notes cannot be finalised until done. <button type="button" class="lnk" data-act="nextMiss">Show next</button>' : 'Patient record complete.';
+  } else {
+    ri.className = 'reqinfo ' + (n ? 'left' : 'done');
+    ri.innerHTML = n ? n + ' required item' + (n > 1 ? 's' : '') + ' left. <button type="button" class="lnk" data-act="nextMiss">Show next</button>' : 'All required items complete. Ready to ' + (cur.cs === NEW ? 'create the record.' : 'finalise.');
+  }
+  // soft warnings (do not block saving)
+  panel.querySelectorAll('.fld.warn').forEach(el => { el.classList.remove('warn'); el.removeAttribute('data-warn'); });
+  const W = !inRec && cur.draft && MODS[cur.mod].warn ? MODS[cur.mod].warn(cur.draft.data) : [];
+  W.forEach(w => { const el = panel.querySelector('.fld[data-k="' + CSS.escape(w.k) + '"]'); if(el){ el.classList.add('warn'); el.setAttribute('data-warn', w.msg); } });
+  cur.warnings = W;
+  if(W.length && !items.length && !(cur.view && !inRec)){
+    ri.className = 'reqinfo left';
+    ri.innerHTML = 'Required items complete. 1 warning to review: ' + esc(W[0].msg);
+    if(tried){ mb.className = 'missbar warnbar'; mb.innerHTML = '<b>Required items complete, but check the amber warning.</b> ' + esc(W[0].msg); }
+  }
+  // tab badges
+  const recN = items.filter(i => i.s === 'record').length;
+  document.querySelectorAll('#tabs .tab').forEach(t => {
+    const m = t.dataset.mod, old = t.querySelector('.cnt'); if(old) old.remove();
+    const c = m === 'record' ? recN : (m === cur.mod && cur.tried[m] ? items.filter(i => i.s !== 'record').length : 0);
+    if(c){ const b = document.createElement('span'); b.className = 'cnt'; b.textContent = c; b.title = c + ' required item(s) missing'; t.appendChild(b); }
+  });
+}
+function gotoMiss(i){
+  const it = cur.missItems[i]; if(!it) return;
+  cur.tried[it.s === 'record' ? 'record' : scopeKey()] = true;
+  if(it.s === 'record' && cur.mod !== 'record'){ cur.tried.record = true; selectMod('record'); }
+  else applyHints();
+  let el;
+  if(it.s === 'doctor') el = $(it.k);
+  else if(it.s === 'verify') el = $('verifyChk');
+  else if(String(it.k).startsWith('task:')) el = $('formPanel').querySelector('[data-ti="' + it.k.slice(5) + '"] [data-tf="o"]');
+  else { const fld = $('formPanel').querySelector('[data-k="' + CSS.escape(it.k) + '"]'); if(fld){ const det = fld.closest('details'); if(det) det.open = true; el = fld.querySelector('input:not([type=hidden]),select,textarea') || fld; } }
+  if(!el) return;
+  el.scrollIntoView({block:'center', behavior:'smooth'});
+  setTimeout(() => { try{ el.focus({preventScroll:true}); }catch(e){} }, 250);
+  const box = el.closest('.fld,.row,.verify') || el; box.classList.remove('pulse'); void box.offsetWidth; box.classList.add('pulse');
+  setTimeout(() => box.classList.remove('pulse'), 2600);
+}
+function blockedFeedback(items){
+  const b = $('finBtn'); b.classList.add('blocked', 'shake');
+  b.textContent = items.length + ' required item' + (items.length > 1 ? 's' : '') + ' missing';
+  setTimeout(() => { b.classList.remove('shake'); }, 450);
+  setTimeout(() => { b.classList.remove('blocked'); showPreview(); }, 2600);
+  status('Not saved. Fill the fields marked in red.');
+  const here = cur.mod === 'record' ? 'record' : 'note';
+  let idx = items.findIndex(i => i.s === here);
+  if(idx < 0) idx = items.findIndex(i => i.s !== 'record');
+  if(idx >= 0) gotoMiss(idx); else $('missBar').scrollIntoView({block:'center', behavior:'smooth'});
+}
+function syncDevices(pt, d){
+  const m = DEVMAP[d.procType]; if(!m) return '';
+  const [act, name] = m, devs = pt.p.devices = pt.p.devices || [], date = String(d.dt).slice(0, 10);
+  const sch = procSchema(d.procType).sch, sx = sch.find(x => /vein|site|artery/i.test(x.l) && d.psf && d.psf[x.i]);
+  const site = [d.side && d.side !== 'Not applicable' ? d.side : '', d.site || (sx ? d.psf[sx.i] : '')].filter(Boolean).join(' ');
+  const removeActive = n => devs.filter(x => x.name === n && !x.removed).forEach(x => x.removed = date);
+  if(act === 'remove'){ removeActive(name); return name + ' marked removed'; }
+  if(act === 'swap') removeActive(name);
+  if(act === 'trach') removeActive('ETT');
+  devs.push({name, site, ins:date});
+  return name + ' added to the device list';
+}
+function finalise(){
+  const pt = P(); if(!pt || cur.mod === 'record') return;
+  const d = cur.draft.data;
+  cur.tried[cur.mod] = true;
+  const items = missingItems();
+  if(items.length){ if(items.some(i => i.s === 'record')) cur.tried.record = true; applyHints(); blockedFeedback(items); return; }
+  const W = MODS[cur.mod].warn ? MODS[cur.mod].warn(d) : [];
+  if(W.length && !confirm('Warning: ' + W[0].msg + '\n\nSave anyway?')){
+    const el = $('formPanel').querySelector('.fld[data-k="' + CSS.escape(W[0].k) + '"]');
+    if(el){ el.scrollIntoView({block:'center', behavior:'smooth'}); const c = el.querySelector('select,input'); if(c) setTimeout(() => c.focus(), 250); el.classList.add('pulse'); setTimeout(() => el.classList.remove('pulse'), 2600); }
+    status('Not saved. Review the amber warning.'); return;
+  }
+  const savedAt = localISO(new Date()), docSnap = {name:doctor.name, cc:doctor.cc};
+  const data = JSON.parse(JSON.stringify(d)); (data.tasks || []).forEach(t => delete t.c);
+  const out = buildOut(cur.mod, data, pt, docSnap, true, savedAt);
+  const note = {id:uid(), mod:cur.mod, dt:data.dt, savedAt, doctor:docSnap, data, profile:JSON.parse(JSON.stringify(pt.p)), out, text:toText(out)};
+  let extra = '';
+  if(cur.mod === 'procedure' && data.devSync) extra = syncDevices(pt, data);
+  if(MODS[cur.mod].closes){ pt.status = 'closed'; pt.closedBy = cur.mod; pt.closedAt = savedAt; extra = 'Record moved to Closed'; }
+  if(data._amends){ const orig = pt.notes.find(x => x.id === data._amends); if(orig){ orig.supersededBy = note.id; orig.supersededAt = savedAt; } note.amends = data._amends; extra = (extra ? extra + '. ' : '') + 'Original note kept and marked superseded'; }
+  pt.notes = pt.notes || []; pt.notes.push(note); pt.updated = new Date().toISOString(); pt.lastMod = cur.mod;
+  // learn phrases from verified content only
+  flat(MODS[cur.mod].fields).forEach(def => { if(def.learn && visible(def, data, pt.p) && typeof data[def.k] === 'string') learnPhrase(phrKey(def, cur.mod), data[def.k]); });
+  PROFILE.forEach(def => { if(def.learn && typeof pt.p[def.k] === 'string') learnPhrase(phrKey(def, 'p'), pt.p[def.k]); });
+  (data.tasks || []).forEach(t => { learnPhrase('sbar.task', t.a); learnPhrase('staff.owner', t.o); });
+  if(!saveStore()){ pt.notes.pop(); return; }
+  clearTimeout(saveTimer); cur.tried[cur.mod] = false; histClear();
+  LS.del(KEY.draft(cur.cs, cur.mod));
+  cur.draft = newDraft(cur.mod);
+  cur.view = note;
+  renderAll();
+  status('Saved. ' + (extra ? extra + '. ' : '') + 'Copy into CIS or print.');
+}
+
+/* =====================================================================
+   Patients, rail, banner, tabs
+   ===================================================================== */
+const normCase = s => String(s || '').trim().toUpperCase().replace(/\s+/g, '');
+function startNew(prefill){
+  if(!confirmLeaveNew()) return;
+  persistDraft();
+  cur.cs = NEW; cur.newPt = {p:{caseNo:prefill || '', hosp:prefs.lastHosp || 'MPMMCC', icu:prefs.lastIcu || '', admDT:nowLocal(), devices:[]}, notes:[], status:'active'};
+  cur.mod = 'record'; cur.draft = null; cur.view = null; cur.tried = {}; delete HIST[NEW + '|record'];
+  $('welcome').classList.add('hidden'); $('workspace').classList.remove('hidden');
+  renderAll(); window.scrollTo(0, 0);
+  const first = prefill ? $('f_name') : $('f_caseNo'); if(first) first.focus();
+  status(prefill ? 'No record for ' + prefill + '. Complete the new patient form.' : 'New patient form opened.');
+}
+function confirmLeaveNew(){
+  if(cur.cs === NEW && cur.newPt && cur.newPt.dirty) return confirm('The new patient has not been created yet. Discard what you entered?');
+  return true;
+}
+function createPatient(){
+  const np = cur.newPt; np.p.caseNo = normCase(np.p.caseNo);
+  cur.tried.record = true;
+  const items = missingItems();
+  if(items.length){ renderForm(); blockedFeedback(items); return; }
+  const cs = np.p.caseNo; delete np.dirty;
+  np.created = np.updated = new Date().toISOString(); np.supportEver = [...(np.p.support || [])];
+  store.patients[cs] = np;
+  if(!saveStore()){ delete store.patients[cs]; return; }
+  cur.newPt = null; cur.cs = cs; cur.tried = {}; prefs.lastCase = cs; savePrefs();
+  selectMod('admission');
+  status('Patient record created for ' + (np.p.name || cs) + '. Admission note opened.');
+}
+function openCase(raw){
+  const cs = normCase(raw); if(!cs) return;
+  if(!store.patients[cs]) startNew(cs);
+  else switchPatient(cs, store.patients[cs].lastMod || 'progress');
+  $('caseIn').value = ''; $('caseNote').textContent = '';
+}
+function switchPatient(cs, mod){
+  if(cs !== cur.cs && !confirmLeaveNew()) return;
+  persistDraft();
+  if(cur.cs === NEW) cur.newPt = null;
+  cur.cs = cs; cur.view = null; cur.tried = {}; prefs.lastCase = cs; savePrefs();
+  $('welcome').classList.add('hidden'); $('workspace').classList.remove('hidden');
+  selectMod(mod);
+}
+function selectMod(mod){
+  if(cur.cs === NEW && mod !== 'record'){ status('Create the patient record first.'); return; }
+  if(cur.cs && cur.mod !== mod) persistDraft();
+  cur.mod = mod; cur.view = null;
+  cur.draft = mod === 'record' ? null : loadDraft(mod);
+  if(mod !== 'record'){ P().lastMod = mod; }
+  renderAll();
+  window.scrollTo(0, 0);
+}
+function startEdit(id){
+  const pt = P(), n = pt && pt.notes.find(x => x.id === id); if(!n) return;
+  if(n.supersededBy){ alert('This note has already been amended. Edit the latest version instead.'); return; }
+  if(hasDraft(n.mod) && !confirm('You have an unsaved ' + MODS[n.mod].tab + ' draft. Replace it with this saved note for editing?')) return;
+  const data = JSON.parse(JSON.stringify(n.data)); data._amends = n.id; data._amendReason = ''; data.verified = false;
+  LS.set(KEY.draft(cur.cs, n.mod), {data, carried:[], dirty:true, created:new Date().toISOString()});
+  delete HIST[cur.cs + '|' + n.mod];
+  cur.tried = {}; selectMod(n.mod); setPTab('text');
+  status('Editing a saved note. Enter the reason, change what is needed, then finalise.');
+  const r = $('f__amendReason'); if(r){ r.scrollIntoView({block:'center'}); r.focus(); }
+}
+function changeCase(){
+  const pt = P(), oldCs = cur.cs;
+  const v = prompt('Correct the case number for ' + (pt.p.name || oldCs) + '.\nCurrent: ' + oldCs + '\nSaved notes keep the number printed at the time they were written.', oldCs);
+  if(v === null) return;
+  const cs = normCase(v); if(!cs || cs === oldCs) return;
+  if(store.patients[cs]){ alert('Case No. ' + cs + ' already has a record. Nothing changed.'); return; }
+  if(!confirm('Change case number from ' + oldCs + ' to ' + cs + '?')) return;
+  persistDraft();
+  MOD_ORDER.forEach(m => { const d = LS.get(KEY.draft(oldCs, m), null); if(d){ LS.set(KEY.draft(cs, m), d); LS.del(KEY.draft(oldCs, m)); } });
+  pt.p.caseNo = cs; store.patients[cs] = pt; delete store.patients[oldCs]; pt.updated = new Date().toISOString();
+  saveStore(); cur.cs = cs; prefs.lastCase = cs; savePrefs(); cur.draft = cur.mod === 'record' ? null : loadDraft(cur.mod); renderAll();
+  status('Case number changed to ' + cs + '.');
+}
+function renderAll(){ renderRail(); if(!P()) return; renderBanner(); renderTabs(); renderForm(); showPreview(); }
+function renderRail(){
+  const f = prefs.filter || 'active';
+  document.querySelectorAll('.filter button').forEach(b => b.classList.toggle('on', b.dataset.f === f));
+  const list = Object.entries(store.patients).filter(([, x]) => f === 'all' || (f === 'closed' ? x.status === 'closed' : x.status !== 'closed'));
+  list.sort((a, b) => f === 'closed' ? String(b[1].closedAt).localeCompare(String(a[1].closedAt)) : String(a[1].p.bed || '~').localeCompare(String(b[1].p.bed || '~'), undefined, {numeric:true}) || String(a[1].p.name).localeCompare(String(b[1].p.name)));
+  $('plist').innerHTML = list.length ? list.map(([cs, x]) => {
+    const n = x.status !== 'closed' ? dayNo(x.p.admDT) : null;
+    return '<button type="button" class="pitem' + (cs === cur.cs ? ' on' : '') + '" data-cs="' + esc(cs) + '"><b>' + esc(x.p.name || cs) + '</b><small>' + esc([x.p.bed ? 'Bed ' + x.p.bed : '', cs, n ? 'Day ' + n : (x.status === 'closed' ? (MODS[x.closedBy] || {}).tab : '')].filter(Boolean).join(', ')) + '</small></button>';
+  }).join('') : '<p class="pempty">' + (f === 'closed' ? 'No closed records.' : 'No patients yet. Enter a case number above.') + '</p>';
+  const lb = prefs.lastBackup; const days = lb ? Math.floor((Date.now() - new Date(lb)) / 864e5) : null;
+  $('bkInfo').textContent = Object.keys(store.patients).length ? (lb ? 'Last backup ' + fmtDT(localISO(new Date(lb))) + (days >= 7 ? ' – export a new one' : '') : 'No backup exported yet') : '';
+}
+function renderBanner(){
+  const pt = P(), p = pt.p, n = dayNo(p.admDT), closed = pt.status === 'closed';
+  const meta = [[p.age, p.sex].filter(Boolean).join(' / '), p.caseNo, [p.icu, p.bed ? 'Bed ' + p.bed : ''].filter(Boolean).join(', '), p.hosp].filter(Boolean);
+  const nkda = p.allergy === 'No known drug allergy (verified)';
+  const rows = [
+    ['Cancer', CTX.cancer(p)[1]], ['ICU diagnosis', joinL(p.icuDx)], ['Co-morbidities', CTX.comorb(p)[1]],
+    ['Allergy', allergyText(p), !nkda], ['Goal of care', (p.goal || 'Not entered') + (p.goalNote ? ' – ' + p.goalNote : ''), !p.goal],
+    ['Support', joinL(p.support)], ['Devices', devText(p)]
+  ].filter((r, i) => i === 3 || i === 4 || !isEmpty(r[1]));
+  const isNew = cur.cs === NEW;
+  $('bcard').innerHTML = '<div class="bhead"><h2 class="bname">' + esc(p.name || 'New patient') + '</h2>' + (isNew ? '<span class="bnew">Not saved yet</span>' : '') + meta.map(m => '<span class="bmeta">' + esc(m) + '</span>').join('') +
+    (closed ? '<span class="bclosed">Closed: ' + esc((MODS[pt.closedBy] || {}).tab || '') + '</span>' : '') + '<span class="bday">' + (n && !closed ? 'ICU day ' + n : '') + '</span></div>' +
+    '<dl class="spine">' + rows.map(r => '<dt>' + esc(r[0]) + '</dt><dd' + (r[2] ? ' class="warnv"' : '') + '>' + esc(r[1]) + '</dd>').join('') + '</dl>' +
+    (isNew ? '<div class="bbar"><button type="button" class="lnk danger" data-act="cancelNew">Cancel new patient</button></div>' :
+    '<div class="bbar">' + (cur.mod !== 'record' ? '<button type="button" class="lnk" data-act="toRecord">Edit patient record</button>' : '') +
+    '<button type="button" class="lnk" data-act="changeCase">Change case number</button>' +
+    (closed ? '<button type="button" class="lnk" data-act="reopen">Reopen (readmission)</button>' : '') +
+    '<button type="button" class="lnk danger" data-act="delPatient">Delete record</button></div>');
+}
+function renderTabs(){
+  $('tabs').innerHTML = MOD_ORDER.map(m => '<button type="button" class="tab' + (m === cur.mod ? ' on' : '') + '" data-mod="' + m + '"' + (cur.cs === NEW && m !== 'record' ? ' disabled title="Create the patient record first"' : '') + '>' + (m === 'record' ? 'Patient record' : MODS[m].tab) + (m !== 'record' && hasDraft(m) ? '<span class="dot" title="Unsaved draft"></span>' : '') + '</button>').join('');
+}
+
+/* =====================================================================
+   Preview and exports
+   ===================================================================== */
+function showPreview(){
+  const pt = P();
+  if(!pt){ $('pvText').textContent = ''; $('pvState').textContent = 'Open a patient to begin.'; ['finBtn','copyBtn','printBtn','txtBtn','jsonBtn'].forEach(id => $(id).disabled = true); return; }
+  let o, text, json, ready = false, state;
+  if(cur.view){ o = cur.view.out; text = cur.view.text; json = noteJSON(cur.view); ready = true; state = 'Saved note: ' + sentence(o.title) + ', ' + fmtDT(cur.view.dt) + '. Ready to copy or print.'; }
+  else if(cur.cs === NEW){ o = recordOut(pt); text = toText(o); json = {schema:APP.schema, type:'patient-record', patient:pt.p, saved:false}; state = 'New patient. Nothing is stored until you create the record.'; }
+  else if(cur.mod === 'record'){ o = recordOut(pt); text = toText(o); json = {schema:APP.schema, type:'patient-record', patient:pt.p, status:pt.status, notes:(pt.notes || []).length}; ready = true; state = 'Patient record summary. Changes save automatically.'; }
+  else { o = buildOut(cur.mod, cur.draft.data, pt, doctor, false); text = toText(o); json = {schema:APP.schema, module:cur.mod, draft:true, data:cur.draft.data}; state = 'Live draft. Finalise to save it and enable copying.'; }
+  cur.exp = {o, text, json};
+  $('pvText').textContent = text; $('pvJson').textContent = JSON.stringify(json, null, 2);
+  $('pvTitle').textContent = sentence(o.title);
+  $('pvState').textContent = state; $('pvState').classList.toggle('final', ready);
+  ['copyBtn','printBtn','txtBtn','jsonBtn'].forEach(id => $(id).disabled = !ready);
+  const isNew = cur.cs === NEW;
+  $('finBtn').disabled = cur.mod === 'record' && !isNew;
+  $('finBtn').textContent = isNew ? 'Create patient record' : cur.mod === 'record' ? 'Patient record saves automatically' : (cur.draft && cur.draft.data._amends ? 'Save amended note' : 'Finalise and save note');
+  if(isNew) ['copyBtn','printBtn','txtBtn','jsonBtn'].forEach(id => $(id).disabled = true);
+  const canEdit = cur.view && cur.view.id && !cur.view.supersededBy;
+  $('editBtn').classList.toggle('hidden', !canEdit);
+  const notes = notesOf(pt, null, true).slice().reverse();
+  $('pvHist').innerHTML = notes.length ? notes.map(n => '<div class="hrow' + (n.supersededBy ? ' old' : '') + '"><button type="button" data-nid="' + esc(n.id) + '"><b>' + esc(sentence(n.out.title)) + '</b>' +
+    (n.supersededBy ? '<span class="tag">Superseded</span>' : '') + '<small>' + esc(fmtDT(n.dt) + (n.doctor && n.doctor.name ? ', ' + n.doctor.name : '')) + '</small></button>' +
+    (n.supersededBy ? '' : '<button type="button" class="hedit" data-edit="' + esc(n.id) + '" title="Edit this saved note">Edit</button>') + '</div>').join('') : '<p class="pstate">No saved notes for this patient yet.</p>';
+  applyHints();
+}
+function sentence(t){ return (t.charAt(0) + t.slice(1).toLowerCase()).replace(/\b(icu|sbar|dama|cis)\b/gi, m => m.toUpperCase()); }
+function schedulePreview(){ clearTimeout(pvTimer); pvTimer = setTimeout(showPreview, 200); }
+function status(msg){ $('status').textContent = msg; }
+function stem(){ const p = P().p || {}, m = cur.view ? cur.view.mod : cur.mod; return [p.hosp, p.caseNo, m, (cur.view ? cur.view.dt : nowLocal()).slice(0, 10)].join('_').replace(/[^A-Za-z0-9_-]+/g, '-'); }
+function download(name, text, type){
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], {type})); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1500);
+}
+
+/* =====================================================================
+   Editing events
+   ===================================================================== */
+const dataObj = () => cur.mod === 'record' ? P().p : cur.draft.data;
+function setData(k, v){ const d = dataObj(); if(k.startsWith('psf.')){ d.psf = d.psf || {}; d.psf[k.slice(4)] = v; } else d[k] = v; }
+function changed(k, rerender, typing){
+  const pt = P();
+  histPush(k, typing);
+  if(cur.mod !== 'record'){
+    cur.draft.dirty = true;
+    const c = cur.draft.carried, i = c.indexOf(k);
+    if(i >= 0){ c.splice(i, 1); const el = $('formPanel').querySelector('[data-k="' + CSS.escape(k) + '"]'); if(el) el.classList.remove('carried'); }
+    clearTimeout(saveTimer); saveTimer = setTimeout(() => { persistDraft(); renderTabs(); }, 400);
+  } else if(cur.cs === NEW){
+    pt.dirty = true; renderBanner();
+  } else {
+    pt.updated = new Date().toISOString();
+    if(k === 'support') pt.supportEver = [...new Set([].concat(pt.supportEver || [], pt.p.support || []))];
+    if(k === 'hosp') prefs.lastHosp = pt.p.hosp;
+    if(k === 'icu') prefs.lastIcu = pt.p.icu;
+    savePrefs();
+    clearTimeout(saveTimer); saveTimer = setTimeout(saveStore, 300);
+    renderBanner();
+    if(['name','bed','admDT'].includes(k)) renderRail();
+  }
+  cur.view = null;
+  if(rerender) renderForm(); else applyHints();
+  schedulePreview();
+}
+function onEdit(e){
+  const el = e.target;
+  if(el.id === 'verifyChk'){ cur.draft.data.verified = el.checked; cur.view = null; applyHints(); schedulePreview(); return; } // never persisted
+  if(el.classList.contains('sp')){
+    if(e.type !== 'change' || !el.value) return;
+    const k = el.dataset.sp, t = SMART[el.value], ta = el.closest('.fld').querySelector('textarea,input:not([type=checkbox])');
+    ta.value = ta.value.trim() ? ta.value.trim() + '\n' + t : t; el.value = '';
+    setData(k, ta.value); changed(k); return;
+  }
+  if(el.dataset.df){
+    const i = +el.closest('[data-di]').dataset.di, x = P().p.devices[i]; x[el.dataset.df] = el.value;
+    if(e.type === 'change' && (el.dataset.df === 'name' || el.dataset.df === 'removed')){ renderDevices(); }
+    changed('devices', false, isTextEl(el)); return;
+  }
+  if(el.dataset.tf){
+    const row = el.closest('[data-ti]'), x = cur.draft.data.tasks[+row.dataset.ti]; x[el.dataset.tf] = el.value;
+    if(x.c){ x.c = 0; row.classList.remove('carried'); }
+    changed('tasks', false, isTextEl(el)); return;
+  }
+  const fld = el.closest('[data-k]'); if(!fld) return;
+  const k = fld.dataset.k, def = cur.defs[k]; if(!def || def.t === 'ms' || def.t === 'action') return;
+  let v;
+  if(def.t === 'chips') v = [...fld.querySelectorAll('input:checked')].map(i => i.value);
+  else if(def.t === 'chk') v = el.checked;
+  else v = el.value;
+  if(def.t === 'chips' && el.type !== 'checkbox') return;
+  setData(k, v);
+  changed(k, e.type === 'change' && def.rr, isTextEl(el));
+}
+function onClick(e){
+  const b = e.target.closest('button'); if(!b) return;
+  const act = b.dataset.act, pt = P();
+  if(b.dataset.mod){ selectMod(b.dataset.mod); return; }
+  if(b.dataset.cs){ switchPatient(b.dataset.cs, store.patients[b.dataset.cs].lastMod || 'progress'); return; }
+  if(b.dataset.miss != null){ gotoMiss(+b.dataset.miss); return; }
+  if(b.dataset.edit){ startEdit(b.dataset.edit); return; }
+  if(b.dataset.nid){ cur.view = pt.notes.find(n => n.id === b.dataset.nid); showPreview(); setPTab('text'); return; }
+  if(b.dataset.ddel != null){ if(confirm('Delete this device entry? Use the Removed date instead if the device was taken out.')){ pt.p.devices.splice(+b.dataset.ddel, 1); renderDevices(); changed('devices'); } return; }
+  if(b.dataset.tdel != null){ cur.draft.data.tasks.splice(+b.dataset.tdel, 1); renderTasks(); changed('tasks'); return; }
+  switch(act){
+    case 'addDev': pt.p.devices.push({name:'', site:'', ins:todayISO()}); renderDevices(); changed('devices'); break;
+    case 'addTask': cur.draft.data.tasks.push({a:'', o:'', due:'', st:'Pending'}); renderTasks(); changed('tasks'); $('taskHost').querySelector('[data-ti="' + (cur.draft.data.tasks.length - 1) + '"] input').focus(); break;
+    case 'fillSys': { let n = 0; SBAR_SYSTEMS.forEach(s => { if(!cur.draft.data['s_' + s.id]){ cur.draft.data['s_' + s.id] = s.o[2]; n++; } }); changed('fillSys', true); status(n ? n + ' system' + (n > 1 ? 's' : '') + ' set to no material change.' : 'All systems already have a status.'); break; }
+    case 'discard': {
+      const am = cur.draft.data._amends;
+      if(!confirm(am ? 'Cancel editing? Your changes are discarded; the saved note stays as it was.' : 'Reset this ' + MODS[cur.mod].tab + ' note? Everything typed in this draft is cleared and carried values reload. You can undo it.')) break;
+      LS.del(KEY.draft(cur.cs, cur.mod)); cur.draft = newDraft(cur.mod); cur.view = null; cur.tried[cur.mod] = false;
+      if(am) histClear(); else histPush('__reset', false, am ? 'Cancel editing' : 'Reset note');
+      renderTabs(); renderForm(); showPreview();
+      $('status').innerHTML = am ? 'Editing cancelled.' : 'Note reset. <button type="button" class="lnk" data-act="undo">Undo</button>';
+      break;
+    }
+    case 'undo': histGo(-1); break;
+    case 'redo': histGo(1); break;
+    case 'nextMiss': if(cur.missItems.length){ const here = cur.mod === 'record' ? 'record' : 'note'; let i = cur.missItems.findIndex(x => x.s === here); if(i < 0) i = cur.missItems.findIndex(x => x.s !== 'record'); if(i < 0) i = 0; gotoMiss(i); } break;
+    case 'cancelNew': if(!cur.newPt.dirty || confirm('Discard this new patient? Nothing has been saved.')){ cur.newPt = null; cur.cs = null; $('workspace').classList.add('hidden'); $('welcome').classList.remove('hidden'); renderRail(); showPreview(); applyHints(); status('New patient discarded.'); } break;
+    case 'changeCase': changeCase(); break;
+    case 'toRecord': selectMod('record'); break;
+    case 'reopen': if(confirm('Reopen this record for a new ICU admission? Update the ICU admission date-time in the patient record.')){ pt.status = 'active'; delete pt.closedBy; delete pt.closedAt; saveStore(); selectMod('record'); } break;
+    case 'delPatient': {
+      const t = prompt('Permanent deletion of ' + (pt.p.name || 'this patient') + ' and all ' + (pt.notes || []).length + ' saved note(s) from this PC.\nExport a backup first.\n\nType the case number ' + cur.cs + ' to confirm:');
+      if(t === null) break;
+      if(normCase(t) !== cur.cs){ alert('The case number did not match. Nothing was deleted.'); break; }
+      MOD_ORDER.forEach(m => LS.del(KEY.draft(cur.cs, m))); delete store.patients[cur.cs]; saveStore();
+      cur.cs = null; $('workspace').classList.add('hidden'); $('welcome').classList.remove('hidden'); renderRail(); showPreview(); applyHints(); status('Record deleted.');
+      break;
+    }
+  }
+}
+
+/* ---------- phrase suggestions (floating) ---------- */
+const fd = document.createElement('div'); fd.className = 'drop'; fd.style.position = 'fixed'; fd.style.right = 'auto'; document.body.appendChild(fd);
+function showSugg(el){
+  const items = phrasesFor(el.dataset.learn, el.value);
+  if(!items.length){ fd.classList.remove('open'); return; }
+  fd.innerHTML = '<div class="g">Your earlier phrases</div>' + items.map(([t, n]) => '<button type="button" data-t="' + esc(t) + '">' + esc(t) + '<span class="n">' + n + '</span></button>').join('');
+  const r = el.getBoundingClientRect();
+  fd.style.left = r.left + 'px'; fd.style.width = Math.max(r.width, 260) + 'px';
+  fd.style.top = (r.bottom + 3) + 'px'; fd.classList.add('open'); fd._el = el;
+}
+fd.addEventListener('mousedown', e => e.preventDefault());
+fd.addEventListener('click', e => {
+  const b = e.target.closest('button[data-t]'), el = fd._el; if(!b || !el) return;
+  el.value = (el.tagName === 'TEXTAREA' && el.value.trim()) ? el.value.trim() + '\n' + b.dataset.t : b.dataset.t;
+  el.dispatchEvent(new Event('input', {bubbles:true})); el.dispatchEvent(new Event('change', {bubbles:true}));
+  fd.classList.remove('open'); el.focus();
+});
+document.addEventListener('focusin', e => { if(e.target.dataset && e.target.dataset.learn) showSugg(e.target); });
+document.addEventListener('input', e => { if(e.target.dataset && e.target.dataset.learn) showSugg(e.target); });
+document.addEventListener('focusout', () => setTimeout(() => { if(!fd.contains(document.activeElement)) fd.classList.remove('open'); }, 120));
+window.addEventListener('scroll', () => fd.classList.remove('open'), true);
+
+/* ---------- side panel ---------- */
+function setPTab(t){
+  document.querySelectorAll('.ptab').forEach(b => b.classList.toggle('on', b.dataset.p === t));
+  $('pvText').classList.toggle('hidden', t !== 'text'); $('pvJson').classList.toggle('hidden', t !== 'json'); $('pvHist').classList.toggle('hidden', t !== 'hist');
+}
+
+/* =====================================================================
+   Wiring and start-up
+   ===================================================================== */
+$('formPanel').addEventListener('input', onEdit);
+$('formPanel').addEventListener('change', onEdit);
+document.addEventListener('click', onClick);
+$('openBtn').addEventListener('click', () => openCase($('caseIn').value));
+$('caseIn').addEventListener('keydown', e => { if(e.key === 'Enter') openCase($('caseIn').value); });
+$('caseIn').addEventListener('input', () => { pendingCreate = null; const v = normCase($('caseIn').value); $('caseNote').textContent = v && !TMC_CASE.test(v) && v.length > 6 ? 'Not in TMC format (e.g. 24A1234/000567). Accepted if correct.' : ''; });
+document.querySelectorAll('.filter button').forEach(b => b.addEventListener('click', () => { prefs.filter = b.dataset.f; savePrefs(); renderRail(); }));
+document.querySelectorAll('.ptab').forEach(b => b.addEventListener('click', () => setPTab(b.dataset.p)));
+$('docName').value = doctor.name || ''; $('docCC').value = doctor.cc || '';
+['docName','docCC'].forEach(id => $(id).addEventListener('input', () => { doctor.name = $('docName').value.trim(); doctor.cc = $('docCC').value.trim(); LS.set(KEY.doc, doctor); applyHints(); if(P() && !cur.view) schedulePreview(); }));
+$('finBtn').addEventListener('click', () => cur.cs === NEW ? createPatient() : finalise());
+$('editBtn').addEventListener('click', () => { if(cur.view) startEdit(cur.view.id); });
+$('newBtn').addEventListener('click', () => startNew(''));
+$('copyBtn').addEventListener('click', async () => {
+  try{ await navigator.clipboard.writeText(cur.exp.text); status('Copied. Paste into CIS.'); }
+  catch(e){ const r = document.createRange(); r.selectNodeContents($('pvText')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); status('Clipboard blocked: text selected, press Ctrl+C.'); setPTab('text'); }
+});
+$('txtBtn').addEventListener('click', () => download(stem() + '.txt', cur.exp.text, 'text/plain;charset=utf-8'));
+$('jsonBtn').addEventListener('click', () => download(stem() + '.json', JSON.stringify(cur.exp.json, null, 2), 'application/json;charset=utf-8'));
+$('printBtn').addEventListener('click', () => { $('printDoc').innerHTML = toPrint(cur.exp.o); const t = document.title; document.title = stem(); window.print(); setTimeout(() => document.title = t, 1500); });
+$('backupBtn').addEventListener('click', () => {
+  persistDraft(); saveStore();
+  const n = new Date(); download('CCRA-Lean-backup_' + localISO(n).replace(/[-:T]/g, '').slice(0, 12) + '.json', JSON.stringify({schema:'CCRA-Lean-backup-1', exportedAt:n.toISOString(), store, phrases:phr()}), 'application/json');
+  prefs.lastBackup = n.toISOString(); savePrefs(); renderRail(); status('Backup exported. It contains identifiable patient data: store it securely.');
+});
+$('restoreBtn').addEventListener('click', () => $('restoreFile').click());
+$('restoreFile').addEventListener('change', async e => {
+  const file = e.target.files[0]; e.target.value = ''; if(!file) return;
+  try{
+    const src = JSON.parse(await file.text());
+    if(src.schema !== 'CCRA-Lean-backup-1' || !src.store || !src.store.patients) throw new Error('Not a CCRA Lean backup file.');
+    if(!confirm('Import ' + Object.keys(src.store.patients).length + ' patient record(s) from this backup? Existing records are merged; no saved note is deleted.')) return;
+    let added = 0, merged = 0, notes = 0;
+    Object.entries(src.store.patients).forEach(([cs, b]) => {
+      const a = store.patients[cs];
+      if(!a){ store.patients[cs] = b; added++; notes += (b.notes || []).length; return; }
+      const ids = new Set((a.notes || []).map(n => n.id));
+      (b.notes || []).forEach(n => { if(!ids.has(n.id)){ a.notes.push(n); notes++; } });
+      if(String(b.updated) > String(a.updated)){ a.p = b.p; a.status = b.status; a.closedBy = b.closedBy; a.closedAt = b.closedAt; a.supportEver = [...new Set([].concat(a.supportEver || [], b.supportEver || []))]; a.updated = b.updated; }
+      merged++;
+    });
+    const ph = phr(); Object.entries(src.phrases || {}).forEach(([k, v]) => { ph[k] = ph[k] || {}; Object.entries(v).forEach(([t, c]) => { ph[k][t] = Math.max(ph[k][t] || 0, c); }); }); LS.set(KEY.phr, ph);
+    saveStore(); renderAll(); status('Imported: ' + added + ' new record(s), ' + merged + ' merged, ' + notes + ' note(s) added.');
+  }catch(err){ alert('Import failed: ' + err.message); }
+});
+$('phraseBtn').addEventListener('click', () => { if(confirm('Clear all remembered phrases on this device?')){ LS.del(KEY.phr); status('Remembered phrases cleared.'); } });
+/* ---------- undo / redo (step history per patient and note) ---------- */
+const HIST = {};
+const ctxKey = () => cur.cs + '|' + cur.mod;
+const isTextEl = el => el && (el.tagName === 'TEXTAREA' || (el.tagName === 'INPUT' && /^(text|search|)$/.test(el.type || '')));
+function snap(){ return JSON.stringify(cur.mod === 'record' ? P().p : {data:cur.draft.data, carried:cur.draft.carried}); }
+function histInit(){ if(!cur.cs || !P()) return; const k = ctxKey(); if(!HIST[k]) HIST[k] = {stack:[snap()], labels:[''], idx:0}; updateUR(); }
+function histClear(){ delete HIST[ctxKey()]; histInit(); }
+function stepLabel(k){
+  if(k === 'devices') return 'Devices'; if(k === 'tasks') return 'Tasks'; if(k === 'fillSys') return 'Set systems to no change';
+  const d = cur.defs[k]; return d ? (d.l || d.label || k) : k;
+}
+function histPush(k, typing, label){
+  if(!cur.cs || !P()) return;
+  const h = HIST[ctxKey()]; if(!h){ histInit(); return; }
+  const s = snap(); if(s === h.stack[h.idx]) return;
+  const now = Date.now();
+  if(typing && h.lastK === k && now - h.lastT < 1500 && h.idx === h.stack.length - 1 && h.idx > 0){ h.stack[h.idx] = s; }
+  else { h.stack = h.stack.slice(0, h.idx + 1); h.labels = h.labels.slice(0, h.idx + 1); h.stack.push(s); h.labels.push(label || stepLabel(k)); h.idx++;
+    if(h.stack.length > 300){ h.stack.shift(); h.labels.shift(); h.idx--; } }
+  h.lastK = typing ? k : null; h.lastT = now; updateUR();
+}
+function histGo(dir){
+  const h = HIST[ctxKey()]; if(!h) return;
+  const ni = h.idx + dir; if(ni < 0 || ni >= h.stack.length){ status(dir < 0 ? 'Nothing to undo.' : 'Nothing to redo.'); return; }
+  const what = dir < 0 ? h.labels[h.idx] : h.labels[ni];
+  h.idx = ni; h.lastK = null;
+  const v = JSON.parse(h.stack[ni]), pt = P();
+  if(cur.mod === 'record'){
+    Object.keys(pt.p).forEach(k => delete pt.p[k]); Object.assign(pt.p, v);
+    if(cur.cs === NEW) pt.dirty = true; else { pt.updated = new Date().toISOString(); pt.supportEver = [...new Set([].concat(pt.supportEver || [], pt.p.support || []))]; saveStore(); }
+    renderBanner(); renderRail();
+  } else {
+    v.data.verified = false; // any undo/redo needs re-verification
+    cur.draft.data = v.data; cur.draft.carried = v.carried; cur.draft.dirty = true; persistDraft(); renderTabs();
+  }
+  cur.view = null; renderForm(); showPreview(); updateUR();
+  status((dir < 0 ? 'Undone: ' : 'Redone: ') + (what || 'change') + '.');
+}
+function updateUR(){
+  const h = cur.cs && P() ? HIST[ctxKey()] : null, u = $('undoBtn'), r = $('redoBtn'); if(!u) return;
+  const nu = h ? h.idx : 0, nr = h ? h.stack.length - 1 - h.idx : 0;
+  u.disabled = !nu; r.disabled = !nr;
+  u.textContent = 'Undo' + (nu ? ' (' + nu + ')' : ''); r.textContent = 'Redo' + (nr ? ' (' + nr + ')' : '');
+  u.title = nu ? 'Undo: ' + h.labels[h.idx] + ' (Ctrl+Z)' : 'Nothing to undo';
+  r.title = nr ? 'Redo: ' + h.labels[h.idx + 1] + ' (Ctrl+Y)' : 'Nothing to redo';
+}
+$('undoBtn').addEventListener('click', () => histGo(-1));
+$('redoBtn').addEventListener('click', () => histGo(1));
+document.addEventListener('keydown', e => {
+  if(!(e.ctrlKey || e.metaKey) || !cur.cs) return;
+  const k = (e.key || '').toLowerCase(), t = document.activeElement;
+  if(isTextEl(t)) return; // inside a text box the browser's own text undo applies
+  if(k === 'z' && !e.shiftKey){ e.preventDefault(); histGo(-1); }
+  else if(k === 'y' || (k === 'z' && e.shiftKey)){ e.preventDefault(); histGo(1); }
+});
+
+/* ---------- refresh / close / reset protection ---------- */
+let allowUnload = false;
+function unsavedMsg(){
+  if(cur.cs === NEW && cur.newPt && cur.newPt.dirty) return 'The new patient has not been created. Reloading or closing will lose what you entered.';
+  if(cur.draft && cur.draft.dirty) return 'This ' + MODS[cur.mod].tab + ' note is not finalised. The draft stays on this PC, but it is not part of the record until you finalise it.';
+  return '';
+}
+document.addEventListener('keydown', e => {
+  const k = (e.key || '').toLowerCase();
+  if(e.key === 'F5' || ((e.ctrlKey || e.metaKey) && k === 'r')){
+    const w = unsavedMsg(); if(!w) return;
+    e.preventDefault();
+    if(confirm(w + '\n\nReload the page anyway?')){ persistDraft(); if(cur.cs && cur.cs !== NEW) saveStore(); allowUnload = true; location.reload(); }
+  }
+});
+window.addEventListener('beforeunload', e => {
+  persistDraft(); if(cur.cs && cur.cs !== NEW) saveStore();
+  if(!allowUnload && unsavedMsg()){ e.preventDefault(); e.returnValue = ''; return ''; }
+});
+try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist(); }catch(e){}
+$('footVer').textContent = APP.name + ' ' + APP.version + ' (derived from CCRA-Critical-Care-Record-Assistant v3.1)';
+renderRail();
+if(prefs.lastCase && store.patients[prefs.lastCase]) switchPatient(prefs.lastCase, store.patients[prefs.lastCase].lastMod || 'progress');
+
+</script>
+</body>
+</html>
