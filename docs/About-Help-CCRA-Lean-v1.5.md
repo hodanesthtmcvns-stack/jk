@@ -1,4 +1,4 @@
-# CCRA Lean: Agile ICU Record Assistant
+# CCRA Lean: ICU Record Assistant - fast yet comprehensive
 
 **Version 1.5** · Single-file HTML · Offline · No network dependency · [GPL-3.0-or-later](https://www.gnu.org/licenses/gpl-3.0.html)
 
