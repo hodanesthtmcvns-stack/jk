@@ -21,7 +21,7 @@ This repository hosts a suite of portable, offline-ready HTML applications desig
 | **Shock** | Learning and decision-support application for the recognition, classification, and mechanistic understanding of shock states | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/Shock-v1.0.html) |
 | **RS-POCUS** | Learning and decision-support application for point of care ultrasound in shock | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/RS-POCUS-v1.0.html) |
 | **SPA (Septic Shock Perfusion Assessment)** | Clinical Decision Support | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/SPA-v2.1.html) |
-| **BEAT-C** | Empiric Antibiotics in Sepsis | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/BEAT-C-v1.0.html) |
+| **BEAT-C** | Empiric Antibiotics in Sepsis | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/BEAT-C-v2.5.html) |
 | **ACDC** | Acute Care Decision Coach | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/ACDC.html) |
 | **PEEP Titrator** | Optimal PEEP Selection | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/PEEP-titration-v1.4.html) |
 | **FILM-Sim2026** | Respiratory Mechanics Simulation | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/FILM-Sim2026.html)
