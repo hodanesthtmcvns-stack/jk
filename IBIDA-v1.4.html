@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>IBIDA v1.4 (26Jan2026) — Inpatient Basal Insulin Dosing Assistant (Offline)</title>
+<title>IBIDA v1.4 — Inpatient Basal Insulin Dosing Assistant (Offline)</title>
 <style>
   :root{
     --bg:#0b1220; --card:#121a2b; --ink:#e7eefb; --muted:#9fb3d9;
@@ -98,10 +98,10 @@
 
 <body>
 <div class="wrap">
-  <h1>IBIDA (Inpatient Basal Insulin Dosing Assistant) — v1.4 (26Jan2026)</h1>
+  <h1>IBIDA (Inpatient Basal Insulin Dosing Assistant) — v1.4</h1>
   <div class="sub">
-    Offline tool for an <b>initial once-daily insulin glargine PFS dose</b> and <b>next-day adjustment</b> using weight, last 06:00 FBS, and renal function.
-    Optional: HbA1c, previous Total Daily Insulin (TDD). Excludes shock/hypothermia.
+    Offline tool for an <b>initial once-daily insulin Glargine PFS (Glargine Prefilled Syringe Pen) dose</b> and <b>next-day adjustment</b> using weight, last 06:00 FBS, and renal function.
+    Excludes shock/hypothermia.
     <br><b>Perioperative fasting here means:</b> total fasting time (pre-op + post-op) expected to be <b>&gt; 12 hours</b>.
 	<b>[Author & Copyright: © Prof J Kirtania, 2026]</b>
   </div>
@@ -151,19 +151,6 @@
         <div>
           <label>Height (cm) (optional; for BMI display only)</label>
           <input id="ht" type="number" inputmode="numeric" min="120" step="1" placeholder="e.g., 168">
-        </div>
-      </div>
-
-      <h2 style="margin-top:14px">2) Optional inputs</h2>
-      <div class="row">
-        <div>
-          <label>HbA1c (%) (optional)</label>
-          <input id="a1c" type="number" inputmode="decimal" min="4" max="18" step="0.1" placeholder="e.g., 9.2">
-        </div>
-        <div>
-          <label>Previous Total Daily Insulin (TDD, units/day) (optional)</label>
-          <input id="tdd" type="number" inputmode="decimal" min="0" step="1" placeholder="e.g., 42">
-          <div class="hint">If provided (&gt;0), app uses it only to <b>estimate total glargine dose</b>. No subtraction/balance is performed.</div>
         </div>
       </div>
 
@@ -297,22 +284,15 @@
     return weightKg / (m*m);
   }
 
-  function getBasalFactorInsulinNaive(isCkd3aPlus, fbs, a1c){
+  function getBasalFactorInsulinNaive(isCkd3aPlus, fbs){
     if (isCkd3aPlus){
       if (fbs > 200) return 0.20;
       if (fbs >= 141) return 0.18;
       return 0.15;
     }
-    const hasA1c = isFinite(a1c) && a1c>0;
-    if (fbs > 200 || (hasA1c && a1c > 10)) return 0.25;
-    if (fbs >= 141 || (hasA1c && a1c >= 8)) return 0.20;
+    if (fbs > 200) return 0.25;
+    if (fbs >= 141) return 0.20;
     return 0.15;
-  }
-
-  function estimateTotalGlargineFromTDD(tdd, isCkd3aPlus){
-    const basalShare = 0.45;
-    const npoFactor = isCkd3aPlus ? 0.65 : 0.80;
-    return (tdd * basalShare * npoFactor);
   }
 
   function nextDayAdjustmentByFBS(fbs){
@@ -352,8 +332,6 @@
     L.push("Inputs used:");
     L.push(`• Weight ${payload.wt.toFixed(1)} kg; 06:00 FBS ${payload.fbs} mg/dL; Age ${payload.age} y; Sex ${payload.sex}`);
     L.push(`• Creatinine ${payload.scrMgDl.toFixed(2)} mg/dL`);
-    L.push(`• HbA1c: ${payload.a1cText}`);
-    L.push(`• Previous TDD: ${payload.tddText}`);
     L.push("");
     L.push("Dose note:");
     L.push(`• ${payload.logicNote}`);
@@ -375,8 +353,6 @@
     const scrUnit = $("scrUnit").value;
     const scrMgDl = toMgDl(scrRaw, scrUnit);
     const ht = Number($("ht").value);
-    const a1c = Number($("a1c").value);
-    const tdd = Number($("tdd").value);
     const npo = $("npo").checked;
     const noShock = $("noShock").checked;
 
@@ -401,21 +377,11 @@
     const isCkd3aPlus = (isFinite(egfr) && egfr < 60);
 
     const bmiVal = bmi(wt, ht);
-    const hasA1c = isFinite(a1c) && a1c>0;
-    const hasTdd = isFinite(tdd) && tdd>0;
 
-    let glargineU = null;
-    let logicNote = "";
-
-    if (hasTdd){
-      glargineU = estimateTotalGlargineFromTDD(tdd, isCkd3aPlus);
-      logicNote = "Total glargine dose estimated from previous TDD (basal share estimate × periop fasting reduction). No subtraction/balance is performed.";
-    } else {
-      const factor = getBasalFactorInsulinNaive(isCkd3aPlus, fbs, hasA1c ? a1c : NaN);
-      glargineU = wt * factor;
-      logicNote = `Total glargine dose estimated from weight-based factor ${factor.toFixed(2)} U/kg/day (periop fasting >12h start).`;
-      glargineU = clamp(glargineU, 4, 0.30 * wt);
-    }
+    const factor = getBasalFactorInsulinNaive(isCkd3aPlus, fbs);
+    let glargineU = wt * factor;
+    const logicNote = `Total glargine dose estimated from weight-based factor ${factor.toFixed(2)} U/kg/day (periop fasting >12h start).`;
+    glargineU = clamp(glargineU, 4, 0.30 * wt);
 
     glargineU = Math.max(4, glargineU);
     const doseU = roundUnits(glargineU);
@@ -442,8 +408,6 @@
       ckdStage,
       isCkd3aPlus,
       bmi: (isFinite(bmiVal) ? bmiVal : null),
-      a1cText: (hasA1c ? a1c.toFixed(1)+" %" : "NA"),
-      tddText: (hasTdd ? Math.round(tdd)+" U/day" : "NA"),
       logicNote,
       nextAdj
     };
@@ -487,7 +451,7 @@
 
   $("resetBtn").addEventListener("click", ()=>{
     if (!confirm("Reset all fields?")) return;
-    ["wt","fbs","age","scr","ht","a1c","tdd"].forEach(id=>$(id).value="");
+    ["wt","fbs","age","scr","ht"].forEach(id=>$(id).value="");
     $("scrUnit").value = "mgdl";
     $("sex").value = "male";
     $("npo").checked = true;
