@@ -6,7 +6,7 @@
 
 ## Key Features
 
-* **Dosing Logic**: Provides dose estimates for insulin-naive patients using weight-based factors or estimates based on previous Total Daily Insulin (TDD).
+* **Dosing Logic**: Provides dose estimates for insulin-naive patients using weight-based factors.
 * **Renal Monitoring**: Automatically calculates **eGFR (CKD-EPI 2021)** and **CrCl (Cockcroft–Gault)** to flag patients with CKD  3a (eGFR < 60 mL/min/1.73m²) for conservative dosing.
 * **Direct Export**: Generates high-contrast admission orders and plain-text summaries for easy copying into Clinical Information Systems (CIS).
 * **Titration Support**: Includes a built-in guidance system for next-day dose adjustments based on 06:00 AM Fasting Blood Sugar (FBS).
@@ -15,7 +15,7 @@
 
 ## Clinical Logic & Factors
 
-The tool selects a basal insulin factor based on the patient's renal status and glycemic control:
+The tool selects a basal insulin factor based on the patient's body weight, renal status and fasting glycemic control:
 
 | Patient Condition | Glycemic Status | Basal Factor (U/kg/day) |
 | --- | --- | --- |
