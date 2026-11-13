@@ -6,6 +6,7 @@ These are a set of Software Tools created and maintained by Prof. Jyotirmay Kirt
 ### Clinical Applications Stack
 | Tool | Launch App (Live) | Manual & Clinical Logic |
 | :--- | :--- | :--- |
+| **ACLS 2025 Simulator** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/ACLS-2025-Simulator.html) | [📖 About & Help](./docs/User-Manual-ACLS2025-Sim.md) |
 | **ICU Help & Support** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/ICU-Help-Support-v2.4.html) | [📖 About & Help](./docs/ICU-help-support-v2.4-Help.md) |
 | **CCRA Lean - Critical Care Record Assistant** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/CCRA-Lean-v1.5.html) | [📖 About & Help](./docs/About-Help-CCRA-Lean-v1.5.md) |
 | **CCRA - Critical Care Record Assistant** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/CCRA-Critical-Care-Record-Assistant-v2.0.html) | [📖 About & Help](./docs/CCRA-v2.0-Help.md) |
