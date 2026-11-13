@@ -10,6 +10,7 @@ This repository hosts a suite of portable, offline-ready HTML applications desig
 
 | Tool | Clinical Focus | Launch Link |
 | :--- | :--- | :--- |
+| **ACLS 2025 Simulator** | Documentation & Orders | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/ACLS-2025-Simulator.html) |
 | **ICU Help & Support** | Documentation & Orders | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/ICU-Help-Support-v2.4.html) |
 | **CCRA Lean** | Fast and Comprehensive Critical Care Record Assistant | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/CCRA-Lean-v1.5.html)|
 | **CCRA** | Critical Care Record Assistant | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/CCRA-Critical-Care-Record-Assistant-v2.0.html)|
