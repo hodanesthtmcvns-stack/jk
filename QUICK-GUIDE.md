@@ -41,6 +41,7 @@ These are a set of Software Tools created and maintained by Prof. Jyotirmay Kirt
 |**AA-PKPD** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/AA-PKPD-v1.2.html) | [📖 About & Help](./docs/AA-PKPD-v1.2-Help.md) |
 |**IACS** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/IACS-v3.html) | [📖 About & Help](./docs/IACS-v3-Help.md) |
 |**ADR Reporter** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/ADR-Reporter-v1.4.html) | [📖 About & Help](./docs/ADR-Reporter-v1.4-About-Help.md) |
+|**Natural Voice Reader** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/NaturalVoiceReader.html) | [📖 About & Help](./docs/NaturalVoiceReaderUserManual.md) |
 |**STTS (Simple Text to Speech)** | [🚀 Launch](https://hodanesthtmcvns-stack.github.io/jk/STTS-v1.5.html) | [📖 About & Help](./docs/STTS-v1.5-About-Help.md) |
 
 ---
