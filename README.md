@@ -45,6 +45,7 @@ This repository hosts a suite of portable, offline-ready HTML applications desig
 |**AA-PKPD** | Inhaled Anaesthetic Agent Pharmacokinetics–Pharmacodynamics Simulator | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/AA-PKPD-v1.2.html) |
 |**IACS** | Inhalational Anaesthesia Cost Simulator | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/IACS-v3.html) |
 |**ADR-Reporter** | Adverse Drug Reaction Reporting | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/ADR-Reporter-v1.4.html) | 
+|**Natural Voice Reader** | Natural Voice English Reader for Medical, Scientific, Technical, Legal, Administrative texts and files | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/NaturalVoiceReader.html) | 
 |**STTS** | Simple Text To Speech in any language | [Launch App](https://hodanesthtmcvns-stack.github.io/jk/STTS-v1.5.html) | 
 
 ## Core Principles
